@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600&family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Navy / Gold / Cream family shared with LingoBite + LingoTrace */
+  --background: 42 38% 96%;        /* cream #faf6ef */
+  --foreground: 210 45% 12%;       /* navy #0d1b2a */
+
+  --card: 0 0% 100%;
+  --card-foreground: 210 45% 12%;
+
+  --primary: 210 45% 12%;          /* navy */
+  --primary-foreground: 42 38% 96%;
+
+  --secondary: 38 47% 53%;         /* gold #c9993f */
+  --secondary-foreground: 210 45% 12%;
+
+  --accent: 38 47% 53%;
+  --accent-foreground: 210 45% 12%;
+
+  --muted: 40 20% 90%;
+  --muted-foreground: 210 20% 40%;
+
+  --destructive: 0 65% 50%;
+  --destructive-foreground: 0 0% 100%;
+
+  --success: 145 45% 40%;          /* #38a169 */
+
+  --border: 40 20% 85%;
+  --input: 40 20% 85%;
+  --ring: 38 47% 53%;
+
+  --radius: 1.2rem;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* RTL support: interface chrome only (nav/menus/labels), never game content */
+html[dir='rtl'] .ltr-always {
+  direction: ltr;
+}
+
+.card-surface {
+  background-color: hsl(var(--card));
+  border-radius: var(--radius);
+  box-shadow: 0 4px 20px -4px rgba(13, 27, 42, 0.08);
+  border: 1px solid hsl(var(--border));
+}
+
+.brand-gradient {
+  background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+}
+
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
