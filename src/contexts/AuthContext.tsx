@@ -1,13 +1,10 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import {
-  onAuthStateChanged, signInWithPopup, signOut as fbSignOut, type User,
-} from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { auth, db, googleProvider } from '../lib/firebase';
+import type { Session } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
 import type { UserProfile } from '../types';
 
 interface AuthContextValue {
-  firebaseUser: User | null;
+  session: Session | null;
   profile: UserProfile | null;
   loading: boolean;
   isGuest: boolean;
@@ -19,58 +16,76 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function rowToProfile(row: any): UserProfile {
+  return {
+    uid: row.id,
+    email: row.email,
+    displayName: row.display_name,
+    photoURL: row.photo_url,
+    role: row.role,
+    teacherStatus: row.teacher_status,
+    totalXP: row.total_xp,
+    currentStreak: row.current_streak,
+    badges: row.badges ?? [],
+    classIds: [], // populated separately where needed (class_students join table)
+    consentGiven: row.consent_given,
+    parentEmail: row.parent_email ?? undefined,
+    createdAt: row.created_at ? new Date(row.created_at) : new Date(),
+    lastLoginAt: row.last_login_at ? new Date(row.last_login_at) : new Date(),
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isGuest, setIsGuest] = useState(false);
 
+  async function loadProfile(userId: string) {
+    // The handle_new_user() trigger creates the row on first sign-in, but
+    // there can be a brief race right after OAuth redirect - retry a couple
+    // of times before giving up.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+      if (data) {
+        await supabase.from('profiles').update({ last_login_at: new Date().toISOString() }).eq('id', userId);
+        setProfile(rowToProfile(data));
+        return;
+      }
+      if (error) console.error(error);
+      await new Promise((r) => setTimeout(r, 400));
+    }
+  }
+
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      setFirebaseUser(user);
-      if (user) {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      if (data.session) {
         setIsGuest(false);
-        const ref = doc(db, 'users', user.uid);
-        const snap = await getDoc(ref);
-        if (!snap.exists()) {
-          const newProfile = {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
-            role: 'student' as const,
-            teacherStatus: 'none' as const,
-            totalXP: 0,
-            currentStreak: 0,
-            badges: [],
-            classIds: [],
-            consentGiven: false,
-            createdAt: serverTimestamp(),
-            lastLoginAt: serverTimestamp(),
-          };
-          await setDoc(ref, newProfile);
-          setProfile({ ...newProfile, createdAt: new Date(), lastLoginAt: new Date() } as UserProfile);
-        } else {
-          await updateDoc(ref, { lastLoginAt: serverTimestamp() });
-          const data = snap.data();
-          setProfile({
-            ...data,
-            classIds: data.classIds ?? [],
-            consentGiven: data.consentGiven ?? false,
-            createdAt: data.createdAt?.toDate?.() ?? new Date(),
-            lastLoginAt: new Date(),
-          } as UserProfile);
-        }
+        loadProfile(data.session.user.id).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      if (newSession) {
+        setIsGuest(false);
+        loadProfile(newSession.user.id);
       } else {
         setProfile(null);
       }
-      setLoading(false);
     });
-    return unsub;
+
+    return () => listener.subscription.unsubscribe();
   }, []);
 
   const signInWithGoogle = async () => {
-    await signInWithPopup(auth, googleProvider);
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
   };
 
   const continueAsGuest = () => {
@@ -80,20 +95,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     setIsGuest(false);
-    await fbSignOut(auth);
+    await supabase.auth.signOut();
   };
 
   const giveConsent = async (parentEmail?: string) => {
-    if (!firebaseUser) return;
-    await updateDoc(doc(db, 'users', firebaseUser.uid), {
-      consentGiven: true,
-      ...(parentEmail ? { parentEmail } : {}),
-    });
+    if (!session) return;
+    await supabase
+      .from('profiles')
+      .update({ consent_given: true, ...(parentEmail ? { parent_email: parentEmail } : {}) })
+      .eq('id', session.user.id);
     setProfile((p) => (p ? { ...p, consentGiven: true, parentEmail: parentEmail ?? p.parentEmail } : p));
   };
 
   return (
-    <AuthContext.Provider value={{ firebaseUser, profile, loading, isGuest, signInWithGoogle, continueAsGuest, signOut, giveConsent }}>
+    <AuthContext.Provider value={{ session, profile, loading, isGuest, signInWithGoogle, continueAsGuest, signOut, giveConsent }}>
       {children}
     </AuthContext.Provider>
   );

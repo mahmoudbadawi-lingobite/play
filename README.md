@@ -4,47 +4,62 @@ Educational games for the LingoBite ecosystem — teachers turn word lists into
 six different games, students play them for XP.
 
 Part of the same product family as **LingoBite** (lessons) and **LingoTrace**
-(class/session management) — same visual identity, but its **own Firebase
-project**, own accounts, and own data. Nothing is shared automatically
-between the three apps; a teacher's Google login works the same way in all of
-them, but content and rosters are separate.
+(class/session management) — same visual identity, but its **own backend**,
+own accounts, and own data. Nothing is shared automatically between the
+three apps.
 
 ## Stack
 
-React + TypeScript + Vite, Tailwind CSS, Firebase (Auth + Firestore),
-react-i18next (English / Arabic UI, Arabic is interface-only — games and
-content stay English), SheetJS (xlsx) for the content template pipeline,
-React Router.
+React + TypeScript + Vite, Tailwind CSS, **Supabase** (Postgres + Auth +
+Row Level Security), react-i18next (English / Arabic UI, Arabic is
+interface-only — games and content stay English), SheetJS (xlsx) for the
+content template pipeline, React Router.
+
+> This app originally targeted Firebase, matching LingoBite/LingoTrace. It
+> was switched to Supabase because Firestore now requires a linked billing
+> account (Blaze plan) to provision a database at all, and billing accounts
+> with a Saudi Arabia address must go through a reseller (CNTXT) via a
+> business contact form rather than instant self-serve card entry — not a
+> fit for an individual/pilot project. Supabase's free tier requires no
+> card and no regional reseller. The UI, games, and content pipeline are
+> unchanged; only the backend layer differs from the other two apps.
 
 ## Getting started
 
 ```bash
 npm install
-cp .env.example .env   # fill in your Firebase project's config
+cp .env.example .env   # fill in your Supabase project's URL + anon key
 npm run dev
 ```
 
-## Firebase setup
+## Supabase setup
 
-1. Create a **new, separate** Firebase project (do not reuse LingoBite's or
-   LingoTrace's).
-2. Enable **Authentication → Google** sign-in.
-3. Enable **Firestore** (production mode) and deploy the included rules:
-   ```bash
-   firebase deploy --only firestore:rules
-   ```
-   `firestore.rules` covers: users can't self-promote to teacher/admin (only
-   an Admin can), content sets are readable when public or owned, only
-   playCount/reportCount can be bumped by any signed-in user, classes can be
-   read by any signed-in user (needed to look up a join code) but only a
-   student adding themselves to `studentIds` is allowed as a non-owner
-   update, and game results are create-only (no editing past scores).
-4. Copy your web app config into `.env` (see `.env.example`).
+1. Create a **new, separate** Supabase project at [supabase.com](https://supabase.com)
+   (free tier, no card required). Pick a region close to your users.
+2. **Run the schema**: Supabase Dashboard → **SQL Editor** → paste the
+   entire contents of `supabase/schema.sql` → **Run**. This creates every
+   table, Row Level Security policy, and helper function the app needs —
+   it's the Supabase equivalent of `firestore.rules`, but expressed as
+   actual Postgres policies plus a few `security definer` functions for
+   actions that need to safely bypass a strict owner-only policy (bumping
+   a play counter, joining a class by code, awarding XP, admin actions).
+3. **Enable Google sign-in**: Dashboard → **Authentication → Providers →
+   Google** → toggle on. Create an OAuth Client ID (type: Web application)
+   in [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials)
+   (any Google Cloud project works — this doesn't need Firestore/Blaze),
+   paste Supabase's provided callback URL into "Authorized redirect URIs,"
+   then paste the resulting Client ID + Secret back into Supabase.
+4. **Get your API keys**: Dashboard → **Settings → API** → copy the
+   **Project URL** and **anon public** key into `.env` (see
+   `.env.example`). The anon key is safe to expose client-side by design —
+   real access control comes from the RLS policies in `schema.sql`, not
+   from hiding this key.
 
 ## First admin
 
-There's no UI to promote the first Admin — after signing in once, manually
-set `role: "admin"` on your user document in the Firestore console.
+There's no UI to promote the first Admin — after signing in once, open
+**Table Editor → profiles** in the Supabase dashboard, find your row, and
+change `role` from `student` to `admin`.
 
 ## Content model
 
@@ -71,15 +86,15 @@ it — no changes to content authoring needed.
 ## Classes and joining
 
 A teacher's class gets a random 6-character join code (shown on
-`/teacher/classes`). Students go to `/join`, enter it, and are added to the
-class's roster and their own `classIds`. There's no cap on how many classes
-a student can join.
+`/teacher/classes`). Students go to `/join`, enter it, and the
+`join_class_by_code` Postgres function validates the code and adds them to
+`class_students` server-side.
 
 ## Moderation
 
 Any signed-in user can report a public game from the library
 (`⚑ Report this content`). Reports increment a counter and log a reason in
-`contentReports`; Admin sees a "Reported content" list on `/admin` with
+`content_reports`; Admin sees a "Reported content" list on `/admin` with
 options to unpublish (sets it private) or dismiss.
 
 ## Parental consent
@@ -90,14 +105,14 @@ using the app, with an optional parent email field. Teachers and Admins
 (adult accounts) skip this. This is a lightweight acknowledgment flow, not a
 verified-consent system — for stricter compliance (e.g. formal COPPA
 verifiable parental consent), that would need a real verification step
-(e.g. a parent-side confirmation email/link) added later.
+added later.
 
 ## Deploying (GitHub Pages)
 
 A workflow is included at `.github/workflows/deploy.yml`. Push to `main`,
-set the repo's Pages source to "GitHub Actions", and add your Firebase
-config as repo secrets (`VITE_FIREBASE_API_KEY`, etc.) referenced in the
-workflow.
+set the repo's Pages source to "GitHub Actions", and add
+`VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` as repo secrets (Settings →
+Secrets and variables → Actions).
 
 ## Known v1 simplifications (flagged for later)
 
@@ -106,5 +121,8 @@ workflow.
 - Parental consent is an acknowledgment checkbox, not verified consent (see
   above).
 - No email notification to teachers when their content is unpublished by an
-  Admin — they'd need to check back on `/teacher/create` or be told
-  directly for now.
+  Admin.
+- Supabase's free tier pauses a project after a week of no activity (it
+  wakes back up automatically on the next request, with a short cold-start
+  delay) — worth knowing if you leave the app untouched for a while during
+  a school break.

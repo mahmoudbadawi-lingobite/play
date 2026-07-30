@@ -1,0 +1,326 @@
+-- ============================================================
+-- LingoBite Play - Supabase schema
+-- Run this once in the Supabase SQL Editor (or via `supabase db push`).
+-- Replaces the Firestore data model + firestore.rules entirely.
+--
+-- Order matters here: tables before the functions that query them,
+-- functions before the policies that call them.
+-- ============================================================
+
+create extension if not exists pgcrypto;
+
+-- ------------------------------------------------------------
+-- profiles (one row per auth.users row - the app's "users" table)
+-- ------------------------------------------------------------
+create table public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  display_name text,
+  photo_url text,
+  role text not null default 'student' check (role in ('student', 'teacher', 'admin')),
+  teacher_status text not null default 'none' check (teacher_status in ('none', 'pending', 'approved', 'rejected')),
+  total_xp integer not null default 0,
+  current_streak integer not null default 0,
+  badges text[] not null default '{}',
+  consent_given boolean not null default false,
+  parent_email text,
+  created_at timestamptz not null default now(),
+  last_login_at timestamptz not null default now()
+);
+
+alter table public.profiles enable row level security;
+
+-- ------------------------------------------------------------
+-- helper functions (security definer so they can read profiles
+-- regardless of the caller's own RLS visibility, without recursion)
+-- ------------------------------------------------------------
+create or replace function public.is_admin()
+returns boolean language sql stable security definer as $$
+  select exists (select 1 from public.profiles where id = auth.uid() and role = 'admin');
+$$;
+
+create or replace function public.is_teacher()
+returns boolean language sql stable security definer as $$
+  select exists (select 1 from public.profiles where id = auth.uid() and role = 'teacher');
+$$;
+
+-- ------------------------------------------------------------
+-- profiles: policies + privilege-protecting trigger
+-- ------------------------------------------------------------
+create policy "profiles: read own or admin"
+  on public.profiles for select
+  using (auth.uid() = id or public.is_admin());
+
+create policy "profiles: insert own default row"
+  on public.profiles for insert
+  with check (auth.uid() = id and role = 'student' and teacher_status = 'none');
+
+create policy "profiles: update own or admin"
+  on public.profiles for update
+  using (auth.uid() = id or public.is_admin())
+  with check (auth.uid() = id or public.is_admin());
+
+-- RLS alone can't express "you may update your own row, but not the
+-- role/teacher_status columns" - that needs a trigger. A non-admin
+-- self-update can only move teacher_status from 'none' to 'pending'
+-- (the "request teacher access" flow); role never changes except via
+-- the approve_teacher()/reject_teacher() RPCs further down.
+create or replace function public.protect_profile_privileges()
+returns trigger language plpgsql security definer as $$
+begin
+  if public.is_admin() then
+    return new;
+  end if;
+  new.role := old.role;
+  if old.teacher_status = 'none' and new.teacher_status = 'pending' then
+    -- allowed: self-service teacher access request
+  else
+    new.teacher_status := old.teacher_status;
+  end if;
+  return new;
+end;
+$$;
+
+create trigger protect_profile_privileges_trigger
+  before update on public.profiles
+  for each row execute function public.protect_profile_privileges();
+
+-- auto-create a profile row whenever someone signs in for the first time
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer as $$
+begin
+  insert into public.profiles (id, email, display_name, photo_url)
+  values (new.id, new.email, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'avatar_url')
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- ------------------------------------------------------------
+-- content_sets
+-- ------------------------------------------------------------
+create table public.content_sets (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  title_lower text not null,
+  skill text not null check (skill in ('vocabulary', 'grammar', 'reading', 'spelling')),
+  teacher_id uuid not null references public.profiles(id),
+  teacher_name text not null,
+  visibility text not null default 'public' check (visibility in ('public', 'private')),
+  items jsonb not null default '[]',
+  play_count integer not null default 0,
+  report_count integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index content_sets_title_lower_idx on public.content_sets (title_lower);
+create index content_sets_visibility_idx on public.content_sets (visibility);
+
+alter table public.content_sets enable row level security;
+
+create policy "content_sets: read public, own, or admin"
+  on public.content_sets for select
+  using (visibility = 'public' or teacher_id = auth.uid() or public.is_admin());
+
+create policy "content_sets: teacher creates own"
+  on public.content_sets for insert
+  with check (public.is_teacher() and teacher_id = auth.uid());
+
+create policy "content_sets: owner or admin updates"
+  on public.content_sets for update
+  using (teacher_id = auth.uid() or public.is_admin());
+
+create policy "content_sets: owner or admin deletes"
+  on public.content_sets for delete
+  using (teacher_id = auth.uid() or public.is_admin());
+
+-- play_count / report_count bump via RPC (bypasses the owner-only update
+-- policy above safely, instead of trying to do column-level RLS)
+create or replace function public.increment_play_count(set_id uuid)
+returns void language sql security definer as $$
+  update public.content_sets set play_count = play_count + 1 where id = set_id;
+$$;
+
+create or replace function public.report_content_set(set_id uuid, reason text)
+returns void language plpgsql security definer as $$
+begin
+  update public.content_sets set report_count = report_count + 1 where id = set_id;
+  insert into public.content_reports (content_set_id, reason, reporter_id)
+  values (set_id, reason, auth.uid());
+end;
+$$;
+
+create or replace function public.unpublish_content_set(set_id uuid)
+returns void language plpgsql security definer as $$
+begin
+  if not public.is_admin() then
+    raise exception 'not authorized';
+  end if;
+  update public.content_sets set visibility = 'private' where id = set_id;
+end;
+$$;
+
+create or replace function public.dismiss_content_reports(set_id uuid)
+returns void language plpgsql security definer as $$
+begin
+  if not public.is_admin() then
+    raise exception 'not authorized';
+  end if;
+  update public.content_sets set report_count = 0 where id = set_id;
+end;
+$$;
+
+-- ------------------------------------------------------------
+-- content_reports (admin-only read, created only via the RPC above)
+-- ------------------------------------------------------------
+create table public.content_reports (
+  id uuid primary key default gen_random_uuid(),
+  content_set_id uuid not null references public.content_sets(id) on delete cascade,
+  reason text,
+  reporter_id uuid references public.profiles(id),
+  created_at timestamptz not null default now()
+);
+
+alter table public.content_reports enable row level security;
+
+create policy "content_reports: admin reads"
+  on public.content_reports for select
+  using (public.is_admin());
+
+-- ------------------------------------------------------------
+-- classes + class_students
+-- ------------------------------------------------------------
+create table public.classes (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  teacher_id uuid not null references public.profiles(id),
+  join_code text not null unique,
+  created_at timestamptz not null default now()
+);
+
+alter table public.classes enable row level security;
+
+create policy "classes: any signed-in user can read (needed for join by code)"
+  on public.classes for select
+  using (auth.uid() is not null);
+
+create policy "classes: teacher creates own"
+  on public.classes for insert
+  with check (public.is_teacher() and teacher_id = auth.uid());
+
+create policy "classes: owner or admin updates"
+  on public.classes for update using (teacher_id = auth.uid() or public.is_admin());
+
+create policy "classes: owner or admin deletes"
+  on public.classes for delete using (teacher_id = auth.uid() or public.is_admin());
+
+create table public.class_students (
+  class_id uuid not null references public.classes(id) on delete cascade,
+  student_id uuid not null references public.profiles(id) on delete cascade,
+  joined_at timestamptz not null default now(),
+  primary key (class_id, student_id)
+);
+
+alter table public.class_students enable row level security;
+
+create policy "class_students: teacher or the student themself can read"
+  on public.class_students for select
+  using (
+    student_id = auth.uid()
+    or exists (select 1 from public.classes c where c.id = class_id and c.teacher_id = auth.uid())
+  );
+
+-- joining a class happens via RPC (validates the code server-side,
+-- rather than trusting a client-supplied class_id)
+create or replace function public.join_class_by_code(code text)
+returns public.classes language plpgsql security definer as $$
+declare
+  target public.classes;
+begin
+  select * into target from public.classes where join_code = upper(trim(code)) limit 1;
+  if target.id is null then
+    return null;
+  end if;
+  insert into public.class_students (class_id, student_id)
+  values (target.id, auth.uid())
+  on conflict do nothing;
+  return target;
+end;
+$$;
+
+-- ------------------------------------------------------------
+-- game_results
+-- ------------------------------------------------------------
+create table public.game_results (
+  id uuid primary key default gen_random_uuid(),
+  content_set_id uuid references public.content_sets(id),
+  content_set_title text,
+  game_key text not null,
+  student_id uuid not null references public.profiles(id),
+  student_name text,
+  class_id uuid references public.classes(id),
+  xp_earned integer not null,
+  accuracy integer not null,
+  duration_seconds integer,
+  played_at timestamptz not null default now()
+);
+
+create index game_results_class_id_idx on public.game_results (class_id);
+create index game_results_game_key_idx on public.game_results (game_key);
+
+alter table public.game_results enable row level security;
+
+create policy "game_results: any signed-in user can read (leaderboards)"
+  on public.game_results for select
+  using (auth.uid() is not null);
+
+-- recording a result + awarding XP happens atomically via RPC
+create or replace function public.record_game_result(
+  p_content_set_id uuid,
+  p_content_set_title text,
+  p_game_key text,
+  p_class_id uuid,
+  p_xp_earned integer,
+  p_accuracy integer,
+  p_duration_seconds integer
+)
+returns void language plpgsql security definer as $$
+begin
+  insert into public.game_results
+    (content_set_id, content_set_title, game_key, student_id, student_name, class_id, xp_earned, accuracy, duration_seconds)
+  values
+    (p_content_set_id, p_content_set_title, p_game_key, auth.uid(),
+     (select display_name from public.profiles where id = auth.uid()),
+     p_class_id, p_xp_earned, p_accuracy, p_duration_seconds);
+
+  update public.profiles set total_xp = total_xp + p_xp_earned where id = auth.uid();
+end;
+$$;
+
+-- ------------------------------------------------------------
+-- teacher approval RPCs (admin-only, checked inside the function body)
+-- ------------------------------------------------------------
+create or replace function public.approve_teacher(target_uid uuid)
+returns void language plpgsql security definer as $$
+begin
+  if not public.is_admin() then
+    raise exception 'not authorized';
+  end if;
+  update public.profiles set role = 'teacher', teacher_status = 'approved' where id = target_uid;
+end;
+$$;
+
+create or replace function public.reject_teacher(target_uid uuid)
+returns void language plpgsql security definer as $$
+begin
+  if not public.is_admin() then
+    raise exception 'not authorized';
+  end if;
+  update public.profiles set teacher_status = 'rejected' where id = target_uid;
+end;
+$$;

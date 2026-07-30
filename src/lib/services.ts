@@ -1,23 +1,38 @@
-import {
-  collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
-  query, where, orderBy, limit, serverTimestamp, increment, arrayUnion,
-} from 'firebase/firestore';
-import { db } from './firebase';
+import { supabase } from './supabase';
 import type { ContentItem, ContentSet, GameKey, GameResult, SchoolClass, SkillTemplate, Visibility } from '../types';
 
 // ------------------------------------------------------------------
 // Content sets
 // ------------------------------------------------------------------
 
-const contentCol = collection(db, 'contentSets');
+function rowToContentSet(row: any): ContentSet {
+  return {
+    id: row.id,
+    title: row.title,
+    skill: row.skill,
+    teacherId: row.teacher_id,
+    teacherName: row.teacher_name,
+    visibility: row.visibility,
+    items: row.items ?? [],
+    playCount: row.play_count ?? 0,
+    reportCount: row.report_count ?? 0,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
 
 export async function checkDuplicateTitle(title: string): Promise<ContentSet | null> {
   const normalized = title.trim().toLowerCase();
   if (!normalized) return null;
-  const q = query(contentCol, where('titleLower', '==', normalized), where('visibility', '==', 'public'), limit(1));
-  const snap = await getDocs(q);
-  if (snap.empty) return null;
-  return docToContentSet(snap.docs[0]);
+  const { data, error } = await supabase
+    .from('content_sets')
+    .select('*')
+    .eq('title_lower', normalized)
+    .eq('visibility', 'public')
+    .limit(1)
+    .maybeSingle();
+  if (error || !data) return null;
+  return rowToContentSet(data);
 }
 
 export async function createContentSet(input: {
@@ -28,93 +43,81 @@ export async function createContentSet(input: {
   visibility: Visibility;
   items: ContentItem[];
 }): Promise<string> {
-  const ref = await addDoc(contentCol, {
-    title: input.title,
-    titleLower: input.title.trim().toLowerCase(),
-    skill: input.skill,
-    teacherId: input.teacherId,
-    teacherName: input.teacherName,
-    visibility: input.visibility,
-    items: input.items,
-    playCount: 0,
-    reportCount: 0,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-  return ref.id;
+  const { data, error } = await supabase
+    .from('content_sets')
+    .insert({
+      title: input.title,
+      title_lower: input.title.trim().toLowerCase(),
+      skill: input.skill,
+      teacher_id: input.teacherId,
+      teacher_name: input.teacherName,
+      visibility: input.visibility,
+      items: input.items,
+    })
+    .select('id')
+    .single();
+  if (error) throw error;
+  return data.id;
 }
 
 export async function getContentSet(id: string): Promise<ContentSet | null> {
-  const snap = await getDoc(doc(db, 'contentSets', id));
-  if (!snap.exists()) return null;
-  return docToContentSet(snap);
+  const { data, error } = await supabase.from('content_sets').select('*').eq('id', id).maybeSingle();
+  if (error || !data) return null;
+  return rowToContentSet(data);
 }
 
 export async function listPublicContentSets(skill?: SkillTemplate): Promise<ContentSet[]> {
-  const clauses = [where('visibility', '==', 'public')];
-  if (skill) clauses.push(where('skill', '==', skill));
-  const q = query(contentCol, ...clauses, orderBy('playCount', 'desc'), limit(50));
-  const snap = await getDocs(q);
-  return snap.docs.map(docToContentSet);
+  let query = supabase.from('content_sets').select('*').eq('visibility', 'public').order('play_count', { ascending: false }).limit(50);
+  if (skill) query = query.eq('skill', skill);
+  const { data, error } = await query;
+  if (error || !data) return [];
+  return data.map(rowToContentSet);
 }
 
 export async function listMyContentSets(teacherId: string): Promise<ContentSet[]> {
-  const q = query(contentCol, where('teacherId', '==', teacherId), orderBy('updatedAt', 'desc'));
-  const snap = await getDocs(q);
-  return snap.docs.map(docToContentSet);
+  const { data, error } = await supabase
+    .from('content_sets')
+    .select('*')
+    .eq('teacher_id', teacherId)
+    .order('updated_at', { ascending: false });
+  if (error || !data) return [];
+  return data.map(rowToContentSet);
 }
 
 export async function incrementPlayCount(id: string): Promise<void> {
-  await updateDoc(doc(db, 'contentSets', id), { playCount: increment(1) });
+  await supabase.rpc('increment_play_count', { set_id: id });
 }
 
 export async function deleteContentSet(id: string): Promise<void> {
-  await deleteDoc(doc(db, 'contentSets', id));
+  await supabase.from('content_sets').delete().eq('id', id);
 }
 
-export async function reportContentSet(id: string, reason: string, reporterId: string): Promise<void> {
-  await updateDoc(doc(db, 'contentSets', id), { reportCount: increment(1) });
-  await addDoc(collection(db, 'contentReports'), {
-    contentSetId: id, reason, reporterId, createdAt: serverTimestamp(),
-  });
+export async function reportContentSet(id: string, reason: string, _reporterId: string): Promise<void> {
+  await supabase.rpc('report_content_set', { set_id: id, reason });
 }
 
 export async function listReportedContentSets(): Promise<ContentSet[]> {
-  const q = query(contentCol, where('reportCount', '>', 0), orderBy('reportCount', 'desc'), limit(50));
-  const snap = await getDocs(q);
-  return snap.docs.map(docToContentSet);
+  const { data, error } = await supabase
+    .from('content_sets')
+    .select('*')
+    .gt('report_count', 0)
+    .order('report_count', { ascending: false })
+    .limit(50);
+  if (error || !data) return [];
+  return data.map(rowToContentSet);
 }
 
 export async function unpublishContentSet(id: string): Promise<void> {
-  await updateDoc(doc(db, 'contentSets', id), { visibility: 'private' });
+  await supabase.rpc('unpublish_content_set', { set_id: id });
 }
 
 export async function dismissReports(id: string): Promise<void> {
-  await updateDoc(doc(db, 'contentSets', id), { reportCount: 0 });
-}
-
-function docToContentSet(d: any): ContentSet {
-  const data = d.data();
-  return {
-    id: d.id,
-    title: data.title,
-    skill: data.skill,
-    teacherId: data.teacherId,
-    teacherName: data.teacherName,
-    visibility: data.visibility,
-    items: data.items ?? [],
-    playCount: data.playCount ?? 0,
-    reportCount: data.reportCount ?? 0,
-    createdAt: data.createdAt?.toDate?.() ?? new Date(),
-    updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
-  };
+  await supabase.rpc('dismiss_content_reports', { set_id: id });
 }
 
 // ------------------------------------------------------------------
 // Classes / rosters (independent within LingoBite Play)
 // ------------------------------------------------------------------
-
-const classCol = collection(db, 'classes');
 
 function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no O/0/I/1 ambiguity
@@ -124,48 +127,48 @@ function generateJoinCode(): string {
 }
 
 export async function createClass(teacherId: string, name: string): Promise<string> {
-  const ref = await addDoc(classCol, {
-    name, teacherId, studentIds: [], joinCode: generateJoinCode(), createdAt: serverTimestamp(),
-  });
-  return ref.id;
+  const { data, error } = await supabase
+    .from('classes')
+    .insert({ name, teacher_id: teacherId, join_code: generateJoinCode() })
+    .select('id')
+    .single();
+  if (error) throw error;
+  return data.id;
 }
 
 export async function listMyClasses(teacherId: string): Promise<SchoolClass[]> {
-  const q = query(classCol, where('teacherId', '==', teacherId));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => {
-    const data = d.data();
-    return {
-      id: d.id,
-      name: data.name,
-      teacherId: data.teacherId,
-      studentIds: data.studentIds ?? [],
-      joinCode: data.joinCode ?? '',
-      createdAt: data.createdAt?.toDate?.() ?? new Date(),
-    };
-  });
+  const { data: classRows, error } = await supabase.from('classes').select('*').eq('teacher_id', teacherId);
+  if (error || !classRows) return [];
+
+  const { data: studentRows } = await supabase
+    .from('class_students')
+    .select('class_id, student_id')
+    .in('class_id', classRows.map((c) => c.id));
+
+  return classRows.map((c) => ({
+    id: c.id,
+    name: c.name,
+    teacherId: c.teacher_id,
+    joinCode: c.join_code,
+    studentIds: (studentRows ?? []).filter((s) => s.class_id === c.id).map((s) => s.student_id),
+    createdAt: new Date(c.created_at),
+  }));
 }
 
 export async function addStudentToClass(classId: string, studentId: string): Promise<void> {
-  await updateDoc(doc(db, 'classes', classId), { studentIds: arrayUnion(studentId) });
+  await supabase.from('class_students').insert({ class_id: classId, student_id: studentId });
 }
 
-export async function joinClassByCode(code: string, studentId: string): Promise<SchoolClass | null> {
-  const normalized = code.trim().toUpperCase();
-  const q = query(classCol, where('joinCode', '==', normalized), limit(1));
-  const snap = await getDocs(q);
-  if (snap.empty) return null;
-  const classDoc = snap.docs[0];
-  await addStudentToClass(classDoc.id, studentId);
-  await updateDoc(doc(db, 'users', studentId), { classIds: arrayUnion(classDoc.id) });
-  const data = classDoc.data();
+export async function joinClassByCode(code: string, _studentId: string): Promise<SchoolClass | null> {
+  const { data, error } = await supabase.rpc('join_class_by_code', { code });
+  if (error || !data) return null;
   return {
-    id: classDoc.id,
+    id: data.id,
     name: data.name,
-    teacherId: data.teacherId,
-    studentIds: [...(data.studentIds ?? []), studentId],
-    joinCode: data.joinCode,
-    createdAt: data.createdAt?.toDate?.() ?? new Date(),
+    teacherId: data.teacher_id,
+    joinCode: data.join_code,
+    studentIds: [],
+    createdAt: new Date(data.created_at),
   };
 }
 
@@ -173,29 +176,54 @@ export async function joinClassByCode(code: string, studentId: string): Promise<
 // Game results / leaderboard / XP
 // ------------------------------------------------------------------
 
-const resultsCol = collection(db, 'gameResults');
+function rowToGameResult(row: any): GameResult {
+  return {
+    id: row.id,
+    contentSetId: row.content_set_id,
+    contentSetTitle: row.content_set_title,
+    gameKey: row.game_key,
+    studentId: row.student_id,
+    studentName: row.student_name,
+    classId: row.class_id ?? undefined,
+    xpEarned: row.xp_earned,
+    accuracy: row.accuracy,
+    durationSeconds: row.duration_seconds,
+    playedAt: new Date(row.played_at),
+  };
+}
 
 export async function recordGameResult(input: Omit<GameResult, 'id' | 'playedAt'>): Promise<void> {
-  await addDoc(resultsCol, { ...input, playedAt: serverTimestamp() });
-  await updateDoc(doc(db, 'users', input.studentId), { totalXP: increment(input.xpEarned) });
+  await supabase.rpc('record_game_result', {
+    p_content_set_id: input.contentSetId,
+    p_content_set_title: input.contentSetTitle,
+    p_game_key: input.gameKey,
+    p_class_id: input.classId ?? null,
+    p_xp_earned: input.xpEarned,
+    p_accuracy: input.accuracy,
+    p_duration_seconds: input.durationSeconds,
+  });
 }
 
 export async function getClassLeaderboard(classId: string): Promise<GameResult[]> {
-  const q = query(resultsCol, where('classId', '==', classId), orderBy('xpEarned', 'desc'), limit(50));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => {
-    const data = d.data();
-    return { id: d.id, ...data, playedAt: data.playedAt?.toDate?.() ?? new Date() } as GameResult;
-  });
+  const { data, error } = await supabase
+    .from('game_results')
+    .select('*')
+    .eq('class_id', classId)
+    .order('xp_earned', { ascending: false })
+    .limit(50);
+  if (error || !data) return [];
+  return data.map(rowToGameResult);
 }
 
 export async function getGameLeaderboard(gameKey: GameKey): Promise<GameResult[]> {
-  const q = query(resultsCol, where('gameKey', '==', gameKey), orderBy('xpEarned', 'desc'), limit(50));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => {
-    const data = d.data();
-    return { id: d.id, ...data, playedAt: data.playedAt?.toDate?.() ?? new Date() } as GameResult;
-  });
+  const { data, error } = await supabase
+    .from('game_results')
+    .select('*')
+    .eq('game_key', gameKey)
+    .order('xp_earned', { ascending: false })
+    .limit(50);
+  if (error || !data) return [];
+  return data.map(rowToGameResult);
 }
 
 // ------------------------------------------------------------------
@@ -204,19 +232,24 @@ export async function getGameLeaderboard(gameKey: GameKey): Promise<GameResult[]
 // ------------------------------------------------------------------
 
 export async function requestTeacherAccess(uid: string): Promise<void> {
-  await updateDoc(doc(db, 'users', uid), { teacherStatus: 'pending' });
+  await supabase.from('profiles').update({ teacher_status: 'pending' }).eq('id', uid);
 }
 
 export async function listPendingTeacherRequests() {
-  const q = query(collection(db, 'users'), where('teacherStatus', '==', 'pending'));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+  const { data, error } = await supabase.from('profiles').select('*').eq('teacher_status', 'pending');
+  if (error || !data) return [];
+  return data.map((row) => ({
+    uid: row.id,
+    displayName: row.display_name,
+    email: row.email,
+    photoURL: row.photo_url,
+  }));
 }
 
 export async function approveTeacher(uid: string): Promise<void> {
-  await updateDoc(doc(db, 'users', uid), { role: 'teacher', teacherStatus: 'approved' });
+  await supabase.rpc('approve_teacher', { target_uid: uid });
 }
 
 export async function rejectTeacher(uid: string): Promise<void> {
-  await updateDoc(doc(db, 'users', uid), { teacherStatus: 'rejected' });
+  await supabase.rpc('reject_teacher', { target_uid: uid });
 }
