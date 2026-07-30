@@ -19,7 +19,7 @@ export default function App() {
   return (
     <AuthProvider>
       <GuestProgressProvider>
-        <BrowserRouter>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
           <div className="min-h-screen bg-background">
             <Header />
             <main>
