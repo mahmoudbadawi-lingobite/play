@@ -56,6 +56,9 @@ export function TypingRaceGame({ items, onFinish }: GameProps) {
         <div className="h-full bg-secondary transition-all" style={{ width: `${(timeLeft / TIME_PER_QUESTION) * 100}%` }} />
       </div>
 
+      {current.imageUrl && (
+        <img src={current.imageUrl} alt="" className="mb-3 h-32 w-full rounded-lg object-cover" />
+      )}
       <p className="font-display text-xl text-primary">{current.clue}</p>
 
       <input

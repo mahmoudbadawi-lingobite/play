@@ -12,6 +12,7 @@ interface AuthContextValue {
   continueAsGuest: () => void;
   signOut: () => Promise<void>;
   giveConsent: (parentEmail?: string) => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -107,8 +108,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile((p) => (p ? { ...p, consentGiven: true, parentEmail: parentEmail ?? p.parentEmail } : p));
   };
 
+  const refreshProfile = async () => {
+    if (session) await loadProfile(session.user.id);
+  };
+
   return (
-    <AuthContext.Provider value={{ session, profile, loading, isGuest, signInWithGoogle, continueAsGuest, signOut, giveConsent }}>
+    <AuthContext.Provider value={{ session, profile, loading, isGuest, signInWithGoogle, continueAsGuest, signOut, giveConsent, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

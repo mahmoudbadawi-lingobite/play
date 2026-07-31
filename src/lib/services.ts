@@ -159,6 +159,45 @@ export async function addStudentToClass(classId: string, studentId: string): Pro
   await supabase.from('class_students').insert({ class_id: classId, student_id: studentId });
 }
 
+export interface RosterEntry {
+  studentId: string;
+  displayName: string;
+  photoURL: string | null;
+  totalXP: number;
+  gamesPlayed: number;
+  avgAccuracy: number;
+}
+
+export async function getClassRoster(classId: string): Promise<RosterEntry[]> {
+  const { data: studentRows, error: studentsError } = await supabase
+    .from('class_students')
+    .select('student_id, profiles(display_name, photo_url)')
+    .eq('class_id', classId);
+  if (studentsError || !studentRows) return [];
+
+  const { data: resultRows } = await supabase
+    .from('game_results')
+    .select('student_id, xp_earned, accuracy')
+    .eq('class_id', classId);
+
+  return studentRows.map((row: any) => {
+    const results = (resultRows ?? []).filter((r: any) => r.student_id === row.student_id);
+    const totalXP = results.reduce((sum: number, r: any) => sum + (r.xp_earned ?? 0), 0);
+    const gamesPlayed = results.length;
+    const avgAccuracy = gamesPlayed
+      ? Math.round(results.reduce((s: number, r: any) => s + (r.accuracy ?? 0), 0) / gamesPlayed)
+      : 0;
+    return {
+      studentId: row.student_id,
+      displayName: row.profiles?.display_name ?? 'Student',
+      photoURL: row.profiles?.photo_url ?? null,
+      totalXP,
+      gamesPlayed,
+      avgAccuracy,
+    };
+  });
+}
+
 export async function joinClassByCode(code: string, _studentId: string): Promise<SchoolClass | null> {
   const { data, error } = await supabase.rpc('join_class_by_code', { code });
   if (error || !data) return null;

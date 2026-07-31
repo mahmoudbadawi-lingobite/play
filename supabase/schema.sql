@@ -68,6 +68,16 @@ create policy "profiles: update own or admin"
   using (auth.uid() = id or public.is_admin())
   with check (auth.uid() = id or public.is_admin());
 
+create policy "profiles: teacher reads own students"
+  on public.profiles for select
+  using (
+    exists (
+      select 1 from public.class_students cs
+      join public.classes c on c.id = cs.class_id
+      where cs.student_id = profiles.id and c.teacher_id = auth.uid()
+    )
+  );
+
 -- RLS alone can't express "you may update your own row, but not the
 -- role/teacher_status columns" - that needs a trigger. A non-admin
 -- self-update can only move teacher_status from 'none' to 'pending'

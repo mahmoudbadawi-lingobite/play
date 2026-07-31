@@ -5,6 +5,7 @@ interface Card {
   cardId: string;
   itemId: string;
   label: string;
+  imageUrl?: string;
   kind: 'term' | 'clue';
 }
 
@@ -27,7 +28,7 @@ export function MemoryMatchGame({ items, onFinish }: GameProps) {
   useEffect(() => {
     const built: Card[] = pool.flatMap((item) => [
       { cardId: `${item.id}-term`, itemId: item.id, label: item.term, kind: 'term' as const },
-      { cardId: `${item.id}-clue`, itemId: item.id, label: item.clue, kind: 'clue' as const },
+      { cardId: `${item.id}-clue`, itemId: item.id, label: item.clue, imageUrl: item.imageUrl, kind: 'clue' as const },
     ]);
     setCards(shuffle(built));
   }, [pool]);
@@ -71,7 +72,7 @@ export function MemoryMatchGame({ items, onFinish }: GameProps) {
               key={card.cardId}
               onClick={() => handleFlip(card.cardId)}
               disabled={isMatched}
-              className={`flex h-24 items-center justify-center rounded-xl border p-2 text-center text-sm font-medium transition ${
+              className={`flex h-24 flex-col items-center justify-center gap-1 rounded-xl border p-2 text-center text-sm font-medium transition ${
                 isMatched
                   ? 'border-success bg-success/10 text-success'
                   : isFlipped
@@ -79,7 +80,12 @@ export function MemoryMatchGame({ items, onFinish }: GameProps) {
                   : 'border-border bg-primary text-primary-foreground'
               }`}
             >
-              {isFlipped ? card.label : '?'}
+              {isFlipped ? (
+                <>
+                  {card.imageUrl && <img src={card.imageUrl} alt="" className="h-10 w-10 rounded object-cover" />}
+                  <span className="line-clamp-2">{card.label}</span>
+                </>
+              ) : '?'}
             </button>
           );
         })}

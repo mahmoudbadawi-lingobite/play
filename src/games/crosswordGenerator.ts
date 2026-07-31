@@ -4,6 +4,7 @@ export interface PlacedWord {
   itemId: string;
   term: string;
   clue: string;
+  imageUrl?: string;
   row: number;
   col: number;
   direction: 'across' | 'down';
@@ -50,7 +51,7 @@ export function generateCrossword(items: ContentItem[]): CrosswordLayout {
       const c = dir === 'across' ? col + i : col;
       cells.set(key(r, c), { row: r, col: c, char: term[i] });
     }
-    words.push({ itemId: item.id, term, clue: item.clue, row, col, direction: dir, number: 0 });
+    words.push({ itemId: item.id, term, clue: item.clue, imageUrl: item.imageUrl, row, col, direction: dir, number: 0 });
   }
 
   sorted.forEach((item, idx) => {

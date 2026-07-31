@@ -72,6 +72,15 @@ html[dir='rtl'] .ltr-always {
   outline-offset: 2px;
 }
 
+/* Every button gets a visible press response, so clicking always feels
+   acknowledged even before a request/state change completes. */
+button:not(:disabled) {
+  transition: transform 100ms ease;
+}
+button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

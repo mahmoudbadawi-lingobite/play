@@ -61,13 +61,19 @@ export function CrosswordGame({ items, onFinish }: GameProps) {
         <div>
           <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Across</p>
           {layout.words.filter((w) => w.direction === 'across').map((w) => (
-            <p key={w.itemId} className="text-sm text-primary"><b>{w.number}.</b> {w.clue}</p>
+            <div key={w.itemId} className="mb-1 flex items-center gap-2 text-sm text-primary">
+              {w.imageUrl && <img src={w.imageUrl} alt="" className="h-8 w-8 rounded object-cover" />}
+              <span><b>{w.number}.</b> {w.clue}</span>
+            </div>
           ))}
         </div>
         <div>
           <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Down</p>
           {layout.words.filter((w) => w.direction === 'down').map((w) => (
-            <p key={w.itemId} className="text-sm text-primary"><b>{w.number}.</b> {w.clue}</p>
+            <div key={w.itemId} className="mb-1 flex items-center gap-2 text-sm text-primary">
+              {w.imageUrl && <img src={w.imageUrl} alt="" className="h-8 w-8 rounded object-cover" />}
+              <span><b>{w.number}.</b> {w.clue}</span>
+            </div>
           ))}
         </div>
       </div>

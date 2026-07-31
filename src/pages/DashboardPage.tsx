@@ -6,9 +6,10 @@ import { requestTeacherAccess, listMyEnrolledClasses } from '../lib/services';
 
 export function DashboardPage() {
   const { t } = useTranslation();
-  const { profile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const [enrolledClasses, setEnrolledClasses] = useState<{ id: string; name: string }[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
+  const [requesting, setRequesting] = useState(false);
 
   useEffect(() => {
     if (!profile || profile.role !== 'student') return;
@@ -16,6 +17,14 @@ export function DashboardPage() {
       .then(setEnrolledClasses)
       .finally(() => setLoadingClasses(false));
   }, [profile]);
+
+  const handleRequestTeacherAccess = async () => {
+    if (!profile) return;
+    setRequesting(true);
+    await requestTeacherAccess(profile.uid);
+    await refreshProfile();
+    setRequesting(false);
+  };
 
   if (!profile) return null;
 
@@ -83,11 +92,11 @@ export function DashboardPage() {
 
         {profile.role === 'student' && profile.teacherStatus !== 'approved' && (
           <button
-            disabled={profile.teacherStatus === 'pending'}
-            onClick={() => requestTeacherAccess(profile.uid)}
-            className="rounded-xl border border-border bg-card px-5 py-3 font-semibold text-primary hover:border-secondary disabled:opacity-50"
+            disabled={requesting || profile.teacherStatus === 'pending'}
+            onClick={handleRequestTeacherAccess}
+            className="rounded-xl border border-border bg-card px-5 py-3 font-semibold text-primary transition hover:border-secondary active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
           >
-            {profile.teacherStatus === 'pending' ? t('teacherPending') : t('requestTeacherAccess')}
+            {requesting ? 'Sending request...' : profile.teacherStatus === 'pending' ? t('teacherPending') : t('requestTeacherAccess')}
           </button>
         )}
 

@@ -59,6 +59,9 @@ export function WordBuilderGame({ items, onFinish }: GameProps) {
   return (
     <div className="card-surface p-6">
       <p className="mb-1 text-sm text-muted-foreground">Word {index + 1} / {questions.length}</p>
+      {current.imageUrl && (
+        <img src={current.imageUrl} alt="" className="mb-3 h-32 w-full rounded-lg object-cover" />
+      )}
       <p className="font-display text-xl text-primary">{current.clue}</p>
 
       <div className="mt-5 flex min-h-[3.5rem] flex-wrap gap-2 rounded-lg border-2 border-dashed border-border p-3">

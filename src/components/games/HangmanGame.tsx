@@ -41,6 +41,9 @@ export function HangmanGame({ items, onFinish }: GameProps) {
   return (
     <div className="card-surface p-6 text-center">
       <p className="mb-1 text-sm text-muted-foreground">Word {index + 1} / {rounds.length} · Misses: {misses}/{MAX_MISSES}</p>
+      {current.imageUrl && (
+        <img src={current.imageUrl} alt="" className="mx-auto mb-3 h-32 w-full max-w-xs rounded-lg object-cover" />
+      )}
       <p className="mb-4 font-display text-lg text-primary">{current.clue}</p>
 
       <div className="mb-6 flex justify-center gap-2 text-2xl font-bold tracking-widest text-primary">
