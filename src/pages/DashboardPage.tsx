@@ -1,11 +1,22 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { requestTeacherAccess } from '../lib/services';
+import { requestTeacherAccess, listMyEnrolledClasses } from '../lib/services';
 
 export function DashboardPage() {
   const { t } = useTranslation();
   const { profile } = useAuth();
+  const [enrolledClasses, setEnrolledClasses] = useState<{ id: string; name: string }[]>([]);
+  const [loadingClasses, setLoadingClasses] = useState(true);
+
+  useEffect(() => {
+    if (!profile || profile.role !== 'student') return;
+    listMyEnrolledClasses(profile.uid)
+      .then(setEnrolledClasses)
+      .finally(() => setLoadingClasses(false));
+  }, [profile]);
+
   if (!profile) return null;
 
   return (
@@ -28,6 +39,25 @@ export function DashboardPage() {
           <p className="font-display text-3xl font-bold text-primary">{profile.badges.length} 🏅</p>
         </div>
       </div>
+
+      {profile.role === 'student' && (
+        <div className="mt-6">
+          <p className="mb-2 text-sm font-semibold text-primary">My classes</p>
+          {loadingClasses ? (
+            <p className="text-sm text-muted-foreground">Loading...</p>
+          ) : enrolledClasses.length === 0 ? (
+            <p className="text-sm text-muted-foreground">You haven't joined a class yet.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {enrolledClasses.map((c) => (
+                <span key={c.id} className="rounded-full border border-border bg-card px-3 py-1.5 text-sm font-medium text-primary">
+                  {c.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Link to="/library" className="rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground hover:opacity-90">
