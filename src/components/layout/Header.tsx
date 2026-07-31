@@ -18,7 +18,7 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <Link to="/" className="flex items-center gap-2">
-          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" className="h-9 w-9 rounded-xl object-cover" />
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" className="h-[72px] w-[72px] rounded-xl object-cover" />
           <span className="font-display text-lg font-semibold text-primary">{t('appName')}</span>
         </Link>
 
