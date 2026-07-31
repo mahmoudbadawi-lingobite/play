@@ -171,6 +171,7 @@ export async function joinClassByCode(code: string, _studentId: string): Promise
     createdAt: new Date(data.created_at),
   };
 }
+
 export async function listMyEnrolledClasses(studentId: string): Promise<{ id: string; name: string }[]> {
   const { data, error } = await supabase
     .from('class_students')
@@ -179,6 +180,7 @@ export async function listMyEnrolledClasses(studentId: string): Promise<{ id: st
   if (error || !data) return [];
   return data.map((row: any) => row.classes).filter(Boolean);
 }
+
 // ------------------------------------------------------------------
 // Game results / leaderboard / XP
 // ------------------------------------------------------------------

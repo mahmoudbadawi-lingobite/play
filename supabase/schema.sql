@@ -9,6 +9,14 @@
 
 create extension if not exists pgcrypto;
 
+-- Supabase's `anon` and `authenticated` roles need an explicit GRANT before
+-- RLS policies even come into play - without this, Postgres blocks access
+-- before evaluating any policy below, regardless of how permissive the
+-- policy is.
+grant usage on schema public to anon, authenticated;
+alter default privileges in schema public grant select, insert, update, delete on tables to authenticated;
+alter default privileges in schema public grant execute on functions to authenticated, anon;
+
 -- ------------------------------------------------------------
 -- profiles (one row per auth.users row - the app's "users" table)
 -- ------------------------------------------------------------
@@ -126,6 +134,9 @@ alter table public.content_sets enable row level security;
 create policy "content_sets: read public, own, or admin"
   on public.content_sets for select
   using (visibility = 'public' or teacher_id = auth.uid() or public.is_admin());
+
+-- guests (anon role, not signed in) can browse the public library too
+grant select on public.content_sets to anon;
 
 create policy "content_sets: teacher creates own"
   on public.content_sets for insert

@@ -14,7 +14,7 @@ export function HomePage() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col items-center px-4 py-16 text-center">
-      <span className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl brand-gradient text-3xl">🎮</span>
+      <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" className="mb-4 h-16 w-16 rounded-2xl object-cover" />
       <h1 className="font-display text-4xl font-bold text-primary sm:text-5xl">{t('appName')}</h1>
       <p className="mt-3 text-lg text-muted-foreground">{t('tagline')}</p>
 
