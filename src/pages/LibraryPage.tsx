@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { listPublicContentSets, reportContentSet } from '../lib/services';
+import { listPublicContentSets, reportContentSet, deleteContentSet } from '../lib/services';
 import { compatibleGames } from '../games/registry';
 import { useAuth } from '../contexts/AuthContext';
 import type { ContentSet, SkillTemplate } from '../types';
@@ -14,17 +14,25 @@ export function LibraryPage() {
   const [loading, setLoading] = useState(true);
   const [reportedIds, setReportedIds] = useState<string[]>([]);
 
-  useEffect(() => {
+  const refresh = () => {
     setLoading(true);
     listPublicContentSets(skill === 'all' ? undefined : skill)
       .then(setSets)
       .finally(() => setLoading(false));
-  }, [skill]);
+  };
+
+  useEffect(() => { refresh(); }, [skill]);
 
   const handleReport = async (id: string) => {
     if (!profile || reportedIds.includes(id)) return;
     await reportContentSet(id, 'Reported by user from library', profile.uid);
     setReportedIds((r) => [...r, id]);
+  };
+
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`Delete "${title}"? This can't be undone.`)) return;
+    await deleteContentSet(id);
+    refresh();
   };
 
   return (
@@ -81,6 +89,16 @@ export function LibraryPage() {
                 >
                   {reportedIds.includes(set.id) ? '✓ Reported - thanks' : '⚑ Report this content'}
                 </button>
+              )}
+              {profile && (profile.uid === set.teacherId || profile.role === 'admin') && (
+                <div className="mt-2 flex gap-2">
+                  <Link to={`/teacher/edit/${set.id}`} className="text-xs font-semibold text-primary hover:text-secondary">
+                    Edit
+                  </Link>
+                  <button onClick={() => handleDelete(set.id, set.title)} className="text-xs font-semibold text-destructive hover:opacity-80">
+                    Delete
+                  </button>
+                </div>
               )}
             </div>
           ))}

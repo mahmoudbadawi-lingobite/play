@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   approveTeacher, listPendingTeacherRequests, rejectTeacher,
   listReportedContentSets, unpublishContentSet, dismissReports,
+  republishContentSet, deleteContentSet,
 } from '../lib/services';
 import type { ContentSet } from '../types';
 
@@ -30,6 +32,17 @@ export function AdminPage() {
 
   const handleUnpublish = async (id: string) => {
     await unpublishContentSet(id);
+    refresh();
+  };
+
+  const handleReactivate = async (id: string) => {
+    await republishContentSet(id);
+    refresh();
+  };
+
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`Permanently delete "${title}"? This can't be undone.`)) return;
+    await deleteContentSet(id);
     refresh();
   };
 
@@ -88,16 +101,33 @@ export function AdminPage() {
                     <p className="font-semibold text-primary">{set.title}</p>
                     <p className="text-sm text-muted-foreground">by {set.teacherName} · {set.skill} · {set.items.length} items</p>
                   </div>
-                  <span className="rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive">
-                    {set.reportCount} report{set.reportCount !== 1 ? 's' : ''}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${set.visibility === 'public' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
+                      {set.visibility === 'public' ? '🌐 Public' : '🔒 Private'}
+                    </span>
+                    <span className="rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive">
+                      {set.reportCount} report{set.reportCount !== 1 ? 's' : ''}
+                    </span>
+                  </div>
                 </div>
-                <div className="mt-3 flex gap-2">
-                  <button onClick={() => handleUnpublish(set.id)} className="rounded-lg bg-destructive px-3 py-1.5 text-sm font-semibold text-white">
-                    Unpublish (make private)
-                  </button>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {set.visibility === 'public' ? (
+                    <button onClick={() => handleUnpublish(set.id)} className="rounded-lg bg-destructive px-3 py-1.5 text-sm font-semibold text-white">
+                      Unpublish (make private)
+                    </button>
+                  ) : (
+                    <button onClick={() => handleReactivate(set.id)} className="rounded-lg bg-success px-3 py-1.5 text-sm font-semibold text-white">
+                      Reactivate (make public)
+                    </button>
+                  )}
                   <button onClick={() => handleDismiss(set.id)} className="rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-primary">
                     Dismiss reports
+                  </button>
+                  <Link to={`/teacher/edit/${set.id}`} className="rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-primary hover:border-secondary">
+                    Edit
+                  </Link>
+                  <button onClick={() => handleDelete(set.id, set.title)} className="rounded-lg border border-destructive px-3 py-1.5 text-sm font-semibold text-destructive hover:bg-destructive/10">
+                    Delete permanently
                   </button>
                 </div>
               </div>

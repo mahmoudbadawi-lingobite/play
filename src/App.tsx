@@ -9,6 +9,8 @@ import { LibraryPage } from './pages/LibraryPage';
 import { GamePickerPage } from './pages/GamePickerPage';
 import { GameShell } from './components/games/GameShell';
 import { CreateContentPage } from './pages/CreateContentPage';
+import { MyGamesPage } from './pages/MyGamesPage';
+import { EditContentPage } from './pages/EditContentPage';
 import { TeacherClassesPage } from './pages/TeacherClassesPage';
 import { AdminPage } from './pages/AdminPage';
 import { JoinClassPage } from './pages/JoinClassPage';
@@ -37,6 +39,12 @@ export default function App() {
                 } />
                 <Route path="/teacher/create" element={
                   <ProtectedRoute roles={['teacher']}><CreateContentPage /></ProtectedRoute>
+                } />
+                <Route path="/teacher/my-games" element={
+                  <ProtectedRoute roles={['teacher']}><MyGamesPage /></ProtectedRoute>
+                } />
+                <Route path="/teacher/edit/:setId" element={
+                  <ProtectedRoute roles={['teacher', 'admin']}><EditContentPage /></ProtectedRoute>
                 } />
                 <Route path="/teacher/classes" element={
                   <ProtectedRoute roles={['teacher']}><TeacherClassesPage /></ProtectedRoute>

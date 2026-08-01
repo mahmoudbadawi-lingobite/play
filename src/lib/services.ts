@@ -111,6 +111,27 @@ export async function unpublishContentSet(id: string): Promise<void> {
   await supabase.rpc('unpublish_content_set', { set_id: id });
 }
 
+export async function republishContentSet(id: string): Promise<void> {
+  await supabase.rpc('republish_content_set', { set_id: id });
+}
+
+export async function updateContentSet(id: string, input: {
+  title: string;
+  skill: SkillTemplate;
+  visibility: Visibility;
+  items?: ContentItem[];
+}): Promise<void> {
+  const updates: Record<string, unknown> = {
+    title: input.title,
+    title_lower: input.title.trim().toLowerCase(),
+    skill: input.skill,
+    visibility: input.visibility,
+    updated_at: new Date().toISOString(),
+  };
+  if (input.items) updates.items = input.items;
+  await supabase.from('content_sets').update(updates).eq('id', id);
+}
+
 export async function dismissReports(id: string): Promise<void> {
   await supabase.rpc('dismiss_content_reports', { set_id: id });
 }
