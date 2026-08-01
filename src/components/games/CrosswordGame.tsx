@@ -27,34 +27,36 @@ export function CrosswordGame({ items, onFinish }: GameProps) {
   };
 
   return (
-    <div className="card-surface p-6">
-      <div
-        className="grid gap-0.5"
-        style={{ gridTemplateColumns: `repeat(${layout.cols}, minmax(0, 2rem))` }}
-      >
-        {Array.from({ length: layout.rows }).map((_, r) =>
-          Array.from({ length: layout.cols }).map((_, c) => {
-            const cell = layout.cells.get(cellKey(r, c));
-            if (!cell) return <div key={cellKey(r, c)} className="h-8 w-8" />;
-            const isCorrect = checked && (answers[cellKey(r, c)] || '') === cell.char;
-            const isWrong = checked && (answers[cellKey(r, c)] || '') !== cell.char;
-            return (
-              <div key={cellKey(r, c)} className="relative h-8 w-8">
-                {cell.number && <span className="pointer-events-none absolute left-0.5 top-0 text-[8px] text-muted-foreground">{cell.number}</span>}
-                <input
-                  ref={(el) => { inputRefs.current[cellKey(r, c)] = el; }}
-                  maxLength={1}
-                  value={answers[cellKey(r, c)] || ''}
-                  onChange={(e) => handleChange(r, c, e.target.value)}
-                  disabled={checked}
-                  className={`h-8 w-8 border text-center text-sm font-bold uppercase outline-none ${
-                    isCorrect ? 'border-success bg-success/10' : isWrong ? 'border-destructive bg-destructive/10' : 'border-border bg-card'
-                  }`}
-                />
-              </div>
-            );
-          })
-        )}
+    <div className="card-surface p-3 sm:p-6">
+      <div className="overflow-x-auto pb-2">
+        <div
+          className="grid w-max gap-0.5"
+          style={{ gridTemplateColumns: `repeat(${layout.cols}, minmax(0, 1.75rem))` }}
+        >
+          {Array.from({ length: layout.rows }).map((_, r) =>
+            Array.from({ length: layout.cols }).map((_, c) => {
+              const cell = layout.cells.get(cellKey(r, c));
+              if (!cell) return <div key={cellKey(r, c)} className="h-7 w-7 sm:h-8 sm:w-8" />;
+              const isCorrect = checked && (answers[cellKey(r, c)] || '') === cell.char;
+              const isWrong = checked && (answers[cellKey(r, c)] || '') !== cell.char;
+              return (
+                <div key={cellKey(r, c)} className="relative h-7 w-7 sm:h-8 sm:w-8">
+                  {cell.number && <span className="pointer-events-none absolute left-0.5 top-0 text-[8px] text-muted-foreground">{cell.number}</span>}
+                  <input
+                    ref={(el) => { inputRefs.current[cellKey(r, c)] = el; }}
+                    maxLength={1}
+                    value={answers[cellKey(r, c)] || ''}
+                    onChange={(e) => handleChange(r, c, e.target.value)}
+                    disabled={checked}
+                    className={`h-7 w-7 border text-center text-sm font-bold uppercase outline-none sm:h-8 sm:w-8 ${
+                      isCorrect ? 'border-success bg-success/10' : isWrong ? 'border-destructive bg-destructive/10' : 'border-border bg-card'
+                    }`}
+                  />
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">

@@ -55,6 +55,36 @@ npm run dev
    real access control comes from the RLS policies in `schema.sql`, not
    from hiding this key.
 
+## Cloudinary setup (for the announcement bar)
+
+1. Create a free account at [cloudinary.com](https://cloudinary.com) (no
+   card required for the free tier).
+2. Your **Cloud name** is shown on the Dashboard homepage.
+3. Create an **unsigned upload preset**: Settings (gear icon) → **Upload**
+   → **Upload presets** → **Add upload preset** → set **Signing Mode** to
+   **Unsigned** → Save. Note the preset name.
+4. Add both to `.env` (see `.env.example`):
+   ```
+   VITE_CLOUDINARY_CLOUD_NAME=your-cloud-name
+   VITE_CLOUDINARY_UPLOAD_PRESET=your-preset-name
+   ```
+5. Add the same two as GitHub repo secrets if deploying (Settings →
+   Secrets and variables → Actions) — `deploy.yml` already references them.
+
+An unsigned preset means uploads happen directly from the browser with no
+backend signing step - matching the pattern already used elsewhere in the
+LingoBite ecosystem.
+
+## Announcement bar
+
+A single site-wide banner shown above the header on every page, to every
+visitor including signed-out guests - managed entirely from `/admin`
+(text, an uploaded image, or an uploaded video via Cloudinary). Only one
+announcement is active at a time; publishing a new one automatically
+retires the previous one. It's dismissible per-visit (a session-only close
+button, not persisted) and fully responsive - text, image, and video all
+cap their height on small screens rather than dominating the viewport.
+
 ## First admin
 
 There's no UI to promote the first Admin — after signing in once, open

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { GuestProgressProvider } from './contexts/GuestProgressContext';
 import { Header } from './components/layout/Header';
+import { AnnouncementBar } from './components/layout/AnnouncementBar';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { HomePage } from './pages/HomePage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -23,6 +24,7 @@ export default function App() {
       <GuestProgressProvider>
         <BrowserRouter basename={import.meta.env.BASE_URL}>
           <div className="min-h-screen bg-background">
+            <AnnouncementBar />
             <Header />
             <main>
               <Routes>

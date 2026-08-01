@@ -325,3 +325,64 @@ export async function approveTeacher(uid: string): Promise<void> {
 export async function rejectTeacher(uid: string): Promise<void> {
   await supabase.rpc('reject_teacher', { target_uid: uid });
 }
+
+// ------------------------------------------------------------------
+// Site-wide announcement banner (admin-managed, shown to everyone)
+// ------------------------------------------------------------------
+
+export type AnnouncementType = 'text' | 'image' | 'video';
+
+export interface Announcement {
+  id: string;
+  type: AnnouncementType;
+  textContent: string | null;
+  mediaUrl: string | null;
+  isActive: boolean;
+  updatedAt: Date;
+}
+
+function rowToAnnouncement(row: any): Announcement {
+  return {
+    id: row.id,
+    type: row.type,
+    textContent: row.text_content,
+    mediaUrl: row.media_url,
+    isActive: row.is_active,
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+export async function getActiveAnnouncement(): Promise<Announcement | null> {
+  const { data, error } = await supabase
+    .from('announcements')
+    .select('*')
+    .eq('is_active', true)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error || !data) return null;
+  return rowToAnnouncement(data);
+}
+
+export async function setAnnouncement(input: {
+  type: AnnouncementType;
+  textContent?: string;
+  mediaUrl?: string;
+  createdBy: string;
+}): Promise<void> {
+  // Deactivate any existing announcements, then insert the new one - keeps
+  // exactly one active banner at a time without needing a separate "current"
+  // pointer row.
+  await supabase.from('announcements').update({ is_active: false }).eq('is_active', true);
+  await supabase.from('announcements').insert({
+    type: input.type,
+    text_content: input.textContent ?? null,
+    media_url: input.mediaUrl ?? null,
+    is_active: true,
+    created_by: input.createdBy,
+  });
+}
+
+export async function clearAnnouncement(): Promise<void> {
+  await supabase.from('announcements').update({ is_active: false }).eq('is_active', true);
+}
