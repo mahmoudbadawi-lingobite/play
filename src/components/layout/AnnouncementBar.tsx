@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getActiveAnnouncement, type Announcement } from '../../lib/services';
+import { linkify } from '../../lib/linkify';
 
 export function AnnouncementBar() {
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
@@ -15,8 +16,11 @@ export function AnnouncementBar() {
     <div className="relative w-full border-b border-border bg-secondary/10">
       <div className="mx-auto max-w-6xl px-4 py-3 pe-10 sm:py-4">
         {announcement.type === 'text' && (
-          <p className="text-center text-sm font-medium text-primary sm:text-base">
-            {announcement.textContent}
+          <p
+            className="text-center text-sm font-medium sm:text-base"
+            style={{ color: announcement.textColor || undefined }}
+          >
+            {announcement.textContent ? linkify(announcement.textContent) : null}
           </p>
         )}
 

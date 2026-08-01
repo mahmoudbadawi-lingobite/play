@@ -337,6 +337,7 @@ export interface Announcement {
   id: string;
   type: AnnouncementType;
   textContent: string | null;
+  textColor: string | null;
   mediaUrl: string | null;
   isActive: boolean;
   updatedAt: Date;
@@ -347,6 +348,7 @@ function rowToAnnouncement(row: any): Announcement {
     id: row.id,
     type: row.type,
     textContent: row.text_content,
+    textColor: row.text_color,
     mediaUrl: row.media_url,
     isActive: row.is_active,
     updatedAt: new Date(row.updated_at),
@@ -368,6 +370,7 @@ export async function getActiveAnnouncement(): Promise<Announcement | null> {
 export async function setAnnouncement(input: {
   type: AnnouncementType;
   textContent?: string;
+  textColor?: string;
   mediaUrl?: string;
   createdBy: string;
 }): Promise<void> {
@@ -379,6 +382,7 @@ export async function setAnnouncement(input: {
   const { error: insertError } = await supabase.from('announcements').insert({
     type: input.type,
     text_content: input.textContent ?? null,
+    text_color: input.textColor ?? null,
     media_url: input.mediaUrl ?? null,
     is_active: true,
     created_by: input.createdBy,

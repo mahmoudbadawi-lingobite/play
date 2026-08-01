@@ -344,6 +344,7 @@ create table public.announcements (
   id uuid primary key default gen_random_uuid(),
   type text not null check (type in ('text', 'image')),
   text_content text,
+  text_color text,
   media_url text,
   is_active boolean not null default true,
   created_by uuid references public.profiles(id),

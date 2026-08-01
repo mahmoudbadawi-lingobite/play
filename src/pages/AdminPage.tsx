@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   approveTeacher, listPendingTeacherRequests, rejectTeacher,
@@ -9,6 +9,7 @@ import {
   type Announcement, type AnnouncementType, type HeroMedia, type HeroMediaType,
 } from '../lib/services';
 import { uploadToCloudinary } from '../lib/cloudinary';
+import { linkify } from '../lib/linkify';
 import { useAuth } from '../contexts/AuthContext';
 import type { ContentSet } from '../types';
 
@@ -22,6 +23,35 @@ export function AdminPage() {
   const [current, setCurrent] = useState<Announcement | null>(null);
   const [annType, setAnnType] = useState<AnnouncementType>('text');
   const [annText, setAnnText] = useState('');
+  const [annColor, setAnnColor] = useState('');
+  const annTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const COLOR_SWATCHES = [
+    { label: 'Default', value: '' },
+    { label: 'Navy', value: '#0d1b2a' },
+    { label: 'Gold', value: '#c9993f' },
+    { label: 'Success', value: '#38a169' },
+    { label: 'Red', value: '#dc2626' },
+    { label: 'Blue', value: '#2563eb' },
+  ];
+  const EMOJI_OPTIONS = ['📢', '🎉', '⭐', '🔥', '✅', '⚠️', '📚', '🎮', '❤️', '👏', '🚀', '🏆'];
+
+  const insertEmoji = (emoji: string) => {
+    const el = annTextareaRef.current;
+    if (!el) {
+      setAnnText((t) => t + emoji);
+      return;
+    }
+    const start = el.selectionStart ?? annText.length;
+    const end = el.selectionEnd ?? annText.length;
+    const next = annText.slice(0, start) + emoji + annText.slice(end);
+    setAnnText(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      const cursor = start + emoji.length;
+      el.setSelectionRange(cursor, cursor);
+    });
+  };
   const [annUploading, setAnnUploading] = useState(false);
   const [annPublishing, setAnnPublishing] = useState(false);
   const [annUploadError, setAnnUploadError] = useState<string | null>(null);
@@ -76,10 +106,12 @@ export function AdminPage() {
       await setAnnouncement({
         type: annType,
         textContent: annType === 'text' ? annText : undefined,
+        textColor: annType === 'text' && annColor ? annColor : undefined,
         mediaUrl: annType === 'image' ? (annPendingMediaUrl ?? undefined) : undefined,
         createdBy: profile.uid,
       });
       setAnnText('');
+      setAnnColor('');
       setAnnPendingMediaUrl(null);
       await refresh();
     } catch (err: any) {
@@ -168,7 +200,11 @@ export function AdminPage() {
         {current && (
           <div className="card-surface mt-4 p-4">
             <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Currently live</p>
-            {current.type === 'text' && <p className="text-primary">{current.textContent}</p>}
+            {current.type === 'text' && (
+              <p className="text-primary" style={{ color: current.textColor || undefined }}>
+                {current.textContent ? linkify(current.textContent) : null}
+              </p>
+            )}
             {current.type === 'image' && current.mediaUrl && (
               <img src={current.mediaUrl} alt="" className="max-h-40 w-full rounded-lg object-contain sm:max-h-56" />
             )}
@@ -194,13 +230,64 @@ export function AdminPage() {
           </div>
 
           {annType === 'text' && (
-            <textarea
-              value={annText}
-              onChange={(e) => setAnnText(e.target.value)}
-              placeholder="Write the announcement text..."
-              rows={3}
-              className="mt-4 w-full rounded-lg border border-border px-4 py-2.5 outline-none focus:border-secondary"
-            />
+            <div className="mt-4">
+              <textarea
+                ref={annTextareaRef}
+                value={annText}
+                onChange={(e) => setAnnText(e.target.value)}
+                placeholder="Write the announcement text... you can paste a link too"
+                rows={3}
+                className="w-full rounded-lg border border-border px-4 py-2.5 outline-none focus:border-secondary"
+              />
+
+              <div className="mt-3">
+                <p className="mb-1.5 text-xs font-semibold text-primary">Text color</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  {COLOR_SWATCHES.map((c) => (
+                    <button
+                      key={c.label}
+                      onClick={() => setAnnColor(c.value)}
+                      title={c.label}
+                      className={`h-7 w-7 rounded-full border-2 ${annColor === c.value ? 'border-primary' : 'border-border'}`}
+                      style={{ backgroundColor: c.value || '#0d1b2a' }}
+                    />
+                  ))}
+                  <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <input
+                      type="color"
+                      value={annColor || '#0d1b2a'}
+                      onChange={(e) => setAnnColor(e.target.value)}
+                      className="h-7 w-7 cursor-pointer rounded border border-border bg-transparent p-0"
+                    />
+                    Custom
+                  </label>
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <p className="mb-1.5 text-xs font-semibold text-primary">Add an emoji</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {EMOJI_OPTIONS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => insertEmoji(emoji)}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-lg hover:border-secondary"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {annText.trim() && (
+                <div className="mt-3 rounded-lg border border-dashed border-border p-3">
+                  <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Preview</p>
+                  <p className="text-center text-sm font-medium sm:text-base" style={{ color: annColor || undefined }}>
+                    {annText}
+                  </p>
+                </div>
+              )}
+            </div>
           )}
 
           {annType === 'image' && (
