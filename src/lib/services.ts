@@ -196,10 +196,13 @@ export async function getClassRoster(classId: string): Promise<RosterEntry[]> {
     .eq('class_id', classId);
   if (studentsError || !studentRows) return [];
 
-  const { data: resultRows } = await supabase
-    .from('game_results')
-    .select('student_id, xp_earned, accuracy')
-    .eq('class_id', classId);
+  const studentIds = studentRows.map((row: any) => row.student_id);
+  // Games aren't currently assigned per-class, so a play isn't tagged with
+  // a class_id - roster stats reflect each student's overall activity
+  // rather than only plays attributed to this specific class.
+  const { data: resultRows } = studentIds.length
+    ? await supabase.from('game_results').select('student_id, xp_earned, accuracy').in('student_id', studentIds)
+    : { data: [] as any[] };
 
   return studentRows.map((row: any) => {
     const results = (resultRows ?? []).filter((r: any) => r.student_id === row.student_id);

@@ -79,6 +79,9 @@ export function TeacherClassesPage() {
 
               {expandedId === c.id && (
                 <div className="mt-4 border-t border-border pt-3">
+                  <p className="mb-2 text-xs text-muted-foreground">
+                    Stats reflect each student's overall activity across LingoBite Play, not only games played for this class.
+                  </p>
                   {rosterLoading === c.id ? (
                     <p className="text-sm text-muted-foreground">Loading roster...</p>
                   ) : (rosters[c.id]?.length ?? 0) === 0 ? (
