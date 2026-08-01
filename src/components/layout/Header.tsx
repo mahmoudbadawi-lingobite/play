@@ -59,6 +59,19 @@ export function Header() {
               {t('nav_signIn')}
             </button>
           )}
+
+          <div className="flex flex-col items-center gap-1">
+            <video
+              src={`${import.meta.env.BASE_URL}mahmoud-badawi.mp4`}
+              poster={`${import.meta.env.BASE_URL}mahmoud-badawi-poster.jpg`}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="h-14 w-14 rounded-full border-2 border-secondary object-cover"
+            />
+            <span className="whitespace-nowrap text-[10px] font-medium text-primary/70">Mr. Mahmoud Badawi</span>
+          </div>
         </div>
       </div>
     </header>
