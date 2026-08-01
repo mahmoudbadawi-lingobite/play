@@ -1,4 +1,4 @@
-import type { ContentItem, GameKey } from '../types';
+import type { ContentItem, GameKey, SkillTemplate } from '../types';
 
 export interface GameDefinition {
   key: GameKey;
@@ -67,8 +67,20 @@ export const GAME_DEFINITIONS: GameDefinition[] = [
   },
 ];
 
-export function compatibleGames(items: ContentItem[]): GameDefinition[] {
-  return GAME_DEFINITIONS.filter(g => g.isCompatible(items));
+// Some games don't fit certain skills conceptually - grammar and spelling
+// are about correctness of a specific answer, not free-association matching
+// or visual recognition, so those game types are excluded regardless of
+// whether the content would otherwise technically qualify.
+const SKILL_EXCLUSIONS: Record<SkillTemplate, GameKey[]> = {
+  vocabulary: [],
+  reading: [],
+  grammar: ['memory-match', 'word-builder', 'picture-match'],
+  spelling: ['memory-match', 'picture-match'],
+};
+
+export function compatibleGames(items: ContentItem[], skill: SkillTemplate): GameDefinition[] {
+  const excluded = SKILL_EXCLUSIONS[skill];
+  return GAME_DEFINITIONS.filter(g => !excluded.includes(g.key) && g.isCompatible(items));
 }
 
 export function getGameDefinition(key: GameKey): GameDefinition {

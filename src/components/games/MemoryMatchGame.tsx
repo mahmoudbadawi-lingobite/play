@@ -82,7 +82,7 @@ export function MemoryMatchGame({ items, onFinish }: GameProps) {
             >
               {isFlipped ? (
                 <>
-                  {card.imageUrl && <img src={card.imageUrl} alt="" className="h-10 w-10 rounded object-cover" />}
+                  {card.imageUrl && <img src={card.imageUrl} alt="" className="h-10 w-10 rounded object-contain" />}
                   <span className="line-clamp-2">{card.label}</span>
                 </>
               ) : '?'}

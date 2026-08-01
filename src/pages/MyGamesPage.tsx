@@ -61,7 +61,7 @@ export function MyGamesPage() {
               <h3 className="mt-3 font-display text-lg font-semibold text-primary">{set.title}</h3>
               <p className="mt-1 text-xs text-muted-foreground">{set.items.length} items · {set.playCount} plays</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {compatibleGames(set.items).map((g) => (
+                {compatibleGames(set.items, set.skill).map((g) => (
                   <span key={g.key} title={g.name} className="text-lg">{g.icon}</span>
                 ))}
               </div>

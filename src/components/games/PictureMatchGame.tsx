@@ -51,7 +51,7 @@ export function PictureMatchGame({ items, onFinish }: GameProps) {
       <img
         src={current.imageUrl}
         alt="What is this?"
-        className="mx-auto h-56 w-full max-w-sm rounded-xl border border-border object-cover"
+        className="mx-auto h-56 w-auto max-w-full rounded-xl border border-border object-contain"
       />
       <div className="mt-5 grid grid-cols-2 gap-3">
         {options.map((opt) => {

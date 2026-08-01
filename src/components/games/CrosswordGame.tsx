@@ -64,7 +64,7 @@ export function CrosswordGame({ items, onFinish }: GameProps) {
           <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Across</p>
           {layout.words.filter((w) => w.direction === 'across').map((w) => (
             <div key={w.itemId} className="mb-1 flex items-center gap-2 text-sm text-primary">
-              {w.imageUrl && <img src={w.imageUrl} alt="" className="h-8 w-8 rounded object-cover" />}
+              {w.imageUrl && <img src={w.imageUrl} alt="" className="h-8 w-8 rounded object-contain" />}
               <span><b>{w.number}.</b> {w.clue}</span>
             </div>
           ))}
@@ -73,7 +73,7 @@ export function CrosswordGame({ items, onFinish }: GameProps) {
           <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Down</p>
           {layout.words.filter((w) => w.direction === 'down').map((w) => (
             <div key={w.itemId} className="mb-1 flex items-center gap-2 text-sm text-primary">
-              {w.imageUrl && <img src={w.imageUrl} alt="" className="h-8 w-8 rounded object-cover" />}
+              {w.imageUrl && <img src={w.imageUrl} alt="" className="h-8 w-8 rounded object-contain" />}
               <span><b>{w.number}.</b> {w.clue}</span>
             </div>
           ))}

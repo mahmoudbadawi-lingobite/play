@@ -57,7 +57,7 @@ export function TypingRaceGame({ items, onFinish }: GameProps) {
       </div>
 
       {current.imageUrl && (
-        <img src={current.imageUrl} alt="" className="mb-3 h-32 w-full rounded-lg object-cover" />
+        <img src={current.imageUrl} alt="" className="mx-auto mb-3 h-32 w-auto max-w-full rounded-lg object-contain" />
       )}
       <p className="font-display text-xl text-primary">{current.clue}</p>
 

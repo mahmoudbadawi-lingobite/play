@@ -17,7 +17,7 @@ export function GamePickerPage() {
   if (loading) return <p className="p-8 text-center text-muted-foreground">Loading...</p>;
   if (!set) return <p className="p-8 text-center text-muted-foreground">Game not found.</p>;
 
-  const games = compatibleGames(set.items);
+  const games = compatibleGames(set.items, set.skill);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
