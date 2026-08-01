@@ -374,14 +374,16 @@ export async function setAnnouncement(input: {
   // Deactivate any existing announcements, then insert the new one - keeps
   // exactly one active banner at a time without needing a separate "current"
   // pointer row.
-  await supabase.from('announcements').update({ is_active: false }).eq('is_active', true);
-  await supabase.from('announcements').insert({
+  const { error: deactivateError } = await supabase.from('announcements').update({ is_active: false }).eq('is_active', true);
+  if (deactivateError) throw deactivateError;
+  const { error: insertError } = await supabase.from('announcements').insert({
     type: input.type,
     text_content: input.textContent ?? null,
     media_url: input.mediaUrl ?? null,
     is_active: true,
     created_by: input.createdBy,
   });
+  if (insertError) throw insertError;
 }
 
 export async function clearAnnouncement(): Promise<void> {
@@ -430,13 +432,15 @@ export async function setHeroMedia(input: {
   mediaUrl: string;
   createdBy: string;
 }): Promise<void> {
-  await supabase.from('hero_media').update({ is_active: false }).eq('is_active', true);
-  await supabase.from('hero_media').insert({
+  const { error: deactivateError } = await supabase.from('hero_media').update({ is_active: false }).eq('is_active', true);
+  if (deactivateError) throw deactivateError;
+  const { error: insertError } = await supabase.from('hero_media').insert({
     type: input.type,
     media_url: input.mediaUrl,
     is_active: true,
     created_by: input.createdBy,
   });
+  if (insertError) throw insertError;
 }
 
 export async function clearHeroMedia(): Promise<void> {

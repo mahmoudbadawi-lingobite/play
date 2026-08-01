@@ -26,6 +26,7 @@ export function AdminPage() {
   const [annPublishing, setAnnPublishing] = useState(false);
   const [annUploadError, setAnnUploadError] = useState<string | null>(null);
   const [annPendingMediaUrl, setAnnPendingMediaUrl] = useState<string | null>(null);
+  const [annPublishError, setAnnPublishError] = useState<string | null>(null);
 
   // Homepage hero banner (image/video, under the header)
   const [heroCurrent, setHeroCurrent] = useState<HeroMedia | null>(null);
@@ -34,6 +35,7 @@ export function AdminPage() {
   const [heroPublishing, setHeroPublishing] = useState(false);
   const [heroUploadError, setHeroUploadError] = useState<string | null>(null);
   const [heroPendingMediaUrl, setHeroPendingMediaUrl] = useState<string | null>(null);
+  const [heroPublishError, setHeroPublishError] = useState<string | null>(null);
 
   const refresh = async () => {
     setLoading(true);
@@ -69,16 +71,22 @@ export function AdminPage() {
   const handlePublishAnnouncement = async () => {
     if (!profile) return;
     setAnnPublishing(true);
-    await setAnnouncement({
-      type: annType,
-      textContent: annType === 'text' ? annText : undefined,
-      mediaUrl: annType === 'image' ? (annPendingMediaUrl ?? undefined) : undefined,
-      createdBy: profile.uid,
-    });
-    setAnnPublishing(false);
-    setAnnText('');
-    setAnnPendingMediaUrl(null);
-    refresh();
+    setAnnPublishError(null);
+    try {
+      await setAnnouncement({
+        type: annType,
+        textContent: annType === 'text' ? annText : undefined,
+        mediaUrl: annType === 'image' ? (annPendingMediaUrl ?? undefined) : undefined,
+        createdBy: profile.uid,
+      });
+      setAnnText('');
+      setAnnPendingMediaUrl(null);
+      await refresh();
+    } catch (err: any) {
+      setAnnPublishError(err.message ?? 'Failed to publish - please try again.');
+    } finally {
+      setAnnPublishing(false);
+    }
   };
 
   const handleClearAnnouncement = async () => {
@@ -103,10 +111,16 @@ export function AdminPage() {
   const handlePublishHero = async () => {
     if (!profile || !heroPendingMediaUrl) return;
     setHeroPublishing(true);
-    await setHeroMedia({ type: heroType, mediaUrl: heroPendingMediaUrl, createdBy: profile.uid });
-    setHeroPublishing(false);
-    setHeroPendingMediaUrl(null);
-    refresh();
+    setHeroPublishError(null);
+    try {
+      await setHeroMedia({ type: heroType, mediaUrl: heroPendingMediaUrl, createdBy: profile.uid });
+      setHeroPendingMediaUrl(null);
+      await refresh();
+    } catch (err: any) {
+      setHeroPublishError(err.message ?? 'Failed to publish - please try again.');
+    } finally {
+      setHeroPublishing(false);
+    }
   };
 
   const handleClearHero = async () => {
@@ -208,6 +222,8 @@ export function AdminPage() {
             </div>
           )}
 
+          {annPublishError && <p className="mt-3 text-sm text-destructive">⚠ {annPublishError}</p>}
+
           <button
             onClick={handlePublishAnnouncement}
             disabled={
@@ -281,6 +297,8 @@ export function AdminPage() {
               </div>
             )}
           </div>
+
+          {heroPublishError && <p className="mt-3 text-sm text-destructive">⚠ {heroPublishError}</p>}
 
           <button
             onClick={handlePublishHero}
