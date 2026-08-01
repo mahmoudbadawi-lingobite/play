@@ -77,13 +77,24 @@ LingoBite ecosystem.
 
 ## Announcement bar
 
-A single site-wide banner shown above the header on every page, to every
-visitor including signed-out guests - managed entirely from `/admin`
-(text, an uploaded image, or an uploaded video via Cloudinary). Only one
-announcement is active at a time; publishing a new one automatically
-retires the previous one. It's dismissible per-visit (a session-only close
-button, not persisted) and fully responsive - text, image, and video all
-cap their height on small screens rather than dominating the viewport.
+A thin text-or-photo strip shown above the header on every page, to every
+visitor including signed-out guests - managed entirely from `/admin`.
+Only one announcement is active at a time; publishing a new one
+automatically retires the previous one. It's dismissible per-visit (a
+session-only close button, not persisted) and responsive - text and image
+both cap their height on small screens.
+
+## Homepage banner
+
+A larger centered photo or auto-playing video shown right below the
+header (a separate area, not part of the sticky header itself - it
+scrolls away normally with the page), inside a rounded, shadowed frame.
+Video autoplays muted and loops (muted is required for autoplay to work
+in browsers), with controls visible so a visitor can pause or unmute.
+Managed from `/admin`, same one-active-at-a-time pattern as the
+announcement bar. Fully responsive: the frame keeps a 16:9 shape and
+shrinks with the screen, with visible background margin on every side
+rather than running edge-to-edge, even on small phones.
 
 ## First admin
 

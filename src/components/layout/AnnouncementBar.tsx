@@ -27,15 +27,6 @@ export function AnnouncementBar() {
             className="mx-auto max-h-48 w-full rounded-lg object-contain sm:max-h-72"
           />
         )}
-
-        {announcement.type === 'video' && announcement.mediaUrl && (
-          <video
-            src={announcement.mediaUrl}
-            controls
-            playsInline
-            className="mx-auto max-h-48 w-full rounded-lg sm:max-h-72"
-          />
-        )}
       </div>
 
       <button

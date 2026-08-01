@@ -5,7 +5,8 @@ import {
   listReportedContentSets, unpublishContentSet, dismissReports,
   republishContentSet, deleteContentSet,
   getActiveAnnouncement, setAnnouncement, clearAnnouncement,
-  type Announcement, type AnnouncementType,
+  getActiveHeroMedia, setHeroMedia, clearHeroMedia,
+  type Announcement, type AnnouncementType, type HeroMedia, type HeroMediaType,
 } from '../lib/services';
 import { uploadToCloudinary } from '../lib/cloudinary';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,60 +18,99 @@ export function AdminPage() {
   const [reported, setReported] = useState<ContentSet[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Announcement bar (text/image)
   const [current, setCurrent] = useState<Announcement | null>(null);
   const [annType, setAnnType] = useState<AnnouncementType>('text');
   const [annText, setAnnText] = useState('');
-  const [uploading, setUploading] = useState(false);
-  const [publishing, setPublishing] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [pendingMediaUrl, setPendingMediaUrl] = useState<string | null>(null);
+  const [annUploading, setAnnUploading] = useState(false);
+  const [annPublishing, setAnnPublishing] = useState(false);
+  const [annUploadError, setAnnUploadError] = useState<string | null>(null);
+  const [annPendingMediaUrl, setAnnPendingMediaUrl] = useState<string | null>(null);
+
+  // Homepage hero banner (image/video, under the header)
+  const [heroCurrent, setHeroCurrent] = useState<HeroMedia | null>(null);
+  const [heroType, setHeroType] = useState<HeroMediaType>('image');
+  const [heroUploading, setHeroUploading] = useState(false);
+  const [heroPublishing, setHeroPublishing] = useState(false);
+  const [heroUploadError, setHeroUploadError] = useState<string | null>(null);
+  const [heroPendingMediaUrl, setHeroPendingMediaUrl] = useState<string | null>(null);
 
   const refresh = async () => {
     setLoading(true);
-    const [pendingList, reportedList, announcement] = await Promise.all([
+    const [pendingList, reportedList, announcement, hero] = await Promise.all([
       listPendingTeacherRequests(),
       listReportedContentSets(),
       getActiveAnnouncement(),
+      getActiveHeroMedia(),
     ]);
     setPending(pendingList);
     setReported(reportedList);
     setCurrent(announcement);
+    setHeroCurrent(hero);
     setLoading(false);
   };
 
   useEffect(() => { refresh(); }, []);
 
-  const handleMediaUpload = async (file: File | undefined, resourceType: 'image' | 'video') => {
+  const handleAnnMediaUpload = async (file: File | undefined) => {
     if (!file) return;
-    setUploading(true);
-    setUploadError(null);
+    setAnnUploading(true);
+    setAnnUploadError(null);
     try {
-      const url = await uploadToCloudinary(file, resourceType);
-      setPendingMediaUrl(url);
+      const url = await uploadToCloudinary(file, 'image');
+      setAnnPendingMediaUrl(url);
     } catch (err: any) {
-      setUploadError(err.message ?? 'Upload failed');
+      setAnnUploadError(err.message ?? 'Upload failed');
     } finally {
-      setUploading(false);
+      setAnnUploading(false);
     }
   };
 
-  const handlePublish = async () => {
+  const handlePublishAnnouncement = async () => {
     if (!profile) return;
-    setPublishing(true);
+    setAnnPublishing(true);
     await setAnnouncement({
       type: annType,
       textContent: annType === 'text' ? annText : undefined,
-      mediaUrl: annType !== 'text' ? (pendingMediaUrl ?? undefined) : undefined,
+      mediaUrl: annType === 'image' ? (annPendingMediaUrl ?? undefined) : undefined,
       createdBy: profile.uid,
     });
-    setPublishing(false);
+    setAnnPublishing(false);
     setAnnText('');
-    setPendingMediaUrl(null);
+    setAnnPendingMediaUrl(null);
     refresh();
   };
 
   const handleClearAnnouncement = async () => {
     await clearAnnouncement();
+    refresh();
+  };
+
+  const handleHeroMediaUpload = async (file: File | undefined) => {
+    if (!file) return;
+    setHeroUploading(true);
+    setHeroUploadError(null);
+    try {
+      const url = await uploadToCloudinary(file, heroType);
+      setHeroPendingMediaUrl(url);
+    } catch (err: any) {
+      setHeroUploadError(err.message ?? 'Upload failed');
+    } finally {
+      setHeroUploading(false);
+    }
+  };
+
+  const handlePublishHero = async () => {
+    if (!profile || !heroPendingMediaUrl) return;
+    setHeroPublishing(true);
+    await setHeroMedia({ type: heroType, mediaUrl: heroPendingMediaUrl, createdBy: profile.uid });
+    setHeroPublishing(false);
+    setHeroPendingMediaUrl(null);
+    refresh();
+  };
+
+  const handleClearHero = async () => {
+    await clearHeroMedia();
     refresh();
   };
 
@@ -107,7 +147,8 @@ export function AdminPage() {
       <section className="mt-8">
         <h2 className="font-display text-xl font-semibold text-primary">Announcement bar</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Shown above the header on every page, to every visitor - even signed-out guests.
+          A thin strip above the header on every page, to every visitor - even signed-out guests.
+          Text or a photo.
         </p>
 
         {current && (
@@ -117,9 +158,6 @@ export function AdminPage() {
             {current.type === 'image' && current.mediaUrl && (
               <img src={current.mediaUrl} alt="" className="max-h-40 w-full rounded-lg object-contain sm:max-h-56" />
             )}
-            {current.type === 'video' && current.mediaUrl && (
-              <video src={current.mediaUrl} controls className="max-h-40 w-full rounded-lg sm:max-h-56" />
-            )}
             <button onClick={handleClearAnnouncement} className="mt-3 rounded-lg border border-destructive px-3 py-1.5 text-sm font-semibold text-destructive hover:bg-destructive/10">
               Remove announcement
             </button>
@@ -128,10 +166,10 @@ export function AdminPage() {
 
         <div className="card-surface mt-4 p-4 sm:p-6">
           <div className="flex flex-wrap gap-2">
-            {(['text', 'image', 'video'] as AnnouncementType[]).map((t) => (
+            {(['text', 'image'] as AnnouncementType[]).map((t) => (
               <button
                 key={t}
-                onClick={() => { setAnnType(t); setPendingMediaUrl(null); setUploadError(null); }}
+                onClick={() => { setAnnType(t); setAnnPendingMediaUrl(null); setAnnUploadError(null); }}
                 className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize ${
                   annType === t ? 'bg-primary text-primary-foreground' : 'border border-border bg-card text-primary/70'
                 }`}
@@ -151,39 +189,105 @@ export function AdminPage() {
             />
           )}
 
-          {(annType === 'image' || annType === 'video') && (
+          {annType === 'image' && (
             <div className="mt-4">
               <input
                 type="file"
-                accept={annType === 'image' ? 'image/*' : 'video/*'}
-                onChange={(e) => handleMediaUpload(e.target.files?.[0], annType)}
+                accept="image/*"
+                onChange={(e) => handleAnnMediaUpload(e.target.files?.[0])}
                 className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-secondary-foreground"
               />
-              {uploading && <p className="mt-2 text-sm text-muted-foreground">Uploading to Cloudinary...</p>}
-              {uploadError && <p className="mt-2 text-sm text-destructive">{uploadError}</p>}
-              {pendingMediaUrl && !uploading && (
+              {annUploading && <p className="mt-2 text-sm text-muted-foreground">Uploading to Cloudinary...</p>}
+              {annUploadError && <p className="mt-2 text-sm text-destructive">{annUploadError}</p>}
+              {annPendingMediaUrl && !annUploading && (
                 <div className="mt-3">
                   <p className="mb-1 text-xs font-semibold text-success">✓ Uploaded - preview:</p>
-                  {annType === 'image' ? (
-                    <img src={pendingMediaUrl} alt="" className="max-h-40 w-full rounded-lg object-contain sm:max-h-56" />
-                  ) : (
-                    <video src={pendingMediaUrl} controls className="max-h-40 w-full rounded-lg sm:max-h-56" />
-                  )}
+                  <img src={annPendingMediaUrl} alt="" className="max-h-40 w-full rounded-lg object-contain sm:max-h-56" />
                 </div>
               )}
             </div>
           )}
 
           <button
-            onClick={handlePublish}
+            onClick={handlePublishAnnouncement}
             disabled={
-              publishing ||
-              uploading ||
-              (annType === 'text' ? !annText.trim() : !pendingMediaUrl)
+              annPublishing ||
+              annUploading ||
+              (annType === 'text' ? !annText.trim() : !annPendingMediaUrl)
             }
             className="mt-5 w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-40 sm:w-auto sm:px-8"
           >
-            {publishing ? 'Publishing...' : 'Publish announcement'}
+            {annPublishing ? 'Publishing...' : 'Publish announcement'}
+          </button>
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="font-display text-xl font-semibold text-primary">Homepage banner</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          A large centered photo or auto-playing video right below the header, on every page.
+        </p>
+
+        {heroCurrent && (
+          <div className="card-surface mt-4 p-4">
+            <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Currently live</p>
+            <div className="mx-auto aspect-video w-full max-w-sm overflow-hidden rounded-xl">
+              {heroCurrent.type === 'image' ? (
+                <img src={heroCurrent.mediaUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <video src={heroCurrent.mediaUrl} autoPlay muted loop playsInline className="h-full w-full object-cover" />
+              )}
+            </div>
+            <button onClick={handleClearHero} className="mt-3 rounded-lg border border-destructive px-3 py-1.5 text-sm font-semibold text-destructive hover:bg-destructive/10">
+              Remove banner
+            </button>
+          </div>
+        )}
+
+        <div className="card-surface mt-4 p-4 sm:p-6">
+          <div className="flex flex-wrap gap-2">
+            {(['image', 'video'] as HeroMediaType[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => { setHeroType(t); setHeroPendingMediaUrl(null); setHeroUploadError(null); }}
+                className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize ${
+                  heroType === t ? 'bg-primary text-primary-foreground' : 'border border-border bg-card text-primary/70'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-4">
+            <input
+              type="file"
+              accept={heroType === 'image' ? 'image/*' : 'video/*'}
+              onChange={(e) => handleHeroMediaUpload(e.target.files?.[0])}
+              className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-secondary-foreground"
+            />
+            {heroUploading && <p className="mt-2 text-sm text-muted-foreground">Uploading to Cloudinary...</p>}
+            {heroUploadError && <p className="mt-2 text-sm text-destructive">{heroUploadError}</p>}
+            {heroPendingMediaUrl && !heroUploading && (
+              <div className="mt-3">
+                <p className="mb-1 text-xs font-semibold text-success">✓ Uploaded - preview:</p>
+                <div className="mx-auto aspect-video w-full max-w-sm overflow-hidden rounded-xl">
+                  {heroType === 'image' ? (
+                    <img src={heroPendingMediaUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <video src={heroPendingMediaUrl} autoPlay muted loop playsInline className="h-full w-full object-cover" />
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={handlePublishHero}
+            disabled={heroPublishing || heroUploading || !heroPendingMediaUrl}
+            className="mt-5 w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-40 sm:w-auto sm:px-8"
+          >
+            {heroPublishing ? 'Publishing...' : 'Publish banner'}
           </button>
         </div>
       </section>

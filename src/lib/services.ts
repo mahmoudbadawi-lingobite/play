@@ -328,9 +328,10 @@ export async function rejectTeacher(uid: string): Promise<void> {
 
 // ------------------------------------------------------------------
 // Site-wide announcement banner (admin-managed, shown to everyone)
+// Text or image only - see hero_media below for the video banner.
 // ------------------------------------------------------------------
 
-export type AnnouncementType = 'text' | 'image' | 'video';
+export type AnnouncementType = 'text' | 'image';
 
 export interface Announcement {
   id: string;
@@ -385,4 +386,59 @@ export async function setAnnouncement(input: {
 
 export async function clearAnnouncement(): Promise<void> {
   await supabase.from('announcements').update({ is_active: false }).eq('is_active', true);
+}
+
+// ------------------------------------------------------------------
+// Hero media banner - a single image/video shown centered right below
+// the header, admin-managed, autoplays if it's a video.
+// ------------------------------------------------------------------
+
+export type HeroMediaType = 'image' | 'video';
+
+export interface HeroMedia {
+  id: string;
+  type: HeroMediaType;
+  mediaUrl: string;
+  isActive: boolean;
+  updatedAt: Date;
+}
+
+function rowToHeroMedia(row: any): HeroMedia {
+  return {
+    id: row.id,
+    type: row.type,
+    mediaUrl: row.media_url,
+    isActive: row.is_active,
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+export async function getActiveHeroMedia(): Promise<HeroMedia | null> {
+  const { data, error } = await supabase
+    .from('hero_media')
+    .select('*')
+    .eq('is_active', true)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error || !data) return null;
+  return rowToHeroMedia(data);
+}
+
+export async function setHeroMedia(input: {
+  type: HeroMediaType;
+  mediaUrl: string;
+  createdBy: string;
+}): Promise<void> {
+  await supabase.from('hero_media').update({ is_active: false }).eq('is_active', true);
+  await supabase.from('hero_media').insert({
+    type: input.type,
+    media_url: input.mediaUrl,
+    is_active: true,
+    created_by: input.createdBy,
+  });
+}
+
+export async function clearHeroMedia(): Promise<void> {
+  await supabase.from('hero_media').update({ is_active: false }).eq('is_active', true);
 }

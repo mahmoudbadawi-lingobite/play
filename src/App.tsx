@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { GuestProgressProvider } from './contexts/GuestProgressContext';
 import { Header } from './components/layout/Header';
 import { AnnouncementBar } from './components/layout/AnnouncementBar';
+import { HeroMediaBanner } from './components/layout/HeroMediaBanner';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { HomePage } from './pages/HomePage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -26,6 +27,7 @@ export default function App() {
           <div className="min-h-screen bg-background">
             <AnnouncementBar />
             <Header />
+            <HeroMediaBanner />
             <main>
               <Routes>
                 <Route path="/" element={<HomePage />} />

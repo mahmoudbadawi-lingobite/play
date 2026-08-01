@@ -336,10 +336,13 @@ $$;
 -- ------------------------------------------------------------
 -- announcements (a single site-wide banner, admin-managed, shown
 -- above the header to every visitor including signed-out guests)
+-- text or image only - video lives in hero_media below instead,
+-- since a video reads better in a large centered banner than a
+-- thin top strip.
 -- ------------------------------------------------------------
 create table public.announcements (
   id uuid primary key default gen_random_uuid(),
-  type text not null check (type in ('text', 'image', 'video')),
+  type text not null check (type in ('text', 'image')),
   text_content text,
   media_url text,
   is_active boolean not null default true,
@@ -360,6 +363,33 @@ create policy "announcements: admin manages"
   with check (public.is_admin());
 
 grant select on public.announcements to anon;
+
+-- ------------------------------------------------------------
+-- hero_media (a single image/video banner shown right below the
+-- header, centered, inside a rounded frame - autoplays if video)
+-- ------------------------------------------------------------
+create table public.hero_media (
+  id uuid primary key default gen_random_uuid(),
+  type text not null check (type in ('image', 'video')),
+  media_url text not null,
+  is_active boolean not null default true,
+  created_by uuid references public.profiles(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.hero_media enable row level security;
+
+create policy "hero_media: anyone can read active ones"
+  on public.hero_media for select
+  using (is_active = true or public.is_admin());
+
+create policy "hero_media: admin manages"
+  on public.hero_media for all
+  using (public.is_admin())
+  with check (public.is_admin());
+
+grant select on public.hero_media to anon;
 
 -- ------------------------------------------------------------
 -- teacher approval RPCs (admin-only, checked inside the function body)
