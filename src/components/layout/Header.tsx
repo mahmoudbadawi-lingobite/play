@@ -19,6 +19,7 @@ export function Header() {
   const navLinks = (
     <>
       <Link to="/library" onClick={() => setMenuOpen(false)} className="hover:text-secondary">{t('nav_library')}</Link>
+      <Link to="/escape-rooms" onClick={() => setMenuOpen(false)} className="hover:text-secondary">Escape Rooms</Link>
       {profile && (
         <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="hover:text-secondary">{t('nav_dashboard')}</Link>
       )}

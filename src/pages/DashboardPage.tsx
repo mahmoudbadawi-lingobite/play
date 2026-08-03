@@ -81,6 +81,12 @@ export function DashboardPage() {
             <Link to="/teacher/my-games" className="rounded-xl border border-border bg-card px-5 py-3 font-semibold text-primary hover:border-secondary">
               My Games
             </Link>
+            <Link to="/teacher/create-escape-room" className="rounded-xl bg-secondary px-5 py-3 font-semibold text-secondary-foreground hover:opacity-90">
+              Create Escape Room
+            </Link>
+            <Link to="/teacher/my-escape-rooms" className="rounded-xl border border-border bg-card px-5 py-3 font-semibold text-primary hover:border-secondary">
+              My Escape Rooms
+            </Link>
             <Link to="/teacher/classes" className="rounded-xl border border-border bg-card px-5 py-3 font-semibold text-primary hover:border-secondary">
               {t('nav_classes')}
             </Link>

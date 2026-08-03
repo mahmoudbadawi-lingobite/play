@@ -16,6 +16,11 @@ import { EditContentPage } from './pages/EditContentPage';
 import { TeacherClassesPage } from './pages/TeacherClassesPage';
 import { AdminPage } from './pages/AdminPage';
 import { JoinClassPage } from './pages/JoinClassPage';
+import { EscapeRoomsPage } from './pages/EscapeRoomsPage';
+import { MyEscapeRoomsPage } from './pages/MyEscapeRoomsPage';
+import { CreateEscapeRoomPage } from './pages/CreateEscapeRoomPage';
+import { EditEscapeRoomPage } from './pages/EditEscapeRoomPage';
+import { EscapeRoomPlayPage } from './pages/EscapeRoomPlayPage';
 import { ConsentGate } from './components/auth/ConsentGate';
 import './i18n/config';
 
@@ -36,6 +41,17 @@ export default function App() {
                 <Route path="/play/:setId/:gameKey" element={<ConsentGate><GameShell /></ConsentGate>} />
                 <Route path="/join" element={
                   <ProtectedRoute roles={['student']}><JoinClassPage /></ProtectedRoute>
+                } />
+                <Route path="/escape-rooms" element={<EscapeRoomsPage />} />
+                <Route path="/escape-room/:roomId" element={<ConsentGate><EscapeRoomPlayPage /></ConsentGate>} />
+                <Route path="/teacher/create-escape-room" element={
+                  <ProtectedRoute roles={['teacher']}><CreateEscapeRoomPage /></ProtectedRoute>
+                } />
+                <Route path="/teacher/my-escape-rooms" element={
+                  <ProtectedRoute roles={['teacher']}><MyEscapeRoomsPage /></ProtectedRoute>
+                } />
+                <Route path="/escape-room/edit/:roomId" element={
+                  <ProtectedRoute roles={['teacher', 'admin']}><EditEscapeRoomPage /></ProtectedRoute>
                 } />
 
                 <Route path="/dashboard" element={

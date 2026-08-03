@@ -94,3 +94,32 @@ export interface ClassStudent {
   totalXP: number;
   joinCode?: string;
 }
+
+// --- Escape Room (separate game type - see supabase/schema.sql for why) ---
+
+export type AnswerMode = 'type' | 'choice';
+
+export interface EscapeRoomHotspot {
+  id: string;
+  orderIndex: number;
+  xPercent: number;
+  yPercent: number;
+  radiusPercent: number;
+  clueText: string;
+  answerMode: AnswerMode;
+  correctAnswer: string;
+  choices?: string[];
+}
+
+export interface EscapeRoom {
+  id: string;
+  title: string;
+  teacherId: string;
+  teacherName: string;
+  imageUrl: string;
+  visibility: Visibility;
+  playCount: number;
+  reportCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}

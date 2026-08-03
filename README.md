@@ -116,6 +116,20 @@ it into that shape. Any set with enough items (and images, for Picture
 Match) unlocks the games that can use it; nothing about the content changes
 per game.
 
+## Escape Room
+
+A separate game type from the main six (its own "Escape Rooms" nav tab,
+not mixed into the Game Library), since it needs a different content
+shape: a background image with an ordered set of clickable hotspots
+instead of the universal `{term, clue, imageUrl}` item. Teachers upload an
+image, then click directly on it to drop numbered clue markers - each with
+a typed or multiple-choice answer. Students see one clue at a time, click
+where they think the object is (a "hot/warm/cold" hint appears on a miss),
+then answer it correctly to unlock the next clue in sequence. Wrong clicks
+and wrong answers both count against the final score. Has its own
+moderation (report/unpublish/reactivate/delete) in `/admin`, matching the
+main content sets.
+
 ## Games included (v1)
 
 Memory Match, Typing Race, Word Builder, Crossword, Picture Match, Hangman —

@@ -10,13 +10,17 @@ import {
 } from '../lib/services';
 import { uploadToCloudinary } from '../lib/cloudinary';
 import { linkify } from '../lib/linkify';
+import {
+  listReportedEscapeRooms, unpublishEscapeRoom, republishEscapeRoom, dismissEscapeRoomReports, deleteEscapeRoom,
+} from '../lib/escapeRoomService';
 import { useAuth } from '../contexts/AuthContext';
-import type { ContentSet } from '../types';
+import type { ContentSet, EscapeRoom } from '../types';
 
 export function AdminPage() {
   const { profile } = useAuth();
   const [pending, setPending] = useState<any[]>([]);
   const [reported, setReported] = useState<ContentSet[]>([]);
+  const [reportedRooms, setReportedRooms] = useState<EscapeRoom[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Announcement bar (text/image)
@@ -69,14 +73,16 @@ export function AdminPage() {
 
   const refresh = async () => {
     setLoading(true);
-    const [pendingList, reportedList, announcement, hero] = await Promise.all([
+    const [pendingList, reportedList, reportedRoomsList, announcement, hero] = await Promise.all([
       listPendingTeacherRequests(),
       listReportedContentSets(),
+      listReportedEscapeRooms(),
       getActiveAnnouncement(),
       getActiveHeroMedia(),
     ]);
     setPending(pendingList);
     setReported(reportedList);
+    setReportedRooms(reportedRoomsList);
     setCurrent(announcement);
     setHeroCurrent(hero);
     setLoading(false);
@@ -183,6 +189,27 @@ export function AdminPage() {
 
   const handleDismiss = async (id: string) => {
     await dismissReports(id);
+    refresh();
+  };
+
+  const handleUnpublishRoom = async (id: string) => {
+    await unpublishEscapeRoom(id);
+    refresh();
+  };
+
+  const handleReactivateRoom = async (id: string) => {
+    await republishEscapeRoom(id);
+    refresh();
+  };
+
+  const handleDeleteRoom = async (id: string, title: string) => {
+    if (!confirm(`Permanently delete "${title}"? This can't be undone.`)) return;
+    await deleteEscapeRoom(id);
+    refresh();
+  };
+
+  const handleDismissRoom = async (id: string) => {
+    await dismissEscapeRoomReports(id);
     refresh();
   };
 
@@ -469,6 +496,56 @@ export function AdminPage() {
                     Edit
                   </Link>
                   <button onClick={() => handleDelete(set.id, set.title)} className="rounded-lg border border-destructive px-3 py-1.5 text-sm font-semibold text-destructive hover:bg-destructive/10">
+                    Delete permanently
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="mt-10">
+        <h2 className="font-display text-xl font-semibold text-primary">Reported escape rooms</h2>
+        {loading ? (
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        ) : reportedRooms.length === 0 ? (
+          <p className="mt-4 text-muted-foreground">Nothing reported. 👍</p>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {reportedRooms.map((room) => (
+              <div key={room.id} className="card-surface p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="font-semibold text-primary">{room.title}</p>
+                    <p className="text-sm text-muted-foreground">by {room.teacherName}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${room.visibility === 'public' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
+                      {room.visibility === 'public' ? '🌐 Public' : '🔒 Private'}
+                    </span>
+                    <span className="rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive">
+                      {room.reportCount} report{room.reportCount !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {room.visibility === 'public' ? (
+                    <button onClick={() => handleUnpublishRoom(room.id)} className="rounded-lg bg-destructive px-3 py-1.5 text-sm font-semibold text-white">
+                      Unpublish (make private)
+                    </button>
+                  ) : (
+                    <button onClick={() => handleReactivateRoom(room.id)} className="rounded-lg bg-success px-3 py-1.5 text-sm font-semibold text-white">
+                      Reactivate (make public)
+                    </button>
+                  )}
+                  <button onClick={() => handleDismissRoom(room.id)} className="rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-primary">
+                    Dismiss reports
+                  </button>
+                  <Link to={`/escape-room/edit/${room.id}`} className="rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-primary hover:border-secondary">
+                    Edit
+                  </Link>
+                  <button onClick={() => handleDeleteRoom(room.id, room.title)} className="rounded-lg border border-destructive px-3 py-1.5 text-sm font-semibold text-destructive hover:bg-destructive/10">
                     Delete permanently
                   </button>
                 </div>
