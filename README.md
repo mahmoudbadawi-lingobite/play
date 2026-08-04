@@ -130,6 +130,19 @@ and wrong answers both count against the final score. Has its own
 moderation (report/unpublish/reactivate/delete) in `/admin`, matching the
 main content sets.
 
+**Story introduction**: an optional field on each room. If set, students
+see a briefing screen with the story and a "Begin" button before the
+room's timer starts - so reading time never counts against their score.
+
+**AI Prompt Generator**: a step inside "Create Escape Room," before the
+image upload. The teacher picks a theme, grade (1-12), difficulty, and
+question type via buttons, plus optional vocabulary/grammar/reading/spelling
+lists, and the tool assembles three ready-to-copy prompts (background
+image, story, clue questions) for pasting into any external AI tool. It
+does not call any AI itself - the teacher runs the prompts elsewhere, then
+comes back to upload the resulting image, paste the story, and enter the
+clues using the tools already in the app.
+
 ## Games included (v1)
 
 Memory Match, Typing Race, Word Builder, Crossword, Picture Match, Hangman —

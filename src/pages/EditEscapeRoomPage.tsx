@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { uploadToCloudinary } from '../lib/cloudinary';
 import { HotspotEditor } from '../components/escapeRoom/HotspotEditor';
+import { PromptGeneratorPanel } from '../components/escapeRoom/PromptGeneratorPanel';
 import {
   getEscapeRoom, getEscapeRoomHotspots, updateEscapeRoom, type HotspotInput,
 } from '../lib/escapeRoomService';
@@ -22,10 +23,12 @@ export function EditEscapeRoomPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [hotspots, setHotspots] = useState<HotspotInput[]>([]);
   const [title, setTitle] = useState('');
+  const [storyText, setStoryText] = useState('');
   const [visibility, setVisibility] = useState<Visibility>('public');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [showPromptGenerator, setShowPromptGenerator] = useState(false);
 
   useEffect(() => {
     if (!roomId || !profile) return;
@@ -39,6 +42,7 @@ export function EditEscapeRoomPage() {
       setOriginal(room);
       setImageUrl(room.imageUrl);
       setTitle(room.title);
+      setStoryText(room.storyText ?? '');
       setVisibility(room.visibility);
       setHotspots(spots.map((s) => ({
         xPercent: s.xPercent, yPercent: s.yPercent, radiusPercent: s.radiusPercent,
@@ -71,7 +75,7 @@ export function EditEscapeRoomPage() {
     setSaving(true);
     setSaveError(null);
     try {
-      await updateEscapeRoom(original.id, { title: title.trim(), visibility, imageUrl, hotspots });
+      await updateEscapeRoom(original.id, { title: title.trim(), visibility, imageUrl, storyText: storyText.trim() || undefined, hotspots });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err: any) {
@@ -88,6 +92,18 @@ export function EditEscapeRoomPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       <h1 className="font-display text-3xl font-bold text-primary">Edit Escape Room</h1>
+
+      <div className="mt-6 flex items-center justify-between">
+        <p className="text-sm font-semibold text-primary">AI Prompt Generator (optional)</p>
+        <button onClick={() => setShowPromptGenerator((v) => !v)} className="text-xs font-semibold text-secondary">
+          {showPromptGenerator ? 'Hide' : 'Show'}
+        </button>
+      </div>
+      {showPromptGenerator && (
+        <div className="mt-3">
+          <PromptGeneratorPanel />
+        </div>
+      )}
 
       <div className="card-surface mt-6 p-6">
         <div className="mb-4 flex items-center justify-between">
@@ -108,6 +124,18 @@ export function EditEscapeRoomPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full rounded-lg border border-border px-4 py-2.5 outline-none focus:border-secondary"
+          />
+        </label>
+
+        <label className="mt-5 block">
+          <span className="mb-1 block text-sm font-semibold text-primary">
+            Story introduction <span className="font-normal text-muted-foreground">(optional - shown before the game begins)</span>
+          </span>
+          <textarea
+            value={storyText}
+            onChange={(e) => setStoryText(e.target.value)}
+            rows={4}
+            className="w-full rounded-lg border border-border px-4 py-2.5 text-sm outline-none focus:border-secondary"
           />
         </label>
 

@@ -117,6 +117,7 @@ export interface EscapeRoom {
   teacherId: string;
   teacherName: string;
   imageUrl: string;
+  storyText: string | null;
   visibility: Visibility;
   playCount: number;
   reportCount: number;

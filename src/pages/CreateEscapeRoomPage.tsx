@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { uploadToCloudinary } from '../lib/cloudinary';
 import { HotspotEditor } from '../components/escapeRoom/HotspotEditor';
+import { PromptGeneratorPanel } from '../components/escapeRoom/PromptGeneratorPanel';
 import {
   checkDuplicateEscapeRoomTitle, createEscapeRoom, type HotspotInput,
 } from '../lib/escapeRoomService';
@@ -12,11 +13,13 @@ export function CreateEscapeRoomPage() {
   const { profile } = useAuth();
   const navigate = useNavigate();
 
+  const [showPromptGenerator, setShowPromptGenerator] = useState(true);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [hotspots, setHotspots] = useState<HotspotInput[]>([]);
   const [title, setTitle] = useState('');
+  const [storyText, setStoryText] = useState('');
   const [visibility, setVisibility] = useState<Visibility>('public');
   const [duplicate, setDuplicate] = useState<EscapeRoom | null>(null);
   const [saving, setSaving] = useState(false);
@@ -56,6 +59,7 @@ export function CreateEscapeRoomPage() {
         teacherId: profile.uid,
         teacherName: profile.displayName ?? 'Teacher',
         imageUrl,
+        storyText: storyText.trim() || undefined,
         visibility,
         hotspots,
       });
@@ -71,10 +75,22 @@ export function CreateEscapeRoomPage() {
     <div className="mx-auto max-w-2xl px-4 py-10">
       <h1 className="font-display text-3xl font-bold text-primary">Create an Escape Room</h1>
 
+      <div className="mt-6 flex items-center justify-between">
+        <p className="text-sm font-semibold text-primary">Step 1 · AI Prompt Generator (optional)</p>
+        <button onClick={() => setShowPromptGenerator((v) => !v)} className="text-xs font-semibold text-secondary">
+          {showPromptGenerator ? 'Hide' : 'Show'}
+        </button>
+      </div>
+      {showPromptGenerator && (
+        <div className="mt-3">
+          <PromptGeneratorPanel />
+        </div>
+      )}
+
       <div className="card-surface mt-6 p-6">
         {!imageUrl ? (
           <div>
-            <p className="mb-2 text-sm font-semibold text-primary">1. Upload the room's background image</p>
+            <p className="mb-2 text-sm font-semibold text-primary">Step 2 · Upload the room's background image</p>
             <input
               type="file"
               accept="image/*"
@@ -87,7 +103,7 @@ export function CreateEscapeRoomPage() {
         ) : (
           <div>
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-semibold text-primary">2. Place your clues</p>
+              <p className="text-sm font-semibold text-primary">Step 3 · Place your clues</p>
               <button onClick={() => { setImageUrl(null); setHotspots([]); }} className="text-xs font-semibold text-destructive">
                 Change image
               </button>
@@ -123,6 +139,19 @@ export function CreateEscapeRoomPage() {
                 </div>
               </div>
             )}
+
+            <label className="mt-5 block">
+              <span className="mb-1 block text-sm font-semibold text-primary">
+                Story introduction <span className="font-normal text-muted-foreground">(optional - shown before the game begins)</span>
+              </span>
+              <textarea
+                value={storyText}
+                onChange={(e) => setStoryText(e.target.value)}
+                placeholder="Paste the story you generated with the AI prompt above, or write your own..."
+                rows={4}
+                className="w-full rounded-lg border border-border px-4 py-2.5 text-sm outline-none focus:border-secondary"
+              />
+            </label>
 
             <div className="mt-5 flex flex-col gap-3 sm:flex-row">
               <button

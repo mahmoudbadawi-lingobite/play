@@ -429,6 +429,7 @@ create table public.escape_rooms (
   teacher_id uuid not null references public.profiles(id),
   teacher_name text not null,
   image_url text not null,
+  story_text text,
   visibility text not null default 'public' check (visibility in ('public', 'private')),
   play_count integer not null default 0,
   report_count integer not null default 0,

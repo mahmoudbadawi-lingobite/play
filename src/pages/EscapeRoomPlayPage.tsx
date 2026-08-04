@@ -36,6 +36,7 @@ export function EscapeRoomPlayPage() {
   const [answerFeedback, setAnswerFeedback] = useState<'wrong' | null>(null);
   const [finished, setFinished] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
+  const [begun, setBegun] = useState(false);
 
   useEffect(() => {
     if (!roomId) return;
@@ -47,9 +48,17 @@ export function EscapeRoomPlayPage() {
         countedRef.current = true;
         incrementEscapeRoomPlayCount(r.id);
       }
-      startRef.current = Date.now();
+      if (!r?.storyText) {
+        setBegun(true);
+        startRef.current = Date.now();
+      }
     });
   }, [roomId]);
+
+  const handleBegin = () => {
+    startRef.current = Date.now();
+    setBegun(true);
+  };
 
   const current = hotspots[currentIndex];
 
@@ -61,6 +70,24 @@ export function EscapeRoomPlayPage() {
 
   if (loading) return <p className="p-8 text-center text-muted-foreground">Loading room...</p>;
   if (!room || hotspots.length === 0) return <p className="p-8 text-center text-muted-foreground">This escape room isn't available.</p>;
+
+  if (!begun && room.storyText) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16">
+        <div className="card-surface p-6 sm:p-8">
+          <p className="text-sm uppercase tracking-wide text-secondary">Escape Room</p>
+          <h1 className="mt-1 font-display text-2xl font-bold text-primary sm:text-3xl">{room.title}</h1>
+          <p className="mt-4 whitespace-pre-wrap leading-relaxed text-primary">{room.storyText}</p>
+          <button
+            onClick={handleBegin}
+            className="mt-6 w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground hover:opacity-90"
+          >
+            Begin
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleImageClick = (e: MouseEvent<HTMLDivElement>) => {
     if (unlocked || finished || !current) return;
