@@ -1,5 +1,17 @@
 import { useState } from 'react';
 
+const TEXT_AI_SHORTCUTS: AiShortcut[] = [
+  { label: 'ChatGPT', url: 'https://chat.openai.com' },
+  { label: 'Gemini', url: 'https://gemini.google.com/app' },
+  { label: 'Claude', url: 'https://claude.ai/new' },
+];
+
+const IMAGE_AI_SHORTCUTS: AiShortcut[] = [
+  { label: 'Leonardo.ai', url: 'https://app.leonardo.ai' },
+  { label: 'ChatGPT', url: 'https://chat.openai.com' },
+  { label: 'Gemini', url: 'https://gemini.google.com/app' },
+];
+
 const THEMES = [
   'Ancient Egyptian temple', 'Pirate island', 'Secret laboratory', 'Haunted castle',
   'Jungle expedition', 'Space station', 'Medieval village', 'Underwater city',
@@ -29,22 +41,46 @@ function buildElementsBlock(vocab: string, grammar: string, reading: string, spe
   return sections.join('\n\n');
 }
 
-function CopyBox({ label, text }: { label: string; text: string }) {
+interface AiShortcut {
+  label: string;
+  url: string;
+}
+
+function CopyBox({ label, text, shortcuts }: { label: string; text: string; shortcuts?: AiShortcut[] }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = () => {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+  const handleShortcut = (url: string) => {
+    navigator.clipboard.writeText(text);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
   return (
     <div className="mt-4">
-      <div className="mb-1.5 flex items-center justify-between">
+      <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold text-primary">{label}</p>
         <button onClick={handleCopy} className="rounded-lg bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground hover:opacity-90">
           {copied ? '✓ Copied' : 'Copy'}
         </button>
       </div>
       <textarea readOnly value={text} rows={8} className="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 font-mono text-xs text-primary" />
+      {shortcuts && shortcuts.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <span className="self-center text-xs text-muted-foreground">Open in:</span>
+          {shortcuts.map((s) => (
+            <button
+              key={s.label}
+              onClick={() => handleShortcut(s.url)}
+              title={`Copies this prompt and opens ${s.label} - paste it there once the tab opens`}
+              className="rounded-full border border-border px-3 py-1 text-xs font-medium text-primary hover:border-secondary"
+            >
+              {s.label} ↗
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -291,9 +327,9 @@ ${elementsBlock || '[add vocabulary/grammar/reading/spelling items below]'}`;
         </label>
       </div>
 
-      <CopyBox label="1. Background image prompt" text={imagePrompt} />
-      <CopyBox label="2. Story introduction prompt" text={storyPrompt} />
-      <CopyBox label="3. Clue questions prompt" text={questionsPrompt} />
+      <CopyBox label="1. Background image prompt" text={imagePrompt} shortcuts={IMAGE_AI_SHORTCUTS} />
+      <CopyBox label="2. Story introduction prompt" text={storyPrompt} shortcuts={TEXT_AI_SHORTCUTS} />
+      <CopyBox label="3. Clue questions prompt" text={questionsPrompt} shortcuts={TEXT_AI_SHORTCUTS} />
     </div>
   );
 }

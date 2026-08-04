@@ -2,10 +2,21 @@ import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useGuestProgress } from '../contexts/GuestProgressContext';
+import { ConfettiBurst } from '../components/escapeRoom/ConfettiBurst';
 import {
   getEscapeRoom, getEscapeRoomHotspots, incrementEscapeRoomPlayCount, recordEscapeRoomResult,
 } from '../lib/escapeRoomService';
 import type { EscapeRoom, EscapeRoomHotspot } from '../types';
+
+const CONGRATS_MESSAGES = [
+  { title: 'You escaped!', emoji: '🔓' },
+  { title: 'Room cleared!', emoji: '🏆' },
+  { title: 'Mission complete!', emoji: '🎉' },
+  { title: 'You cracked it!', emoji: '⭐' },
+  { title: 'Freedom!', emoji: '🗝️' },
+  { title: 'Case closed!', emoji: '🕵️' },
+  { title: 'Brilliant escape!', emoji: '✨' },
+];
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -37,6 +48,8 @@ export function EscapeRoomPlayPage() {
   const [finished, setFinished] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [begun, setBegun] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [congrats] = useState(() => CONGRATS_MESSAGES[Math.floor(Math.random() * CONGRATS_MESSAGES.length)]);
 
   useEffect(() => {
     if (!roomId) return;
@@ -56,9 +69,32 @@ export function EscapeRoomPlayPage() {
   }, [roomId]);
 
   const handleBegin = () => {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    setSpeaking(false);
     startRef.current = Date.now();
     setBegun(true);
   };
+
+  const handleToggleSpeak = () => {
+    if (!('speechSynthesis' in window) || !room?.storyText) return;
+    if (speaking) {
+      window.speechSynthesis.cancel();
+      setSpeaking(false);
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(room.storyText);
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+    setSpeaking(true);
+  };
+
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    };
+  }, []);
 
   const current = hotspots[currentIndex];
 
@@ -78,6 +114,14 @@ export function EscapeRoomPlayPage() {
           <p className="text-sm uppercase tracking-wide text-secondary">Escape Room</p>
           <h1 className="mt-1 font-display text-2xl font-bold text-primary sm:text-3xl">{room.title}</h1>
           <p className="mt-4 whitespace-pre-wrap leading-relaxed text-primary">{room.storyText}</p>
+          {'speechSynthesis' in window && (
+            <button
+              onClick={handleToggleSpeak}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-primary hover:border-secondary"
+            >
+              {speaking ? '⏸ Stop reading' : '🔊 Read story aloud'}
+            </button>
+          )}
           <button
             onClick={handleBegin}
             className="mt-6 w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground hover:opacity-90"
@@ -151,9 +195,10 @@ export function EscapeRoomPlayPage() {
   if (finished) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
+        <ConfettiBurst />
         <div className="card-surface p-8">
-          <span className="text-4xl">🔓</span>
-          <h2 className="mt-3 font-display text-2xl font-bold text-primary">You escaped!</h2>
+          <span className="text-4xl">{congrats.emoji}</span>
+          <h2 className="mt-3 font-display text-2xl font-bold text-primary">{congrats.title}</h2>
           <p className="mt-1 text-muted-foreground">{room.title}</p>
           <div className="mt-6 grid grid-cols-2 gap-4">
             <div>
