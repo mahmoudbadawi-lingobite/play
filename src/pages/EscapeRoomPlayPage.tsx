@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useGuestProgress } from '../contexts/GuestProgressContext';
 import { ConfettiBurst } from '../components/escapeRoom/ConfettiBurst';
+import { shareLink } from '../lib/share';
 import { pickCongratsMessage, GENERIC_CONGRATS, type CongratsMessage } from '../games/escapeRoomThemes';
 import {
   getEscapeRoom, getEscapeRoomHotspots, incrementEscapeRoomPlayCount, recordEscapeRoomResult,
@@ -41,6 +42,17 @@ export function EscapeRoomPlayPage() {
   const [begun, setBegun] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [congrats, setCongrats] = useState<CongratsMessage>(GENERIC_CONGRATS[0]);
+  const [shareStatus, setShareStatus] = useState<'shared' | 'copied' | null>(null);
+
+  const handleShare = async () => {
+    if (!room) return;
+    const url = `${window.location.origin}${import.meta.env.BASE_URL}escape-room/${room.id}`;
+    const result = await shareLink(url, room.title);
+    if (result === 'shared' || result === 'copied') {
+      setShareStatus(result);
+      setTimeout(() => setShareStatus(null), 2000);
+    }
+  };
 
   useEffect(() => {
     if (!roomId) return;
@@ -204,6 +216,9 @@ export function EscapeRoomPlayPage() {
           </div>
           {isGuest && <p className="mt-4 text-xs text-muted-foreground">Guest progress isn't saved. Sign in to keep your XP. (session XP: {guestXP})</p>}
           <div className="mt-6 flex justify-center gap-3">
+            <button onClick={handleShare} className="rounded-lg bg-secondary px-4 py-2 text-sm font-semibold text-secondary-foreground hover:opacity-90">
+              {shareStatus === 'shared' ? '✓ Shared' : shareStatus === 'copied' ? '✓ Link copied' : '🔗 Share this room'}
+            </button>
             <Link to="/escape-rooms" className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-primary">
               Back to Escape Rooms
             </Link>
@@ -215,9 +230,16 @@ export function EscapeRoomPlayPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <p className="text-sm uppercase tracking-wide text-secondary">Escape Room</p>
-      <h1 className="font-display text-2xl font-bold text-primary">{room.title}</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Clue {currentIndex + 1} of {hotspots.length} · {solvedCount} solved</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm uppercase tracking-wide text-secondary">Escape Room</p>
+          <h1 className="font-display text-2xl font-bold text-primary">{room.title}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Clue {currentIndex + 1} of {hotspots.length} · {solvedCount} solved</p>
+        </div>
+        <button onClick={handleShare} className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-primary hover:border-secondary">
+          {shareStatus === 'shared' ? '✓ Shared' : shareStatus === 'copied' ? '✓ Copied' : '🔗 Share'}
+        </button>
+      </div>
 
       <div className="card-surface mt-4 p-4">
         <p className="mb-3 font-display text-lg text-primary">{current?.clueText}</p>
