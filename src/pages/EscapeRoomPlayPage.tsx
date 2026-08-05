@@ -3,20 +3,11 @@ import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useGuestProgress } from '../contexts/GuestProgressContext';
 import { ConfettiBurst } from '../components/escapeRoom/ConfettiBurst';
+import { pickCongratsMessage, GENERIC_CONGRATS, type CongratsMessage } from '../games/escapeRoomThemes';
 import {
   getEscapeRoom, getEscapeRoomHotspots, incrementEscapeRoomPlayCount, recordEscapeRoomResult,
 } from '../lib/escapeRoomService';
 import type { EscapeRoom, EscapeRoomHotspot } from '../types';
-
-const CONGRATS_MESSAGES = [
-  { title: 'You escaped!', emoji: '🔓' },
-  { title: 'Room cleared!', emoji: '🏆' },
-  { title: 'Mission complete!', emoji: '🎉' },
-  { title: 'You cracked it!', emoji: '⭐' },
-  { title: 'Freedom!', emoji: '🗝️' },
-  { title: 'Case closed!', emoji: '🕵️' },
-  { title: 'Brilliant escape!', emoji: '✨' },
-];
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -49,7 +40,7 @@ export function EscapeRoomPlayPage() {
   const [xpEarned, setXpEarned] = useState(0);
   const [begun, setBegun] = useState(false);
   const [speaking, setSpeaking] = useState(false);
-  const [congrats] = useState(() => CONGRATS_MESSAGES[Math.floor(Math.random() * CONGRATS_MESSAGES.length)]);
+  const [congrats, setCongrats] = useState<CongratsMessage>(GENERIC_CONGRATS[0]);
 
   useEffect(() => {
     if (!roomId) return;
@@ -157,6 +148,7 @@ export function EscapeRoomPlayPage() {
     const accuracy = Math.max(0, 100 - finalWrongClicks * 5);
     const earned = Math.round((accuracy / 100) * 50 + 10);
     setXpEarned(earned);
+    setCongrats(pickCongratsMessage(room?.theme));
     setFinished(true);
 
     if (profile) {

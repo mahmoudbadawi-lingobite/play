@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { uploadToCloudinary } from '../lib/cloudinary';
 import { HotspotEditor } from '../components/escapeRoom/HotspotEditor';
 import { PromptGeneratorPanel } from '../components/escapeRoom/PromptGeneratorPanel';
+import { ESCAPE_ROOM_THEMES } from '../games/escapeRoomThemes';
 import {
   getEscapeRoom, getEscapeRoomHotspots, updateEscapeRoom, type HotspotInput,
 } from '../lib/escapeRoomService';
@@ -24,6 +25,7 @@ export function EditEscapeRoomPage() {
   const [hotspots, setHotspots] = useState<HotspotInput[]>([]);
   const [title, setTitle] = useState('');
   const [storyText, setStoryText] = useState('');
+  const [theme, setTheme] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<Visibility>('public');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -43,6 +45,7 @@ export function EditEscapeRoomPage() {
       setImageUrl(room.imageUrl);
       setTitle(room.title);
       setStoryText(room.storyText ?? '');
+      setTheme(room.theme ?? null);
       setVisibility(room.visibility);
       setHotspots(spots.map((s) => ({
         xPercent: s.xPercent, yPercent: s.yPercent, radiusPercent: s.radiusPercent,
@@ -75,7 +78,7 @@ export function EditEscapeRoomPage() {
     setSaving(true);
     setSaveError(null);
     try {
-      await updateEscapeRoom(original.id, { title: title.trim(), visibility, imageUrl, storyText: storyText.trim() || undefined, hotspots });
+      await updateEscapeRoom(original.id, { title: title.trim(), visibility, imageUrl, storyText: storyText.trim() || undefined, theme: theme ?? undefined, hotspots });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err: any) {
@@ -126,6 +129,29 @@ export function EditEscapeRoomPage() {
             className="w-full rounded-lg border border-border px-4 py-2.5 outline-none focus:border-secondary"
           />
         </label>
+
+        <div className="mt-5">
+          <p className="mb-1.5 text-sm font-semibold text-primary">
+            Theme <span className="font-normal text-muted-foreground">(optional - matches the "escaped!" message to your setting)</span>
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setTheme(null)}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium ${theme === null ? 'bg-primary text-primary-foreground' : 'border border-border text-primary/70'}`}
+            >
+              None
+            </button>
+            {ESCAPE_ROOM_THEMES.map((t) => (
+              <button
+                key={t}
+                onClick={() => setTheme(t)}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium ${theme === t ? 'bg-primary text-primary-foreground' : 'border border-border text-primary/70'}`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <label className="mt-5 block">
           <span className="mb-1 block text-sm font-semibold text-primary">

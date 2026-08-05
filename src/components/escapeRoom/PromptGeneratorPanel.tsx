@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ESCAPE_ROOM_THEMES } from '../../games/escapeRoomThemes';
 
 const TEXT_AI_SHORTCUTS: AiShortcut[] = [
   { label: 'ChatGPT', url: 'https://chat.openai.com' },
@@ -12,11 +13,7 @@ const IMAGE_AI_SHORTCUTS: AiShortcut[] = [
   { label: 'Gemini', url: 'https://gemini.google.com/app' },
 ];
 
-const THEMES = [
-  'Ancient Egyptian temple', 'Pirate island', 'Secret laboratory', 'Haunted castle',
-  'Jungle expedition', 'Space station', 'Medieval village', 'Underwater city',
-  'Wizard school', 'Detective office',
-];
+const THEMES = ESCAPE_ROOM_THEMES;
 
 const DIFFICULTIES = ['Easy', 'Medium', 'Hard'];
 
@@ -193,6 +190,9 @@ ${level}
 
 • Question type:
 ${questionType.value}
+• The correct answer must NOT be distinguishable from the three distractors - keep all four options
+  similar in length, style, and tone. Do NOT make the correct answer noticeably longer, more detailed,
+  or use qualifying/technical wording that gives it away. All four should sound equally plausible.
 
 Output format
 

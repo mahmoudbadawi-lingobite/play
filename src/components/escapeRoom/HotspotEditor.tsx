@@ -123,6 +123,7 @@ export function HotspotEditor({ imageUrl, hotspots, onChange }: Props) {
           {editing.answerMode === 'choice' && (
             <div className="mt-3">
               <span className="mb-1 block text-xs font-semibold text-primary">Wrong options (1-3, shown mixed with the correct answer)</span>
+              <span className="mb-1 block text-xs text-muted-foreground">Tip: keep these a similar length/style to the correct answer so it doesn't stand out.</span>
               {(editing.choices ?? []).map((choice, ci) => (
                 <div key={ci} className="mt-1 flex gap-2">
                   <input

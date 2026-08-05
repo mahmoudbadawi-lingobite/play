@@ -9,6 +9,7 @@ function rowToEscapeRoom(row: any): EscapeRoom {
     teacherName: row.teacher_name,
     imageUrl: row.image_url,
     storyText: row.story_text,
+    theme: row.theme,
     visibility: row.visibility,
     playCount: row.play_count ?? 0,
     reportCount: row.report_count ?? 0,
@@ -61,6 +62,7 @@ export async function createEscapeRoom(input: {
   teacherName: string;
   imageUrl: string;
   storyText?: string;
+  theme?: string;
   visibility: Visibility;
   hotspots: HotspotInput[];
 }): Promise<string> {
@@ -73,6 +75,7 @@ export async function createEscapeRoom(input: {
       teacher_name: input.teacherName,
       image_url: input.imageUrl,
       story_text: input.storyText ?? null,
+      theme: input.theme ?? null,
       visibility: input.visibility,
     })
     .select('id')
@@ -101,6 +104,7 @@ export async function updateEscapeRoom(id: string, input: {
   visibility: Visibility;
   imageUrl?: string;
   storyText?: string;
+  theme?: string;
   hotspots?: HotspotInput[];
 }): Promise<void> {
   const updates: Record<string, unknown> = {
@@ -108,6 +112,7 @@ export async function updateEscapeRoom(id: string, input: {
     title_lower: input.title.trim().toLowerCase(),
     visibility: input.visibility,
     story_text: input.storyText ?? null,
+    theme: input.theme ?? null,
     updated_at: new Date().toISOString(),
   };
   if (input.imageUrl) updates.image_url = input.imageUrl;
