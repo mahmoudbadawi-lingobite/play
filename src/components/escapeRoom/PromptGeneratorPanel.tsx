@@ -17,14 +17,56 @@ const THEMES = ESCAPE_ROOM_THEMES;
 
 const DIFFICULTIES = ['Easy', 'Medium', 'Hard'];
 
-const QUESTION_TYPES = [
-  { label: 'Meaning', value: 'What does this word mean?' },
-  { label: 'Grammar', value: 'Choose the correct verb.' },
-  { label: 'Reading', value: 'What does this object tell us?' },
-  { label: 'Spelling', value: 'Which spelling is correct?' },
-  { label: 'Word formation', value: 'Choose the correct form.' },
-  { label: 'Pronunciation', value: 'Which syllable is stressed?' },
-];
+type QuestionCategory = 'Vocabulary' | 'Grammar' | 'Reading' | 'Spelling' | 'Word formation' | 'Pronunciation';
+
+const QUESTION_CATEGORIES: QuestionCategory[] = ['Vocabulary', 'Grammar', 'Reading', 'Spelling', 'Word formation', 'Pronunciation'];
+
+const QUESTION_TYPES_BY_CATEGORY: Record<QuestionCategory, { label: string; value: string }[]> = {
+  Vocabulary: [
+    { label: 'Meaning', value: 'What does this word mean? (multiple choice)' },
+    { label: 'Synonym', value: 'Choose the word with the same meaning. (multiple choice)' },
+    { label: 'Antonym', value: 'Choose the word with the opposite meaning. (multiple choice)' },
+    { label: 'Fill in the blank', value: 'Complete the sentence with the correct word. (typed answer)' },
+    { label: 'Definition match', value: 'Which definition matches this word? (multiple choice)' },
+    { label: 'Use in a sentence', value: 'Which sentence uses this word correctly? (multiple choice)' },
+    { label: 'Word category', value: 'Which category does this word belong to? (multiple choice)' },
+    { label: 'Picture match', value: 'Which picture matches this word? (multiple choice)' },
+  ],
+  Grammar: [
+    { label: 'Fill in the blank', value: 'Complete the sentence with the correct verb form. (typed answer)' },
+    { label: 'Error correction', value: 'Find and correct the grammar mistake in this sentence. (typed answer)' },
+    { label: 'Correct structure', value: 'Choose the grammatically correct sentence. (multiple choice)' },
+    { label: 'Sentence reordering', value: 'Put the words in the correct order to form a sentence. (typed answer)' },
+    { label: 'Verb tense', value: 'Choose the correct tense for this sentence. (multiple choice)' },
+    { label: 'Sentence transformation', value: 'Rewrite the sentence as instructed (e.g. active to passive). (typed answer)' },
+    { label: 'True/False', value: 'Is this sentence grammatically correct? True or False. (multiple choice)' },
+  ],
+  Reading: [
+    { label: 'Comprehension', value: 'What does this object tell us about the passage? (multiple choice)' },
+    { label: 'Main idea', value: 'What is the main idea here? (multiple choice)' },
+    { label: 'True/False', value: 'Is this statement true or false based on the text? (multiple choice)' },
+    { label: 'Detail question', value: 'According to the text, what happened here? (multiple choice)' },
+    { label: 'Inference', value: 'What can you infer from this? (multiple choice)' },
+    { label: 'Sequencing', value: 'What happened first/next in the passage? (multiple choice)' },
+  ],
+  Spelling: [
+    { label: 'Correct spelling', value: 'Which spelling is correct? (multiple choice)' },
+    { label: 'Missing letters', value: 'Fill in the missing letters. (typed answer)' },
+    { label: 'Unscramble', value: 'Unscramble the letters to form the word. (typed answer)' },
+    { label: 'Find the mistake', value: 'Which word is spelled incorrectly? (multiple choice)' },
+    { label: 'Type the word', value: 'Type the word correctly after hearing/seeing a hint. (typed answer)' },
+  ],
+  'Word formation': [
+    { label: 'Correct form', value: 'Choose the correct form of the word. (multiple choice)' },
+    { label: 'Fill in the blank', value: 'Complete the sentence with the correct word form. (typed answer)' },
+    { label: 'Part of speech', value: 'What part of speech is needed here? (multiple choice)' },
+  ],
+  Pronunciation: [
+    { label: 'Stress', value: 'Which syllable is stressed? (multiple choice)' },
+    { label: 'Odd one out', value: 'Which word has a different sound from the others? (multiple choice)' },
+    { label: 'Rhyme', value: 'Which word rhymes with this one? (multiple choice)' },
+  ],
+};
 
 function buildElementsBlock(vocab: string, grammar: string, reading: string, spelling: string): string {
   const sections: string[] = [];
@@ -88,7 +130,8 @@ export function PromptGeneratorPanel() {
   const [useCustomTheme, setUseCustomTheme] = useState(false);
   const [grade, setGrade] = useState(5);
   const [difficulty, setDifficulty] = useState('Medium');
-  const [questionType, setQuestionType] = useState(QUESTION_TYPES[0]);
+  const [questionCategory, setQuestionCategory] = useState<QuestionCategory>('Vocabulary');
+  const [questionType, setQuestionType] = useState(QUESTION_TYPES_BY_CATEGORY['Vocabulary'][0]);
   const [lessonTopic, setLessonTopic] = useState('');
   const [vocab, setVocab] = useState('');
   const [grammar, setGrammar] = useState('');
@@ -281,9 +324,24 @@ ${elementsBlock || '[add vocabulary/grammar/reading/spelling items below]'}`;
       </div>
 
       <div className="mt-4">
-        <p className="mb-1.5 text-sm font-semibold text-primary">Question type</p>
+        <p className="mb-1.5 text-sm font-semibold text-primary">Question category</p>
         <div className="flex flex-wrap gap-2">
-          {QUESTION_TYPES.map((q) => (
+          {QUESTION_CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => { setQuestionCategory(cat); setQuestionType(QUESTION_TYPES_BY_CATEGORY[cat][0]); }}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+                questionCategory === cat ? 'bg-primary text-primary-foreground' : 'border border-border text-primary/70'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        <p className="mb-1.5 mt-3 text-sm font-semibold text-primary">Question type</p>
+        <div className="flex flex-wrap gap-2">
+          {QUESTION_TYPES_BY_CATEGORY[questionCategory].map((q) => (
             <button
               key={q.label}
               onClick={() => setQuestionType(q)}
