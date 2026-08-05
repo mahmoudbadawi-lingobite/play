@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   listPublicEscapeRooms, reportEscapeRoom, deleteEscapeRoom,
 } from '../lib/escapeRoomService';
+import { shareLink } from '../lib/share';
 import type { EscapeRoom } from '../types';
 
 export function EscapeRoomsPage() {
@@ -11,6 +12,7 @@ export function EscapeRoomsPage() {
   const [rooms, setRooms] = useState<EscapeRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [reportedIds, setReportedIds] = useState<string[]>([]);
+  const [shareStatus, setShareStatus] = useState<Record<string, 'copied' | 'shared'>>({});
 
   const refresh = () => {
     setLoading(true);
@@ -18,6 +20,15 @@ export function EscapeRoomsPage() {
   };
 
   useEffect(() => { refresh(); }, []);
+
+  const handleShare = async (room: EscapeRoom) => {
+    const url = `${window.location.origin}${import.meta.env.BASE_URL}escape-room/${room.id}`;
+    const result = await shareLink(url, room.title);
+    if (result === 'shared' || result === 'copied') {
+      setShareStatus((s) => ({ ...s, [room.id]: result }));
+      setTimeout(() => setShareStatus((s) => { const next = { ...s }; delete next[room.id]; return next; }), 2000);
+    }
+  };
 
   const handleReport = async (id: string) => {
     if (!profile || reportedIds.includes(id)) return;
@@ -55,6 +66,13 @@ export function EscapeRoomsPage() {
                 >
                   Play now →
                 </Link>
+
+                <button
+                  onClick={() => handleShare(room)}
+                  className="mt-2 rounded-lg border border-border px-4 py-1.5 text-center text-xs font-semibold text-primary hover:border-secondary"
+                >
+                  {shareStatus[room.id] === 'shared' ? '✓ Shared' : shareStatus[room.id] === 'copied' ? '✓ Link copied' : '🔗 Share'}
+                </button>
 
                 {profile && (
                   <button
