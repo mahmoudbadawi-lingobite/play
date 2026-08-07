@@ -27,7 +27,10 @@ export function Header() {
         <Link to="/teacher/classes" onClick={() => setMenuOpen(false)} className="hover:text-secondary">{t('nav_classes')}</Link>
       )}
       {profile?.role === 'admin' && (
-        <Link to="/admin" onClick={() => setMenuOpen(false)} className="hover:text-secondary">{t('nav_admin')}</Link>
+        <>
+          <Link to="/admin" onClick={() => setMenuOpen(false)} className="hover:text-secondary">{t('nav_admin')}</Link>
+          <Link to="/admin/chat" onClick={() => setMenuOpen(false)} className="hover:text-secondary">Admin Chat</Link>
+        </>
       )}
     </>
   );

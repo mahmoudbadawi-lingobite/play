@@ -6,7 +6,8 @@ import {
   republishContentSet, deleteContentSet,
   getActiveAnnouncement, setAnnouncement, clearAnnouncement,
   getActiveHeroMedia, setHeroMedia, clearHeroMedia,
-  type Announcement, type AnnouncementType, type HeroMedia, type HeroMediaType,
+  searchProfilesByEmail, listAdmins, promoteToAdmin, demoteAdmin,
+  type Announcement, type AnnouncementType, type HeroMedia, type HeroMediaType, type SimpleProfile,
 } from '../lib/services';
 import { uploadToCloudinary } from '../lib/cloudinary';
 import { linkify } from '../lib/linkify';
@@ -18,6 +19,10 @@ import type { ContentSet, EscapeRoom } from '../types';
 
 export function AdminPage() {
   const { profile } = useAuth();
+  const [admins, setAdmins] = useState<SimpleProfile[]>([]);
+  const [emailQuery, setEmailQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SimpleProfile[]>([]);
+  const [searching, setSearching] = useState(false);
   const [pending, setPending] = useState<any[]>([]);
   const [reported, setReported] = useState<ContentSet[]>([]);
   const [reportedRooms, setReportedRooms] = useState<EscapeRoom[]>([]);
@@ -73,22 +78,44 @@ export function AdminPage() {
 
   const refresh = async () => {
     setLoading(true);
-    const [pendingList, reportedList, reportedRoomsList, announcement, hero] = await Promise.all([
+    const [pendingList, reportedList, reportedRoomsList, announcement, hero, adminList] = await Promise.all([
       listPendingTeacherRequests(),
       listReportedContentSets(),
       listReportedEscapeRooms(),
       getActiveAnnouncement(),
       getActiveHeroMedia(),
+      listAdmins(),
     ]);
     setPending(pendingList);
     setReported(reportedList);
     setReportedRooms(reportedRoomsList);
     setCurrent(announcement);
     setHeroCurrent(hero);
+    setAdmins(adminList);
     setLoading(false);
   };
 
   useEffect(() => { refresh(); }, []);
+
+  const handleSearch = async () => {
+    setSearching(true);
+    const results = await searchProfilesByEmail(emailQuery);
+    setSearchResults(results);
+    setSearching(false);
+  };
+
+  const handlePromote = async (uid: string) => {
+    await promoteToAdmin(uid);
+    setSearchResults([]);
+    setEmailQuery('');
+    refresh();
+  };
+
+  const handleDemote = async (uid: string) => {
+    if (!confirm('Remove admin access from this account?')) return;
+    await demoteAdmin(uid);
+    refresh();
+  };
 
   const handleAnnMediaUpload = async (file: File | undefined) => {
     if (!file) return;
@@ -216,6 +243,69 @@ export function AdminPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <h1 className="font-display text-3xl font-bold text-primary">Admin</h1>
+
+      <section className="mt-8">
+        <h2 className="font-display text-xl font-semibold text-primary">Manage admins</h2>
+
+        {admins.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {admins.map((a) => (
+              <div key={a.uid} className="card-surface flex flex-wrap items-center justify-between gap-2 p-3">
+                <div className="flex items-center gap-2">
+                  {a.photoURL && <img src={a.photoURL} alt="" className="h-8 w-8 rounded-full" />}
+                  <div>
+                    <p className="text-sm font-semibold text-primary">{a.displayName}</p>
+                    <p className="text-xs text-muted-foreground">{a.email}</p>
+                  </div>
+                </div>
+                {a.uid === profile?.uid ? (
+                  <span className="text-xs text-muted-foreground">(you)</span>
+                ) : (
+                  <button onClick={() => handleDemote(a.uid)} className="rounded-lg border border-destructive px-2.5 py-1 text-xs font-semibold text-destructive hover:bg-destructive/10">
+                    Remove admin
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="card-surface mt-4 flex flex-wrap gap-2 p-4">
+          <input
+            value={emailQuery}
+            onChange={(e) => setEmailQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            placeholder="Search by email to add a new admin..."
+            className="flex-1 rounded-lg border border-border px-4 py-2 outline-none focus:border-secondary"
+          />
+          <button onClick={handleSearch} disabled={!emailQuery.trim() || searching} className="rounded-lg bg-secondary px-4 py-2 text-sm font-semibold text-secondary-foreground disabled:opacity-40">
+            {searching ? 'Searching...' : 'Search'}
+          </button>
+        </div>
+
+        {searchResults.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {searchResults.map((r) => (
+              <div key={r.uid} className="card-surface flex flex-wrap items-center justify-between gap-2 p-3">
+                <div className="flex items-center gap-2">
+                  {r.photoURL && <img src={r.photoURL} alt="" className="h-8 w-8 rounded-full" />}
+                  <div>
+                    <p className="text-sm font-semibold text-primary">{r.displayName}</p>
+                    <p className="text-xs text-muted-foreground">{r.email} · currently {r.role}</p>
+                  </div>
+                </div>
+                {r.role === 'admin' ? (
+                  <span className="text-xs text-success">Already admin</span>
+                ) : (
+                  <button onClick={() => handlePromote(r.uid)} className="rounded-lg bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
+                    Make admin
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="mt-8">
         <h2 className="font-display text-xl font-semibold text-primary">Announcement bar</h2>

@@ -15,6 +15,7 @@ import { MyGamesPage } from './pages/MyGamesPage';
 import { EditContentPage } from './pages/EditContentPage';
 import { TeacherClassesPage } from './pages/TeacherClassesPage';
 import { AdminPage } from './pages/AdminPage';
+import { AdminChatPage } from './pages/AdminChatPage';
 import { JoinClassPage } from './pages/JoinClassPage';
 import { EscapeRoomsPage } from './pages/EscapeRoomsPage';
 import { MyEscapeRoomsPage } from './pages/MyEscapeRoomsPage';
@@ -71,6 +72,9 @@ export default function App() {
                 } />
                 <Route path="/admin" element={
                   <ProtectedRoute roles={['admin']}><AdminPage /></ProtectedRoute>
+                } />
+                <Route path="/admin/chat" element={
+                  <ProtectedRoute roles={['admin']}><AdminChatPage /></ProtectedRoute>
                 } />
               </Routes>
             </main>

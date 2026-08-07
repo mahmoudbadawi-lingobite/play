@@ -327,6 +327,43 @@ export async function rejectTeacher(uid: string): Promise<void> {
 }
 
 // ------------------------------------------------------------------
+// Admin management - search any account by email, promote/demote Admin
+// ------------------------------------------------------------------
+
+export interface SimpleProfile {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+  role: string;
+}
+
+function rowToSimpleProfile(row: any): SimpleProfile {
+  return { uid: row.id, displayName: row.display_name, email: row.email, photoURL: row.photo_url, role: row.role };
+}
+
+export async function searchProfilesByEmail(query: string): Promise<SimpleProfile[]> {
+  if (!query.trim()) return [];
+  const { data, error } = await supabase.from('profiles').select('*').ilike('email', `%${query.trim()}%`).limit(10);
+  if (error || !data) return [];
+  return data.map(rowToSimpleProfile);
+}
+
+export async function listAdmins(): Promise<SimpleProfile[]> {
+  const { data, error } = await supabase.from('profiles').select('*').eq('role', 'admin');
+  if (error || !data) return [];
+  return data.map(rowToSimpleProfile);
+}
+
+export async function promoteToAdmin(uid: string): Promise<void> {
+  await supabase.rpc('promote_to_admin', { target_uid: uid });
+}
+
+export async function demoteAdmin(uid: string): Promise<void> {
+  await supabase.rpc('demote_admin', { target_uid: uid });
+}
+
+// ------------------------------------------------------------------
 // Site-wide announcement banner (admin-managed, shown to everyone)
 // Text or image only - see hero_media below for the video banner.
 // ------------------------------------------------------------------

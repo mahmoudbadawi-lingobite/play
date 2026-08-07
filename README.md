@@ -116,6 +116,21 @@ it into that shape. Any set with enough items (and images, for Picture
 Match) unlocks the games that can use it; nothing about the content changes
 per game.
 
+## Admin chat
+
+Admins-only messaging at `/admin/chat` - a shared group thread every admin
+sees, plus 1:1 direct messages between specific admins. Not visible to or
+usable by teachers or students in any way. Uses Supabase Realtime
+(`postgres_changes`), so messages appear instantly without polling; the
+schema includes the `alter publication supabase_realtime add table ...`
+statements this requires.
+
+## Manage admins
+
+`/admin` includes an admin-management panel: search any account by email
+and promote it to Admin, or remove Admin access from anyone but yourself
+(so you can't accidentally lock yourself out).
+
 ## Escape Room
 
 A separate game type from the main six (its own "Escape Rooms" nav tab,
