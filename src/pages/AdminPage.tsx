@@ -113,8 +113,12 @@ export function AdminPage() {
 
   const handleDemote = async (uid: string) => {
     if (!confirm('Remove admin access from this account?')) return;
-    await demoteAdmin(uid);
-    refresh();
+    try {
+      await demoteAdmin(uid);
+      refresh();
+    } catch (err: any) {
+      alert(err.message ?? 'Could not remove admin access.');
+    }
   };
 
   const handleAnnMediaUpload = async (file: File | undefined) => {
@@ -254,12 +258,17 @@ export function AdminPage() {
                 <div className="flex items-center gap-2">
                   {a.photoURL && <img src={a.photoURL} alt="" className="h-8 w-8 rounded-full" />}
                   <div>
-                    <p className="text-sm font-semibold text-primary">{a.displayName}</p>
+                    <p className="flex items-center gap-1 text-sm font-semibold text-primary">
+                      {a.displayName}
+                      {a.isProtected && <span title="Protected - cannot be demoted through the app">🔒</span>}
+                    </p>
                     <p className="text-xs text-muted-foreground">{a.email}</p>
                   </div>
                 </div>
                 {a.uid === profile?.uid ? (
                   <span className="text-xs text-muted-foreground">(you)</span>
+                ) : a.isProtected ? (
+                  <span className="text-xs text-muted-foreground">Protected</span>
                 ) : (
                   <button onClick={() => handleDemote(a.uid)} className="rounded-lg border border-destructive px-2.5 py-1 text-xs font-semibold text-destructive hover:bg-destructive/10">
                     Remove admin

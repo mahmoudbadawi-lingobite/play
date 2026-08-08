@@ -336,10 +336,11 @@ export interface SimpleProfile {
   email: string | null;
   photoURL: string | null;
   role: string;
+  isProtected: boolean;
 }
 
 function rowToSimpleProfile(row: any): SimpleProfile {
-  return { uid: row.id, displayName: row.display_name, email: row.email, photoURL: row.photo_url, role: row.role };
+  return { uid: row.id, displayName: row.display_name, email: row.email, photoURL: row.photo_url, role: row.role, isProtected: row.is_protected ?? false };
 }
 
 export async function searchProfilesByEmail(query: string): Promise<SimpleProfile[]> {
@@ -356,11 +357,13 @@ export async function listAdmins(): Promise<SimpleProfile[]> {
 }
 
 export async function promoteToAdmin(uid: string): Promise<void> {
-  await supabase.rpc('promote_to_admin', { target_uid: uid });
+  const { error } = await supabase.rpc('promote_to_admin', { target_uid: uid });
+  if (error) throw error;
 }
 
 export async function demoteAdmin(uid: string): Promise<void> {
-  await supabase.rpc('demote_admin', { target_uid: uid });
+  const { error } = await supabase.rpc('demote_admin', { target_uid: uid });
+  if (error) throw error;
 }
 
 // ------------------------------------------------------------------

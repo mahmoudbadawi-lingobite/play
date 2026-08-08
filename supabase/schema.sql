@@ -32,6 +32,7 @@ create table public.profiles (
   badges text[] not null default '{}',
   consent_given boolean not null default false,
   parent_email text,
+  is_protected boolean not null default false,
   created_at timestamptz not null default now(),
   last_login_at timestamptz not null default now()
 );
@@ -86,6 +87,13 @@ create policy "profiles: teacher reads own students"
 create or replace function public.protect_profile_privileges()
 returns trigger language plpgsql security definer as $$
 begin
+  -- is_protected can NEVER be changed through the app, by anyone, including
+  -- an admin - only by directly running SQL with this trigger disabled
+  -- (see supabase/bootstrap_admin.sql for the pattern). This is what keeps
+  -- a compromised or malicious second admin account from being able to
+  -- strip protection from the original admin before demoting them.
+  new.is_protected := old.is_protected;
+
   if public.is_admin() then
     return new;
   end if;
@@ -626,6 +634,9 @@ begin
   end if;
   if target_uid = auth.uid() then
     raise exception 'cannot remove your own admin access';
+  end if;
+  if (select is_protected from public.profiles where id = target_uid) then
+    raise exception 'this account is protected and cannot be demoted';
   end if;
   update public.profiles set role = 'student' where id = target_uid;
 end;
