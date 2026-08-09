@@ -102,3 +102,49 @@ export function subscribeToDirectMessages(myUid: string, otherUid: string, onIns
     .subscribe();
   return () => { supabase.removeChannel(channel); };
 }
+
+export async function markDmThreadRead(myUid: string, otherUid: string): Promise<void> {
+  await supabase
+    .from('admin_direct_messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('recipient_id', myUid)
+    .eq('sender_id', otherUid)
+    .is('read_at', null);
+}
+
+export async function getUnreadDmCount(myUid: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('admin_direct_messages')
+    .select('*', { count: 'exact', head: true })
+    .eq('recipient_id', myUid)
+    .is('read_at', null);
+  if (error) return 0;
+  return count ?? 0;
+}
+
+export async function getUnreadDmCountsBySender(myUid: string): Promise<Record<string, number>> {
+  const { data, error } = await supabase
+    .from('admin_direct_messages')
+    .select('sender_id')
+    .eq('recipient_id', myUid)
+    .is('read_at', null);
+  if (error || !data) return {};
+  const counts: Record<string, number> = {};
+  for (const row of data) counts[row.sender_id] = (counts[row.sender_id] ?? 0) + 1;
+  return counts;
+}
+
+/** Fires for any new DM addressed to this admin, regardless of which
+ * conversation is currently open - used to drive the global unread
+ * badge/chime from anywhere in the app. */
+export function subscribeToMyIncomingDms(myUid: string, onInsert: (msg: DirectMessage) => void) {
+  const channel = supabase
+    .channel(`admin_dm_inbox_${myUid}`)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'admin_direct_messages', filter: `recipient_id=eq.${myUid}` },
+      (payload) => onInsert(rowToDirectMessage(payload.new))
+    )
+    .subscribe();
+  return () => { supabase.removeChannel(channel); };
+}

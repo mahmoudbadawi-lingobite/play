@@ -116,6 +116,21 @@ it into that shape. Any set with enough items (and images, for Picture
 Match) unlocks the games that can use it; nothing about the content changes
 per game.
 
+## Admin notifications
+
+Two live, Realtime-driven notifications, both visible only to admins:
+
+- **Direct message badge + chime** — a red badge on the "Admin Chat" nav
+  link shows total unread DMs across every conversation, and each admin in
+  the DM sidebar shows their own per-conversation unread count. A short
+  two-note chime (generated in-browser via the Web Audio API - no audio
+  file needed) plays when a new DM arrives **and that specific conversation
+  isn't currently open**; if it is open, the message is marked read
+  immediately instead, silently.
+- **Teacher-request bell** — a red badge on the "🔔 Admin" nav link shows
+  the count of pending teacher-access requests, updating live the moment
+  someone requests access or an existing request is approved/rejected.
+
 ## Admin chat
 
 Admins-only messaging at `/admin/chat` - a shared group thread every admin

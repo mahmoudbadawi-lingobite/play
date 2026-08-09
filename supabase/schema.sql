@@ -674,6 +674,7 @@ create table public.admin_direct_messages (
   sender_id uuid not null references public.profiles(id),
   recipient_id uuid not null references public.profiles(id),
   content text not null,
+  read_at timestamptz,
   created_at timestamptz not null default now()
 );
 
@@ -693,7 +694,17 @@ create policy "admin_direct_messages: admin sends to admin"
     and exists (select 1 from public.profiles p where p.id = recipient_id and p.role = 'admin')
   );
 
-grant select, insert on public.admin_direct_messages to authenticated;
+create policy "admin_direct_messages: recipient marks read"
+  on public.admin_direct_messages for update
+  using (public.is_admin() and recipient_id = auth.uid())
+  with check (public.is_admin() and recipient_id = auth.uid());
+
+grant select, insert, update on public.admin_direct_messages to authenticated;
+
+-- enable realtime on profiles too, so the pending-teacher-request bell
+-- updates live without polling (admin already sees every profile row
+-- per RLS, so this only ever reaches admin sessions)
+alter publication supabase_realtime add table public.profiles;
 
 -- enable realtime so messages appear instantly without polling
 alter publication supabase_realtime add table public.admin_group_messages;

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { AdminNotificationsProvider } from './contexts/AdminNotificationsContext';
 import { GuestProgressProvider } from './contexts/GuestProgressContext';
 import { Header } from './components/layout/Header';
 import { AnnouncementBar } from './components/layout/AnnouncementBar';
@@ -28,6 +29,7 @@ import './i18n/config';
 export default function App() {
   return (
     <AuthProvider>
+      <AdminNotificationsProvider>
       <GuestProgressProvider>
         <BrowserRouter basename={import.meta.env.BASE_URL}>
           <div className="min-h-screen bg-background">
@@ -81,6 +83,7 @@ export default function App() {
           </div>
         </BrowserRouter>
       </GuestProgressProvider>
+      </AdminNotificationsProvider>
     </AuthProvider>
   );
 }

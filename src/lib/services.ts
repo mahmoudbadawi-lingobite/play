@@ -318,6 +318,16 @@ export async function listPendingTeacherRequests() {
   }));
 }
 
+/** Fires on any profile change visible to this admin - used to keep the
+ * pending-teacher-request bell count live without polling. */
+export function subscribeToProfileChanges(onChange: () => void) {
+  const channel = supabase
+    .channel('admin_profile_watch')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => onChange())
+    .subscribe();
+  return () => { supabase.removeChannel(channel); };
+}
+
 export async function approveTeacher(uid: string): Promise<void> {
   await supabase.rpc('approve_teacher', { target_uid: uid });
 }

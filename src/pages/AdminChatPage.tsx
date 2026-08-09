@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useAdminNotifications } from '../contexts/AdminNotificationsContext';
 import { listAdmins, type SimpleProfile } from '../lib/services';
 import {
   getGroupMessages, sendGroupMessage, subscribeToGroupMessages,
   getDirectMessages, sendDirectMessage, subscribeToDirectMessages,
+  markDmThreadRead, getUnreadDmCountsBySender,
   type GroupMessage, type DirectMessage,
 } from '../lib/adminChatService';
 
@@ -11,30 +13,57 @@ type Thread = { type: 'group' } | { type: 'dm'; uid: string; name: string };
 
 export function AdminChatPage() {
   const { profile } = useAuth();
+  const { setActiveDmPartner, refreshUnreadDm } = useAdminNotifications();
   const [admins, setAdmins] = useState<SimpleProfile[]>([]);
   const [thread, setThread] = useState<Thread>({ type: 'group' });
   const [messages, setMessages] = useState<(GroupMessage | DirectMessage)[]>([]);
   const [input, setInput] = useState('');
   const [showSidebarOnMobile, setShowSidebarOnMobile] = useState(true);
+  const [unreadBySender, setUnreadBySender] = useState<Record<string, number>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     listAdmins().then((list) => setAdmins(list.filter((a) => a.uid !== profile?.uid)));
   }, [profile]);
 
+  const refreshUnreadBySender = () => {
+    if (!profile) return;
+    getUnreadDmCountsBySender(profile.uid).then(setUnreadBySender);
+  };
+
+  useEffect(() => { refreshUnreadBySender(); }, [profile]);
+
   useEffect(() => {
     if (!profile) return;
     let unsubscribe: () => void;
 
     if (thread.type === 'group') {
+      setActiveDmPartner(null);
       getGroupMessages().then(setMessages);
       unsubscribe = subscribeToGroupMessages((msg) => setMessages((m) => [...m, msg]));
     } else {
+      setActiveDmPartner(thread.uid);
+      markDmThreadRead(profile.uid, thread.uid).then(() => {
+        refreshUnreadDm();
+        refreshUnreadBySender();
+      });
       getDirectMessages(profile.uid, thread.uid).then(setMessages);
-      unsubscribe = subscribeToDirectMessages(profile.uid, thread.uid, (msg) => setMessages((m) => [...m, msg]));
+      unsubscribe = subscribeToDirectMessages(profile.uid, thread.uid, (msg) => {
+        setMessages((m) => [...m, msg]);
+        if (msg.senderId === thread.uid) {
+          markDmThreadRead(profile.uid, thread.uid).then(() => {
+            refreshUnreadDm();
+            refreshUnreadBySender();
+          });
+        }
+      });
     }
 
-    return () => unsubscribe?.();
+    return () => {
+      unsubscribe?.();
+      setActiveDmPartner(null);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [thread, profile]);
 
   useEffect(() => {
@@ -84,7 +113,12 @@ export function AdminChatPage() {
             }`}
           >
             {a.photoURL && <img src={a.photoURL} alt="" className="h-6 w-6 rounded-full" />}
-            {a.displayName}
+            <span className="flex-1">{a.displayName}</span>
+            {unreadBySender[a.uid] > 0 && (
+              <span className="flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white">
+                {unreadBySender[a.uid]}
+              </span>
+            )}
           </button>
         ))
       )}

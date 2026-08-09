@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAdminNotifications } from '../../contexts/AdminNotificationsContext';
 
 export function Header() {
   const { t, i18n } = useTranslation();
   const { profile, isGuest, signInWithGoogle, signOut } = useAuth();
+  const { unreadDmCount, pendingTeacherCount } = useAdminNotifications();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -28,8 +30,22 @@ export function Header() {
       )}
       {profile?.role === 'admin' && (
         <>
-          <Link to="/admin" onClick={() => setMenuOpen(false)} className="hover:text-secondary">{t('nav_admin')}</Link>
-          <Link to="/admin/chat" onClick={() => setMenuOpen(false)} className="hover:text-secondary">Admin Chat</Link>
+          <Link to="/admin" onClick={() => setMenuOpen(false)} className="relative flex items-center gap-1 hover:text-secondary">
+            🔔 {t('nav_admin')}
+            {pendingTeacherCount > 0 && (
+              <span className="flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white">
+                {pendingTeacherCount}
+              </span>
+            )}
+          </Link>
+          <Link to="/admin/chat" onClick={() => setMenuOpen(false)} className="relative flex items-center gap-1 hover:text-secondary">
+            Admin Chat
+            {unreadDmCount > 0 && (
+              <span className="flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white">
+                {unreadDmCount}
+              </span>
+            )}
+          </Link>
         </>
       )}
     </>
