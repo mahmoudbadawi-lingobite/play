@@ -3,13 +3,17 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAdminNotifications } from '../contexts/AdminNotificationsContext';
 import { listAdmins, type SimpleProfile } from '../lib/services';
 import {
-  getGroupMessages, sendGroupMessage, subscribeToGroupMessages,
-  getDirectMessages, sendDirectMessage, subscribeToDirectMessages,
+  getGroupMessages, sendGroupMessage, subscribeToGroupMessages, clearGroupChat,
+  getDirectMessages, sendDirectMessage, subscribeToDirectMessages, clearDmThread,
   markDmThreadRead, getUnreadDmCountsBySender,
   type GroupMessage, type DirectMessage,
 } from '../lib/adminChatService';
 
 type Thread = { type: 'group' } | { type: 'dm'; uid: string; name: string };
+
+function formatTimestamp(date: Date): string {
+  return date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
 
 export function AdminChatPage() {
   const { profile } = useAuth();
@@ -20,6 +24,7 @@ export function AdminChatPage() {
   const [input, setInput] = useState('');
   const [showSidebarOnMobile, setShowSidebarOnMobile] = useState(true);
   const [unreadBySender, setUnreadBySender] = useState<Record<string, number>>({});
+  const [clearing, setClearing] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -40,7 +45,10 @@ export function AdminChatPage() {
     if (thread.type === 'group') {
       setActiveDmPartner(null);
       getGroupMessages().then(setMessages);
-      unsubscribe = subscribeToGroupMessages((msg) => setMessages((m) => [...m, msg]));
+      unsubscribe = subscribeToGroupMessages(
+        (msg) => setMessages((m) => [...m, msg]),
+        () => setMessages([])
+      );
     } else {
       setActiveDmPartner(thread.uid);
       markDmThreadRead(profile.uid, thread.uid).then(() => {
@@ -48,15 +56,20 @@ export function AdminChatPage() {
         refreshUnreadBySender();
       });
       getDirectMessages(profile.uid, thread.uid).then(setMessages);
-      unsubscribe = subscribeToDirectMessages(profile.uid, thread.uid, (msg) => {
-        setMessages((m) => [...m, msg]);
-        if (msg.senderId === thread.uid) {
-          markDmThreadRead(profile.uid, thread.uid).then(() => {
-            refreshUnreadDm();
-            refreshUnreadBySender();
-          });
-        }
-      });
+      unsubscribe = subscribeToDirectMessages(
+        profile.uid,
+        thread.uid,
+        (msg) => {
+          setMessages((m) => [...m, msg]);
+          if (msg.senderId === thread.uid) {
+            markDmThreadRead(profile.uid, thread.uid).then(() => {
+              refreshUnreadDm();
+              refreshUnreadBySender();
+            });
+          }
+        },
+        () => getDirectMessages(profile.uid, thread.uid).then(setMessages)
+      );
     }
 
     return () => {
@@ -81,12 +94,35 @@ export function AdminChatPage() {
     }
   };
 
+  const handleClear = async () => {
+    if (!profile) return;
+    const label = thread.type === 'group' ? 'the group chat for every admin' : `your chat with ${thread.name}`;
+    if (!confirm(`Clear ${label}? This can't be undone.`)) return;
+    setClearing(true);
+    try {
+      if (thread.type === 'group') {
+        await clearGroupChat();
+      } else {
+        await clearDmThread(profile.uid, thread.uid);
+      }
+      setMessages([]);
+      refreshUnreadDm();
+      refreshUnreadBySender();
+    } catch (err: any) {
+      alert(err.message ?? 'Could not clear chat.');
+    } finally {
+      setClearing(false);
+    }
+  };
+
   const selectThread = (t: Thread) => {
     setThread(t);
     setShowSidebarOnMobile(false);
   };
 
   if (!profile) return null;
+
+  const canClearThisChat = thread.type === 'dm' || (thread.type === 'group' && profile.isProtected);
 
   const sidebar = (
     <div className="w-full shrink-0 border-border sm:w-64 sm:border-e">
@@ -127,27 +163,39 @@ export function AdminChatPage() {
 
   const conversation = (
     <div className="flex min-w-0 flex-1 flex-col">
-      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-        <button onClick={() => setShowSidebarOnMobile(true)} className="text-primary sm:hidden">←</button>
-        <p className="font-display font-semibold text-primary">
-          {thread.type === 'group' ? '👥 Admin Group Chat' : thread.name}
-        </p>
+      <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowSidebarOnMobile(true)} className="text-primary sm:hidden">←</button>
+          <p className="font-display font-semibold text-primary">
+            {thread.type === 'group' ? '👥 Admin Group Chat' : thread.name}
+          </p>
+        </div>
+        {canClearThisChat && messages.length > 0 && (
+          <button
+            onClick={handleClear}
+            disabled={clearing}
+            className="text-xs font-semibold text-destructive hover:opacity-80 disabled:opacity-40"
+          >
+            {clearing ? 'Clearing...' : 'Clear chat'}
+          </button>
+        )}
       </div>
 
-      <div className="flex-1 space-y-2 overflow-y-auto px-4 py-3" style={{ maxHeight: '55vh' }}>
+      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3" style={{ maxHeight: '55vh' }}>
         {messages.length === 0 ? (
           <p className="mt-4 text-center text-sm text-muted-foreground">No messages yet - say hello.</p>
         ) : (
           messages.map((m) => {
             const isMine = m.senderId === profile.uid;
             return (
-              <div key={m.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+              <div key={m.id} className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
                 <div className={`max-w-[75%] rounded-xl px-3 py-2 text-sm ${isMine ? 'bg-primary text-primary-foreground' : 'bg-muted text-primary'}`}>
                   {thread.type === 'group' && !isMine && (
                     <p className="mb-0.5 text-xs font-semibold text-secondary">{(m as GroupMessage).senderName}</p>
                   )}
                   <p>{m.content}</p>
                 </div>
+                <span className="mt-0.5 px-1 text-[10px] text-muted-foreground">{formatTimestamp(m.createdAt)}</span>
               </div>
             );
           })

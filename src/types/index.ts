@@ -19,6 +19,7 @@ export interface UserProfile {
   classIds: string[];
   consentGiven: boolean;
   parentEmail?: string;
+  isProtected: boolean;
 }
 
 // --- Content model ---

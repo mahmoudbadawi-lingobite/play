@@ -54,7 +54,7 @@ export async function sendGroupMessage(senderId: string, senderName: string, con
   await supabase.from('admin_group_messages').insert({ sender_id: senderId, sender_name: senderName, content });
 }
 
-export function subscribeToGroupMessages(onInsert: (msg: GroupMessage) => void) {
+export function subscribeToGroupMessages(onInsert: (msg: GroupMessage) => void, onClear?: () => void) {
   const channel = supabase
     .channel('admin_group_messages_changes')
     .on(
@@ -62,8 +62,18 @@ export function subscribeToGroupMessages(onInsert: (msg: GroupMessage) => void) 
       { event: 'INSERT', schema: 'public', table: 'admin_group_messages' },
       (payload) => onInsert(rowToGroupMessage(payload.new))
     )
+    .on(
+      'postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'admin_group_messages' },
+      () => onClear?.()
+    )
     .subscribe();
   return () => { supabase.removeChannel(channel); };
+}
+
+export async function clearGroupChat(): Promise<void> {
+  const { error } = await supabase.rpc('clear_group_chat');
+  if (error) throw error;
 }
 
 // ------------------------------------------------------------------
@@ -85,7 +95,11 @@ export async function sendDirectMessage(senderId: string, recipientId: string, c
   await supabase.from('admin_direct_messages').insert({ sender_id: senderId, recipient_id: recipientId, content });
 }
 
-export function subscribeToDirectMessages(myUid: string, otherUid: string, onInsert: (msg: DirectMessage) => void) {
+export function subscribeToDirectMessages(
+  myUid: string, otherUid: string,
+  onInsert: (msg: DirectMessage) => void,
+  onClear?: () => void
+) {
   const channel = supabase
     .channel(`admin_dm_${[myUid, otherUid].sort().join('_')}`)
     .on(
@@ -99,8 +113,21 @@ export function subscribeToDirectMessages(myUid: string, otherUid: string, onIns
         if (isThisConversation) onInsert(msg);
       }
     )
+    .on(
+      'postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'admin_direct_messages' },
+      () => onClear?.()
+    )
     .subscribe();
   return () => { supabase.removeChannel(channel); };
+}
+
+export async function clearDmThread(myUid: string, otherUid: string): Promise<void> {
+  const { error } = await supabase
+    .from('admin_direct_messages')
+    .delete()
+    .or(`and(sender_id.eq.${myUid},recipient_id.eq.${otherUid}),and(sender_id.eq.${otherUid},recipient_id.eq.${myUid})`);
+  if (error) throw error;
 }
 
 export async function markDmThreadRead(myUid: string, otherUid: string): Promise<void> {

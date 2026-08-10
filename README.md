@@ -116,6 +116,20 @@ it into that shape. Any set with enough items (and images, for Picture
 Match) unlocks the games that can use it; nothing about the content changes
 per game.
 
+## Clear chat & main-admin-only controls
+
+- **Clear chat**: either participant in a DM can clear that conversation
+  - it's deleted for both sides, not just hidden for one. Clearing the
+  **group chat** is restricted to the main (protected) admin only -
+  enforced server-side (no DELETE policy exists on the group table at
+  all; the `clear_group_chat()` function is the only path, and it checks
+  `is_main_admin()` itself).
+- **Removing admin access** is now main-admin-only too - a regular
+  (non-protected) admin can add new admins, but can no longer remove
+  *any* admin, protected or not. Only an account with `is_protected =
+  true` can demote another admin.
+- Every chat message now shows its date and time underneath.
+
 ## Admin notifications
 
 Two live, Realtime-driven notifications, both visible only to admins:

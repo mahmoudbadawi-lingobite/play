@@ -53,6 +53,11 @@ returns boolean language sql stable security definer as $$
   select exists (select 1 from public.profiles where id = auth.uid() and role = 'teacher');
 $$;
 
+create or replace function public.is_main_admin()
+returns boolean language sql stable security definer as $$
+  select exists (select 1 from public.profiles where id = auth.uid() and role = 'admin' and is_protected = true);
+$$;
+
 -- ------------------------------------------------------------
 -- profiles: policies + privilege-protecting trigger
 -- ------------------------------------------------------------
@@ -632,6 +637,9 @@ begin
   if not public.is_admin() then
     raise exception 'not authorized';
   end if;
+  if not public.is_main_admin() then
+    raise exception 'only the main admin can remove admin access';
+  end if;
   if target_uid = auth.uid() then
     raise exception 'cannot remove your own admin access';
   end if;
@@ -699,12 +707,29 @@ create policy "admin_direct_messages: recipient marks read"
   using (public.is_admin() and recipient_id = auth.uid())
   with check (public.is_admin() and recipient_id = auth.uid());
 
-grant select, insert, update on public.admin_direct_messages to authenticated;
+create policy "admin_direct_messages: participants can clear"
+  on public.admin_direct_messages for delete
+  using (public.is_admin() and (sender_id = auth.uid() or recipient_id = auth.uid()));
+
+grant select, insert, update, delete on public.admin_direct_messages to authenticated;
 
 -- enable realtime on profiles too, so the pending-teacher-request bell
 -- updates live without polling (admin already sees every profile row
 -- per RLS, so this only ever reaches admin sessions)
 alter publication supabase_realtime add table public.profiles;
+
+-- Clearing the group chat is main-admin only. Deliberately no DELETE
+-- policy exists on admin_group_messages, so this security-definer
+-- function is the *only* way any row in it can ever be removed.
+create or replace function public.clear_group_chat()
+returns void language plpgsql security definer as $$
+begin
+  if not public.is_main_admin() then
+    raise exception 'only the main admin can clear the group chat';
+  end if;
+  delete from public.admin_group_messages;
+end;
+$$;
 
 -- enable realtime so messages appear instantly without polling
 alter publication supabase_realtime add table public.admin_group_messages;

@@ -31,6 +31,7 @@ function rowToProfile(row: any): UserProfile {
     classIds: [], // populated separately where needed (class_students join table)
     consentGiven: row.consent_given,
     parentEmail: row.parent_email ?? undefined,
+    isProtected: row.is_protected ?? false,
     createdAt: row.created_at ? new Date(row.created_at) : new Date(),
     lastLoginAt: row.last_login_at ? new Date(row.last_login_at) : new Date(),
   };

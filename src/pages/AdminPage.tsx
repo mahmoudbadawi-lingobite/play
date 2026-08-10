@@ -269,10 +269,12 @@ export function AdminPage() {
                   <span className="text-xs text-muted-foreground">(you)</span>
                 ) : a.isProtected ? (
                   <span className="text-xs text-muted-foreground">Protected</span>
-                ) : (
+                ) : profile?.isProtected ? (
                   <button onClick={() => handleDemote(a.uid)} className="rounded-lg border border-destructive px-2.5 py-1 text-xs font-semibold text-destructive hover:bg-destructive/10">
                     Remove admin
                   </button>
+                ) : (
+                  <span className="text-xs text-muted-foreground">Only the main admin can remove</span>
                 )}
               </div>
             ))}
