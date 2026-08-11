@@ -1,73 +1,64 @@
-# Escape Room: easier clue creation (locate hints + JSON templates + draggable pins)
+# Admin Chat: seen indicators + voice notes
 
-## Problem this fixes
-Each hotspot only had one text field (`clueText`), shown BOTH before the click
-(as the "find it" clue) AND after the click (as the quiz question). That's why
-a question like "Which spelling is correct?" gave the player zero information
-about where to click before answering — the screenshot you sent.
+## What's new
 
-## What changed
+### 1. Seen indicators
+- **DMs**: reuses the existing `read_at` column - no schema change needed
+  beyond exposing it. Once the recipient opens the thread, small avatar
+  stamps appear under your sent messages.
+- **Group chat**: new `admin_group_read_receipts` table stores a single
+  "last opened the group chat at ___" timestamp per admin. Under each of
+  your messages, a small avatar appears for every other admin whose
+  timestamp is at/after that message - live, via realtime.
 
-1. **Locate hint vs. question, split apart.** Every hotspot now has:
-   - `locateHint` — shown BEFORE the click, a short visual/positional
-     description ("the pink spiral shell near the bottom of the steps") that
-     helps the player find the object, without giving away the answer.
-   - `clueText` — unchanged field name, but now purely the QUESTION, shown
-     only AFTER they click.
+### 2. Voice notes
+- New 🎤 button next to the message input (both group chat and DMs).
+- Click to start recording (red pulsing timer) → click Stop → a preview
+  player appears with **Discard** / **Send** buttons, so nothing sends
+  by accident.
+- Uploads reuse your existing Cloudinary integration (same one used for
+  escape room images), just with the `'video'` resource type - Cloudinary
+  accepts audio uploads through that same endpoint.
+- Voice messages render as a small audio player with a duration label in
+  the chat bubble instead of text.
 
-2. **AI prompt generator rewritten.** The 3rd prompt (clues) now forces the
-   AI to produce both fields per object, plus asks the AI to look at the
-   background image (attached by the teacher) and estimate each object's
-   x/y position. Output is strict JSON, not free text.
-
-3. **JSON template import.** Teachers can:
-   - Paste the AI's JSON reply into a `.json` file and upload it directly, or
-   - Download a blank template (button in the prompt generator) and fill it
-     in by hand, no AI needed.
-   - On upload, any item with AI-estimated coordinates is placed immediately
-     as a draggable pin; items without coordinates queue up so the teacher
-     just clicks the matching object in the image to drop each one.
-
-4. **Draggable pins.** All hotspot markers (imported or manually placed) can
-   now be dragged to fine-tune their position, instead of only being
-   click-once-and-done.
-
-5. **Room title defaults to the theme.** On the Create page, the title field
-   auto-fills with whichever theme button is selected, until the teacher
-   types their own title — then it stops overwriting it.
+**⚠️ Please check your Cloudinary upload preset** (Cloudinary dashboard →
+Settings → Upload → your unsigned preset) allows audio/video formats. If
+it's currently restricted to images only, voice note uploads will fail
+with a Cloudinary error until that's adjusted.
 
 ## Files in this delivery
 
 ### New files
-- `src/lib/hotspotTemplate.ts` — parses/validates the JSON template, builds
-  a blank template for download.
-- `supabase/hotspot_locate_hint_patch.sql` — **run this once in the Supabase
-  SQL editor** (not part of the app deploy) to add the `locate_hint` column
-  to your existing `escape_room_hotspots` table.
+- `src/lib/useVoiceRecorder.ts` — hook wrapping the browser's
+  `MediaRecorder` API (start/stop/discard, timer, error handling).
+- `supabase/admin_chat_seen_and_voice_patch.sql` — **run this once in the
+  Supabase SQL editor.** Adds `audio_url` / `audio_duration_seconds`
+  columns to both message tables, creates the group read-receipts table
+  with RLS policies, and adds it to the realtime publication. Safe to
+  re-run (uses `if not exists` / `drop policy if exists`).
 
-### Full file replacements (replace the existing file with this one)
-- `src/lib/escapeRoomService.ts`
-- `src/components/escapeRoom/HotspotEditor.tsx`
-- `src/components/escapeRoom/PromptGeneratorPanel.tsx`
-- `src/pages/EscapeRoomPlayPage.tsx`
-- `src/pages/CreateEscapeRoomPage.tsx`
-- `src/pages/EditEscapeRoomPage.tsx`
-- `src/types/index.ts` — only the `EscapeRoomHotspot` interface changed
-  (added `locateHint: string;`); rest of the file is untouched, included
-  in full for convenience.
-- `supabase/schema.sql` — only the `escape_room_hotspots` table definition
-  changed (added `locate_hint text not null default '',`); rest of the file
-  is untouched, included in full for convenience.
+### Full file replacements
+- `src/lib/adminChatService.ts` — added voice note params to
+  `sendGroupMessage`/`sendDirectMessage`, exposed `audioUrl`/
+  `audioDurationSeconds`/`readAt` on both message types, added
+  `markGroupChatRead`, `getGroupReadReceipts`,
+  `subscribeToGroupReadReceipts`, and an `onUpdate` callback on
+  `subscribeToDirectMessages` (needed so a message's seen-status updates
+  live once the recipient reads it).
+- `src/pages/AdminChatPage.tsx` — recording UI, seen-avatar stamps,
+  voice note playback.
+- `supabase/schema.sql` — kept in sync with the same table/column changes
+  as the patch file (only matters for brand-new database setups).
 
 ## Deploy steps
-1. Run `supabase/hotspot_locate_hint_patch.sql` in the Supabase SQL editor
-   first (safe — uses `add column if not exists`).
-2. Upload the other files to their matching paths via GitHub's web UI,
-   overwriting the existing ones.
-3. `schema.sql` doesn't need to run anywhere for existing databases — it's
-   just kept in sync for future fresh setups.
+1. Run `supabase/admin_chat_seen_and_voice_patch.sql` in the Supabase SQL
+   editor first.
+2. Double-check your Cloudinary unsigned upload preset allows audio/video
+   formats (see warning above).
+3. Upload the other files to their matching paths via GitHub's web UI.
 
 ## Verified before delivery
 - `tsc -b` — clean
 - `npm run build` — clean
-- `oxlint src` — 0 warnings, 0 errors across all 51 source files
+- `oxlint src` — 0 warnings, 0 errors across all 52 source files

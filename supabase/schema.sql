@@ -661,6 +661,8 @@ create table public.admin_group_messages (
   sender_id uuid not null references public.profiles(id),
   sender_name text not null,
   content text not null,
+  audio_url text,
+  audio_duration_seconds integer,
   created_at timestamptz not null default now()
 );
 
@@ -683,6 +685,8 @@ create table public.admin_direct_messages (
   sender_id uuid not null references public.profiles(id),
   recipient_id uuid not null references public.profiles(id),
   content text not null,
+  audio_url text,
+  audio_duration_seconds integer,
   read_at timestamptz,
   created_at timestamptz not null default now()
 );
@@ -713,6 +717,35 @@ create policy "admin_direct_messages: participants can clear"
   using (public.is_admin() and (sender_id = auth.uid() or recipient_id = auth.uid()));
 
 grant select, insert, update, delete on public.admin_direct_messages to authenticated;
+
+-- Group chat "seen" tracking - one row per admin holding the timestamp of
+-- the last time they opened the group chat. A message is considered seen
+-- by an admin once that admin's last_read_at is at/after the message's
+-- created_at. Everyone can read everyone's cursor (so avatars can be
+-- shown under a message), but an admin can only ever write their own row.
+create table public.admin_group_read_receipts (
+  admin_id uuid primary key references public.profiles(id) on delete cascade,
+  last_read_at timestamptz not null default now()
+);
+
+alter table public.admin_group_read_receipts enable row level security;
+
+create policy "admin_group_read_receipts: admins read all"
+  on public.admin_group_read_receipts for select
+  using (public.is_admin());
+
+create policy "admin_group_read_receipts: admin upserts own row"
+  on public.admin_group_read_receipts for insert
+  with check (public.is_admin() and admin_id = auth.uid());
+
+create policy "admin_group_read_receipts: admin updates own row"
+  on public.admin_group_read_receipts for update
+  using (public.is_admin() and admin_id = auth.uid())
+  with check (public.is_admin() and admin_id = auth.uid());
+
+grant select, insert, update on public.admin_group_read_receipts to authenticated;
+
+alter publication supabase_realtime add table public.admin_group_read_receipts;
 
 -- enable realtime on profiles too, so the pending-teacher-request bell
 -- updates live without polling (admin already sees every profile row

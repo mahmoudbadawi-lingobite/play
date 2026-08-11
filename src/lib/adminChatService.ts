@@ -5,6 +5,8 @@ export interface GroupMessage {
   senderId: string;
   senderName: string;
   content: string;
+  audioUrl: string | null;
+  audioDurationSeconds: number | null;
   createdAt: Date;
 }
 
@@ -13,6 +15,9 @@ export interface DirectMessage {
   senderId: string;
   recipientId: string;
   content: string;
+  audioUrl: string | null;
+  audioDurationSeconds: number | null;
+  readAt: Date | null;
   createdAt: Date;
 }
 
@@ -22,6 +27,8 @@ function rowToGroupMessage(row: any): GroupMessage {
     senderId: row.sender_id,
     senderName: row.sender_name,
     content: row.content,
+    audioUrl: row.audio_url ?? null,
+    audioDurationSeconds: row.audio_duration_seconds ?? null,
     createdAt: new Date(row.created_at),
   };
 }
@@ -32,8 +39,16 @@ function rowToDirectMessage(row: any): DirectMessage {
     senderId: row.sender_id,
     recipientId: row.recipient_id,
     content: row.content,
+    audioUrl: row.audio_url ?? null,
+    audioDurationSeconds: row.audio_duration_seconds ?? null,
+    readAt: row.read_at ? new Date(row.read_at) : null,
     createdAt: new Date(row.created_at),
   };
+}
+
+export interface VoiceNoteInput {
+  audioUrl: string;
+  audioDurationSeconds: number;
 }
 
 // ------------------------------------------------------------------
@@ -50,8 +65,19 @@ export async function getGroupMessages(): Promise<GroupMessage[]> {
   return data.map(rowToGroupMessage);
 }
 
-export async function sendGroupMessage(senderId: string, senderName: string, content: string): Promise<void> {
-  await supabase.from('admin_group_messages').insert({ sender_id: senderId, sender_name: senderName, content });
+export async function sendGroupMessage(
+  senderId: string,
+  senderName: string,
+  content: string,
+  voiceNote?: VoiceNoteInput
+): Promise<void> {
+  await supabase.from('admin_group_messages').insert({
+    sender_id: senderId,
+    sender_name: senderName,
+    content,
+    audio_url: voiceNote?.audioUrl ?? null,
+    audio_duration_seconds: voiceNote?.audioDurationSeconds ?? null,
+  });
 }
 
 export function subscribeToGroupMessages(onInsert: (msg: GroupMessage) => void, onClear?: () => void) {
@@ -76,6 +102,40 @@ export async function clearGroupChat(): Promise<void> {
   if (error) throw error;
 }
 
+// --- Group chat "seen" tracking ---
+// Each admin has a single "last_read_at" cursor. A message is treated as
+// seen by an admin once that admin's cursor is at/after the message's
+// created_at.
+
+export async function markGroupChatRead(adminId: string): Promise<void> {
+  await supabase
+    .from('admin_group_read_receipts')
+    .upsert({ admin_id: adminId, last_read_at: new Date().toISOString() });
+}
+
+export async function getGroupReadReceipts(): Promise<Record<string, Date>> {
+  const { data, error } = await supabase.from('admin_group_read_receipts').select('*');
+  if (error || !data) return {};
+  const map: Record<string, Date> = {};
+  for (const row of data) map[row.admin_id] = new Date(row.last_read_at);
+  return map;
+}
+
+export function subscribeToGroupReadReceipts(onChange: (adminId: string, lastReadAt: Date) => void) {
+  const channel = supabase
+    .channel('admin_group_read_receipts_changes')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'admin_group_read_receipts' },
+      (payload) => {
+        const row = payload.new as any;
+        if (row?.admin_id) onChange(row.admin_id, new Date(row.last_read_at));
+      }
+    )
+    .subscribe();
+  return () => { supabase.removeChannel(channel); };
+}
+
 // ------------------------------------------------------------------
 // Direct messages (1:1 between two specific admins)
 // ------------------------------------------------------------------
@@ -91,14 +151,26 @@ export async function getDirectMessages(myUid: string, otherUid: string): Promis
   return data.map(rowToDirectMessage);
 }
 
-export async function sendDirectMessage(senderId: string, recipientId: string, content: string): Promise<void> {
-  await supabase.from('admin_direct_messages').insert({ sender_id: senderId, recipient_id: recipientId, content });
+export async function sendDirectMessage(
+  senderId: string,
+  recipientId: string,
+  content: string,
+  voiceNote?: VoiceNoteInput
+): Promise<void> {
+  await supabase.from('admin_direct_messages').insert({
+    sender_id: senderId,
+    recipient_id: recipientId,
+    content,
+    audio_url: voiceNote?.audioUrl ?? null,
+    audio_duration_seconds: voiceNote?.audioDurationSeconds ?? null,
+  });
 }
 
 export function subscribeToDirectMessages(
   myUid: string, otherUid: string,
   onInsert: (msg: DirectMessage) => void,
-  onClear?: () => void
+  onClear?: () => void,
+  onUpdate?: (msg: DirectMessage) => void
 ) {
   const channel = supabase
     .channel(`admin_dm_${[myUid, otherUid].sort().join('_')}`)
@@ -111,6 +183,17 @@ export function subscribeToDirectMessages(
           (msg.senderId === myUid && msg.recipientId === otherUid) ||
           (msg.senderId === otherUid && msg.recipientId === myUid);
         if (isThisConversation) onInsert(msg);
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'admin_direct_messages' },
+      (payload) => {
+        const msg = rowToDirectMessage(payload.new);
+        const isThisConversation =
+          (msg.senderId === myUid && msg.recipientId === otherUid) ||
+          (msg.senderId === otherUid && msg.recipientId === myUid);
+        if (isThisConversation) onUpdate?.(msg);
       }
     )
     .on(

@@ -2,10 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdminNotifications } from '../contexts/AdminNotificationsContext';
 import { listAdmins, type SimpleProfile } from '../lib/services';
+import { uploadToCloudinary } from '../lib/cloudinary';
+import { useVoiceRecorder } from '../lib/useVoiceRecorder';
 import {
   getGroupMessages, sendGroupMessage, subscribeToGroupMessages, clearGroupChat,
   getDirectMessages, sendDirectMessage, subscribeToDirectMessages, clearDmThread,
   markDmThreadRead, getUnreadDmCountsBySender,
+  markGroupChatRead, getGroupReadReceipts, subscribeToGroupReadReceipts,
   type GroupMessage, type DirectMessage,
 } from '../lib/adminChatService';
 
@@ -13,6 +16,12 @@ type Thread = { type: 'group' } | { type: 'dm'; uid: string; name: string };
 
 function formatTimestamp(date: Date): string {
   return date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+function formatDuration(totalSeconds: number): string {
+  const m = Math.floor(totalSeconds / 60);
+  const s = Math.floor(totalSeconds % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 export function AdminChatPage() {
@@ -25,7 +34,10 @@ export function AdminChatPage() {
   const [showSidebarOnMobile, setShowSidebarOnMobile] = useState(true);
   const [unreadBySender, setUnreadBySender] = useState<Record<string, number>>({});
   const [clearing, setClearing] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [groupReadReceipts, setGroupReadReceipts] = useState<Record<string, Date>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
+  const recorder = useVoiceRecorder();
 
   useEffect(() => {
     listAdmins().then((list) => setAdmins(list.filter((a) => a.uid !== profile?.uid)));
@@ -38,6 +50,16 @@ export function AdminChatPage() {
 
   useEffect(() => { refreshUnreadBySender(); }, [profile]);
 
+  // Everyone's "last read the group chat at" cursor, kept live so seen
+  // avatars appear under a message as soon as another admin catches up.
+  useEffect(() => {
+    getGroupReadReceipts().then(setGroupReadReceipts);
+    const unsub = subscribeToGroupReadReceipts((adminId, lastReadAt) => {
+      setGroupReadReceipts((prev) => ({ ...prev, [adminId]: lastReadAt }));
+    });
+    return unsub;
+  }, []);
+
   useEffect(() => {
     if (!profile) return;
     let unsubscribe: () => void;
@@ -45,8 +67,17 @@ export function AdminChatPage() {
     if (thread.type === 'group') {
       setActiveDmPartner(null);
       getGroupMessages().then(setMessages);
+      markGroupChatRead(profile.uid).then(() =>
+        setGroupReadReceipts((prev) => ({ ...prev, [profile.uid]: new Date() }))
+      );
       unsubscribe = subscribeToGroupMessages(
-        (msg) => setMessages((m) => [...m, msg]),
+        (msg) => {
+          setMessages((m) => [...m, msg]);
+          // Viewing the thread live counts as reading it too.
+          markGroupChatRead(profile.uid).then(() =>
+            setGroupReadReceipts((prev) => ({ ...prev, [profile.uid]: new Date() }))
+          );
+        },
         () => setMessages([])
       );
     } else {
@@ -68,7 +99,11 @@ export function AdminChatPage() {
             });
           }
         },
-        () => getDirectMessages(profile.uid, thread.uid).then(setMessages)
+        () => getDirectMessages(profile.uid, thread.uid).then(setMessages),
+        (updatedMsg) => {
+          // e.g. read_at flipped once the other admin opened the thread
+          setMessages((m) => m.map((existing) => (existing.id === updatedMsg.id ? updatedMsg : existing)));
+        }
       );
     }
 
@@ -83,6 +118,12 @@ export function AdminChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  useEffect(() => {
+    // Clean up mic/preview if the admin navigates away mid-recording.
+    return () => recorder.discard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thread]);
+
   const handleSend = async () => {
     if (!profile || !input.trim()) return;
     const content = input.trim();
@@ -91,6 +132,26 @@ export function AdminChatPage() {
       await sendGroupMessage(profile.uid, profile.displayName ?? 'Admin', content);
     } else {
       await sendDirectMessage(profile.uid, thread.uid, content);
+    }
+  };
+
+  const handleSendVoiceNote = async () => {
+    if (!profile || !recorder.audioBlob) return;
+    setSending(true);
+    try {
+      const file = new File([recorder.audioBlob], `voice-note-${Date.now()}.webm`, { type: recorder.audioBlob.type || 'audio/webm' });
+      const audioUrl = await uploadToCloudinary(file, 'video');
+      const voiceNote = { audioUrl, audioDurationSeconds: recorder.seconds };
+      if (thread.type === 'group') {
+        await sendGroupMessage(profile.uid, profile.displayName ?? 'Admin', '', voiceNote);
+      } else {
+        await sendDirectMessage(profile.uid, thread.uid, '', voiceNote);
+      }
+      recorder.discard();
+    } catch (err: any) {
+      alert(err.message ?? 'Could not send the voice note.');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -116,6 +177,7 @@ export function AdminChatPage() {
   };
 
   const selectThread = (t: Thread) => {
+    recorder.discard();
     setThread(t);
     setShowSidebarOnMobile(false);
   };
@@ -123,6 +185,18 @@ export function AdminChatPage() {
   if (!profile) return null;
 
   const canClearThisChat = thread.type === 'dm' || (thread.type === 'group' && profile.isProtected);
+
+  // Which other admins have "seen" a given message (their group read
+  // cursor is at/after the message's timestamp). Only relevant for
+  // messages I sent - shown as small avatar stamps underneath.
+  const seenByForGroupMessage = (msg: GroupMessage): SimpleProfile[] => {
+    return admins.filter((a) => {
+      const lastRead = groupReadReceipts[a.uid];
+      return lastRead && lastRead.getTime() >= msg.createdAt.getTime();
+    });
+  };
+
+  const dmPartnerAvatar = thread.type === 'dm' ? admins.find((a) => a.uid === thread.uid) : null;
 
   const sidebar = (
     <div className="w-full shrink-0 border-border sm:w-64 sm:border-e">
@@ -187,15 +261,64 @@ export function AdminChatPage() {
         ) : (
           messages.map((m) => {
             const isMine = m.senderId === profile.uid;
+            const isVoiceNote = !!m.audioUrl;
+
+            // "Seen by" avatars - only shown under my own messages.
+            let seenAvatars: SimpleProfile[] = [];
+            if (isMine) {
+              if (thread.type === 'group') {
+                seenAvatars = seenByForGroupMessage(m as GroupMessage);
+              } else {
+                const dm = m as DirectMessage;
+                if (dm.readAt && dmPartnerAvatar) seenAvatars = [dmPartnerAvatar];
+              }
+            }
+
             return (
               <div key={m.id} className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
                 <div className={`max-w-[75%] rounded-xl px-3 py-2 text-sm ${isMine ? 'bg-primary text-primary-foreground' : 'bg-muted text-primary'}`}>
                   {thread.type === 'group' && !isMine && (
                     <p className="mb-0.5 text-xs font-semibold text-secondary">{(m as GroupMessage).senderName}</p>
                   )}
-                  <p>{m.content}</p>
+                  {isVoiceNote ? (
+                    <div className="flex items-center gap-2">
+                      <span>🎤</span>
+                      <audio controls src={m.audioUrl ?? undefined} className="h-8 max-w-[220px]" />
+                      {m.audioDurationSeconds != null && (
+                        <span className="text-[10px] opacity-80">{formatDuration(m.audioDurationSeconds)}</span>
+                      )}
+                    </div>
+                  ) : (
+                    <p>{m.content}</p>
+                  )}
                 </div>
-                <span className="mt-0.5 px-1 text-[10px] text-muted-foreground">{formatTimestamp(m.createdAt)}</span>
+
+                <div className="mt-0.5 flex items-center gap-1 px-1">
+                  <span className="text-[10px] text-muted-foreground">{formatTimestamp(m.createdAt)}</span>
+                  {seenAvatars.length > 0 && (
+                    <span className="ms-1 flex -space-x-1.5">
+                      {seenAvatars.map((a) =>
+                        a.photoURL ? (
+                          <img
+                            key={a.uid}
+                            src={a.photoURL}
+                            alt={`Seen by ${a.displayName}`}
+                            title={`Seen by ${a.displayName}`}
+                            className="h-3.5 w-3.5 rounded-full border border-background"
+                          />
+                        ) : (
+                          <span
+                            key={a.uid}
+                            title={`Seen by ${a.displayName}`}
+                            className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-background bg-secondary text-[7px] font-bold text-secondary-foreground"
+                          >
+                            {(a.displayName ?? '?').charAt(0).toUpperCase()}
+                          </span>
+                        )
+                      )}
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })
@@ -203,17 +326,56 @@ export function AdminChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="flex gap-2 border-t border-border p-3">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          placeholder="Type a message..."
-          className="flex-1 rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary"
-        />
-        <button onClick={handleSend} disabled={!input.trim()} className="rounded-lg bg-secondary px-4 py-2 text-sm font-semibold text-secondary-foreground disabled:opacity-40">
-          Send
-        </button>
+      <div className="border-t border-border p-3">
+        {recorder.error && <p className="mb-2 text-xs font-medium text-destructive">{recorder.error}</p>}
+
+        {recorder.state === 'recording' ? (
+          <div className="flex items-center gap-3 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2">
+            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-destructive" />
+            <span className="flex-1 text-sm font-medium text-primary">Recording... {formatDuration(recorder.seconds)}</span>
+            <button onClick={recorder.stop} className="rounded-lg bg-destructive px-3 py-1.5 text-xs font-semibold text-white">
+              Stop
+            </button>
+          </div>
+        ) : recorder.state === 'stopped' && recorder.audioPreviewUrl ? (
+          <div className="flex items-center gap-2 rounded-lg border border-secondary/40 bg-secondary/5 px-3 py-2">
+            <audio controls src={recorder.audioPreviewUrl} className="h-8 flex-1" />
+            <button
+              onClick={recorder.discard}
+              disabled={sending}
+              className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-primary/70 disabled:opacity-40"
+            >
+              Discard
+            </button>
+            <button
+              onClick={handleSendVoiceNote}
+              disabled={sending}
+              className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground disabled:opacity-40"
+            >
+              {sending ? 'Sending...' : 'Send'}
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              placeholder="Type a message..."
+              className="flex-1 rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary"
+            />
+            <button
+              onClick={recorder.start}
+              title="Record a voice note"
+              className="rounded-lg border border-border px-3 py-2 text-sm text-primary hover:bg-muted/50"
+            >
+              🎤
+            </button>
+            <button onClick={handleSend} disabled={!input.trim()} className="rounded-lg bg-secondary px-4 py-2 text-sm font-semibold text-secondary-foreground disabled:opacity-40">
+              Send
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
