@@ -242,7 +242,8 @@ export function EscapeRoomPlayPage() {
       </div>
 
       <div className="card-surface mt-4 p-4">
-        <p className="mb-3 font-display text-lg text-primary">{current?.clueText}</p>
+        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-secondary">🔍 Find this</p>
+        <p className="mb-3 font-display text-lg text-primary">{current?.locateHint || current?.clueText}</p>
 
         <div onClick={handleImageClick} className="relative w-full cursor-crosshair overflow-hidden rounded-xl border border-border">
           <img src={room.imageUrl} alt="" className="block w-full select-none" draggable={false} />
@@ -261,7 +262,7 @@ export function EscapeRoomPlayPage() {
 
         {unlocked && current && (
           <div className="mt-4 rounded-lg border border-secondary bg-secondary/10 p-4">
-            <p className="mb-2 text-sm font-semibold text-primary">Found it! Now answer to unlock it:</p>
+            <p className="mb-2 text-sm font-semibold text-primary">Found it! ❓ Answer to unlock it:</p>
             <p className="mb-3 text-primary">{current.clueText}</p>
 
             {current.answerMode === 'type' ? (

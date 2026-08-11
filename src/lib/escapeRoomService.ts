@@ -25,6 +25,7 @@ function rowToHotspot(row: any): EscapeRoomHotspot {
     xPercent: Number(row.x_percent),
     yPercent: Number(row.y_percent),
     radiusPercent: Number(row.radius_percent),
+    locateHint: row.locate_hint ?? '',
     clueText: row.clue_text,
     answerMode: row.answer_mode,
     correctAnswer: row.correct_answer,
@@ -36,6 +37,7 @@ export interface HotspotInput {
   xPercent: number;
   yPercent: number;
   radiusPercent?: number;
+  locateHint: string;
   clueText: string;
   answerMode: AnswerMode;
   correctAnswer: string;
@@ -88,6 +90,7 @@ export async function createEscapeRoom(input: {
     x_percent: h.xPercent,
     y_percent: h.yPercent,
     radius_percent: h.radiusPercent ?? 8,
+    locate_hint: h.locateHint,
     clue_text: h.clueText,
     answer_mode: h.answerMode,
     correct_answer: h.correctAnswer,
@@ -128,6 +131,7 @@ export async function updateEscapeRoom(id: string, input: {
       x_percent: h.xPercent,
       y_percent: h.yPercent,
       radius_percent: h.radiusPercent ?? 8,
+      locate_hint: h.locateHint,
       clue_text: h.clueText,
       answer_mode: h.answerMode,
       correct_answer: h.correctAnswer,

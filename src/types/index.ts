@@ -106,6 +106,7 @@ export interface EscapeRoomHotspot {
   xPercent: number;
   yPercent: number;
   radiusPercent: number;
+  locateHint: string;
   clueText: string;
   answerMode: AnswerMode;
   correctAnswer: string;

@@ -49,7 +49,7 @@ export function EditEscapeRoomPage() {
       setVisibility(room.visibility);
       setHotspots(spots.map((s) => ({
         xPercent: s.xPercent, yPercent: s.yPercent, radiusPercent: s.radiusPercent,
-        clueText: s.clueText, answerMode: s.answerMode, correctAnswer: s.correctAnswer, choices: s.choices,
+        locateHint: s.locateHint, clueText: s.clueText, answerMode: s.answerMode, correctAnswer: s.correctAnswer, choices: s.choices,
       })));
       setLoading(false);
     });
@@ -70,7 +70,7 @@ export function EditEscapeRoomPage() {
   };
 
   const incompleteHotspot = hotspots.find(
-    (h) => !h.clueText.trim() || !h.correctAnswer.trim() || (h.answerMode === 'choice' && (h.choices?.length ?? 0) === 0)
+    (h) => !h.locateHint.trim() || !h.clueText.trim() || !h.correctAnswer.trim() || (h.answerMode === 'choice' && (h.choices?.length ?? 0) === 0)
   );
 
   const handleSave = async () => {
@@ -182,7 +182,7 @@ export function EditEscapeRoomPage() {
 
         {incompleteHotspot && hotspots.length > 0 && (
           <p className="mt-3 text-sm text-destructive">
-            ⚠ Every clue needs text and a correct answer (and at least one wrong option, if multiple choice) before saving.
+            ⚠ Every clue needs a locate hint, a question, and a correct answer (and at least one wrong option, if multiple choice) before saving.
           </p>
         )}
         {saveError && <p className="mt-3 text-sm text-destructive">⚠ {saveError}</p>}

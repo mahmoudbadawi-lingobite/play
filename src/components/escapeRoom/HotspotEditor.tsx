@@ -1,6 +1,7 @@
-import { useState, type MouseEvent } from 'react';
+import { useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import type { AnswerMode } from '../../types';
 import type { HotspotInput } from '../../lib/escapeRoomService';
+import { parseHotspotTemplate, type TemplateItem } from '../../lib/hotspotTemplate';
 
 interface Props {
   imageUrl: string;
@@ -9,16 +10,50 @@ interface Props {
 }
 
 function emptyHotspot(xPercent: number, yPercent: number): HotspotInput {
-  return { xPercent, yPercent, clueText: '', answerMode: 'type', correctAnswer: '', choices: [] };
+  return { xPercent, yPercent, locateHint: '', clueText: '', answerMode: 'type', correctAnswer: '', choices: [] };
+}
+
+function itemToHotspot(item: TemplateItem, xPercent: number, yPercent: number): HotspotInput {
+  return {
+    xPercent,
+    yPercent,
+    locateHint: item.locateHint,
+    clueText: item.question,
+    answerMode: item.answerMode,
+    correctAnswer: item.correctAnswer,
+    choices: item.choices,
+  };
 }
 
 export function HotspotEditor({ imageUrl, hotspots, onChange }: Props) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [pendingItems, setPendingItems] = useState<TemplateItem[]>([]);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const handleImageClick = (e: MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const xPercent = Math.round(((e.clientX - rect.left) / rect.width) * 1000) / 10;
-    const yPercent = Math.round(((e.clientY - rect.top) / rect.height) * 1000) / 10;
+  const clampPercent = (n: number) => Math.min(100, Math.max(0, n));
+
+  const percentFromEvent = (clientX: number, clientY: number) => {
+    const rect = containerRef.current!.getBoundingClientRect();
+    const xPercent = Math.round(clampPercent(((clientX - rect.left) / rect.width) * 100) * 10) / 10;
+    const yPercent = Math.round(clampPercent(((clientY - rect.top) / rect.height) * 100) * 10) / 10;
+    return { xPercent, yPercent };
+  };
+
+  const handleImageClick = (e: ReactMouseEvent<HTMLDivElement>) => {
+    const { xPercent, yPercent } = percentFromEvent(e.clientX, e.clientY);
+
+    if (pendingItems.length > 0) {
+      const [next, ...rest] = pendingItems;
+      setPendingItems(rest);
+      const nextHotspots = [...hotspots, itemToHotspot(next, xPercent, yPercent)];
+      onChange(nextHotspots);
+      setEditingIndex(nextHotspots.length - 1);
+      return;
+    }
+
     const next = [...hotspots, emptyHotspot(xPercent, yPercent)];
     onChange(next);
     setEditingIndex(next.length - 1);
@@ -43,15 +78,88 @@ export function HotspotEditor({ imageUrl, hotspots, onChange }: Props) {
     setEditingIndex(target);
   };
 
+  // --- Drag to reposition an existing pin ---
+  const startDrag = (index: number) => (e: ReactMouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setDraggingIndex(index);
+
+    const handleMove = (moveEvent: globalThis.MouseEvent) => {
+      const { xPercent, yPercent } = percentFromEvent(moveEvent.clientX, moveEvent.clientY);
+      updateHotspot(index, { xPercent, yPercent });
+    };
+    const handleUp = () => {
+      setDraggingIndex(null);
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+    };
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+  };
+
+  // --- Import a template JSON file ---
+  const handleFileSelected = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportError(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = parseHotspotTemplate(String(reader.result ?? ''));
+        const placedNow: HotspotInput[] = [];
+        const stillPending: TemplateItem[] = [];
+        for (const item of parsed.items) {
+          if (item.xPercent !== null && item.yPercent !== null) {
+            placedNow.push(itemToHotspot(item, item.xPercent, item.yPercent));
+          } else {
+            stillPending.push(item);
+          }
+        }
+        onChange([...hotspots, ...placedNow]);
+        setPendingItems((prev) => [...prev, ...stillPending]);
+      } catch (err) {
+        setImportError(err instanceof Error ? err.message : 'Could not read that file.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const editing = editingIndex !== null ? hotspots[editingIndex] : null;
 
   return (
     <div>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="rounded-lg border border-secondary px-3 py-1.5 text-xs font-semibold text-secondary hover:bg-secondary/10"
+        >
+          Import clues from file (.json)
+        </button>
+        <input ref={fileInputRef} type="file" accept="application/json,.json" onChange={handleFileSelected} className="hidden" />
+        {importError && <span className="text-xs font-medium text-destructive">{importError}</span>}
+      </div>
+
+      {pendingItems.length > 0 && (
+        <div className="mb-3 rounded-lg border border-secondary bg-secondary/5 p-3 text-sm">
+          <p className="mb-1 font-semibold text-primary">
+            {pendingItems.length} imported {pendingItems.length === 1 ? 'clue needs' : 'clues need'} a spot on the image
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Click the matching object in the picture for: <span className="font-semibold text-primary">{pendingItems[0].objectLabel || pendingItems[0].question}</span>
+          </p>
+        </div>
+      )}
+
       <p className="mb-2 text-sm text-muted-foreground">
-        Click anywhere on the image to drop a numbered clue marker. Students must solve them in order.
+        {pendingItems.length > 0
+          ? 'Click on the image to drop the next imported clue where its object is.'
+          : 'Click anywhere on the image to drop a numbered clue marker, or drag existing pins to fine-tune them. Students must solve them in order.'}
       </p>
 
       <div
+        ref={containerRef}
         onClick={handleImageClick}
         className="relative w-full cursor-crosshair overflow-hidden rounded-xl border border-border"
       >
@@ -59,8 +167,9 @@ export function HotspotEditor({ imageUrl, hotspots, onChange }: Props) {
         {hotspots.map((h, i) => (
           <button
             key={i}
-            onClick={(e) => { e.stopPropagation(); setEditingIndex(i); }}
-            style={{ left: `${h.xPercent}%`, top: `${h.yPercent}%` }}
+            onMouseDown={startDrag(i)}
+            onClick={(e) => { e.stopPropagation(); if (draggingIndex === null) setEditingIndex(i); }}
+            style={{ left: `${h.xPercent}%`, top: `${h.yPercent}%`, cursor: draggingIndex === i ? 'grabbing' : 'grab' }}
             className={`absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 text-xs font-bold shadow ${
               editingIndex === i ? 'border-primary bg-secondary text-primary' : 'border-white bg-primary text-primary-foreground'
             }`}
@@ -89,13 +198,27 @@ export function HotspotEditor({ imageUrl, hotspots, onChange }: Props) {
         <div className="mt-4 rounded-lg border border-secondary bg-secondary/5 p-4">
           <p className="mb-2 text-sm font-semibold text-primary">Clue #{editingIndex + 1}</p>
 
-          <textarea
-            value={editing.clueText}
-            onChange={(e) => updateHotspot(editingIndex, { clueText: e.target.value })}
-            placeholder="What clue should students see for this object?"
-            rows={2}
-            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary"
-          />
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold text-primary">Locate hint (shown before they click - helps them find the spot)</span>
+            <textarea
+              value={editing.locateHint}
+              onChange={(e) => updateHotspot(editingIndex, { locateHint: e.target.value })}
+              placeholder="e.g. Look for the pink spiral seashell resting in the sand near the bottom of the steps."
+              rows={2}
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary"
+            />
+          </label>
+
+          <label className="mt-3 block">
+            <span className="mb-1 block text-xs font-semibold text-primary">Question (shown after they click - what they must answer)</span>
+            <textarea
+              value={editing.clueText}
+              onChange={(e) => updateHotspot(editingIndex, { clueText: e.target.value })}
+              placeholder="What question should students answer for this object?"
+              rows={2}
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary"
+            />
+          </label>
 
           <div className="mt-3 flex gap-2">
             {(['type', 'choice'] as AnswerMode[]).map((mode) => (

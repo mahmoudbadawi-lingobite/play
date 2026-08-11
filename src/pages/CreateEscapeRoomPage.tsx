@@ -20,6 +20,7 @@ export function CreateEscapeRoomPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [hotspots, setHotspots] = useState<HotspotInput[]>([]);
   const [title, setTitle] = useState('');
+  const [titleManuallyEdited, setTitleManuallyEdited] = useState(false);
   const [storyText, setStoryText] = useState('');
   const [theme, setTheme] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<Visibility>('public');
@@ -47,8 +48,22 @@ export function CreateEscapeRoomPage() {
     setDuplicate(existing);
   };
 
+  const handleTitleChange = (value: string) => {
+    setTitle(value);
+    setTitleManuallyEdited(true);
+  };
+
+  // Room title defaults to the selected theme name, but only until the
+  // teacher types their own - after that we stop overwriting it.
+  const handleThemeSelect = (t: string | null) => {
+    setTheme(t);
+    if (!titleManuallyEdited) {
+      setTitle(t ?? '');
+    }
+  };
+
   const incompleteHotspot = hotspots.find(
-    (h) => !h.clueText.trim() || !h.correctAnswer.trim() || (h.answerMode === 'choice' && (h.choices?.length ?? 0) === 0)
+    (h) => !h.locateHint.trim() || !h.clueText.trim() || !h.correctAnswer.trim() || (h.answerMode === 'choice' && (h.choices?.length ?? 0) === 0)
   );
 
   const handleSave = async () => {
@@ -121,11 +136,14 @@ export function CreateEscapeRoomPage() {
               <span className="mb-1 block text-sm font-semibold text-primary">Room title</span>
               <input
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => handleTitleChange(e.target.value)}
                 onBlur={handleTitleBlur}
                 placeholder="e.g. The Vocabulary Vault"
                 className="w-full rounded-lg border border-border px-4 py-2.5 outline-none focus:border-secondary"
               />
+              <span className="mt-1 block text-xs text-muted-foreground">
+                Defaults to your chosen theme below - edit it any time.
+              </span>
             </label>
 
             {duplicate && (
@@ -149,7 +167,7 @@ export function CreateEscapeRoomPage() {
               </p>
               <div className="flex flex-wrap gap-2">
                 <button
-                  onClick={() => setTheme(null)}
+                  onClick={() => handleThemeSelect(null)}
                   className={`rounded-full px-3 py-1.5 text-xs font-medium ${theme === null ? 'bg-primary text-primary-foreground' : 'border border-border text-primary/70'}`}
                 >
                   None
@@ -157,7 +175,7 @@ export function CreateEscapeRoomPage() {
                 {ESCAPE_ROOM_THEMES.map((t) => (
                   <button
                     key={t}
-                    onClick={() => setTheme(t)}
+                    onClick={() => handleThemeSelect(t)}
                     className={`rounded-full px-3 py-1.5 text-xs font-medium ${theme === t ? 'bg-primary text-primary-foreground' : 'border border-border text-primary/70'}`}
                   >
                     {t}
@@ -196,7 +214,7 @@ export function CreateEscapeRoomPage() {
 
             {incompleteHotspot && hotspots.length > 0 && (
               <p className="mt-3 text-sm text-destructive">
-                ⚠ Every clue needs text and a correct answer (and at least one wrong option, if multiple choice) before saving.
+                ⚠ Every clue needs a locate hint, a question, and a correct answer (and at least one wrong option, if multiple choice) before saving.
               </p>
             )}
             {saveError && <p className="mt-3 text-sm text-destructive">⚠ {saveError}</p>}
