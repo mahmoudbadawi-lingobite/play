@@ -107,10 +107,12 @@ export interface EscapeRoomHotspot {
   yPercent: number;
   radiusPercent: number;
   locateHint: string;
+  locateHintExtra: string;
   clueText: string;
   answerMode: AnswerMode;
   correctAnswer: string;
   choices?: string[];
+  questionHintExtra: string;
 }
 
 export interface EscapeRoom {

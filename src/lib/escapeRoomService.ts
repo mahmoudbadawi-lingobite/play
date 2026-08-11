@@ -26,10 +26,12 @@ function rowToHotspot(row: any): EscapeRoomHotspot {
     yPercent: Number(row.y_percent),
     radiusPercent: Number(row.radius_percent),
     locateHint: row.locate_hint ?? '',
+    locateHintExtra: row.locate_hint_extra ?? '',
     clueText: row.clue_text,
     answerMode: row.answer_mode,
     correctAnswer: row.correct_answer,
     choices: row.choices ?? undefined,
+    questionHintExtra: row.question_hint_extra ?? '',
   };
 }
 
@@ -38,10 +40,12 @@ export interface HotspotInput {
   yPercent: number;
   radiusPercent?: number;
   locateHint: string;
+  locateHintExtra?: string;
   clueText: string;
   answerMode: AnswerMode;
   correctAnswer: string;
   choices?: string[];
+  questionHintExtra?: string;
 }
 
 export async function checkDuplicateEscapeRoomTitle(title: string): Promise<EscapeRoom | null> {
@@ -91,10 +95,12 @@ export async function createEscapeRoom(input: {
     y_percent: h.yPercent,
     radius_percent: h.radiusPercent ?? 8,
     locate_hint: h.locateHint,
+    locate_hint_extra: h.locateHintExtra ?? '',
     clue_text: h.clueText,
     answer_mode: h.answerMode,
     correct_answer: h.correctAnswer,
     choices: h.choices ?? null,
+    question_hint_extra: h.questionHintExtra ?? '',
   }));
   const { error: hotspotError } = await supabase.from('escape_room_hotspots').insert(hotspotRows);
   if (hotspotError) throw hotspotError;
@@ -132,10 +138,12 @@ export async function updateEscapeRoom(id: string, input: {
       y_percent: h.yPercent,
       radius_percent: h.radiusPercent ?? 8,
       locate_hint: h.locateHint,
+      locate_hint_extra: h.locateHintExtra ?? '',
       clue_text: h.clueText,
       answer_mode: h.answerMode,
       correct_answer: h.correctAnswer,
       choices: h.choices ?? null,
+      question_hint_extra: h.questionHintExtra ?? '',
     }));
     const { error: insertError } = await supabase.from('escape_room_hotspots').insert(hotspotRows);
     if (insertError) throw insertError;

@@ -482,7 +482,9 @@ create table public.escape_room_hotspots (
   y_percent numeric not null,
   radius_percent numeric not null default 8,
   locate_hint text not null default '',
+  locate_hint_extra text not null default '',
   clue_text text not null,
+  question_hint_extra text not null default '',
   answer_mode text not null check (answer_mode in ('type', 'choice')),
   correct_answer text not null,
   choices jsonb

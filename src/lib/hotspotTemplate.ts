@@ -1,3 +1,4 @@
+import * as XLSX from 'xlsx';
 import type { AnswerMode } from '../types';
 
 /**
@@ -11,7 +12,9 @@ export interface TemplateItem {
   id: number;
   objectLabel: string;
   locateHint: string;
+  locateHintExtra: string;
   question: string;
+  questionHintExtra: string;
   answerMode: AnswerMode;
   correctAnswer: string;
   choices: string[];
@@ -23,93 +26,123 @@ export interface ParsedTemplate {
   items: TemplateItem[];
 }
 
-const VALID_ANSWER_MODES: AnswerMode[] = ['type', 'choice'];
+const HEADERS = [
+  'Object #', 'Object Label', 'Locate Hint', 'Extra Locate Hint (if stuck)',
+  'Question', 'Extra Answer Hint (if wrong)', 'Answer Mode (type/choice)',
+  'Correct Answer', 'Wrong Option 1', 'Wrong Option 2', 'Wrong Option 3',
+  'X Percent (0-100, optional)', 'Y Percent (0-100, optional)',
+];
 
 function toFiniteOrNull(value: unknown): number | null {
+  if (value === '' || value === null || value === undefined) return null;
   const n = typeof value === 'number' ? value : Number(value);
-  if (Number.isFinite(n)) {
-    return Math.min(100, Math.max(0, n));
-  }
+  if (Number.isFinite(n)) return Math.min(100, Math.max(0, n));
   return null;
 }
 
-function coerceItem(raw: any, index: number): TemplateItem {
-  if (!raw || typeof raw !== 'object') {
-    throw new Error(`Item #${index + 1} in the file is not a valid object.`);
-  }
-  const answerMode: AnswerMode = VALID_ANSWER_MODES.includes(raw.answerMode) ? raw.answerMode : 'type';
-  const choices = Array.isArray(raw.choices)
-    ? raw.choices.filter((c: unknown) => typeof c === 'string' && c.trim().length > 0).map((c: string) => c.trim())
-    : [];
+/**
+ * Builds a downloadable .xlsx template. Teachers fill this out offline
+ * (in Excel, Google Sheets, Numbers, etc.) - by hand, or by pasting in a
+ * table an AI produced in chat - then upload it back on the create/edit
+ * escape room page.
+ */
+export function downloadHotspotTemplate(objectLabels: string[], answerMode: AnswerMode): void {
+  const wb = XLSX.utils.book_new();
 
-  return {
-    id: Number.isFinite(Number(raw.id)) ? Number(raw.id) : index + 1,
-    objectLabel: typeof raw.objectLabel === 'string' ? raw.objectLabel.trim() : '',
-    locateHint: typeof raw.locateHint === 'string' ? raw.locateHint.trim() : '',
-    question: typeof raw.question === 'string' ? raw.question.trim() : '',
-    answerMode,
-    correctAnswer: typeof raw.correctAnswer === 'string' ? raw.correctAnswer.trim() : '',
-    choices,
-    xPercent: toFiniteOrNull(raw.xPercent),
-    yPercent: toFiniteOrNull(raw.yPercent),
-  };
+  const exampleChoices = answerMode === 'choice' ? ['wrong option A', 'wrong option B', 'wrong option C'] : ['', '', ''];
+  const instructionRows: any[][] = [
+    ['LingoBite Play - Escape Room clue template'],
+    ['One row per hidden object, in the order students should find them.'],
+    ['Leave X/Y Percent blank if you don\'t know it yet - you can drag the pin into place after uploading.'],
+    ['Do not delete or reorder the header row below.'],
+    [],
+    HEADERS,
+    [1, 'example: pink spiral seashell', 'a curled pink-and-white shell resting on the sand', 'look near the bottom of the stone steps', 'Which spelling is correct?', 'it starts with the letter N', answerMode, 'necessary', ...exampleChoices, '', ''],
+  ];
+
+  const objects = objectLabels.length > 0 ? objectLabels : ['object 1'];
+  for (let i = 0; i < objects.length; i++) {
+    instructionRows.push([i + 1, objects[i], '', '', '', '', answerMode, '', '', '', '', '', '']);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(instructionRows);
+  ws['!cols'] = [
+    { wch: 8 }, { wch: 26 }, { wch: 40 }, { wch: 34 }, { wch: 34 }, { wch: 30 },
+    { wch: 16 }, { wch: 20 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 14 }, { wch: 14 },
+  ];
+  XLSX.utils.book_append_sheet(wb, ws, 'Clues');
+
+  XLSX.writeFile(wb, 'escape-room-clue-template.xlsx');
+}
+
+export interface ParseResult {
+  template: ParsedTemplate;
+  errors: string[];
 }
 
 /**
- * Parses and validates a template JSON string uploaded by a teacher (either
- * hand-filled from the blank template, or pasted from an AI's reply).
- * Throws a user-friendly Error if the file isn't usable.
+ * Parses an uploaded, filled-in .xlsx template back into TemplateItem[].
+ * Skips the instruction rows automatically by locating the header row.
  */
-export function parseHotspotTemplate(raw: string): ParsedTemplate {
-  let data: any;
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    throw new Error('That file is not valid JSON. Make sure you saved the AI\'s full reply (or the downloaded template) without extra text around it.');
+export async function parseHotspotTemplateFile(file: File): Promise<ParseResult> {
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: 'array' });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+  const headerRowIndex = rows.findIndex(
+    (r) => typeof r[0] === 'string' && r[0].trim().toLowerCase() === 'object #'
+  );
+
+  if (headerRowIndex === -1) {
+    return {
+      template: { items: [] },
+      errors: ["Could not find the header row - please use the downloaded template and don't rearrange its columns."],
+    };
   }
 
-  const itemsRaw = Array.isArray(data) ? data : data?.items;
-  if (!Array.isArray(itemsRaw) || itemsRaw.length === 0) {
-    throw new Error('No "items" array was found in that file.');
-  }
+  const errors: string[] = [];
+  const items: TemplateItem[] = [];
 
-  return { items: itemsRaw.map((item, i) => coerceItem(item, i)) };
-}
+  for (let i = headerRowIndex + 1; i < rows.length; i++) {
+    const row = rows[i];
+    const objectLabel = String(row[1] ?? '').trim();
+    const locateHint = String(row[2] ?? '').trim();
+    const question = String(row[4] ?? '').trim();
+    const correctAnswer = String(row[7] ?? '').trim();
 
-/**
- * Builds a blank starter template from a plain list of object labels
- * (e.g. the vocabulary/grammar/reading/spelling lines a teacher already
- * typed into the prompt generator), so a teacher who isn't using AI can
- * still fill everything in one file instead of the on-image form.
- */
-export function buildBlankTemplate(objectLabels: string[], answerMode: AnswerMode): ParsedTemplate {
-  return {
-    items: objectLabels.map((label, i) => ({
-      id: i + 1,
-      objectLabel: label,
-      locateHint: '',
-      question: '',
+    const isBlankRow = !objectLabel && !locateHint && !question && !correctAnswer;
+    if (isBlankRow) continue;
+
+    if (!locateHint || !question || !correctAnswer) {
+      errors.push(`Row ${i + 1} (${objectLabel || 'unnamed'}): needs at least a Locate Hint, Question, and Correct Answer - skipped.`);
+      continue;
+    }
+
+    const rawMode = String(row[6] ?? '').trim().toLowerCase();
+    const answerMode: AnswerMode = rawMode === 'choice' ? 'choice' : 'type';
+    const choices = [row[8], row[9], row[10]]
+      .map((c) => String(c ?? '').trim())
+      .filter((c) => c.length > 0);
+
+    items.push({
+      id: Number.isFinite(Number(row[0])) ? Number(row[0]) : items.length + 1,
+      objectLabel,
+      locateHint,
+      locateHintExtra: String(row[3] ?? '').trim(),
+      question,
+      questionHintExtra: String(row[5] ?? '').trim(),
       answerMode,
-      correctAnswer: '',
-      choices: answerMode === 'choice' ? ['', '', ''] : [],
-      xPercent: null,
-      yPercent: null,
-    })),
-  };
-}
+      correctAnswer,
+      choices,
+      xPercent: toFiniteOrNull(row[11]),
+      yPercent: toFiniteOrNull(row[12]),
+    });
+  }
 
-export function templateToJSONString(template: ParsedTemplate): string {
-  return JSON.stringify(template, null, 2);
-}
+  if (items.length === 0 && errors.length === 0) {
+    errors.push('No filled-in rows found. Fill in at least one object\'s Locate Hint, Question, and Correct Answer.');
+  }
 
-export function downloadTemplateFile(template: ParsedTemplate, filename = 'escape-room-template.json') {
-  const blob = new Blob([templateToJSONString(template)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  return { template: { items }, errors };
 }

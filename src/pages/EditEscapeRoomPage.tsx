@@ -49,7 +49,7 @@ export function EditEscapeRoomPage() {
       setVisibility(room.visibility);
       setHotspots(spots.map((s) => ({
         xPercent: s.xPercent, yPercent: s.yPercent, radiusPercent: s.radiusPercent,
-        locateHint: s.locateHint, clueText: s.clueText, answerMode: s.answerMode, correctAnswer: s.correctAnswer, choices: s.choices,
+        locateHint: s.locateHint, locateHintExtra: s.locateHintExtra, clueText: s.clueText, answerMode: s.answerMode, correctAnswer: s.correctAnswer, choices: s.choices, questionHintExtra: s.questionHintExtra,
       })));
       setLoading(false);
     });

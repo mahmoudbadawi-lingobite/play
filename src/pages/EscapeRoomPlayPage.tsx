@@ -19,6 +19,11 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+// After this many missed clicks on the current object, show its extra
+// locate hint (if the teacher provided one). Same idea for wrong answers.
+const LOCATE_HINT_THRESHOLD = 3;
+const ANSWER_HINT_THRESHOLD = 2;
+
 export function EscapeRoomPlayPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const { profile, isGuest } = useAuth();
@@ -34,6 +39,8 @@ export function EscapeRoomPlayPage() {
   const [solvedCount, setSolvedCount] = useState(0);
   const [wrongClicks, setWrongClicks] = useState(0);
   const [hint, setHint] = useState<string | null>(null);
+  const [missesOnCurrent, setMissesOnCurrent] = useState(0);
+  const [wrongAnswersOnCurrent, setWrongAnswersOnCurrent] = useState(0);
   const [unlocked, setUnlocked] = useState(false);
   const [typedAnswer, setTypedAnswer] = useState('');
   const [answerFeedback, setAnswerFeedback] = useState<'wrong' | null>(null);
@@ -101,6 +108,11 @@ export function EscapeRoomPlayPage() {
 
   const current = hotspots[currentIndex];
 
+  useEffect(() => {
+    setMissesOnCurrent(0);
+    setWrongAnswersOnCurrent(0);
+  }, [currentIndex]);
+
   const choiceOptions = useMemo(() => {
     if (!current || current.answerMode !== 'choice') return [];
     return shuffle([current.correctAnswer, ...(current.choices ?? [])]);
@@ -149,7 +161,10 @@ export function EscapeRoomPlayPage() {
       return;
     }
 
+    const nextMisses = missesOnCurrent + 1;
+    setMissesOnCurrent(nextMisses);
     setWrongClicks((w) => w + 1);
+
     if (distance <= current.radiusPercent * 2.5) setHint('🔥 Hot! You\'re very close.');
     else if (distance <= current.radiusPercent * 5) setHint('🌡️ Warm - getting closer.');
     else setHint('❄️ Cold - try another spot.');
@@ -193,6 +208,7 @@ export function EscapeRoomPlayPage() {
     } else {
       setAnswerFeedback('wrong');
       setWrongClicks((w) => w + 1);
+      setWrongAnswersOnCurrent((w) => w + 1);
     }
   };
 
@@ -259,6 +275,11 @@ export function EscapeRoomPlayPage() {
         </div>
 
         {hint && !unlocked && <p className="mt-2 text-sm text-primary">{hint}</p>}
+        {!unlocked && missesOnCurrent >= LOCATE_HINT_THRESHOLD && current?.locateHintExtra && (
+          <p className="mt-2 rounded-lg border border-secondary bg-secondary/10 px-3 py-2 text-sm text-primary">
+            💡 <span className="font-semibold">Extra hint:</span> {current.locateHintExtra}
+          </p>
+        )}
 
         {unlocked && current && (
           <div className="mt-4 rounded-lg border border-secondary bg-secondary/10 p-4">
@@ -293,6 +314,11 @@ export function EscapeRoomPlayPage() {
               </div>
             )}
             {answerFeedback === 'wrong' && <p className="mt-2 text-sm text-destructive">Not quite - try again.</p>}
+            {wrongAnswersOnCurrent >= ANSWER_HINT_THRESHOLD && current.questionHintExtra && (
+              <p className="mt-2 rounded-lg border border-secondary bg-secondary/10 px-3 py-2 text-sm text-primary">
+                💡 <span className="font-semibold">Hint:</span> {current.questionHintExtra}
+              </p>
+            )}
           </div>
         )}
       </div>

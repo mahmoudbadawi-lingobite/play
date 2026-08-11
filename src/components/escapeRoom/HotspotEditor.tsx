@@ -1,7 +1,7 @@
 import { useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import type { AnswerMode } from '../../types';
 import type { HotspotInput } from '../../lib/escapeRoomService';
-import { parseHotspotTemplate, type TemplateItem } from '../../lib/hotspotTemplate';
+import { parseHotspotTemplateFile, type TemplateItem } from '../../lib/hotspotTemplate';
 
 interface Props {
   imageUrl: string;
@@ -10,7 +10,7 @@ interface Props {
 }
 
 function emptyHotspot(xPercent: number, yPercent: number): HotspotInput {
-  return { xPercent, yPercent, locateHint: '', clueText: '', answerMode: 'type', correctAnswer: '', choices: [] };
+  return { xPercent, yPercent, locateHint: '', locateHintExtra: '', clueText: '', answerMode: 'type', correctAnswer: '', choices: [], questionHintExtra: '' };
 }
 
 function itemToHotspot(item: TemplateItem, xPercent: number, yPercent: number): HotspotInput {
@@ -18,10 +18,12 @@ function itemToHotspot(item: TemplateItem, xPercent: number, yPercent: number): 
     xPercent,
     yPercent,
     locateHint: item.locateHint,
+    locateHintExtra: item.locateHintExtra,
     clueText: item.question,
     answerMode: item.answerMode,
     correctAnswer: item.correctAnswer,
     choices: item.choices,
+    questionHintExtra: item.questionHintExtra,
   };
 }
 
@@ -97,32 +99,33 @@ export function HotspotEditor({ imageUrl, hotspots, onChange }: Props) {
     window.addEventListener('mouseup', handleUp);
   };
 
-  // --- Import a template JSON file ---
-  const handleFileSelected = (e: ChangeEvent<HTMLInputElement>) => {
+  // --- Import a filled-in .xlsx template ---
+  const handleFileSelected = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setImportError(null);
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const parsed = parseHotspotTemplate(String(reader.result ?? ''));
-        const placedNow: HotspotInput[] = [];
-        const stillPending: TemplateItem[] = [];
-        for (const item of parsed.items) {
-          if (item.xPercent !== null && item.yPercent !== null) {
-            placedNow.push(itemToHotspot(item, item.xPercent, item.yPercent));
-          } else {
-            stillPending.push(item);
-          }
-        }
-        onChange([...hotspots, ...placedNow]);
-        setPendingItems((prev) => [...prev, ...stillPending]);
-      } catch (err) {
-        setImportError(err instanceof Error ? err.message : 'Could not read that file.');
-      }
-    };
-    reader.readAsText(file);
     e.target.value = '';
+    try {
+      const { template, errors } = await parseHotspotTemplateFile(file);
+      if (template.items.length === 0) {
+        setImportError(errors[0] ?? 'No usable rows found in that file.');
+        return;
+      }
+      const placedNow: HotspotInput[] = [];
+      const stillPending: TemplateItem[] = [];
+      for (const item of template.items) {
+        if (item.xPercent !== null && item.yPercent !== null) {
+          placedNow.push(itemToHotspot(item, item.xPercent, item.yPercent));
+        } else {
+          stillPending.push(item);
+        }
+      }
+      onChange([...hotspots, ...placedNow]);
+      setPendingItems((prev) => [...prev, ...stillPending]);
+      if (errors.length > 0) setImportError(`Imported ${template.items.length} clue(s), but: ${errors.join(' ')}`);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Could not read that file.');
+    }
   };
 
   const editing = editingIndex !== null ? hotspots[editingIndex] : null;
@@ -135,9 +138,9 @@ export function HotspotEditor({ imageUrl, hotspots, onChange }: Props) {
           onClick={() => fileInputRef.current?.click()}
           className="rounded-lg border border-secondary px-3 py-1.5 text-xs font-semibold text-secondary hover:bg-secondary/10"
         >
-          Import clues from file (.json)
+          Import clues from file (.xlsx)
         </button>
-        <input ref={fileInputRef} type="file" accept="application/json,.json" onChange={handleFileSelected} className="hidden" />
+        <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleFileSelected} className="hidden" />
         {importError && <span className="text-xs font-medium text-destructive">{importError}</span>}
       </div>
 
@@ -210,11 +213,33 @@ export function HotspotEditor({ imageUrl, hotspots, onChange }: Props) {
           </label>
 
           <label className="mt-3 block">
+            <span className="mb-1 block text-xs font-semibold text-primary">Extra locate hint <span className="font-normal text-muted-foreground">(optional - shown automatically if they keep missing the spot)</span></span>
+            <textarea
+              value={editing.locateHintExtra ?? ''}
+              onChange={(e) => updateHotspot(editingIndex, { locateHintExtra: e.target.value })}
+              placeholder="e.g. It's on the left side of the staircase, close to the ground."
+              rows={2}
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary"
+            />
+          </label>
+
+          <label className="mt-3 block">
             <span className="mb-1 block text-xs font-semibold text-primary">Question (shown after they click - what they must answer)</span>
             <textarea
               value={editing.clueText}
               onChange={(e) => updateHotspot(editingIndex, { clueText: e.target.value })}
               placeholder="What question should students answer for this object?"
+              rows={2}
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary"
+            />
+          </label>
+
+          <label className="mt-3 block">
+            <span className="mb-1 block text-xs font-semibold text-primary">Extra answer hint <span className="font-normal text-muted-foreground">(optional - shown automatically if they answer wrong a couple of times)</span></span>
+            <textarea
+              value={editing.questionHintExtra ?? ''}
+              onChange={(e) => updateHotspot(editingIndex, { questionHintExtra: e.target.value })}
+              placeholder="e.g. It starts with the letter N. (a nudge, not the answer itself)"
               rows={2}
               className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary"
             />

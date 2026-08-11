@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ESCAPE_ROOM_THEMES } from '../../games/escapeRoomThemes';
-import { buildBlankTemplate, downloadTemplateFile } from '../../lib/hotspotTemplate';
+import { downloadHotspotTemplate } from '../../lib/hotspotTemplate';
 import type { AnswerMode } from '../../types';
 
 const TEXT_AI_SHORTCUTS: AiShortcut[] = [
@@ -239,51 +239,39 @@ Adventure, mystery, exciting, educational.`;
 
   const questionsPrompt = `You are creating interactive clues for an educational Escape Room game. Attach the background image you generated in Step 1 to this chat before you send this message - it lets you place each object accurately.
 
-For every learning element listed at the end, you must invent an object hidden somewhere in the attached image that represents it, then produce TWO separate pieces of text for it:
+For every learning element listed at the end, you must invent an object hidden somewhere in the attached image that represents it, then produce FOUR separate pieces of text for it:
 
-1. "locateHint" - a short, purely VISUAL/POSITIONAL description a player reads BEFORE clicking anything. It must describe what the object looks like and/or roughly where it sits in the scene (e.g. "a curled pink-and-white spiral shell resting on the sand at the bottom of the stone steps"), specific enough that a player can pick out that one object among everything else in the picture. It must NEVER contain, spell out, translate, define, or hint at the answer to the question - it only helps the player find the spot.
-2. "question" - the actual test question the player answers AFTER they click the object, testing the learning element itself. Do not repeat the visual description here.
+1. LOCATE HINT - a short, purely VISUAL/POSITIONAL description a player reads BEFORE clicking anything. It must describe what the object looks like and/or roughly where it sits in the scene (e.g. "a curled pink-and-white spiral shell resting on the sand at the bottom of the stone steps"), specific enough that a player can pick out that one object among everything else in the picture. It must NEVER contain, spell out, translate, define, or hint at the answer to the question - it only helps the player find the spot.
+2. EXTRA LOCATE HINT - a second, MORE SPECIFIC location clue, only shown to a player who keeps clicking the wrong spot (e.g. narrow it down further: "it's on the left side of the staircase, close to the ground"). Still no answer leakage.
+3. QUESTION - the actual test question the player answers AFTER they click the object, testing the learning element itself. Do not repeat the visual description here.
+4. EXTRA ANSWER HINT - only shown to a player who answers the question wrong a couple of times. A small nudge toward the correct answer (e.g. first letter, a category, a rhyme, part of the definition) WITHOUT stating the answer itself outright.
 
 Requirements
 
-• One object + one clue pair per learning element, in the same order as the list below.
-• Keep both locateHint and question short (1 sentence each).
+• One object + one clue set per learning element, in the same order as the list below.
+• Keep every field short (1 sentence each, or a few words for the extra answer hint).
 • Student level:
 ${level}
 
 • Question type:
 ${questionType.value}
-${isChoice ? `• Provide exactly 3 distractors ("choices") plus the correct answer. The correct answer must NOT be distinguishable from the distractors - keep all four options similar in length, style, and tone. Do NOT make the correct answer noticeably longer, more detailed, or use qualifying/technical wording that gives it away. All four should sound equally plausible.` : `• Leave "choices" as an empty array - this is a typed-answer question, not multiple choice.`}
-• Also estimate where each object sits in the attached image as xPercent/yPercent (0-100, where 0,0 is the top-left corner and 100,100 is the bottom-right corner). Look carefully at the actual picture - do not guess blindly. If you cannot see the image or aren't confident, set both to null and the teacher will place it by hand.
+${isChoice ? `• Provide exactly 3 wrong options plus the correct answer. The correct answer must NOT be distinguishable from the wrong options - keep all four similar in length, style, and tone. Do NOT make the correct answer noticeably longer, more detailed, or use qualifying/technical wording that gives it away. All four should sound equally plausible.` : `• Leave the wrong-option columns empty - this is a typed-answer question, not multiple choice.`}
+• Also estimate where each object sits in the attached image as an X and Y percent (0-100, where 0,0 is the top-left corner and 100,100 is the bottom-right corner). Look carefully at the actual picture - do not guess blindly. If you cannot see the image or aren't confident, leave X/Y blank and the teacher will place it by hand.
 
-OUTPUT FORMAT - respond with ONLY valid JSON, no extra commentary, no markdown code fences, matching this exact shape:
+OUTPUT FORMAT - respond with ONLY a markdown table (pipe-separated), no other commentary before or after it, with EXACTLY these 13 columns in this exact order:
 
-{
-  "items": [
-    {
-      "id": 1,
-      "objectLabel": "short label for the hidden object",
-      "locateHint": "...",
-      "question": "...",
-      "answerMode": "${answerMode}",
-      "correctAnswer": "...",
-      "choices": ${isChoice ? '["...", "...", "..."]' : '[]'},
-      "xPercent": 0,
-      "yPercent": 0
-    }
-  ]
-}
+| Object # | Object Label | Locate Hint | Extra Locate Hint (if stuck) | Question | Extra Answer Hint (if wrong) | Answer Mode (type/choice) | Correct Answer | Wrong Option 1 | Wrong Option 2 | Wrong Option 3 | X Percent (0-100, optional) | Y Percent (0-100, optional) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | ... | ... | ... | ... | ... | ${answerMode} | ... | ${isChoice ? '...' : ''} | ${isChoice ? '...' : ''} | ${isChoice ? '...' : ''} | ... | ... |
+
+(one row per learning element - use "${answerMode}" in every Answer Mode cell)
 
 LEARNING ELEMENTS (one item per line below, in order)
 
 ${elementLines.length > 0 ? elementLines.map((l) => `- ${l}`).join('\n') : '[add vocabulary/grammar/reading/spelling items below]'}`;
 
   const handleDownloadBlankTemplate = () => {
-    const template = buildBlankTemplate(
-      elementLines.length > 0 ? elementLines : ['object 1'],
-      answerMode,
-    );
-    downloadTemplateFile(template, 'escape-room-template.json');
+    downloadHotspotTemplate(elementLines.length > 0 ? elementLines : ['object 1'], answerMode);
   };
 
   return (
@@ -291,9 +279,9 @@ ${elementLines.length > 0 ? elementLines.map((l) => `- ${l}`).join('\n') : '[add
       <p className="font-display text-lg font-semibold text-primary">AI Prompt Generator</p>
       <p className="mt-1 text-sm text-muted-foreground">
         Fill this in, then copy each prompt into any AI tool to generate your background image, story,
-        and clues. For Step 3, attach the image you generated in Step 1 before sending the prompt -
-        the AI will reply with a JSON file you can save and upload directly on the next page, so you
-        only click each pin into its exact spot instead of typing everything by hand.
+        and clues. For Step 3, attach the image you generated in Step 1 before sending the prompt - the
+        AI will reply with a table you can copy straight into an Excel file and upload on the next page,
+        so you only click each pin into its exact spot instead of typing everything by hand.
       </p>
 
       <div className="mt-4">
@@ -429,16 +417,18 @@ ${elementLines.length > 0 ? elementLines.map((l) => `- ${l}`).join('\n') : '[add
 
       <div className="mt-3 rounded-lg border border-border bg-muted/20 p-3">
         <p className="text-xs text-muted-foreground">
-          Save the AI's JSON reply as a <span className="font-mono">.json</span> file and upload it in the
-          "Import clues from file" button on the next page. Prefer to skip AI entirely? Download a blank
-          file below and fill it in by hand instead.
+          Download the blank Excel template below first. When the AI replies with its table, select and
+          copy it, then paste it directly into the template starting in the first empty row - most
+          spreadsheet apps split a pasted table into columns automatically. If a paste lands in one column,
+          use Excel's <span className="font-medium text-primary">Data → Text to Columns</span> (delimiter: <span className="font-mono">|</span>) to fix it.
+          Prefer to skip AI entirely? Fill the template in by hand instead.
         </p>
         <button
           type="button"
           onClick={handleDownloadBlankTemplate}
           className="mt-2 rounded-lg border border-secondary px-3 py-1.5 text-xs font-semibold text-secondary hover:bg-secondary/10"
         >
-          Download blank template (.json)
+          Download blank template (.xlsx)
         </button>
       </div>
     </div>
