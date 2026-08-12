@@ -22,8 +22,12 @@ export function MyEscapeRoomsPage() {
 
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Delete "${title}"? This can't be undone.`)) return;
-    await deleteEscapeRoom(id);
-    refresh();
+    try {
+      await deleteEscapeRoom(id);
+      refresh();
+    } catch (err: any) {
+      alert(err.message ?? 'Could not delete this escape room.');
+    }
   };
 
   const handleShare = (id: string) => {

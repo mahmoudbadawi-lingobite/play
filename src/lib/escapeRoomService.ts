@@ -192,7 +192,8 @@ export async function incrementEscapeRoomPlayCount(id: string): Promise<void> {
 }
 
 export async function deleteEscapeRoom(id: string): Promise<void> {
-  await supabase.from('escape_rooms').delete().eq('id', id);
+  const { error } = await supabase.from('escape_rooms').delete().eq('id', id);
+  if (error) throw error;
 }
 
 export async function reportEscapeRoom(id: string, reason: string): Promise<void> {

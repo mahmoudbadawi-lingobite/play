@@ -602,7 +602,7 @@ $$;
 
 create table public.escape_room_results (
   id uuid primary key default gen_random_uuid(),
-  escape_room_id uuid references public.escape_rooms(id),
+  escape_room_id uuid references public.escape_rooms(id) on delete cascade,
   escape_room_title text,
   student_id uuid not null references public.profiles(id),
   student_name text,
@@ -763,7 +763,7 @@ begin
   if not public.is_main_admin() then
     raise exception 'only the main admin can clear the group chat';
   end if;
-  delete from public.admin_group_messages;
+  delete from public.admin_group_messages where true;
 end;
 $$;
 
