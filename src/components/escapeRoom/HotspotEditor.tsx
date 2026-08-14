@@ -213,11 +213,11 @@ export function HotspotEditor({ imageUrl, hotspots, onChange }: Props) {
           </label>
 
           <label className="mt-3 block">
-            <span className="mb-1 block text-xs font-semibold text-primary">Extra locate hint <span className="font-normal text-muted-foreground">(optional - shown automatically if they keep missing the spot)</span></span>
+            <span className="mb-1 block text-xs font-semibold text-primary">Extra locate hint <span className="font-normal text-muted-foreground">(optional - shown automatically if they keep missing the spot - keep it a gentle nudge, not a giveaway)</span></span>
             <textarea
               value={editing.locateHintExtra ?? ''}
               onChange={(e) => updateHotspot(editingIndex, { locateHintExtra: e.target.value })}
-              placeholder="e.g. It's on the left side of the staircase, close to the ground."
+              placeholder="e.g. Look closer to the ground, near the taller structure. (a small nudge, not a giveaway)"
               rows={2}
               className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary"
             />
@@ -235,11 +235,11 @@ export function HotspotEditor({ imageUrl, hotspots, onChange }: Props) {
           </label>
 
           <label className="mt-3 block">
-            <span className="mb-1 block text-xs font-semibold text-primary">Extra answer hint <span className="font-normal text-muted-foreground">(optional - shown automatically if they answer wrong a couple of times)</span></span>
+            <span className="mb-1 block text-xs font-semibold text-primary">Extra answer hint <span className="font-normal text-muted-foreground">(optional - shown automatically if they answer wrong a couple of times - a subtle nudge, not the answer itself)</span></span>
             <textarea
               value={editing.questionHintExtra ?? ''}
               onChange={(e) => updateHotspot(editingIndex, { questionHintExtra: e.target.value })}
-              placeholder="e.g. It starts with the letter N. (a nudge, not the answer itself)"
+              placeholder="e.g. Think of a related category or a rhyme - not the answer itself."
               rows={2}
               className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary"
             />

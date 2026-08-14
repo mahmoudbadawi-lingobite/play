@@ -94,6 +94,21 @@ function answerModeFromQuestionType(value: string): AnswerMode {
   return value.toLowerCase().includes('typed answer') ? 'type' : 'choice';
 }
 
+const ANSWER_FORMATS: { label: string; value: AnswerMode }[] = [
+  { label: 'Multiple choice', value: 'choice' },
+  { label: 'Fill in the blank', value: 'type' },
+];
+
+/** Question types for a category, narrowed to the chosen answer format.
+ * Falls back to the full list if that category has no options in the
+ * chosen format (e.g. Reading currently has no typed-answer types), so
+ * the picker never ends up empty. */
+function getQuestionTypesForFormat(category: QuestionCategory, format: AnswerMode) {
+  const all = QUESTION_TYPES_BY_CATEGORY[category];
+  const filtered = all.filter((q) => answerModeFromQuestionType(q.value) === format);
+  return { types: filtered.length > 0 ? filtered : all, usedFallback: filtered.length === 0 };
+}
+
 interface AiShortcut {
   label: string;
   url: string;
@@ -145,7 +160,8 @@ export function PromptGeneratorPanel() {
   const [grade, setGrade] = useState(5);
   const [difficulty, setDifficulty] = useState('Medium');
   const [questionCategory, setQuestionCategory] = useState<QuestionCategory>('Vocabulary');
-  const [questionType, setQuestionType] = useState(QUESTION_TYPES_BY_CATEGORY['Vocabulary'][0]);
+  const [answerFormat, setAnswerFormat] = useState<AnswerMode>('choice');
+  const [questionType, setQuestionType] = useState(getQuestionTypesForFormat('Vocabulary', 'choice').types[0]);
   const [lessonTopic, setLessonTopic] = useState('');
   const [vocab, setVocab] = useState('');
   const [grammar, setGrammar] = useState('');
@@ -154,6 +170,7 @@ export function PromptGeneratorPanel() {
 
   const effectiveTheme = useCustomTheme ? customTheme : theme;
   const level = `Grade ${grade} students`;
+  const questionTypesForCurrentSelection = getQuestionTypesForFormat(questionCategory, answerFormat);
   const elementsBlock = buildElementsBlock(vocab, grammar, reading, spelling);
 
   const imagePrompt = `You are an award-winning educational game designer and cinematic digital artist.
@@ -182,7 +199,7 @@ ${effectiveTheme || '[choose a theme above]'}
 
 LEARNING ELEMENTS
 
-Naturally hide these objects inside the scene:
+Naturally hide these objects inside the scene, spread across DIFFERENT areas of the image (foreground, background, left, right, center) - keep them clearly separated from one another rather than clustered together in one corner, so each one is easy to tell apart from the others:
 
 ${elementsBlock || '[add vocabulary/grammar/reading/spelling items below]'}
 
@@ -242,21 +259,22 @@ Adventure, mystery, exciting, educational.`;
 For every learning element listed at the end, you must invent an object hidden somewhere in the attached image that represents it, then produce FOUR separate pieces of text for it:
 
 1. LOCATE HINT - a short, purely VISUAL/POSITIONAL description a player reads BEFORE clicking anything. It must describe what the object looks like and/or roughly where it sits in the scene (e.g. "a curled pink-and-white spiral shell resting on the sand at the bottom of the stone steps"), specific enough that a player can pick out that one object among everything else in the picture. It must NEVER contain, spell out, translate, define, or hint at the answer to the question - it only helps the player find the spot.
-2. EXTRA LOCATE HINT - a second, MORE SPECIFIC location clue, only shown to a player who keeps clicking the wrong spot (e.g. narrow it down further: "it's on the left side of the staircase, close to the ground"). Still no answer leakage.
+2. EXTRA LOCATE HINT - a second location clue, only shown to a player who keeps clicking the wrong spot. Nudge them gently - a small additional visual detail or a slightly narrower area (e.g. "look closer to the ground" or "near the taller of the two towers") - WITHOUT pointing directly at the object or making it obvious at a glance. It should still take a moment of looking, not give away the exact pixel. Still no answer leakage.
 3. QUESTION - the actual test question the player answers AFTER they click the object, testing the learning element itself. Do not repeat the visual description here.
-4. EXTRA ANSWER HINT - only shown to a player who answers the question wrong a couple of times. A small nudge toward the correct answer (e.g. first letter, a category, a rhyme, part of the definition) WITHOUT stating the answer itself outright.
+4. EXTRA ANSWER HINT - only shown to a player who answers the question wrong a couple of times. A subtle, indirect nudge (e.g. a category, a related idea, a rhyme, or a vague partial clue) that narrows things down WITHOUT directly stating or spelling out the answer, its first letter, or anything a player could copy verbatim as the answer.
 
 Requirements
 
 • One object + one clue set per learning element, in the same order as the list below.
 • Keep every field short (1 sentence each, or a few words for the extra answer hint).
+• IMPORTANT - spacing: choose objects that are spread out across DIFFERENT areas of the image (not clustered together or overlapping). Two objects sitting close to each other confuses players about which clue belongs to which object - keep every object a clearly distinct, well-separated spot in the scene.
 • Student level:
 ${level}
 
 • Question type:
 ${questionType.value}
 ${isChoice ? `• Provide exactly 3 wrong options plus the correct answer. The correct answer must NOT be distinguishable from the wrong options - keep all four similar in length, style, and tone. Do NOT make the correct answer noticeably longer, more detailed, or use qualifying/technical wording that gives it away. All four should sound equally plausible.` : `• Leave the wrong-option columns empty - this is a typed-answer question, not multiple choice.`}
-• Also estimate where each object sits in the attached image as an X and Y percent (0-100, where 0,0 is the top-left corner and 100,100 is the bottom-right corner). Look carefully at the actual picture - do not guess blindly. If you cannot see the image or aren't confident, leave X/Y blank and the teacher will place it by hand.
+• Also estimate where each object sits in the attached image as an X and Y percent (0-100, where 0,0 is the top-left corner and 100,100 is the bottom-right corner). Look carefully at the actual picture - do not guess blindly. Double check that no two objects' X/Y positions are close together (keep them at least ~15 percent apart) - pick a different object if two candidates end up too close. If you cannot see the image or aren't confident, leave X/Y blank and the teacher will place it by hand.
 
 OUTPUT FORMAT - respond with ONLY a markdown table (pipe-separated), no other commentary before or after it, with EXACTLY these 13 columns in this exact order:
 
@@ -350,12 +368,32 @@ ${elementLines.length > 0 ? elementLines.map((l) => `- ${l}`).join('\n') : '[add
       </div>
 
       <div className="mt-4">
+        <p className="mb-1.5 text-sm font-semibold text-primary">Answer format</p>
+        <div className="flex gap-2">
+          {ANSWER_FORMATS.map((f) => (
+            <button
+              key={f.value}
+              onClick={() => {
+                setAnswerFormat(f.value);
+                setQuestionType(getQuestionTypesForFormat(questionCategory, f.value).types[0]);
+              }}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium ${
+                answerFormat === f.value ? 'bg-primary text-primary-foreground' : 'border border-border text-primary/70'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4">
         <p className="mb-1.5 text-sm font-semibold text-primary">Question category</p>
         <div className="flex flex-wrap gap-2">
           {QUESTION_CATEGORIES.map((cat) => (
             <button
               key={cat}
-              onClick={() => { setQuestionCategory(cat); setQuestionType(QUESTION_TYPES_BY_CATEGORY[cat][0]); }}
+              onClick={() => { setQuestionCategory(cat); setQuestionType(getQuestionTypesForFormat(cat, answerFormat).types[0]); }}
               className={`rounded-full px-3 py-1.5 text-xs font-medium ${
                 questionCategory === cat ? 'bg-primary text-primary-foreground' : 'border border-border text-primary/70'
               }`}
@@ -366,8 +404,13 @@ ${elementLines.length > 0 ? elementLines.map((l) => `- ${l}`).join('\n') : '[add
         </div>
 
         <p className="mb-1.5 mt-3 text-sm font-semibold text-primary">Question type</p>
+        {questionTypesForCurrentSelection.usedFallback && (
+          <p className="mb-1.5 text-xs text-muted-foreground">
+            {questionCategory} doesn't have {answerFormat === 'type' ? 'fill-in-the-blank' : 'multiple choice'} options yet - showing all types for this category instead.
+          </p>
+        )}
         <div className="flex flex-wrap gap-2">
-          {QUESTION_TYPES_BY_CATEGORY[questionCategory].map((q) => (
+          {questionTypesForCurrentSelection.types.map((q) => (
             <button
               key={q.label}
               onClick={() => setQuestionType(q)}

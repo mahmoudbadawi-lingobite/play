@@ -57,7 +57,7 @@ export function downloadHotspotTemplate(objectLabels: string[], answerMode: Answ
     ['Do not delete or reorder the header row below.'],
     [],
     HEADERS,
-    [1, 'example: pink spiral seashell', 'a curled pink-and-white shell resting on the sand', 'look near the bottom of the stone steps', 'Which spelling is correct?', 'it starts with the letter N', answerMode, 'necessary', ...exampleChoices, '', ''],
+    [1, 'example: pink spiral seashell', 'a curled pink-and-white shell resting on the sand', 'look closer to the ground, near the stairs', 'Which spelling is correct?', 'think of a word that means "needed" or "required"', answerMode, 'necessary', ...exampleChoices, '', ''],
   ];
 
   const objects = objectLabels.length > 0 ? objectLabels : ['object 1'];
