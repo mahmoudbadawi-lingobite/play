@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import type { AnswerMode } from '../../types';
 import type { HotspotInput } from '../../lib/escapeRoomService';
 import { parseHotspotTemplateFile, type TemplateItem } from '../../lib/hotspotTemplate';
@@ -7,6 +7,11 @@ interface Props {
   imageUrl: string;
   hotspots: HotspotInput[];
   onChange: (hotspots: HotspotInput[]) => void;
+  /** Items to import from outside this component (e.g. pasted from an AI
+   * reply on the parent page). Consumed once, then the parent should
+   * clear it via onExternalImportConsumed to avoid re-importing. */
+  externalImportItems?: TemplateItem[] | null;
+  onExternalImportConsumed?: () => void;
 }
 
 function emptyHotspot(xPercent: number, yPercent: number): HotspotInput {
@@ -27,13 +32,38 @@ function itemToHotspot(item: TemplateItem, xPercent: number, yPercent: number): 
   };
 }
 
-export function HotspotEditor({ imageUrl, hotspots, onChange }: Props) {
+export function HotspotEditor({ imageUrl, hotspots, onChange, externalImportItems, onExternalImportConsumed }: Props) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [pendingItems, setPendingItems] = useState<TemplateItem[]>([]);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Splits imported items into ones the AI already placed (has x/y) vs.
+  // ones still needing a click - shared by the .xlsx import and the
+  // "paste AI reply" import on the parent page.
+  const integrateItems = (items: TemplateItem[]) => {
+    const placedNow: HotspotInput[] = [];
+    const stillPending: TemplateItem[] = [];
+    for (const item of items) {
+      if (item.xPercent !== null && item.yPercent !== null) {
+        placedNow.push(itemToHotspot(item, item.xPercent, item.yPercent));
+      } else {
+        stillPending.push(item);
+      }
+    }
+    onChange([...hotspots, ...placedNow]);
+    setPendingItems((prev) => [...prev, ...stillPending]);
+  };
+
+  useEffect(() => {
+    if (externalImportItems && externalImportItems.length > 0) {
+      integrateItems(externalImportItems);
+      onExternalImportConsumed?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalImportItems]);
 
   const clampPercent = (n: number) => Math.min(100, Math.max(0, n));
 
@@ -111,17 +141,7 @@ export function HotspotEditor({ imageUrl, hotspots, onChange }: Props) {
         setImportError(errors[0] ?? 'No usable rows found in that file.');
         return;
       }
-      const placedNow: HotspotInput[] = [];
-      const stillPending: TemplateItem[] = [];
-      for (const item of template.items) {
-        if (item.xPercent !== null && item.yPercent !== null) {
-          placedNow.push(itemToHotspot(item, item.xPercent, item.yPercent));
-        } else {
-          stillPending.push(item);
-        }
-      }
-      onChange([...hotspots, ...placedNow]);
-      setPendingItems((prev) => [...prev, ...stillPending]);
+      integrateItems(template.items);
       if (errors.length > 0) setImportError(`Imported ${template.items.length} clue(s), but: ${errors.join(' ')}`);
     } catch (err) {
       setImportError(err instanceof Error ? err.message : 'Could not read that file.');

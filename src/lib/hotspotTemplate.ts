@@ -40,6 +40,46 @@ function toFiniteOrNull(value: unknown): number | null {
   return null;
 }
 
+/** Turns one row of 13 cells (in HEADERS order) into a TemplateItem, or
+ * null if the row is entirely blank. Shared by both the .xlsx importer
+ * and the pasted-text importer so they behave identically. */
+function cellsToItem(cells: unknown[], fallbackId: number): { item: TemplateItem | null; error: string | null } {
+  const objectLabel = String(cells[1] ?? '').trim();
+  const locateHint = String(cells[2] ?? '').trim();
+  const question = String(cells[4] ?? '').trim();
+  const correctAnswer = String(cells[7] ?? '').trim();
+
+  const isBlankRow = !objectLabel && !locateHint && !question && !correctAnswer;
+  if (isBlankRow) return { item: null, error: null };
+
+  if (!locateHint || !question || !correctAnswer) {
+    return { item: null, error: `"${objectLabel || 'unnamed object'}": needs at least a Locate Hint, Question, and Correct Answer - skipped.` };
+  }
+
+  const rawMode = String(cells[6] ?? '').trim().toLowerCase();
+  const answerMode: AnswerMode = rawMode === 'choice' ? 'choice' : 'type';
+  const choices = [cells[8], cells[9], cells[10]]
+    .map((c) => String(c ?? '').trim())
+    .filter((c) => c.length > 0);
+
+  return {
+    item: {
+      id: Number.isFinite(Number(cells[0])) ? Number(cells[0]) : fallbackId,
+      objectLabel,
+      locateHint,
+      locateHintExtra: String(cells[3] ?? '').trim(),
+      question,
+      questionHintExtra: String(cells[5] ?? '').trim(),
+      answerMode,
+      correctAnswer,
+      choices,
+      xPercent: toFiniteOrNull(cells[11]),
+      yPercent: toFiniteOrNull(cells[12]),
+    },
+    error: null,
+  };
+}
+
 /**
  * Builds a downloadable .xlsx template. Teachers fill this out offline
  * (in Excel, Google Sheets, Numbers, etc.) - by hand, or by pasting in a
@@ -105,39 +145,9 @@ export async function parseHotspotTemplateFile(file: File): Promise<ParseResult>
   const items: TemplateItem[] = [];
 
   for (let i = headerRowIndex + 1; i < rows.length; i++) {
-    const row = rows[i];
-    const objectLabel = String(row[1] ?? '').trim();
-    const locateHint = String(row[2] ?? '').trim();
-    const question = String(row[4] ?? '').trim();
-    const correctAnswer = String(row[7] ?? '').trim();
-
-    const isBlankRow = !objectLabel && !locateHint && !question && !correctAnswer;
-    if (isBlankRow) continue;
-
-    if (!locateHint || !question || !correctAnswer) {
-      errors.push(`Row ${i + 1} (${objectLabel || 'unnamed'}): needs at least a Locate Hint, Question, and Correct Answer - skipped.`);
-      continue;
-    }
-
-    const rawMode = String(row[6] ?? '').trim().toLowerCase();
-    const answerMode: AnswerMode = rawMode === 'choice' ? 'choice' : 'type';
-    const choices = [row[8], row[9], row[10]]
-      .map((c) => String(c ?? '').trim())
-      .filter((c) => c.length > 0);
-
-    items.push({
-      id: Number.isFinite(Number(row[0])) ? Number(row[0]) : items.length + 1,
-      objectLabel,
-      locateHint,
-      locateHintExtra: String(row[3] ?? '').trim(),
-      question,
-      questionHintExtra: String(row[5] ?? '').trim(),
-      answerMode,
-      correctAnswer,
-      choices,
-      xPercent: toFiniteOrNull(row[11]),
-      yPercent: toFiniteOrNull(row[12]),
-    });
+    const { item, error } = cellsToItem(rows[i], items.length + 1);
+    if (error) errors.push(`Row ${i + 1} ${error}`);
+    if (item) items.push(item);
   }
 
   if (items.length === 0 && errors.length === 0) {
@@ -145,4 +155,91 @@ export async function parseHotspotTemplateFile(file: File): Promise<ParseResult>
   }
 
   return { template: { items }, errors };
+}
+
+/**
+ * Parses a pasted markdown/pipe-delimited table (the format the AI prompt
+ * asks for) directly, no file needed. Tolerant of a leading title/prose
+ * before the table and a "|---|---|" separator row.
+ */
+export function parseCluesTableText(text: string): ParseResult {
+  const tableLines = text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith('|') && l.endsWith('|'));
+
+  if (tableLines.length === 0) {
+    return {
+      template: { items: [] },
+      errors: ['No table found in the pasted text - make sure you copied the AI\'s entire reply, including the clue table.'],
+    };
+  }
+
+  const rows = tableLines.map((l) => l.slice(1, -1).split('|').map((c) => c.trim()));
+  const headerRowIndex = rows.findIndex((r) => /object\s*#/i.test(r[0] ?? ''));
+
+  if (headerRowIndex === -1) {
+    return {
+      template: { items: [] },
+      errors: ['Found a table, but not the expected header row - please paste the AI\'s reply unedited.'],
+    };
+  }
+
+  const isSeparatorRow = (r: string[]) => r.every((c) => /^:?-{2,}:?$/.test(c) || c === '');
+
+  const errors: string[] = [];
+  const items: TemplateItem[] = [];
+
+  for (let i = headerRowIndex + 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (isSeparatorRow(row)) continue;
+    const { item, error } = cellsToItem(row, items.length + 1);
+    if (error) errors.push(error);
+    if (item) items.push(item);
+  }
+
+  if (items.length === 0 && errors.length === 0) {
+    errors.push('No usable rows found in that table.');
+  }
+
+  return { template: { items }, errors };
+}
+
+export interface CombinedReplyResult {
+  story: string;
+  clues: ParseResult;
+  errors: string[];
+}
+
+/**
+ * Splits and parses a single AI reply that contains both the story intro
+ * (after a "STORY:" marker) and the clue table (after a "CLUES:" marker) -
+ * the format the merged Step 2 prompt asks for. Falls back gracefully if
+ * a marker is missing so a partial paste still recovers what it can.
+ */
+/** Normalizes a line for marker matching - strips markdown bold/heading
+ * characters and surrounding whitespace so "**STORY:**" or "## Story:"
+ * still match, without accidentally matching the word "story" appearing
+ * mid-sentence elsewhere in the AI's reply. */
+function normalizeMarkerLine(line: string): string {
+  return line.trim().replace(/^[#*_\s]+|[#*_\s]+$/g, '').toUpperCase();
+}
+
+export function parseStoryAndCluesReply(raw: string): CombinedReplyResult {
+  const errors: string[] = [];
+  const lines = raw.split('\n');
+
+  const storyLineIdx = lines.findIndex((l) => normalizeMarkerLine(l) === 'STORY:' || normalizeMarkerLine(l) === 'STORY');
+  const cluesLineIdx = lines.findIndex((l) => normalizeMarkerLine(l) === 'CLUES:' || normalizeMarkerLine(l) === 'CLUES');
+
+  let story = '';
+  if (storyLineIdx !== -1) {
+    const end = cluesLineIdx !== -1 && cluesLineIdx > storyLineIdx ? cluesLineIdx : lines.length;
+    story = lines.slice(storyLineIdx + 1, end).join('\n').trim();
+  }
+  if (!story) errors.push('Could not find a "STORY:" section - paste the AI\'s reply exactly as it sent it, unedited.');
+
+  const cluesText = cluesLineIdx !== -1 ? lines.slice(cluesLineIdx + 1).join('\n').trim() : raw;
+  const clues = parseCluesTableText(cluesText);
+  return { story, clues, errors };
 }

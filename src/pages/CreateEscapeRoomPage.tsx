@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { uploadToCloudinary } from '../lib/cloudinary';
 import { HotspotEditor } from '../components/escapeRoom/HotspotEditor';
 import { PromptGeneratorPanel } from '../components/escapeRoom/PromptGeneratorPanel';
+import type { TemplateItem } from '../lib/hotspotTemplate';
 import { ESCAPE_ROOM_THEMES } from '../games/escapeRoomThemes';
 import {
   checkDuplicateEscapeRoomTitle, createEscapeRoom, type HotspotInput,
@@ -22,6 +23,7 @@ export function CreateEscapeRoomPage() {
   const [title, setTitle] = useState('');
   const [titleManuallyEdited, setTitleManuallyEdited] = useState(false);
   const [storyText, setStoryText] = useState('');
+  const [pendingClueImport, setPendingClueImport] = useState<TemplateItem[] | null>(null);
   const [theme, setTheme] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<Visibility>('public');
   const [duplicate, setDuplicate] = useState<EscapeRoom | null>(null);
@@ -101,7 +103,7 @@ export function CreateEscapeRoomPage() {
       </div>
       {showPromptGenerator && (
         <div className="mt-3">
-          <PromptGeneratorPanel />
+          <PromptGeneratorPanel onImportStory={setStoryText} onImportClues={setPendingClueImport} />
         </div>
       )}
 
@@ -126,7 +128,13 @@ export function CreateEscapeRoomPage() {
                 Change image
               </button>
             </div>
-            <HotspotEditor imageUrl={imageUrl} hotspots={hotspots} onChange={setHotspots} />
+            <HotspotEditor
+              imageUrl={imageUrl}
+              hotspots={hotspots}
+              onChange={setHotspots}
+              externalImportItems={pendingClueImport}
+              onExternalImportConsumed={() => setPendingClueImport(null)}
+            />
           </div>
         )}
 

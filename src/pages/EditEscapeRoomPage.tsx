@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { uploadToCloudinary } from '../lib/cloudinary';
 import { HotspotEditor } from '../components/escapeRoom/HotspotEditor';
 import { PromptGeneratorPanel } from '../components/escapeRoom/PromptGeneratorPanel';
+import type { TemplateItem } from '../lib/hotspotTemplate';
 import { ESCAPE_ROOM_THEMES } from '../games/escapeRoomThemes';
 import {
   getEscapeRoom, getEscapeRoomHotspots, updateEscapeRoom, type HotspotInput,
@@ -25,6 +26,7 @@ export function EditEscapeRoomPage() {
   const [hotspots, setHotspots] = useState<HotspotInput[]>([]);
   const [title, setTitle] = useState('');
   const [storyText, setStoryText] = useState('');
+  const [pendingClueImport, setPendingClueImport] = useState<TemplateItem[] | null>(null);
   const [theme, setTheme] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<Visibility>('public');
   const [saving, setSaving] = useState(false);
@@ -104,7 +106,7 @@ export function EditEscapeRoomPage() {
       </div>
       {showPromptGenerator && (
         <div className="mt-3">
-          <PromptGeneratorPanel />
+          <PromptGeneratorPanel onImportStory={setStoryText} onImportClues={setPendingClueImport} />
         </div>
       )}
 
@@ -119,7 +121,13 @@ export function EditEscapeRoomPage() {
         {uploading && <p className="mb-2 text-sm text-muted-foreground">Uploading to Cloudinary...</p>}
         {uploadError && <p className="mb-2 text-sm text-destructive">{uploadError}</p>}
 
-        <HotspotEditor imageUrl={imageUrl} hotspots={hotspots} onChange={setHotspots} />
+        <HotspotEditor
+          imageUrl={imageUrl}
+          hotspots={hotspots}
+          onChange={setHotspots}
+          externalImportItems={pendingClueImport}
+          onExternalImportConsumed={() => setPendingClueImport(null)}
+        />
 
         <label className="mt-6 block">
           <span className="mb-1 block text-sm font-semibold text-primary">Room title</span>
