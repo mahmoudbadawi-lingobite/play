@@ -40,6 +40,18 @@ function toFiniteOrNull(value: unknown): number | null {
   return null;
 }
 
+/** True for obvious unfilled placeholder text like "...", "…", or
+ * "<your story here>" - i.e. someone pasted the PROMPT (which contains
+ * an example/skeleton showing the AI what format to reply in) instead of
+ * the AI's actual filled-in reply. */
+function looksLikePlaceholder(value: string): boolean {
+  const v = value.trim();
+  if (!v) return false;
+  if (v === '...' || v === '…' || v === '-') return true;
+  if (v.startsWith('<') && v.endsWith('>')) return true;
+  return false;
+}
+
 /** Turns one row of 13 cells (in HEADERS order) into a TemplateItem, or
  * null if the row is entirely blank. Shared by both the .xlsx importer
  * and the pasted-text importer so they behave identically. */
@@ -51,6 +63,13 @@ function cellsToItem(cells: unknown[], fallbackId: number): { item: TemplateItem
 
   const isBlankRow = !objectLabel && !locateHint && !question && !correctAnswer;
   if (isBlankRow) return { item: null, error: null };
+
+  if ([objectLabel, locateHint, question, correctAnswer].some(looksLikePlaceholder)) {
+    return {
+      item: null,
+      error: 'That row still has placeholder text (like "...") instead of real content - make sure you copied the AI\'s actual reply, not the prompt you sent it or an unfilled template.',
+    };
+  }
 
   if (!locateHint || !question || !correctAnswer) {
     return { item: null, error: `"${objectLabel || 'unnamed object'}": needs at least a Locate Hint, Question, and Correct Answer - skipped.` };
@@ -237,7 +256,12 @@ export function parseStoryAndCluesReply(raw: string): CombinedReplyResult {
     const end = cluesLineIdx !== -1 && cluesLineIdx > storyLineIdx ? cluesLineIdx : lines.length;
     story = lines.slice(storyLineIdx + 1, end).join('\n').trim();
   }
-  if (!story) errors.push('Could not find a "STORY:" section - paste the AI\'s reply exactly as it sent it, unedited.');
+  if (!story) {
+    errors.push('Could not find a "STORY:" section - paste the AI\'s reply exactly as it sent it, unedited.');
+  } else if (looksLikePlaceholder(story)) {
+    errors.push('The "STORY:" section still has placeholder text instead of a real story - make sure you copied the AI\'s actual reply, not the prompt you sent it or an unfilled template.');
+    story = '';
+  }
 
   const cluesText = cluesLineIdx !== -1 ? lines.slice(cluesLineIdx + 1).join('\n').trim() : raw;
   const clues = parseCluesTableText(cluesText);

@@ -172,6 +172,7 @@ export function PromptGeneratorPanel({ onImportStory, onImportClues }: {
   const [spelling, setSpelling] = useState('');
   const [pasteText, setPasteText] = useState('');
   const [pasteStatus, setPasteStatus] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
+  const [useOutsideResources, setUseOutsideResources] = useState(false);
 
   const effectiveTheme = useCustomTheme ? customTheme : theme;
   const level = `Grade ${grade} students`;
@@ -203,10 +204,15 @@ Theme:
 ${effectiveTheme || '[choose a theme above]'}
 
 LEARNING ELEMENTS
+${useOutsideResources ? `
+An outside teaching resource (worksheet, textbook page, reading passage, etc.) is attached to this chat along with this prompt. Analyze it first to identify the vocabulary words, grammar points, or skills it teaches, and decide what to hide in the scene based on THAT content.${elementsBlock ? ` Also make sure to include these additional elements the teacher specified:\n\n${elementsBlock}` : ''}
 
+Spread the chosen objects across DIFFERENT areas of the image (foreground, background, left, right, center) - keep them clearly separated from one another rather than clustered together in one corner, so each one is easy to tell apart from the others.
+` : `
 Naturally hide these objects inside the scene, spread across DIFFERENT areas of the image (foreground, background, left, right, center) - keep them clearly separated from one another rather than clustered together in one corner, so each one is easy to tell apart from the others:
 
 ${elementsBlock || '[add vocabulary/grammar/reading/spelling items below]'}
+`}
 
 Difficulty:
 ${difficulty}
@@ -232,8 +238,10 @@ No watermarks`;
   const answerMode = answerModeFromQuestionType(questionType.value);
   const isChoice = answerMode === 'choice';
 
-  const storyAndCluesPrompt = `You are an educational escape-room designer, writing both the story intro and the clues for the room in one reply. Attach the background image you generated in Step 1 to this chat before you send this message - it lets you place each clue accurately.
-
+  const storyAndCluesPrompt = `You are an educational escape-room designer, writing both the story intro and the clues for the room in one reply. Attach the background image you generated in Step 1 to this chat before you send this message${useOutsideResources ? ', along with the outside teaching resource(s) (worksheet, textbook page, reading passage, etc.) you want this room based on' : ''} - it lets you place each clue accurately.
+${useOutsideResources ? `
+Before writing anything, analyze the attached resource(s) first: identify the vocabulary, grammar points, or skills they teach, and use that as the actual content for this room (in addition to anything listed under LEARNING ELEMENTS below).
+` : ''}
 PART 1 - STORY INTRODUCTION
 
 Write a short, exciting introduction for this English Escape Room game.
@@ -244,12 +252,12 @@ Write a short, exciting introduction for this English Escape Room game.
 • Do NOT reveal where the clues are.
 • Create suspense and curiosity, and end with an exciting sentence encouraging students to begin.
 • Setting: ${effectiveTheme || '[choose a theme above]'}
-• Lesson topic: ${lessonTopic || '[add a short lesson topic below]'}
+• Lesson topic: ${lessonTopic || (useOutsideResources ? 'determine this from the attached resource(s)' : '[add a short lesson topic below]')}
 • Tone: adventure, mystery, exciting, educational.
 
 PART 2 - CLUES
 
-For every learning element listed at the end, invent an object hidden somewhere in the attached image that represents it, then produce FOUR separate pieces of text for it:
+For every learning element listed at the end${useOutsideResources ? ' (and any additional ones you identified from the attached resource(s))' : ''}, invent an object hidden somewhere in the attached image that represents it, then produce FOUR separate pieces of text for it:
 
 1. LOCATE HINT - a short, purely VISUAL/POSITIONAL description a player reads BEFORE clicking anything. It must describe what the object looks like and/or roughly where it sits in the scene (e.g. "a curled pink-and-white spiral shell resting on the sand at the bottom of the stone steps"), specific enough that a player can pick out that one object among everything else in the picture. It must NEVER contain, spell out, translate, define, or hint at the answer to the question - it only helps the player find the spot.
 2. EXTRA LOCATE HINT - a second location clue, only shown to a player who keeps clicking the wrong spot. Nudge them gently - a small additional visual detail or a slightly narrower area (e.g. "look closer to the ground" or "near the taller of the two towers") - WITHOUT pointing directly at the object or making it obvious at a glance. It should still take a moment of looking, not give away the exact pixel. Still no answer leakage.
@@ -258,7 +266,7 @@ For every learning element listed at the end, invent an object hidden somewhere 
 
 Requirements
 
-• One object + one clue set per learning element, in the same order as the list below.
+• One object + one clue set per learning element, in the same order as the list below${useOutsideResources ? ' (add extra rows at the end for anything you identified from the attached resource(s))' : ''}.
 • Keep every field short (1 sentence each, or a few words for the extra answer hint).
 • IMPORTANT - spacing: choose objects that are spread out across DIFFERENT areas of the image (not clustered together or overlapping). Two objects sitting close to each other confuses players about which clue belongs to which object - keep every object a clearly distinct, well-separated spot in the scene.
 • Question type: ${questionType.value}
@@ -266,8 +274,8 @@ ${isChoice ? `• Provide exactly 3 wrong options plus the correct answer. The c
 • Also estimate where each object sits in the attached image as an X and Y percent (0-100, where 0,0 is the top-left corner and 100,100 is the bottom-right corner). Look carefully at the actual picture - do not guess blindly. Double check that no two objects' X/Y positions are close together (keep them at least ~15 percent apart) - pick a different object if two candidates end up too close. If you cannot see the image or aren't confident, leave X/Y blank and the teacher will place it by hand.
 
 LEARNING ELEMENTS (one item per line below, in order)
-
-${elementLines.length > 0 ? elementLines.map((l) => `- ${l}`).join('\n') : '[add vocabulary/grammar/reading/spelling items below]'}
+${useOutsideResources ? '\n[Analyze the attached resource(s) to determine the learning elements yourself.]' : ''}
+${elementLines.length > 0 ? elementLines.map((l) => `- ${l}`).join('\n') : (useOutsideResources ? '' : '[add vocabulary/grammar/reading/spelling items below]')}
 
 OUTPUT FORMAT - respond with EXACTLY this structure and nothing else (no commentary before, between, or after):
 
@@ -450,24 +458,53 @@ CLUES:
         />
       </label>
 
+      <label className="mt-4 flex items-start gap-2 rounded-lg border border-border bg-muted/20 p-3">
+        <input
+          type="checkbox"
+          checked={useOutsideResources}
+          onChange={(e) => setUseOutsideResources(e.target.checked)}
+          className="mt-0.5"
+        />
+        <span className="text-sm text-primary">
+          <span className="font-semibold">I have outside resources I'll attach with the prompt</span>
+          <span className="block text-xs text-muted-foreground">
+            (a worksheet, textbook page, reading passage, etc.) - the AI will analyze it to decide the vocabulary, grammar, or skills to use, instead of relying only on what you type below.
+          </span>
+        </span>
+      </label>
+
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <label className="block">
-          <span className="mb-1 block text-xs font-semibold text-primary">Vocabulary words (one per line)</span>
+          <span className="mb-1 block text-xs font-semibold text-primary">
+            Vocabulary words (one per line){useOutsideResources && <span className="font-normal text-muted-foreground"> - optional, adds to the attached resource</span>}
+          </span>
           <textarea value={vocab} onChange={(e) => setVocab(e.target.value)} rows={3} className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary" />
         </label>
         <label className="block">
-          <span className="mb-1 block text-xs font-semibold text-primary">Grammar items (one per line)</span>
+          <span className="mb-1 block text-xs font-semibold text-primary">
+            Grammar items (one per line){useOutsideResources && <span className="font-normal text-muted-foreground"> - optional, adds to the attached resource</span>}
+          </span>
           <textarea value={grammar} onChange={(e) => setGrammar(e.target.value)} rows={3} className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary" />
         </label>
         <label className="block">
-          <span className="mb-1 block text-xs font-semibold text-primary">Reading clues (one per line)</span>
+          <span className="mb-1 block text-xs font-semibold text-primary">
+            Reading clues (one per line){useOutsideResources && <span className="font-normal text-muted-foreground"> - optional, adds to the attached resource</span>}
+          </span>
           <textarea value={reading} onChange={(e) => setReading(e.target.value)} rows={3} className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary" />
         </label>
         <label className="block">
-          <span className="mb-1 block text-xs font-semibold text-primary">Spelling words (one per line)</span>
+          <span className="mb-1 block text-xs font-semibold text-primary">
+            Spelling words (one per line){useOutsideResources && <span className="font-normal text-muted-foreground"> - optional, adds to the attached resource</span>}
+          </span>
           <textarea value={spelling} onChange={(e) => setSpelling(e.target.value)} rows={3} className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary" />
         </label>
       </div>
+
+      {useOutsideResources && (
+        <p className="mt-3 rounded-lg border border-secondary bg-secondary/10 px-3 py-2 text-xs font-medium text-primary">
+          📎 Remember to attach your resource file(s) in the AI chat before sending Prompt 1 and/or Prompt 2 below.
+        </p>
+      )}
 
       <CopyBox label="1. Background image prompt" text={imagePrompt} shortcuts={IMAGE_AI_SHORTCUTS} />
       <CopyBox label="2. Story + clues prompt (attach your Step 1 image first)" text={storyAndCluesPrompt} shortcuts={TEXT_AI_SHORTCUTS} />
