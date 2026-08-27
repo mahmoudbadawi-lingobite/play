@@ -9,7 +9,7 @@
   as its own --gq-* variable below.
 */
 
-[data-theme='galaxy-quest'] {
+html[data-theme='galaxy-quest'] {
   /* Core surfaces */
   --background: 225 67% 7%;         /* Deep Space #060C1E */
   --foreground: 232 100% 98%;       /* Soft White #F7F8FF */
