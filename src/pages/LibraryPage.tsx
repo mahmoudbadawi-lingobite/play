@@ -36,7 +36,7 @@ export function LibraryPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
+    <div className="nebula-background mx-auto max-w-6xl px-4 py-10">
       <h1 className="font-display text-3xl font-bold text-primary">Game Library</h1>
       <p className="mt-1 text-muted-foreground">Public games shared by teachers across LingoBite Play.</p>
 
@@ -61,7 +61,7 @@ export function LibraryPage() {
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sets.map((set) => (
-            <div key={set.id} className="card-surface flex flex-col p-5">
+            <div key={set.id} className="card-surface gq-card-2 gq-card-interactive flex flex-col p-5">
               <div className="flex items-center justify-between">
                 <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold capitalize text-muted-foreground">
                   {set.skill}

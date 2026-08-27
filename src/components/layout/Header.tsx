@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAdminNotifications } from '../../contexts/AdminNotificationsContext';
+import { ThemeToggle } from '../theme/ThemeToggle';
 
 export function Header() {
   const { t, i18n } = useTranslation();
@@ -68,6 +69,8 @@ export function Header() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <ThemeToggle />
+
           <button
             onClick={toggleLanguage}
             className="rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-primary/70 hover:border-secondary hover:text-secondary sm:px-2.5"

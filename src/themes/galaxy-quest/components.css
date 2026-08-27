@@ -1,0 +1,184 @@
+/*
+  Galaxy Quest — component system
+  --------------------------------
+  Card hierarchy, buttons, badges, nav, forms and modals. Scoped entirely
+  under [data-theme="galaxy-quest"] so the base app is untouched when the
+  skin is off.
+*/
+
+/* ---------- Cards ---------- */
+/* .card-surface already exists app-wide; give it the glass treatment. */
+[data-theme='galaxy-quest'] .card-surface {
+  background-color: hsl(var(--gq-glass-bg) / 0.72);
+  border: 1px solid hsl(var(--gq-glass-border) / 0.18);
+  box-shadow: 0 12px 30px -12px rgba(6, 12, 30, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Level 1 — major dashboard cards */
+[data-theme='galaxy-quest'] .gq-card-1 {
+  background-color: hsl(var(--gq-glass-bg) / 0.78);
+  border: 1px solid hsl(var(--gq-glass-border) / 0.22);
+  border-radius: calc(var(--radius) + 6px);
+  box-shadow: 0 20px 45px -18px rgba(6, 12, 30, 0.75), inset 0 1px 0 hsl(var(--gq-soft-white) / 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Level 2 — regular content panels */
+[data-theme='galaxy-quest'] .gq-card-2 {
+  background-color: hsl(var(--gq-glass-bg) / 0.65);
+  border: 1px solid hsl(var(--gq-glass-border) / 0.15);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 26px -14px rgba(6, 12, 30, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Level 3 — small stat/info cards */
+[data-theme='galaxy-quest'] .gq-card-3 {
+  background-color: hsl(var(--gq-glass-bg) / 0.55);
+  border: 1px solid hsl(var(--gq-glass-border) / 0.12);
+  border-radius: calc(var(--radius) - 4px);
+}
+
+/* Interactive cards — hover lift + glow */
+[data-theme='galaxy-quest'] .gq-card-interactive {
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+[data-theme='galaxy-quest'] .gq-card-interactive:hover {
+  transform: translateY(-3px);
+  border-color: hsl(var(--gq-galaxy-purple) / 0.45);
+  box-shadow: 0 22px 50px -18px hsl(var(--gq-galaxy-purple) / 0.35), 0 20px 45px -18px rgba(6, 12, 30, 0.75);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='galaxy-quest'] .gq-card-interactive:hover {
+    transform: none;
+  }
+}
+
+/* ---------- Glow utilities ---------- */
+[data-theme='galaxy-quest'] .gq-glow-purple { box-shadow: 0 0 24px hsl(var(--gq-galaxy-purple) / 0.35); }
+[data-theme='galaxy-quest'] .gq-glow-blue { box-shadow: 0 0 24px hsl(var(--gq-neon-blue) / 0.3); }
+[data-theme='galaxy-quest'] .gq-glow-gold { box-shadow: 0 0 24px hsl(var(--gq-star-gold) / 0.35); }
+[data-theme='galaxy-quest'] .gq-glow-green { box-shadow: 0 0 24px hsl(var(--gq-aurora-green) / 0.3); }
+[data-theme='galaxy-quest'] .gq-glow-pink { box-shadow: 0 0 24px hsl(var(--gq-pink-nebula) / 0.3); }
+
+/* ---------- Buttons ---------- */
+/* Primary buttons already use bg-primary → token swap gives the purple
+   gradient look; add the gradient + soft glow on top. */
+[data-theme='galaxy-quest'] .bg-primary {
+  background-image: linear-gradient(135deg, hsl(var(--gq-galaxy-purple)), hsl(var(--gq-electric-violet)));
+  transition: box-shadow 200ms ease, filter 200ms ease;
+}
+[data-theme='galaxy-quest'] .bg-primary:hover {
+  box-shadow: 0 0 26px hsl(var(--gq-galaxy-purple) / 0.45);
+  filter: brightness(1.05);
+}
+
+[data-theme='galaxy-quest'] .bg-secondary {
+  background-image: linear-gradient(135deg, hsl(var(--gq-star-gold)), hsl(35 100% 58%));
+  transition: box-shadow 200ms ease, filter 200ms ease;
+}
+[data-theme='galaxy-quest'] .bg-secondary:hover {
+  box-shadow: 0 0 22px hsl(var(--gq-star-gold) / 0.4);
+}
+
+[data-theme='galaxy-quest'] .bg-destructive:hover {
+  box-shadow: 0 0 22px hsl(var(--gq-pink-nebula) / 0.4);
+}
+
+/* "Glass" secondary/outline buttons (border + bg-card combo used across the app) */
+[data-theme='galaxy-quest'] .border-border.bg-card {
+  background-color: hsl(var(--gq-glass-bg) / 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+[data-theme='galaxy-quest'] .border-border.bg-card:hover {
+  box-shadow: 0 0 18px hsl(var(--gq-neon-blue) / 0.2);
+}
+
+/* ---------- Badges / achievements ---------- */
+[data-theme='galaxy-quest'] .gq-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-image: linear-gradient(160deg, hsl(var(--gq-star-gold)), hsl(36 100% 45%));
+  box-shadow: 0 0 0 2px hsl(var(--gq-soft-white) / 0.15), 0 8px 20px -6px hsl(var(--gq-star-gold) / 0.5);
+}
+
+[data-theme='galaxy-quest'] .gq-badge--muted {
+  background-image: linear-gradient(160deg, hsl(227 25% 30%), hsl(227 30% 20%));
+  box-shadow: 0 0 0 2px hsl(var(--gq-soft-white) / 0.06);
+  opacity: 0.6;
+}
+
+@keyframes gq-badge-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+[data-theme='galaxy-quest'] .gq-badge-unlock {
+  animation: gq-badge-pop 420ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='galaxy-quest'] .gq-badge-unlock { animation: none; }
+}
+
+/* ---------- Nav ---------- */
+[data-theme='galaxy-quest'] .gq-nav-link {
+  position: relative;
+  border-radius: 9999px;
+  padding: 0.4rem 0.9rem;
+  transition: background-color 200ms ease, color 200ms ease, box-shadow 200ms ease;
+}
+[data-theme='galaxy-quest'] .gq-nav-link:hover {
+  background-color: hsl(var(--gq-soft-white) / 0.06);
+}
+[data-theme='galaxy-quest'] .gq-nav-link.gq-nav-link--active {
+  background-image: linear-gradient(135deg, hsl(var(--gq-galaxy-purple) / 0.9), hsl(var(--gq-electric-violet) / 0.9));
+  color: hsl(var(--gq-soft-white));
+  box-shadow: 0 0 18px hsl(var(--gq-galaxy-purple) / 0.4);
+}
+
+/* ---------- Forms ---------- */
+[data-theme='galaxy-quest'] input,
+[data-theme='galaxy-quest'] select,
+[data-theme='galaxy-quest'] textarea {
+  background-color: hsl(var(--gq-glass-bg) / 0.6);
+}
+[data-theme='galaxy-quest'] input:focus-visible,
+[data-theme='galaxy-quest'] select:focus-visible,
+[data-theme='galaxy-quest'] textarea:focus-visible,
+[data-theme='galaxy-quest'] button:focus-visible {
+  outline: 2px solid hsl(var(--gq-galaxy-purple));
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px hsl(var(--gq-galaxy-purple) / 0.2);
+}
+
+/* ---------- Modals ---------- */
+[data-theme='galaxy-quest'] .gq-modal-backdrop {
+  background-color: hsl(var(--gq-deep-space) / 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+[data-theme='galaxy-quest'] .gq-modal-panel {
+  background-color: hsl(var(--gq-glass-bg) / 0.9);
+  border: 1px solid hsl(var(--gq-glass-border) / 0.25);
+  box-shadow: 0 30px 70px -20px rgba(6, 12, 30, 0.85);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+/* ---------- Progress ring (used for level/XP display) ---------- */
+[data-theme='galaxy-quest'] .gq-progress-ring circle.gq-progress-ring__track {
+  stroke: hsl(var(--gq-soft-white) / 0.08);
+}
+[data-theme='galaxy-quest'] .gq-progress-ring circle.gq-progress-ring__fill {
+  stroke: hsl(var(--gq-galaxy-purple));
+  filter: drop-shadow(0 0 6px hsl(var(--gq-galaxy-purple) / 0.6));
+}

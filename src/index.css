@@ -1,4 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600&family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+/* Galaxy Quest skin — scoped entirely under [data-theme="galaxy-quest"],
+   so it's inert and adds no weight/behavior when the theme is off. */
+@import './themes/galaxy-quest/tokens.css';
+@import './themes/galaxy-quest/background.css';
+@import './themes/galaxy-quest/components.css';
+@import './themes/galaxy-quest/animations.css';
 
 @tailwind base;
 @tailwind components;
