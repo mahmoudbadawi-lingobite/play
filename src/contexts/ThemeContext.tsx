@@ -1,8 +1,8 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
-export type AppTheme = 'default' | 'galaxy-quest';
+export type AppTheme = "classic" | "kid";
 
-const STORAGE_KEY = 'lingotrace-theme';
+const STORAGE_KEY = "lingobite-play-theme";
 
 interface ThemeContextValue {
   theme: AppTheme;
@@ -10,32 +10,29 @@ interface ThemeContextValue {
   toggleTheme: () => void;
 }
 
-const ThemeContext = createContext<ThemeContextValue>({
-  theme: 'default',
-  setTheme: () => {},
-  toggleTheme: () => {},
-});
+const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 function readStoredTheme(): AppTheme {
-  if (typeof window === 'undefined') return 'default';
+  if (typeof window === "undefined") return "classic";
   const stored = window.localStorage.getItem(STORAGE_KEY);
-  return stored === 'galaxy-quest' ? 'galaxy-quest' : 'default';
+  return stored === "kid" ? "kid" : "classic";
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<AppTheme>(readStoredTheme);
 
   useEffect(() => {
-    if (theme === 'galaxy-quest') {
-      document.documentElement.setAttribute('data-theme', 'galaxy-quest');
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-    }
+    document.documentElement.setAttribute("data-theme", theme);
     window.localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);
 
-  const setTheme = (next: AppTheme) => setThemeState(next);
-  const toggleTheme = () => setThemeState((prev) => (prev === 'galaxy-quest' ? 'default' : 'galaxy-quest'));
+  function setTheme(next: AppTheme) {
+    setThemeState(next);
+  }
+
+  function toggleTheme() {
+    setThemeState((prev) => (prev === "kid" ? "classic" : "kid"));
+  }
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
@@ -44,6 +41,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useTheme() {
-  return useContext(ThemeContext);
+export function useTheme(): ThemeContextValue {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error("useTheme must be used within a ThemeProvider");
+  return ctx;
 }

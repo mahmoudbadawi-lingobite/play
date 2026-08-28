@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { AdminNotificationsProvider } from './contexts/AdminNotificationsContext';
 import { GuestProgressProvider } from './contexts/GuestProgressContext';
-import { ThemeProvider } from './contexts/ThemeContext';
 import { Header } from './components/layout/Header';
 import { AnnouncementBar } from './components/layout/AnnouncementBar';
 import { HeroMediaBanner } from './components/layout/HeroMediaBanner';
@@ -29,12 +28,11 @@ import './i18n/config';
 
 export default function App() {
   return (
-    <ThemeProvider>
     <AuthProvider>
       <AdminNotificationsProvider>
       <GuestProgressProvider>
         <BrowserRouter basename={import.meta.env.BASE_URL}>
-          <div className="min-h-screen bg-background space-background space-background--animated">
+          <div className="min-h-screen bg-background">
             <AnnouncementBar />
             <Header />
             <HeroMediaBanner />
@@ -87,6 +85,5 @@ export default function App() {
       </GuestProgressProvider>
       </AdminNotificationsProvider>
     </AuthProvider>
-    </ThemeProvider>
   );
 }

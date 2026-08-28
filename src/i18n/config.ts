@@ -33,6 +33,10 @@ const resources = {
       leaderboard: 'Leaderboard',
       playNow: 'Play now',
       guestNoticeSave: "Guest progress isn't saved. Sign in to keep your XP.",
+      theme_kidMode: 'Kid mode',
+      theme_classicMode: 'Classic mode',
+      theme_switchToKid: 'Switch to the bright, playful kid mode look',
+      theme_switchToClassic: 'Switch back to the classic look',
     },
   },
   ar: {
@@ -65,6 +69,10 @@ const resources = {
       leaderboard: 'لوحة المتصدرين',
       playNow: 'العب الآن',
       guestNoticeSave: 'تقدم الضيف لا يُحفظ. سجّل الدخول للاحتفاظ بنقاطك.',
+      theme_kidMode: 'وضع الأطفال',
+      theme_classicMode: 'الوضع الكلاسيكي',
+      theme_switchToKid: 'التبديل إلى المظهر المرح والملون لوضع الأطفال',
+      theme_switchToClassic: 'العودة إلى المظهر الكلاسيكي',
     },
   },
 };

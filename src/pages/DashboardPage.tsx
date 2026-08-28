@@ -3,13 +3,10 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { requestTeacherAccess, listMyEnrolledClasses } from '../lib/services';
-import { GalaxyDecoration } from '../components/theme/GalaxyDecoration';
-import { useTheme } from '../contexts/ThemeContext';
 
 export function DashboardPage() {
   const { t } = useTranslation();
   const { profile, refreshProfile } = useAuth();
-  const { theme } = useTheme();
   const [enrolledClasses, setEnrolledClasses] = useState<{ id: string; name: string }[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [requesting, setRequesting] = useState(false);
@@ -32,29 +29,21 @@ export function DashboardPage() {
   if (!profile) return null;
 
   return (
-    <div className="dashboard-background mx-auto max-w-5xl px-4 py-10">
-      <div className="relative flex items-start justify-between gap-4 gq-fade-in">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-primary">
-            Welcome back, {profile.displayName?.split(' ')[0] ?? 'there'} ✨
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">Track, learn and level up — you're doing great.</p>
-        </div>
-        {theme === 'galaxy-quest' && (
-          <GalaxyDecoration className="hidden h-28 w-32 shrink-0 sm:block" />
-        )}
-      </div>
+    <div className="mx-auto max-w-5xl px-4 py-10">
+      <h1 className="font-display text-3xl font-bold text-primary">
+        Welcome back, {profile.displayName?.split(' ')[0] ?? 'there'}
+      </h1>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <div className="card-surface gq-card-3 gq-card-interactive p-5">
+        <div className="card-surface p-5">
           <p className="text-sm text-muted-foreground">Total XP</p>
           <p className="font-display text-3xl font-bold text-secondary">{profile.totalXP}</p>
         </div>
-        <div className="card-surface gq-card-3 gq-card-interactive p-5">
+        <div className="card-surface p-5">
           <p className="text-sm text-muted-foreground">Current streak</p>
           <p className="font-display text-3xl font-bold text-primary">{profile.currentStreak} 🔥</p>
         </div>
-        <div className="card-surface gq-card-3 gq-card-interactive p-5">
+        <div className="card-surface p-5">
           <p className="text-sm text-muted-foreground">Badges</p>
           <p className="font-display text-3xl font-bold text-primary">{profile.badges.length} 🏅</p>
         </div>

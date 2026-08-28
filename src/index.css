@@ -1,10 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600&family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
-/* Galaxy Quest skin — scoped entirely under [data-theme="galaxy-quest"],
-   so it's inert and adds no weight/behavior when the theme is off. */
-@import './themes/galaxy-quest/tokens.css';
-@import './themes/galaxy-quest/background.css';
-@import './themes/galaxy-quest/components.css';
-@import './themes/galaxy-quest/animations.css';
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600&family=Inter:wght@400;500;600;700;800&family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -42,6 +36,45 @@
   --radius: 1.2rem;
 }
 
+/*
+ * Kid mode
+ * --------
+ * Ported from LingoTrace: flipping `<html data-theme="kid">` re-skins the
+ * whole app — every color already flows through the CSS variables above, so
+ * no component changes are needed, just this block plus the playful
+ * overrides further down. See src/contexts/ThemeContext.tsx for the toggle.
+ */
+[data-theme="kid"] {
+  --background: 256 100% 96%;      /* soft lavender */
+  --foreground: 255 60% 33%;       /* deep, readable purple standing in for navy */
+
+  --card: 0 0% 100%;
+  --card-foreground: 255 60% 33%;
+
+  --primary: 255 60% 33%;
+  --primary-foreground: 256 100% 96%;
+
+  --secondary: 36 100% 50%;        /* sunny orange standing in for gold */
+  --secondary-foreground: 255 60% 33%;
+
+  --accent: 36 100% 50%;
+  --accent-foreground: 255 60% 33%;
+
+  --muted: 257 100% 95%;
+  --muted-foreground: 260 20% 45%;
+
+  --destructive: 0 65% 50%;
+  --destructive-foreground: 0 0% 100%;
+
+  --success: 145 45% 40%;
+
+  --border: 260 87% 85%;
+  --input: 260 87% 85%;
+  --ring: 36 100% 50%;
+
+  --radius: 1.75rem;
+}
+
 * {
   border-color: hsl(var(--border));
 }
@@ -57,6 +90,26 @@ h1, h2, h3, h4, .font-display {
   font-family: 'Playfair Display', Georgia, serif;
 }
 
+[data-theme="kid"] body {
+  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  /* Soft floating-blob backdrop behind the whole app in kid mode. Fixed +
+     pointer-events-none so it never interferes with scrolling or clicks. */
+  background-image:
+    radial-gradient(circle at 8% 12%, hsl(var(--secondary) / 0.16) 0, transparent 22%),
+    radial-gradient(circle at 92% 8%, hsl(var(--primary) / 0.14) 0, transparent 24%),
+    radial-gradient(circle at 85% 92%, hsl(var(--secondary) / 0.14) 0, transparent 26%);
+  background-attachment: fixed;
+}
+
+[data-theme="kid"] h1,
+[data-theme="kid"] h2,
+[data-theme="kid"] h3,
+[data-theme="kid"] h4,
+[data-theme="kid"] .font-display {
+  font-family: 'Baloo 2', Georgia, serif;
+  font-weight: 700;
+}
+
 /* RTL support: interface chrome only (nav/menus/labels), never game content */
 html[dir='rtl'] .ltr-always {
   direction: ltr;
@@ -69,8 +122,36 @@ html[dir='rtl'] .ltr-always {
   border: 1px solid hsl(var(--border));
 }
 
+[data-theme="kid"] .card-surface {
+  border-width: 2px;
+  box-shadow: 0 10px 28px -6px hsl(var(--primary) / 0.22), 0 2px 6px -1px hsl(var(--secondary) / 0.18);
+}
+
 .brand-gradient {
   background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+}
+
+/* Kid mode: buttons get a chunky drop shadow that "presses in" on click, a
+   familiar tactile pattern from children's game UI. Scoped to the filled
+   nav-style buttons used across the app (bg-primary / bg-secondary), so
+   ghost/outline buttons stay subtle. */
+[data-theme="kid"] button.bg-primary,
+[data-theme="kid"] button.bg-secondary {
+  border-radius: var(--radius);
+  font-weight: 700;
+  box-shadow: 0 4px 0 hsl(var(--primary) / 0.55);
+  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 150ms ease;
+}
+
+[data-theme="kid"] button.bg-primary:hover,
+[data-theme="kid"] button.bg-secondary:hover {
+  transform: translateY(-2px);
+}
+
+[data-theme="kid"] button.bg-primary:active,
+[data-theme="kid"] button.bg-secondary:active {
+  transform: translateY(2px) scale(0.97);
+  box-shadow: none;
 }
 
 :focus-visible {

@@ -117,7 +117,7 @@ export function GameShell() {
   }
 
   return (
-    <div className="game-background mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto max-w-3xl px-4 py-8">
       <p className="text-sm uppercase tracking-wide text-secondary">{gameDef.name}</p>
       <h1 className="font-display text-2xl font-bold text-primary">{set.title}</h1>
       <div className="mt-6 ltr-always">
