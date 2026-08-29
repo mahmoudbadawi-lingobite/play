@@ -199,18 +199,34 @@ export async function getClassRoster(classId: string): Promise<RosterEntry[]> {
   const studentIds = studentRows.map((row: any) => row.student_id);
   // Games aren't currently assigned per-class, so a play isn't tagged with
   // a class_id - roster stats reflect each student's overall activity
-  // rather than only plays attributed to this specific class.
-  const { data: resultRows } = studentIds.length
-    ? await supabase.from('game_results').select('student_id, xp_earned, accuracy').in('student_id', studentIds)
-    : { data: [] as any[] };
+  // rather than only plays attributed to this specific class. This spans
+  // both regular games (game_results) and escape rooms
+  // (escape_room_results), which are recorded in separate tables.
+  const [{ data: resultRows }, { data: escapeRoomRows }] = studentIds.length
+    ? await Promise.all([
+        supabase.from('game_results').select('student_id, xp_earned, accuracy').in('student_id', studentIds),
+        supabase.from('escape_room_results').select('student_id, xp_earned, wrong_clicks').in('student_id', studentIds),
+      ])
+    : [{ data: [] as any[] }, { data: [] as any[] }];
 
   return studentRows.map((row: any) => {
     const results = (resultRows ?? []).filter((r: any) => r.student_id === row.student_id);
-    const totalXP = results.reduce((sum: number, r: any) => sum + (r.xp_earned ?? 0), 0);
-    const gamesPlayed = results.length;
-    const avgAccuracy = gamesPlayed
-      ? Math.round(results.reduce((s: number, r: any) => s + (r.accuracy ?? 0), 0) / gamesPlayed)
-      : 0;
+    const escapeRoomResults = (escapeRoomRows ?? []).filter((r: any) => r.student_id === row.student_id);
+    // escape_room_results doesn't store accuracy directly - it's derived
+    // from wrong_clicks the same way EscapeRoomPlayPage computes it when
+    // the room finishes, so the roster average stays consistent with the
+    // XP the student actually earned.
+    const escapeRoomAccuracies = escapeRoomResults.map((r: any) => Math.max(0, 100 - (r.wrong_clicks ?? 0) * 5));
+
+    const totalXP =
+      results.reduce((sum: number, r: any) => sum + (r.xp_earned ?? 0), 0) +
+      escapeRoomResults.reduce((sum: number, r: any) => sum + (r.xp_earned ?? 0), 0);
+    const gamesPlayed = results.length + escapeRoomResults.length;
+    const accuracySum =
+      results.reduce((s: number, r: any) => s + (r.accuracy ?? 0), 0) +
+      escapeRoomAccuracies.reduce((s: number, a: number) => s + a, 0);
+    const avgAccuracy = gamesPlayed ? Math.round(accuracySum / gamesPlayed) : 0;
+
     return {
       studentId: row.student_id,
       displayName: row.profiles?.display_name ?? 'Student',
