@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useGuestProgress } from '../contexts/GuestProgressContext';
 import { ConfettiBurst } from '../components/escapeRoom/ConfettiBurst';
 import { shareLink } from '../lib/share';
+import { playEscapeRoomSfx, preloadEscapeRoomSfx } from '../lib/escapeRoomSfx';
 import { pickCongratsMessage, GENERIC_CONGRATS, type CongratsMessage } from '../games/escapeRoomThemes';
 import {
   getEscapeRoom, getEscapeRoomHotspots, incrementEscapeRoomPlayCount, recordEscapeRoomResult,
@@ -60,6 +61,10 @@ export function EscapeRoomPlayPage() {
       setTimeout(() => setShareStatus(null), 2000);
     }
   };
+
+  useEffect(() => {
+    preloadEscapeRoomSfx();
+  }, []);
 
   useEffect(() => {
     if (!roomId) return;
@@ -158,6 +163,7 @@ export function EscapeRoomPlayPage() {
     if (distance <= current.radiusPercent) {
       setUnlocked(true);
       setHint(null);
+      playEscapeRoomSfx('detected');
       return;
     }
 
@@ -165,9 +171,16 @@ export function EscapeRoomPlayPage() {
     setMissesOnCurrent(nextMisses);
     setWrongClicks((w) => w + 1);
 
-    if (distance <= current.radiusPercent * 2.5) setHint('🔥 Hot! You\'re very close.');
-    else if (distance <= current.radiusPercent * 5) setHint('🌡️ Warm - getting closer.');
-    else setHint('❄️ Cold - try another spot.');
+    if (distance <= current.radiusPercent * 2.5) {
+      setHint('🔥 Hot! You\'re very close.');
+      playEscapeRoomSfx('hot');
+    } else if (distance <= current.radiusPercent * 5) {
+      setHint('🌡️ Warm - getting closer.');
+      playEscapeRoomSfx('warm');
+    } else {
+      setHint('❄️ Cold - try another spot.');
+      playEscapeRoomSfx('cold');
+    }
   };
 
   const finishRoom = async (finalWrongClicks: number) => {
@@ -195,6 +208,7 @@ export function EscapeRoomPlayPage() {
     if (!current) return;
     const isCorrect = answer.trim().toLowerCase() === current.correctAnswer.trim().toLowerCase();
     if (isCorrect) {
+      playEscapeRoomSfx('correct');
       setAnswerFeedback(null);
       setUnlocked(false);
       setTypedAnswer('');
