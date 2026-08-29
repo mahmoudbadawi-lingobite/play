@@ -25,6 +25,13 @@ function shuffle<T>(arr: T[]): T[] {
 const LOCATE_HINT_THRESHOLD = 3;
 const ANSWER_HINT_THRESHOLD = 2;
 
+const CLICK_BADGE_TONE_CLASSES: Record<'cold' | 'warm' | 'hot' | 'found', string> = {
+  found: 'bg-success text-white',
+  hot: 'bg-destructive text-destructive-foreground',
+  warm: 'bg-secondary text-secondary-foreground',
+  cold: 'bg-muted text-muted-foreground',
+};
+
 export function EscapeRoomPlayPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const { profile, isGuest } = useAuth();
@@ -52,6 +59,25 @@ export function EscapeRoomPlayPage() {
   const [congrats, setCongrats] = useState<CongratsMessage>(GENERIC_CONGRATS[0]);
   const [shareStatus, setShareStatus] = useState<'shared' | 'copied' | null>(null);
   const [sfxEnabled, setSfxEnabled] = useEscapeRoomSfxEnabled();
+  const [clickBadge, setClickBadge] = useState<{
+    xPercent: number;
+    yPercent: number;
+    label: string;
+    tone: 'cold' | 'warm' | 'hot' | 'found';
+  } | null>(null);
+  const badgeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showClickBadge = (xPercent: number, yPercent: number, label: string, tone: 'cold' | 'warm' | 'hot' | 'found') => {
+    if (badgeTimeoutRef.current) clearTimeout(badgeTimeoutRef.current);
+    setClickBadge({ xPercent, yPercent, label, tone });
+    badgeTimeoutRef.current = setTimeout(() => setClickBadge(null), 1500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (badgeTimeoutRef.current) clearTimeout(badgeTimeoutRef.current);
+    };
+  }, []);
 
   const handleShare = async () => {
     if (!room) return;
@@ -117,6 +143,7 @@ export function EscapeRoomPlayPage() {
   useEffect(() => {
     setMissesOnCurrent(0);
     setWrongAnswersOnCurrent(0);
+    setClickBadge(null);
   }, [currentIndex]);
 
   const choiceOptions = useMemo(() => {
@@ -165,6 +192,7 @@ export function EscapeRoomPlayPage() {
       setUnlocked(true);
       setHint(null);
       playEscapeRoomSfx('detected');
+      showClickBadge(xPercent, yPercent, '🎯 Found it!', 'found');
       return;
     }
 
@@ -175,12 +203,15 @@ export function EscapeRoomPlayPage() {
     if (distance <= current.radiusPercent * 2.5) {
       setHint('🔥 Hot! You\'re very close.');
       playEscapeRoomSfx('hot');
+      showClickBadge(xPercent, yPercent, '🔥 Hot', 'hot');
     } else if (distance <= current.radiusPercent * 5) {
       setHint('🌡️ Warm - getting closer.');
       playEscapeRoomSfx('warm');
+      showClickBadge(xPercent, yPercent, '🌡️ Warm', 'warm');
     } else {
       setHint('❄️ Cold - try another spot.');
       playEscapeRoomSfx('cold');
+      showClickBadge(xPercent, yPercent, '❄️ Cold', 'cold');
     }
   };
 
@@ -299,6 +330,14 @@ export function EscapeRoomPlayPage() {
               ✓
             </span>
           ))}
+          {clickBadge && (
+            <span
+              style={{ left: `${clickBadge.xPercent}%`, top: `${clickBadge.yPercent}%` }}
+              className={`pointer-events-none absolute -translate-x-1/2 -translate-y-[140%] whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold shadow-lg animate-pop-in ${CLICK_BADGE_TONE_CLASSES[clickBadge.tone]}`}
+            >
+              {clickBadge.label}
+            </span>
+          )}
         </div>
 
         {hint && !unlocked && <p className="mt-2 text-sm text-primary">{hint}</p>}
