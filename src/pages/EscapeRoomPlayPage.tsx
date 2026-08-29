@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useGuestProgress } from '../contexts/GuestProgressContext';
 import { ConfettiBurst } from '../components/escapeRoom/ConfettiBurst';
 import { shareLink } from '../lib/share';
-import { playEscapeRoomSfx, preloadEscapeRoomSfx } from '../lib/escapeRoomSfx';
+import { playEscapeRoomSfx, preloadEscapeRoomSfx, useEscapeRoomSfxEnabled } from '../lib/escapeRoomSfx';
 import { pickCongratsMessage, GENERIC_CONGRATS, type CongratsMessage } from '../games/escapeRoomThemes';
 import {
   getEscapeRoom, getEscapeRoomHotspots, incrementEscapeRoomPlayCount, recordEscapeRoomResult,
@@ -51,6 +51,7 @@ export function EscapeRoomPlayPage() {
   const [speaking, setSpeaking] = useState(false);
   const [congrats, setCongrats] = useState<CongratsMessage>(GENERIC_CONGRATS[0]);
   const [shareStatus, setShareStatus] = useState<'shared' | 'copied' | null>(null);
+  const [sfxEnabled, setSfxEnabled] = useEscapeRoomSfxEnabled();
 
   const handleShare = async () => {
     if (!room) return;
@@ -220,6 +221,7 @@ export function EscapeRoomPlayPage() {
         setCurrentIndex((i) => i + 1);
       }
     } else {
+      playEscapeRoomSfx('mistake');
       setAnswerFeedback('wrong');
       setWrongClicks((w) => w + 1);
       setWrongAnswersOnCurrent((w) => w + 1);
@@ -266,9 +268,20 @@ export function EscapeRoomPlayPage() {
           <h1 className="font-display text-2xl font-bold text-primary">{room.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">Clue {currentIndex + 1} of {hotspots.length} · {solvedCount} solved</p>
         </div>
-        <button onClick={handleShare} className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-primary hover:border-secondary">
-          {shareStatus === 'shared' ? '✓ Shared' : shareStatus === 'copied' ? '✓ Copied' : '🔗 Share'}
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button onClick={handleShare} className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-primary hover:border-secondary">
+            {shareStatus === 'shared' ? '✓ Shared' : shareStatus === 'copied' ? '✓ Copied' : '🔗 Share'}
+          </button>
+          <button
+            onClick={() => setSfxEnabled(!sfxEnabled)}
+            aria-pressed={sfxEnabled}
+            aria-label={sfxEnabled ? 'Mute sounds' : 'Unmute sounds'}
+            title={sfxEnabled ? 'Mute sounds' : 'Unmute sounds'}
+            className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-primary hover:border-secondary"
+          >
+            {sfxEnabled ? '🔊 Sound' : '🔇 Muted'}
+          </button>
+        </div>
       </div>
 
       <div className="card-surface mt-4 p-4">
