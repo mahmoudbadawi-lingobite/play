@@ -3,6 +3,33 @@ import { useAuth } from '../contexts/AuthContext';
 import { createClass, listMyClasses, getClassRoster, type RosterEntry } from '../lib/services';
 import type { SchoolClass } from '../types';
 
+function buildJoinLink(joinCode: string): string {
+  return `${window.location.origin}${import.meta.env.BASE_URL}join?code=${joinCode}`;
+}
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // Fallback for browsers/contexts without Clipboard API access.
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
 export function TeacherClassesPage() {
   const { profile } = useAuth();
   const [classes, setClasses] = useState<SchoolClass[]>([]);
@@ -11,6 +38,8 @@ export function TeacherClassesPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [rosters, setRosters] = useState<Record<string, RosterEntry[]>>({});
   const [rosterLoading, setRosterLoading] = useState<string | null>(null);
+  const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
+  const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
 
   const refresh = async () => {
     if (!profile) return;
@@ -43,6 +72,22 @@ export function TeacherClassesPage() {
     }
   };
 
+  const handleCopyCode = async (c: SchoolClass) => {
+    const ok = await copyToClipboard(c.joinCode);
+    if (ok) {
+      setCopiedCodeId(c.id);
+      setTimeout(() => setCopiedCodeId((id) => (id === c.id ? null : id)), 1500);
+    }
+  };
+
+  const handleCopyLink = async (c: SchoolClass) => {
+    const ok = await copyToClipboard(buildJoinLink(c.joinCode));
+    if (ok) {
+      setCopiedLinkId(c.id);
+      setTimeout(() => setCopiedLinkId((id) => (id === c.id ? null : id)), 1500);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <h1 className="font-display text-3xl font-bold text-primary">My Classes</h1>
@@ -67,15 +112,29 @@ export function TeacherClassesPage() {
         <div className="mt-6 space-y-3">
           {classes.map((c) => (
             <div key={c.id} className="card-surface p-4">
-              <button onClick={() => toggleRoster(c.id)} className="flex w-full items-center justify-between text-left">
-                <div>
+              <div className="flex w-full items-center justify-between gap-3">
+                <button onClick={() => toggleRoster(c.id)} className="flex-1 text-left">
                   <p className="font-display font-semibold text-primary">{c.name}</p>
                   <p className="text-sm text-muted-foreground">{c.studentIds.length} students</p>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleCopyLink(c); }}
+                    title="Copy join link"
+                    className="rounded-md border border-border px-2 py-1 text-xs font-semibold text-muted-foreground transition hover:border-secondary hover:text-secondary"
+                  >
+                    {copiedLinkId === c.id ? 'Link copied!' : '🔗 Copy link'}
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleCopyCode(c); }}
+                    title="Click to copy class code"
+                    className="rounded-md bg-secondary/10 px-2 py-1 font-mono text-sm font-bold tracking-widest text-secondary transition hover:bg-secondary/20"
+                  >
+                    {copiedCodeId === c.id ? 'Copied!' : c.joinCode}
+                  </button>
                 </div>
-                <p className="rounded-md bg-secondary/10 px-2 py-1 font-mono text-sm font-bold tracking-widest text-secondary">
-                  {c.joinCode}
-                </p>
-              </button>
+              </div>
 
               {expandedId === c.id && (
                 <div className="mt-4 border-t border-border pt-3">

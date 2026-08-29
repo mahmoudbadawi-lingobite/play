@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { CloudLayer, StudyMascot } from '../components/common/decorations';
+
+const PENDING_JOIN_CODE_KEY = 'pendingJoinCode';
 
 export function HomePage() {
   const { t } = useTranslation();
@@ -11,8 +14,23 @@ export function HomePage() {
   const isKid = theme === 'kid';
   const navigate = useNavigate();
 
+  // Google sign-in always redirects back to "/". If the person got here via
+  // a class join link, they were sent to sign in first (see JoinClassPage) -
+  // resume that join now that they're authenticated instead of going to the
+  // dashboard as usual.
+  useEffect(() => {
+    if (!profile) return;
+    const pendingCode = localStorage.getItem(PENDING_JOIN_CODE_KEY);
+    if (pendingCode) {
+      localStorage.removeItem(PENDING_JOIN_CODE_KEY);
+      navigate(`/join?code=${pendingCode}`, { replace: true });
+    } else {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [profile, navigate]);
+
   if (profile) {
-    return <Navigate to="/dashboard" replace />;
+    return null;
   }
 
   return (

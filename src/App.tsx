@@ -42,9 +42,7 @@ export default function App() {
                 <Route path="/library" element={<LibraryPage />} />
                 <Route path="/play/:setId" element={<ConsentGate><GamePickerPage /></ConsentGate>} />
                 <Route path="/play/:setId/:gameKey" element={<ConsentGate><GameShell /></ConsentGate>} />
-                <Route path="/join" element={
-                  <ProtectedRoute roles={['student']}><JoinClassPage /></ProtectedRoute>
-                } />
+                <Route path="/join" element={<JoinClassPage />} />
                 <Route path="/escape-rooms" element={<EscapeRoomsPage />} />
                 <Route path="/escape-room/:roomId" element={<ConsentGate><EscapeRoomPlayPage /></ConsentGate>} />
                 <Route path="/teacher/create-escape-room" element={
