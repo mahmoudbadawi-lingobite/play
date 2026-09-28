@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGuestProgress } from '../../contexts/GuestProgressContext';
-import { getContentSet, incrementPlayCount, recordGameResult } from '../../lib/services';
+import { getContentSet, incrementPlayCount, recordGameResult, submitLinkedGameResult } from '../../lib/services';
 import { getGameDefinition } from '../../games/registry';
 import type { ContentSet, GameKey } from '../../types';
 import { MemoryMatchGame } from './MemoryMatchGame';
@@ -29,6 +29,8 @@ const GAME_COMPONENTS: Record<GameKey, React.ComponentType<GameProps>> = {
 
 export function GameShell() {
   const { setId, gameKey } = useParams<{ setId: string; gameKey: GameKey }>();
+  const [searchParams] = useSearchParams();
+  const ref = searchParams.get('ref');
   const { t } = useTranslation();
   const { profile, isGuest } = useAuth();
   const { addXP, xp: guestXP } = useGuestProgress();
@@ -69,7 +71,19 @@ export function GameShell() {
     setXpEarned(earned);
     setFinished(true);
 
-    if (profile) {
+    if (ref) {
+      // A LingoTrace-assigned link — score it without needing any Play
+      // account (even if one happens to be signed in on this browser), and
+      // relay it to LingoTrace. See patch_guest_game_results.sql.
+      await submitLinkedGameResult({
+        contentSetId: set.id,
+        gameKey,
+        ref,
+        xpEarned: earned,
+        accuracy: accuracyPercent,
+        durationSeconds,
+      });
+    } else if (profile) {
       await recordGameResult({
         contentSetId: set.id,
         contentSetTitle: set.title,

@@ -292,6 +292,32 @@ export async function recordGameResult(input: Omit<GameResult, 'id' | 'playedAt'
   });
 }
 
+/**
+ * Scores a game played via a LingoTrace-assigned link — no Play account
+ * needed. Just inserts into `guest_game_results`; a Supabase Database
+ * Webhook (configured in the dashboard, see patch_guest_game_results.sql)
+ * relays the new row to LingoTrace from there. Nothing here talks to
+ * LingoTrace directly, so no cross-app secret ever needs to live in this
+ * client bundle.
+ */
+export async function submitLinkedGameResult(input: {
+  contentSetId: string;
+  gameKey: GameKey;
+  ref: string;
+  xpEarned: number;
+  accuracy: number;
+  durationSeconds: number;
+}): Promise<void> {
+  await supabase.rpc('submit_guest_game_result', {
+    p_content_set_id: input.contentSetId,
+    p_game_key: input.gameKey,
+    p_ref: input.ref,
+    p_xp_earned: input.xpEarned,
+    p_accuracy: input.accuracy,
+    p_duration_seconds: input.durationSeconds,
+  });
+}
+
 export async function getClassLeaderboard(classId: string): Promise<GameResult[]> {
   const { data, error } = await supabase
     .from('game_results')

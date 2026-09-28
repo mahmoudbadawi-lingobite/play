@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { getContentSet } from '../lib/services';
 import { compatibleGames } from '../games/registry';
 import type { ContentSet } from '../types';
 
 export function GamePickerPage() {
   const { setId } = useParams<{ setId: string }>();
+  const [searchParams] = useSearchParams();
+  const ref = searchParams.get('ref');
   const [set, setSet] = useState<ContentSet | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,7 +31,10 @@ export function GamePickerPage() {
         {games.map((g) => (
           <Link
             key={g.key}
-            to={`/play/${set.id}/${g.key}`}
+            // Carry the LingoTrace ref token through to the actual game route
+            // (if present) so the finished score can still be attributed and
+            // reported back — the picker itself never needs it otherwise.
+            to={`/play/${set.id}/${g.key}${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`}
             className="card-surface flex items-center gap-4 p-5 hover:border-secondary"
           >
             <span className="text-3xl">{g.icon}</span>
