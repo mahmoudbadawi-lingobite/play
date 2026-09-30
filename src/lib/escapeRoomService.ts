@@ -238,3 +238,24 @@ export async function recordEscapeRoomResult(input: {
     p_xp_earned: input.xpEarned,
   });
 }
+
+/**
+ * Scores an escape room played via a LingoTrace-assigned link — no Play
+ * account needed. Mirrors submitLinkedGameResult in services.ts; see
+ * patch_guest_escape_room_results.sql for the receiving side.
+ */
+export async function submitLinkedEscapeRoomResult(input: {
+  roomId: string;
+  ref: string;
+  wrongClicks: number;
+  durationSeconds: number;
+  xpEarned: number;
+}): Promise<void> {
+  await supabase.rpc('submit_guest_escape_room_result', {
+    p_room_id: input.roomId,
+    p_ref: input.ref,
+    p_wrong_clicks: input.wrongClicks,
+    p_duration_seconds: input.durationSeconds,
+    p_xp_earned: input.xpEarned,
+  });
+}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useGuestProgress } from '../contexts/GuestProgressContext';
 import { ConfettiBurst } from '../components/escapeRoom/ConfettiBurst';
@@ -8,6 +8,7 @@ import { playEscapeRoomSfx, preloadEscapeRoomSfx, useEscapeRoomSfxEnabled } from
 import { pickCongratsMessage, GENERIC_CONGRATS, type CongratsMessage } from '../games/escapeRoomThemes';
 import {
   getEscapeRoom, getEscapeRoomHotspots, incrementEscapeRoomPlayCount, recordEscapeRoomResult,
+  submitLinkedEscapeRoomResult,
 } from '../lib/escapeRoomService';
 import type { EscapeRoom, EscapeRoomHotspot } from '../types';
 
@@ -34,6 +35,8 @@ const CLICK_BADGE_TONE_CLASSES: Record<'cold' | 'warm' | 'hot' | 'found', string
 
 export function EscapeRoomPlayPage() {
   const { roomId } = useParams<{ roomId: string }>();
+  const [searchParams] = useSearchParams();
+  const ref = searchParams.get('ref');
   const { profile, isGuest } = useAuth();
   const { addXP, xp: guestXP } = useGuestProgress();
 
@@ -223,7 +226,17 @@ export function EscapeRoomPlayPage() {
     setCongrats(pickCongratsMessage(room?.theme));
     setFinished(true);
 
-    if (profile) {
+    if (ref) {
+      // A LingoTrace-assigned link — score it without needing any Play
+      // account (even if one happens to be signed in on this browser).
+      await submitLinkedEscapeRoomResult({
+        roomId: room.id,
+        ref,
+        wrongClicks: finalWrongClicks,
+        durationSeconds,
+        xpEarned: earned,
+      });
+    } else if (profile) {
       await recordEscapeRoomResult({
         roomId: room.id,
         roomTitle: room.title,
@@ -277,7 +290,8 @@ export function EscapeRoomPlayPage() {
               <p className="font-display text-2xl font-bold text-secondary">+{xpEarned}</p>
             </div>
           </div>
-          {isGuest && <p className="mt-4 text-xs text-muted-foreground">Guest progress isn't saved. Sign in to keep your XP. (session XP: {guestXP})</p>}
+          {ref && <p className="mt-4 text-xs text-muted-foreground">Your score has been sent to your teacher.</p>}
+          {!ref && isGuest && <p className="mt-4 text-xs text-muted-foreground">Guest progress isn't saved. Sign in to keep your XP. (session XP: {guestXP})</p>}
           <div className="mt-6 flex justify-center gap-3">
             <button onClick={handleShare} className="rounded-lg bg-secondary px-4 py-2 text-sm font-semibold text-secondary-foreground hover:opacity-90">
               {shareStatus === 'shared' ? '✓ Shared' : shareStatus === 'copied' ? '✓ Link copied' : '🔗 Share this room'}
