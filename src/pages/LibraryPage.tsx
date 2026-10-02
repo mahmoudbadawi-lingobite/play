@@ -13,6 +13,7 @@ export function LibraryPage() {
   const [skill, setSkill] = useState<SkillTemplate | 'all'>('all');
   const [loading, setLoading] = useState(true);
   const [reportedIds, setReportedIds] = useState<string[]>([]);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const refresh = () => {
     setLoading(true);
@@ -33,6 +34,16 @@ export function LibraryPage() {
     if (!confirm(`Delete "${title}"? This can't be undone.`)) return;
     await deleteContentSet(id);
     refresh();
+  };
+
+  // Lets a teacher grab this game's link to paste into LingoTrace's
+  // "Exams & Games" assignment field — works for ANY public set here,
+  // not just ones this teacher authored, same link format as the
+  // "Copy link" button on My Games.
+  const handleShare = (id: string) => {
+    navigator.clipboard.writeText(`${window.location.origin}${import.meta.env.BASE_URL}play/${id}`);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   return (
@@ -75,12 +86,20 @@ export function LibraryPage() {
                   <span key={g.key} title={g.name} className="text-lg">{g.icon}</span>
                 ))}
               </div>
-              <Link
-                to={`/play/${set.id}`}
-                className="mt-4 inline-block rounded-lg bg-secondary px-4 py-2 text-center text-sm font-semibold text-secondary-foreground hover:opacity-90"
-              >
-                Choose a game →
-              </Link>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <Link
+                  to={`/play/${set.id}`}
+                  className="rounded-lg bg-secondary px-4 py-2 text-center text-sm font-semibold text-secondary-foreground hover:opacity-90"
+                >
+                  Choose a game →
+                </Link>
+                <button
+                  onClick={() => handleShare(set.id)}
+                  className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-primary hover:border-secondary"
+                >
+                  {copiedId === set.id ? '✓ Copied' : 'Copy link'}
+                </button>
+              </div>
               {profile && (
                 <button
                   onClick={() => handleReport(set.id)}
