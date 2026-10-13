@@ -1,0 +1,106 @@
+/* Block Quest - animations and the chunky button style. Imported by BlockQuestGame.tsx.
+   All motion here is also covered by the global prefers-reduced-motion rule in index.css. */
+
+.bq-limb {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+}
+
+@keyframes bq-swing-a {
+  from { transform: rotate(-26deg); }
+  to { transform: rotate(26deg); }
+}
+@keyframes bq-swing-b {
+  from { transform: rotate(26deg); }
+  to { transform: rotate(-26deg); }
+}
+@keyframes bq-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.bq-run .bq-leg-a,
+.bq-run .bq-arm-b {
+  animation: bq-swing-a 0.32s ease-in-out infinite alternate;
+}
+.bq-run .bq-leg-b,
+.bq-run .bq-arm-a {
+  animation: bq-swing-b 0.32s ease-in-out infinite alternate;
+}
+.bq-run .bq-bob {
+  animation: bq-bob 0.32s ease-in-out infinite;
+}
+
+@keyframes bq-bonk {
+  0% { transform: translateX(0) rotate(0deg); }
+  20% { transform: translateX(-9px) rotate(-7deg); }
+  45% { transform: translateX(8px) rotate(6deg); }
+  70% { transform: translateX(-4px) rotate(-3deg); }
+  100% { transform: translateX(0) rotate(0deg); }
+}
+.bq-bonk {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: bq-bonk 0.45s ease-out;
+}
+
+@keyframes bq-cloud {
+  from { transform: translateX(-14px); }
+  to { transform: translateX(14px); }
+}
+.bq-cloud {
+  animation: bq-cloud 9s ease-in-out infinite alternate;
+}
+
+@keyframes bq-twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+.bq-twinkle {
+  animation: bq-twinkle 2.4s ease-in-out infinite;
+}
+
+@keyframes bq-glow {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+.bq-glow {
+  animation: bq-glow 1s ease-in-out infinite;
+}
+
+@keyframes bq-pop {
+  0% { transform: translate(-50%, 10px) scale(0.6); opacity: 0; }
+  25% { transform: translate(-50%, -6px) scale(1.12); opacity: 1; }
+  100% { transform: translate(-50%, -38px) scale(1); opacity: 0; }
+}
+.bq-pop {
+  animation: bq-pop 1.1s ease-out forwards;
+}
+
+@keyframes bq-star-in {
+  0% { transform: scale(0) rotate(-40deg); opacity: 0; }
+  70% { transform: scale(1.25) rotate(8deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.bq-star {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: bq-star-in 0.5s ease-out both;
+}
+
+/* Chunky "press in" buttons, same feel as the kid theme buttons. */
+.bq-btn {
+  box-shadow: 0 5px 0 rgba(20, 16, 60, 0.28);
+  transition: transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 120ms ease;
+}
+.bq-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+.bq-btn:not(:disabled):active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(20, 16, 60, 0.28);
+}
+.bq-btn:disabled {
+  box-shadow: none;
+  cursor: not-allowed;
+}

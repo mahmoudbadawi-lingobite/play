@@ -5,20 +5,24 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useGuestProgress } from '../../contexts/GuestProgressContext';
 import { getContentSet, incrementPlayCount, recordGameResult, submitLinkedGameResult } from '../../lib/services';
 import { getGameDefinition } from '../../games/registry';
-import type { ContentSet, GameKey } from '../../types';
+import type { ContentSet, GameKey, SkillTemplate } from '../../types';
 import { MemoryMatchGame } from './MemoryMatchGame';
 import { TypingRaceGame } from './TypingRaceGame';
 import { WordBuilderGame } from './WordBuilderGame';
 import { CrosswordGame } from './CrosswordGame';
 import { PictureMatchGame } from './PictureMatchGame';
 import { HangmanGame } from './HangmanGame';
+import { BlockQuestGame } from './blockQuest/BlockQuestGame';
 
 export interface GameProps {
   items: ContentSet['items'];
+  /** The content set's skill - lets a game pick question styles that suit it. */
+  skill?: SkillTemplate;
   onFinish: (accuracyPercent: number) => void;
 }
 
 const GAME_COMPONENTS: Record<GameKey, React.ComponentType<GameProps>> = {
+  'block-quest': BlockQuestGame,
   'memory-match': MemoryMatchGame,
   'typing-race': TypingRaceGame,
   'word-builder': WordBuilderGame,
@@ -135,7 +139,7 @@ export function GameShell() {
       <p className="text-sm uppercase tracking-wide text-secondary">{gameDef.name}</p>
       <h1 className="font-display text-2xl font-bold text-primary">{set.title}</h1>
       <div className="mt-6 ltr-always">
-        <GameComponent items={set.items} onFinish={handleFinish} />
+        <GameComponent items={set.items} skill={set.skill} onFinish={handleFinish} />
       </div>
     </div>
   );

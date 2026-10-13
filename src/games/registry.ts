@@ -12,6 +12,17 @@ export interface GameDefinition {
 
 export const GAME_DEFINITIONS: GameDefinition[] = [
   {
+    key: 'block-quest',
+    name: 'Block Quest',
+    description: 'Run through blocky worlds and pick the right portal at every gate.',
+    icon: '🧱',
+    minItems: 4,
+    requiresImages: false,
+    // Wrong portals are built from the other terms in the set, so at least
+    // three different terms are needed.
+    isCompatible: (items) => items.length >= 4 && new Set(items.map((i) => i.term.trim().toLowerCase())).size >= 3,
+  },
+  {
     key: 'memory-match',
     name: 'Memory Match',
     description: 'Flip cards to match each term with its clue.',

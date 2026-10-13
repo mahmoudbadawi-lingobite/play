@@ -56,6 +56,7 @@ export interface ContentSet {
 // --- Games ---
 
 export type GameKey =
+  | 'block-quest'
   | 'memory-match'
   | 'typing-race'
   | 'word-builder'

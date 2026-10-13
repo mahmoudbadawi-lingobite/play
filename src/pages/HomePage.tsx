@@ -62,6 +62,7 @@ export function HomePage() {
 
       <div className="relative z-10 mt-14 grid gap-4 sm:grid-cols-3">
         {[
+          { icon: '🧱', title: 'Block Quest' },
           { icon: '🧠', title: 'Memory Match' },
           { icon: '⌨️', title: 'Typing Race' },
           { icon: '🔤', title: 'Word Builder' },
