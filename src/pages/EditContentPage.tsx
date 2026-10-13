@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { AiContentPanel } from '../components/common/AiContentPanel';
 import { generateTemplate, parseTemplateFile } from '../lib/contentTemplates';
 import { getContentSet, updateContentSet } from '../lib/services';
 import type { ContentItem, ContentSet, SkillTemplate, Visibility } from '../types';
@@ -19,10 +20,13 @@ export function EditContentPage() {
   const [skill, setSkill] = useState<SkillTemplate>('vocabulary');
   const [title, setTitle] = useState('');
   const [visibility, setVisibility] = useState<Visibility>('public');
-  const [replacementItems, setReplacementItems] = useState<ContentItem[] | null>(null);
+  const [aiItems, setAiItems] = useState<ContentItem[]>([]);
+  const [fileItems, setFileItems] = useState<ContentItem[] | null>(null);
   const [parseErrors, setParseErrors] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  // Pasted AI content wins; an uploaded spreadsheet is the fallback.
+  const replacementItems: ContentItem[] | null = aiItems.length > 0 ? aiItems : fileItems;
 
   useEffect(() => {
     if (!setId || !profile) return;
@@ -44,7 +48,7 @@ export function EditContentPage() {
   const handleUpload = async (file: File | undefined) => {
     if (!file) return;
     const result = await parseTemplateFile(file);
-    setReplacementItems(result.items);
+    setFileItems(result.items);
     setParseErrors(result.errors);
   };
 
@@ -98,7 +102,9 @@ export function EditContentPage() {
         </label>
 
         <div className="mt-5 rounded-lg border border-border p-3">
-          <p className="mb-2 text-sm font-semibold text-primary">Content ({activeItems.length} items)</p>
+          <p className="mb-2 text-sm font-semibold text-primary">
+            {replacementItems ? `New content (${activeItems.length} items) - replaces the old content when you save` : `Content (${activeItems.length} items)`}
+          </p>
           <div className="max-h-32 overflow-y-auto text-sm">
             {activeItems.map((it) => (
               <p key={it.id} className="border-b border-border/50 py-1 text-muted-foreground last:border-0">
@@ -106,30 +112,37 @@ export function EditContentPage() {
               </p>
             ))}
           </div>
-
-          <button
-            onClick={() => generateTemplate(skill)}
-            className="mt-3 w-full rounded-lg border border-secondary px-4 py-2 text-sm font-semibold text-secondary hover:bg-secondary/10"
-          >
-            📥 Download template to edit content offline
-          </button>
-          <label className="mt-2 block">
-            <span className="mb-1 block text-xs text-muted-foreground">Upload to replace all content above:</span>
-            <input
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              onChange={(e) => handleUpload(e.target.files?.[0])}
-              className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-secondary-foreground"
-            />
-          </label>
-          {parseErrors.length > 0 && (
-            <ul className="mt-2 list-inside list-disc text-xs text-destructive">
-              {parseErrors.map((e, i) => <li key={i}>{e}</li>)}
-            </ul>
-          )}
         </div>
+      </div>
 
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+      <AiContentPanel skill={skill} title={title} onItemsChange={setAiItems} />
+
+      <details className="card-surface mt-4 p-4">
+        <summary className="cursor-pointer text-sm font-semibold text-primary">Prefer a spreadsheet? Edit content offline</summary>
+        <button
+          onClick={() => generateTemplate(skill)}
+          className="mt-3 w-full rounded-lg border border-secondary px-4 py-2 text-sm font-semibold text-secondary hover:bg-secondary/10"
+        >
+          📥 Download template to edit content offline
+        </button>
+        <label className="mt-2 block">
+          <span className="mb-1 block text-xs text-muted-foreground">Upload to replace all content above:</span>
+          <input
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            onChange={(e) => handleUpload(e.target.files?.[0])}
+            className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-secondary-foreground"
+          />
+        </label>
+        {parseErrors.length > 0 && (
+          <ul className="mt-2 list-inside list-disc text-xs text-destructive">
+            {parseErrors.map((e, i) => <li key={i}>{e}</li>)}
+          </ul>
+        )}
+      </details>
+
+      <div className="card-surface mt-4 p-6">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <button
             onClick={() => setVisibility('public')}
             className={`flex-1 rounded-lg border px-4 py-2.5 text-sm font-semibold ${visibility === 'public' ? 'border-secondary bg-secondary/10 text-primary' : 'border-border text-muted-foreground'}`}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { AiContentPanel } from '../components/common/AiContentPanel';
 import { generateTemplate, parseTemplateFile } from '../lib/contentTemplates';
 import { checkDuplicateTitle, createContentSet } from '../lib/services';
 import type { ContentItem, ContentSet, SkillTemplate, Visibility } from '../types';
@@ -15,16 +16,20 @@ export function CreateContentPage() {
 
   const [skill, setSkill] = useState<SkillTemplate>('vocabulary');
   const [title, setTitle] = useState('');
-  const [items, setItems] = useState<ContentItem[]>([]);
+  const [aiItems, setAiItems] = useState<ContentItem[]>([]);
+  const [fileItems, setFileItems] = useState<ContentItem[]>([]);
   const [parseErrors, setParseErrors] = useState<string[]>([]);
   const [visibility, setVisibility] = useState<Visibility>('public');
   const [duplicate, setDuplicate] = useState<ContentSet | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  // Pasted AI content wins; the spreadsheet path is the fallback.
+  const items = aiItems.length > 0 ? aiItems : fileItems;
 
   const handleUpload = async (file: File | undefined) => {
     if (!file) return;
     const result = await parseTemplateFile(file);
-    setItems(result.items);
+    setFileItems(result.items);
     setParseErrors(result.errors);
   };
 
@@ -37,16 +42,22 @@ export function CreateContentPage() {
   const handleSave = async () => {
     if (!profile || !title.trim() || items.length === 0) return;
     setSaving(true);
-    const id = await createContentSet({
-      title: title.trim(),
-      skill,
-      teacherId: profile.uid,
-      teacherName: profile.displayName ?? 'Teacher',
-      visibility,
-      items,
-    });
-    setSaving(false);
-    navigate(`/play/${id}`);
+    setSaveError('');
+    try {
+      const id = await createContentSet({
+        title: title.trim(),
+        skill,
+        teacherId: profile.uid,
+        teacherName: profile.displayName ?? 'Teacher',
+        visibility,
+        items,
+      });
+      navigate(`/play/${id}`);
+    } catch {
+      setSaveError("Couldn't save the game. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -54,6 +65,7 @@ export function CreateContentPage() {
       <h1 className="font-display text-3xl font-bold text-primary">{t('createGame')}</h1>
 
       <div className="card-surface mt-6 p-6">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Step 1 · Skill and title</p>
         <label className="mb-1 block text-sm font-semibold text-primary">Skill</label>
         <div className="flex flex-wrap gap-2">
           {SKILLS.map((s) => (
@@ -68,40 +80,6 @@ export function CreateContentPage() {
             </button>
           ))}
         </div>
-
-        <button
-          onClick={() => generateTemplate(skill)}
-          className="mt-4 w-full rounded-lg border border-secondary px-4 py-2.5 text-sm font-semibold text-secondary hover:bg-secondary/10"
-        >
-          📥 {t('downloadTemplate')}
-        </button>
-
-        <label className="mt-4 block">
-          <span className="mb-1 block text-sm font-semibold text-primary">{t('uploadFilled')}</span>
-          <input
-            type="file"
-            accept=".xlsx,.xls,.csv"
-            onChange={(e) => handleUpload(e.target.files?.[0])}
-            className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-secondary-foreground"
-          />
-        </label>
-
-        {parseErrors.length > 0 && (
-          <ul className="mt-2 list-inside list-disc text-sm text-destructive">
-            {parseErrors.map((e, i) => <li key={i}>{e}</li>)}
-          </ul>
-        )}
-
-        {items.length > 0 && (
-          <div className="mt-3 max-h-40 overflow-y-auto rounded-lg border border-border p-2 text-sm">
-            {items.map((it) => (
-              <p key={it.id} className="border-b border-border/50 py-1 last:border-0">
-                <b>{it.term}</b> — {it.clue}
-              </p>
-            ))}
-            <p className="mt-1 text-xs text-muted-foreground">{items.length} items loaded</p>
-          </div>
-        )}
 
         <label className="mt-5 block">
           <span className="mb-1 block text-sm font-semibold text-primary">Game title</span>
@@ -131,8 +109,42 @@ export function CreateContentPage() {
             </div>
           </div>
         )}
+      </div>
 
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+      <AiContentPanel skill={skill} title={title} onItemsChange={setAiItems} />
+
+      <details className="card-surface mt-4 p-4">
+        <summary className="cursor-pointer text-sm font-semibold text-primary">
+          Prefer a spreadsheet? Use the template instead{fileItems.length > 0 && aiItems.length === 0 ? ` (${fileItems.length} items loaded)` : ''}
+        </summary>
+        <button
+          onClick={() => generateTemplate(skill)}
+          className="mt-3 w-full rounded-lg border border-secondary px-4 py-2.5 text-sm font-semibold text-secondary hover:bg-secondary/10"
+        >
+          📥 {t('downloadTemplate')}
+        </button>
+        <label className="mt-3 block">
+          <span className="mb-1 block text-sm font-semibold text-primary">{t('uploadFilled')}</span>
+          <input
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            onChange={(e) => handleUpload(e.target.files?.[0])}
+            className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-secondary-foreground"
+          />
+        </label>
+        {parseErrors.length > 0 && (
+          <ul className="mt-2 list-inside list-disc text-sm text-destructive">
+            {parseErrors.map((e, i) => <li key={i}>{e}</li>)}
+          </ul>
+        )}
+        {aiItems.length > 0 && fileItems.length > 0 && (
+          <p className="mt-2 text-xs text-muted-foreground">The pasted AI content above is used. Clear it to use the spreadsheet instead.</p>
+        )}
+      </details>
+
+      <div className="card-surface mt-4 p-6">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Final step · Share and create</p>
+        <div className="flex flex-col gap-3 sm:flex-row">
           <button
             onClick={() => setVisibility('public')}
             className={`flex-1 rounded-lg border px-4 py-2.5 text-sm font-semibold ${visibility === 'public' ? 'border-secondary bg-secondary/10 text-primary' : 'border-border text-muted-foreground'}`}
@@ -150,10 +162,17 @@ export function CreateContentPage() {
         <button
           onClick={handleSave}
           disabled={!title.trim() || items.length === 0 || saving}
-          className="mt-6 w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-40"
+          className="mt-5 w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-40"
         >
-          {saving ? 'Saving...' : 'Save game'}
+          {saving ? 'Creating...' : items.length > 0 ? `Create game (${items.length} items)` : 'Create game'}
         </button>
+        {!saving && (!title.trim() || items.length === 0) && (
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            {!title.trim() ? 'Type a game title in Step 1. ' : ''}
+            {items.length === 0 ? "Paste the AI's reply above to enable this button." : ''}
+          </p>
+        )}
+        {saveError && <p className="mt-2 text-center text-sm text-destructive">{saveError}</p>}
       </div>
     </div>
   );
