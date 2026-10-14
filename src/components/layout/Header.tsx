@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAdminNotifications } from '../../contexts/AdminNotificationsContext';
 import { ThemeToggle } from '../common/ThemeToggle';
+import { useAvatarState } from '../../features/avatar/avatarStore';
+import { AvatarImage } from '../../features/avatar/AvatarImage';
 
 export function Header() {
   const { t, i18n } = useTranslation();
@@ -11,6 +13,7 @@ export function Header() {
   const { unreadDmCount, pendingTeacherCount } = useAdminNotifications();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const avatar = useAvatarState();
 
   const toggleLanguage = () => {
     const next = i18n.language.startsWith('ar') ? 'en' : 'ar';
@@ -23,6 +26,7 @@ export function Header() {
     <>
       <Link to="/library" onClick={() => setMenuOpen(false)} className="hover:text-secondary">{t('nav_library')}</Link>
       <Link to="/escape-rooms" onClick={() => setMenuOpen(false)} className="hover:text-secondary">Escape Rooms</Link>
+      <Link to="/store" onClick={() => setMenuOpen(false)} className="hover:text-secondary">🛍️ Style Store</Link>
       {profile && (
         <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="hover:text-secondary">{t('nav_dashboard')}</Link>
       )}
@@ -55,13 +59,13 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3">
-        <Link to="/" onClick={() => setMenuOpen(false)} className="flex min-w-0 items-center gap-2">
+        <Link to="/" onClick={() => setMenuOpen(false)} className="flex min-w-0 shrink-0 items-center gap-2 sm:shrink">
           <img
             src={`${import.meta.env.BASE_URL}logo.png`}
             alt=""
             className="h-10 w-10 shrink-0 rounded-xl object-cover sm:h-[72px] sm:w-[72px]"
           />
-          <span className="truncate font-display text-base font-semibold text-primary sm:text-lg">{t('appName')}</span>
+          <span className="hidden truncate font-display text-base font-semibold text-primary min-[480px]:inline sm:text-lg">{t('appName')}</span>
         </Link>
 
         <nav className="hidden items-center gap-5 text-sm font-medium text-primary/80 md:flex">
@@ -69,6 +73,14 @@ export function Header() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <Link
+            to="/avatar"
+            aria-label="My Avatar"
+            className="flex items-center gap-1 rounded-full border border-border bg-card py-0.5 pl-0.5 pr-2 text-xs font-bold text-primary hover:border-secondary"
+          >
+            <AvatarImage gender={avatar.gender} look={avatar.gender ? avatar.looks[avatar.gender] : null} size={32} />
+            <span>🪙 {avatar.coins}</span>
+          </Link>
           <ThemeToggle className="hidden sm:inline-flex" />
 
           <button

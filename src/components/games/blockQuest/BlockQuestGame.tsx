@@ -3,8 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import type { GameProps } from '../GameShell';
 import { ConfettiBurst } from '../../escapeRoom/ConfettiBurst';
 import { playEscapeRoomSfx, preloadEscapeRoomSfx, useEscapeRoomSfxEnabled } from '../../../lib/escapeRoomSfx';
-import { AvatarShop } from './AvatarShop';
-import { addCoins, useAvatarStore } from './avatarStore';
+import { addCoins, useAvatarState } from '../../../features/avatar/avatarStore';
+import { AvatarImage } from '../../../features/avatar/AvatarImage';
 import { buildGates, norm, speak, speechAvailable, stopSpeaking, type Phase } from './engine';
 import { AnswerButtons, BossPanel, LetterTray } from './Panels';
 import { S_FAR, S_NEAR, Scene } from './Scene';
@@ -62,7 +62,8 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
   const raceLocked = searchParams.get('mode') === 'race';
 
   const gates = useMemo(() => buildGates(items, skill), [items, skill]);
-  const look = useAvatarStore();
+  const av = useAvatarState();
+  const figure = { gender: av.gender ?? ('boy' as const), look: av.looks[av.gender ?? 'boy'] };
   const [sfxEnabled, setSfxEnabled] = useEscapeRoomSfxEnabled();
   const reduced = useMemo(
     () => typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
@@ -72,7 +73,6 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
   const [worldId, setWorldId] = useState(WORLDS[0].id);
   const [raceChoice, setRaceChoice] = useState(false);
   const raceMode = raceLocked || raceChoice;
-  const [showShop, setShowShop] = useState(false);
 
   const [phase, setPhase] = useState<Phase>('start');
   const [gateIndex, setGateIndex] = useState(0);
@@ -145,7 +145,6 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
     setElapsed(0);
     setRunCoins(0);
     setResult(null);
-    setShowShop(false);
     setFrame({ s: S_FAR, scroll: 0, pass: 0 });
     preloadEscapeRoomSfx();
     go('approach');
@@ -363,8 +362,8 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
             ⏱ {asking ? `${gateTimeLeft}s` : '—'} · {elapsed}s
           </span>
         )}
-        <span className="rounded-full border-2 border-border px-3 py-1 text-sm font-bold text-primary" aria-label={`${look.coins} coins`}>
-          🪙 {look.coins}
+        <span className="rounded-full border-2 border-border px-3 py-1 text-sm font-bold text-primary" aria-label={`${av.coins} coins`}>
+          🪙 {av.coins}
         </span>
         <button
           type="button"
@@ -429,7 +428,7 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
           wrongIds={wrongIds}
           glowLane={glowLane}
           placed={placed}
-          look={look}
+          look={figure}
           bonkKey={bonkKey}
           label={sceneLabel}
           onPickLane={asking && laneGate ? commitLane : undefined}
@@ -450,6 +449,7 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
         {phase === 'done' && result && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 p-4">
             <div className="w-full max-w-sm rounded-3xl border-4 border-primary bg-card p-6 text-center">
+              <AvatarImage gender={av.gender} look={av.gender ? av.looks[av.gender] : null} view="body" size={96} className="mx-auto" />
               <p className="font-display text-2xl font-bold text-primary">{result.title}</p>
               <div className="mt-3 flex justify-center gap-1" aria-label={`${result.stars} out of 3 stars`}>
                 {[1, 2, 3].map((n) => (
@@ -466,20 +466,9 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
       </div>
 
       {/* Controls */}
-      {phase === 'start' &&
-        (showShop ? (
-          <AvatarShop onBack={() => setShowShop(false)} />
-        ) : (
-          <StartPanel
-            worldId={worldId}
-            onWorld={setWorldId}
-            raceMode={raceMode}
-            raceLocked={raceLocked}
-            onRace={setRaceChoice}
-            onShop={() => setShowShop(true)}
-            onStart={startRun}
-          />
-        ))}
+      {phase === 'start' && (
+        <StartPanel worldId={worldId} onWorld={setWorldId} raceMode={raceMode} raceLocked={raceLocked} onRace={setRaceChoice} onStart={startRun} />
+      )}
       {playing && laneGate && (
         <>
           <AnswerButtons options={gate.options} lane={lane} wrongIds={wrongIds} glowLane={glowLane} disabled={!asking} onPick={commitLane} />

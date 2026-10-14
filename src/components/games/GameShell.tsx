@@ -13,6 +13,8 @@ import { CrosswordGame } from './CrosswordGame';
 import { PictureMatchGame } from './PictureMatchGame';
 import { HangmanGame } from './HangmanGame';
 import { BlockQuestGame } from './blockQuest/BlockQuestGame';
+import { useAvatarState } from '../../features/avatar/avatarStore';
+import { AvatarImage } from '../../features/avatar/AvatarImage';
 
 export interface GameProps {
   items: ContentSet['items'];
@@ -38,6 +40,7 @@ export function GameShell() {
   const { t } = useTranslation();
   const { profile, isGuest } = useAuth();
   const { addXP, xp: guestXP } = useGuestProgress();
+  const avatar = useAvatarState();
 
   const [set, setSet] = useState<ContentSet | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,7 +110,11 @@ export function GameShell() {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <div className="card-surface p-8">
-          <span className="text-4xl">🎉</span>
+          {avatar.gender ? (
+            <AvatarImage gender={avatar.gender} look={avatar.looks[avatar.gender]} view="body" size={112} className="mx-auto" />
+          ) : (
+            <span className="text-4xl">🎉</span>
+          )}
           <h2 className="mt-3 font-display text-2xl font-bold text-primary">Nice work!</h2>
           <p className="mt-1 text-muted-foreground">{set.title} · {gameDef.name}</p>
           <div className="mt-6 grid grid-cols-2 gap-4">

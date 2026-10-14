@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { AdminNotificationsProvider } from './contexts/AdminNotificationsContext';
@@ -24,6 +25,10 @@ import { CreateEscapeRoomPage } from './pages/CreateEscapeRoomPage';
 import { EditEscapeRoomPage } from './pages/EditEscapeRoomPage';
 import { EscapeRoomPlayPage } from './pages/EscapeRoomPlayPage';
 import { ConsentGate } from './components/auth/ConsentGate';
+
+const AvatarPage = lazy(() => import('./pages/AvatarPage').then((m) => ({ default: m.AvatarPage })));
+const StorePage = lazy(() => import('./pages/StorePage').then((m) => ({ default: m.StorePage })));
+const pageFallback = <p className="p-10 text-center text-muted-foreground">Loading...</p>;
 import './i18n/config';
 
 export default function App() {
@@ -42,6 +47,8 @@ export default function App() {
                 <Route path="/library" element={<LibraryPage />} />
                 <Route path="/play/:setId" element={<ConsentGate><GamePickerPage /></ConsentGate>} />
                 <Route path="/play/:setId/:gameKey" element={<ConsentGate><GameShell /></ConsentGate>} />
+                <Route path="/avatar" element={<Suspense fallback={pageFallback}><AvatarPage /></Suspense>} />
+                <Route path="/store" element={<Suspense fallback={pageFallback}><StorePage /></Suspense>} />
                 <Route path="/join" element={<JoinClassPage />} />
                 <Route path="/escape-rooms" element={<EscapeRoomsPage />} />
                 <Route path="/escape-room/:roomId" element={<ConsentGate><EscapeRoomPlayPage /></ConsentGate>} />

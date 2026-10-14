@@ -3,10 +3,14 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { requestTeacherAccess, listMyEnrolledClasses } from '../lib/services';
+import { useAvatarState } from '../features/avatar/avatarStore';
+import { AvatarImage } from '../features/avatar/AvatarImage';
+import { levelInfo } from '../features/avatar/level';
 
 export function DashboardPage() {
   const { t } = useTranslation();
   const { profile, refreshProfile } = useAuth();
+  const avatar = useAvatarState();
   const [enrolledClasses, setEnrolledClasses] = useState<{ id: string; name: string }[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [requesting, setRequesting] = useState(false);
@@ -34,7 +38,26 @@ export function DashboardPage() {
         Welcome back, {profile.displayName?.split(' ')[0] ?? 'there'}
       </h1>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      {profile.role === 'student' && (
+      <div className="mt-6 flex flex-wrap items-center gap-4 rounded-3xl bg-gradient-to-r from-[#6C4DFF] via-[#5B7CFF] to-[#3FA9FF] p-4 shadow-lg">
+        <span className="rounded-2xl border-2 border-white/80 bg-white/90 p-1">
+          <AvatarImage gender={avatar.gender} look={avatar.gender ? avatar.looks[avatar.gender] : null} view="body" size={96} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-xl font-extrabold text-white">Level {levelInfo(profile.totalXP ?? 0).level}</p>
+          <div className="mt-1 h-3 max-w-xs overflow-hidden rounded-full border border-white/70 bg-[#3B3B8F]">
+            <div className="h-full rounded-full bg-gradient-to-r from-[#FFB020] to-[#FF7A1F]" style={{ width: `${Math.max(6, levelInfo(profile.totalXP ?? 0).pct)}%` }} />
+          </div>
+          <p className="mt-1 text-sm font-semibold text-white/90">🪙 {avatar.coins} coins</p>
+        </div>
+        <div className="flex gap-2">
+          <Link to="/avatar" className="rounded-xl border-2 border-white/70 bg-white/90 px-4 py-2 text-sm font-extrabold text-primary">My Avatar</Link>
+          <Link to="/store" className="rounded-xl bg-gradient-to-b from-[#FFB020] to-[#FF8A1F] px-4 py-2 text-sm font-extrabold text-white shadow">🛍️ Style Store</Link>
+        </div>
+      </div>
+      )}
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
         <div className="card-surface p-5">
           <p className="text-sm text-muted-foreground">Total XP</p>
           <p className="font-display text-3xl font-bold text-secondary">{profile.totalXP}</p>

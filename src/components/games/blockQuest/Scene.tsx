@@ -1,5 +1,4 @@
-import { AvatarBody } from './Avatar';
-import type { AvatarLook } from './avatarStore';
+import { AvatarBody, type Figure } from '../../../features/avatar/Avatar2D';
 import type { Gate, Phase } from './engine';
 import type { SceneryKind, World } from './worlds';
 
@@ -277,7 +276,7 @@ export interface SceneProps {
   wrongIds: string[];
   glowLane: number | null;
   placed: number;
-  look: AvatarLook;
+  look: Figure;
   bonkKey: number;
   label: string;
   onPickLane?: (lane: number) => void;
@@ -342,7 +341,7 @@ export function Scene(props: SceneProps) {
         }}
       >
         <g key={bonkKey} className={bonkKey > 0 ? 'bq-bonk' : undefined}>
-          <AvatarBody look={look} running={running} />
+          <AvatarBody figure={look} running={running} />
         </g>
       </g>
     </svg>

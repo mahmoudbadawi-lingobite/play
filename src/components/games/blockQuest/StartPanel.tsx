@@ -1,5 +1,7 @@
-import { AvatarPreview } from './Avatar';
-import { useAvatarStore } from './avatarStore';
+import { Link } from 'react-router-dom';
+import { useAvatarState } from '../../../features/avatar/avatarStore';
+import { AvatarImage } from '../../../features/avatar/AvatarImage';
+import { ChooseHero } from '../../../features/avatar/ChooseHero';
 import { WORLDS } from './worlds';
 
 export function StartPanel({
@@ -8,7 +10,6 @@ export function StartPanel({
   raceMode,
   raceLocked,
   onRace,
-  onShop,
   onStart,
 }: {
   worldId: string;
@@ -16,21 +17,32 @@ export function StartPanel({
   raceMode: boolean;
   raceLocked: boolean;
   onRace: (on: boolean) => void;
-  onShop: () => void;
   onStart: () => void;
 }) {
-  const store = useAvatarStore();
+  const av = useAvatarState();
+  if (!av.gender) {
+    return (
+      <div className="mt-3">
+        <ChooseHero title="Choose your hero to start" />
+      </div>
+    );
+  }
   return (
     <div className="mt-3 rounded-2xl border-2 border-border bg-card p-4">
       <div className="flex items-center gap-4">
-        <AvatarPreview look={store} className="h-24 w-12 shrink-0" />
+        <AvatarImage gender={av.gender} look={av.looks[av.gender]} view="body" size={88} className="shrink-0" />
         <div className="min-w-0 flex-1">
           <p className="font-display text-xl font-bold text-primary">Pick your world</p>
           <p className="text-sm text-muted-foreground">Run to each gate, then choose the right portal.</p>
         </div>
-        <button type="button" onClick={onShop} className="shrink-0 rounded-xl border-2 border-border px-3 py-2 text-sm font-bold text-primary hover:border-secondary">
-          Your look · 🪙 {store.coins}
-        </button>
+        <div className="flex shrink-0 flex-col gap-1.5">
+          <Link to="/store" className="rounded-xl border-2 border-border px-3 py-1.5 text-center text-sm font-bold text-primary hover:border-secondary">
+            🛍️ Style Store · 🪙 {av.coins}
+          </Link>
+          <Link to="/avatar" className="rounded-xl border-2 border-border px-3 py-1.5 text-center text-sm font-bold text-primary hover:border-secondary">
+            My Avatar
+          </Link>
+        </div>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5" role="group" aria-label="Worlds">
