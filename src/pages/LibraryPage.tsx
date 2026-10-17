@@ -48,6 +48,7 @@ export function LibraryPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
+      <div className="kid-sticky-head">
       <h1 className="font-display text-3xl font-bold text-primary">Game Library</h1>
       <p className="mt-1 text-muted-foreground">Public games shared by teachers across LingoBite Play.</p>
 
@@ -63,6 +64,7 @@ export function LibraryPage() {
             {s}
           </button>
         ))}
+      </div>
       </div>
 
       {loading ? (

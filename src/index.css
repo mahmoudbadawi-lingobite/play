@@ -268,6 +268,7 @@ button:not(:disabled):active {
   height: 100dvh;
   overflow-x: hidden;
   overflow-y: auto;
+  scrollbar-width: none; /* still scrollable, but no grey scrollbar strip */
   border: 0;
   color: #fff;
   backdrop-filter: none;
@@ -539,4 +540,37 @@ button:not(:disabled):active {
 /* ---- Student dashboard banner: hard-coded purple gradient -> theme blue -- */
 [data-theme="kid"] main .from-\[\#6C4DFF\] {
   background-image: linear-gradient(135deg, hsl(213 97% 40%), hsl(207 100% 58%));
+}
+
+/* ---- Sticky page headers (tablet/desktop; compact on phones) -------------
+   Game Library: title + subtitle + filter chips stay pinned while the cards
+   scroll (wrapper div .kid-sticky-head in LibraryPage; it has no styling
+   outside Kid Mode). Style Store: the level / coins banner stays pinned. */
+[data-theme="kid"] .kid-sticky-head {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  margin: 0 -1rem;
+  padding: 0.75rem 1rem 0.9rem;
+  background: hsl(var(--background));
+  box-shadow: 0 10px 14px -12px hsl(213 80% 35% / 0.35);
+}
+@media (max-width: 639px) {
+  [data-theme="kid"] .kid-sticky-head h1 {
+    font-size: 1.4rem;
+    line-height: 1.8rem;
+  }
+  [data-theme="kid"] .kid-sticky-head > p {
+    display: none;
+  }
+  [data-theme="kid"] .kid-sticky-head > div {
+    margin-top: 0.5rem;
+  }
+}
+@media (min-width: 640px) {
+  [data-theme="kid"] main > div.max-w-7xl > div.rounded-3xl.overflow-hidden:first-child {
+    position: sticky;
+    top: 0.5rem;
+    z-index: 30;
+  }
 }
