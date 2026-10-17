@@ -68,6 +68,29 @@ function Hat({ spec }: { spec: Record<string, string | number | boolean> }) {
 /** The character in a 60 x 100 box (hats reach up to y = -28). */
 export function AvatarBody({ figure, running = false }: { figure: Figure; running?: boolean }) {
   const { gender, look } = figure;
+  if (look.character) {
+    // flat stand-in for a character skin (only used when 3D isn't available)
+    const hue = [...look.character].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) % 360;
+    const body = `hsl(${hue} 55% 52%)`;
+    const head = `hsl(${hue} 55% 64%)`;
+    const o2 = { stroke: OUTLINE, strokeWidth: 2 };
+    return (
+      <g className={running ? 'bq-run' : undefined}>
+        <ellipse cx="30" cy="98" rx="20" ry="4" fill="#000" fillOpacity="0.2" />
+        <g className="bq-bob">
+          <rect className="bq-limb bq-leg-a" x="16" y="66" width="12" height="30" rx="2" fill={body} {...o2} />
+          <rect className="bq-limb bq-leg-b" x="32" y="66" width="12" height="30" rx="2" fill={body} {...o2} />
+          <rect className="bq-limb bq-arm-a" x="3" y="38" width="11" height="26" rx="2" fill={body} {...o2} />
+          <rect className="bq-limb bq-arm-b" x="46" y="38" width="11" height="26" rx="2" fill={body} {...o2} />
+          <rect x="14" y="36" width="32" height="32" rx="3" fill={body} {...o2} />
+          <rect x="12" y="2" width="36" height="32" rx="8" fill={head} {...o2} />
+          <circle cx="24" cy="16" r="3.5" fill={OUTLINE} />
+          <circle cx="36" cy="16" r="3.5" fill={OUTLINE} />
+          <rect x="24" y="25" width="12" height="3" rx="1.5" fill={OUTLINE} />
+        </g>
+      </g>
+    );
+  }
   const skin = skinColor(look.skin);
   const outfit = getItem(look.outfit)?.spec ?? {};
   const top = str(outfit.top, '#3D7BFF');

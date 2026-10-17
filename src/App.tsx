@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { AdminNotificationsProvider } from './contexts/AdminNotificationsContext';
@@ -26,12 +26,19 @@ import { EditEscapeRoomPage } from './pages/EditEscapeRoomPage';
 import { EscapeRoomPlayPage } from './pages/EscapeRoomPlayPage';
 import { ConsentGate } from './components/auth/ConsentGate';
 
+import { loadRemoteStoreItems } from './features/avatar/remoteCatalog';
+
 const AvatarPage = lazy(() => import('./pages/AvatarPage').then((m) => ({ default: m.AvatarPage })));
+const StoreAdminPage = lazy(() => import('./pages/StoreAdminPage').then((m) => ({ default: m.StoreAdminPage })));
 const StorePage = lazy(() => import('./pages/StorePage').then((m) => ({ default: m.StorePage })));
 const pageFallback = <p className="p-10 text-center text-muted-foreground">Loading...</p>;
 import './i18n/config';
 
 export default function App() {
+  // Items an admin added in the Style Store admin page
+  useEffect(() => {
+    void loadRemoteStoreItems();
+  }, []);
   return (
     <AuthProvider>
       <AdminNotificationsProvider>
@@ -49,6 +56,14 @@ export default function App() {
                 <Route path="/play/:setId/:gameKey" element={<ConsentGate><GameShell /></ConsentGate>} />
                 <Route path="/avatar" element={<Suspense fallback={pageFallback}><AvatarPage /></Suspense>} />
                 <Route path="/store" element={<Suspense fallback={pageFallback}><StorePage /></Suspense>} />
+                <Route
+                  path="/admin/store"
+                  element={
+                    <ProtectedRoute roles={['admin']}>
+                      <Suspense fallback={pageFallback}><StoreAdminPage /></Suspense>
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="/join" element={<JoinClassPage />} />
                 <Route path="/escape-rooms" element={<EscapeRoomsPage />} />
                 <Route path="/escape-room/:roomId" element={<ConsentGate><EscapeRoomPlayPage /></ConsentGate>} />

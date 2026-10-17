@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { getItem, hairColor, skinColor, type Gender, type Look } from './catalog';
 import { ARM_H, GLOW, HEAD, HEAD_Y, LEG_H, SHOULDER_Y, TORSO_D, TORSO_W, TORSO_Y, ball, box, cone, cyl, group, torus } from './kit';
 import { buildAccessory, buildBackpack, buildHat, buildPet, buildShoes } from './items3d';
+import { buildCharacter } from './characters3d';
 
 /** Everything a builder needs to attach parts to the right place. */
 export interface Rig {
@@ -299,6 +300,8 @@ export interface AvatarHandle extends THREE.Group {
 }
 
 export function buildAvatar(gender: Gender, look: Look, opts: BuildOpts = {}): AvatarHandle {
+  const character = getItem(look.character);
+  if (character) return buildCharacter(String(character.spec.model ?? 'cookie'), character.spec);
   const rig = makeRig(gender, look);
   const outfitItem = getItem(look.outfit);
   addOutfit(rig, outfitItem?.spec ?? {});

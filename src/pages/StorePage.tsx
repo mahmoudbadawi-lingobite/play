@@ -10,7 +10,8 @@ import {
   type Look,
   type Rarity,
 } from '../features/avatar/catalog';
-import { buyItem, equipItem, useAvatarState } from '../features/avatar/avatarStore';
+import { buyItem, equipItem, isOwned, useAvatarState } from '../features/avatar/avatarStore';
+import { useCatalogVersion } from '../features/avatar/useCatalog';
 import { AvatarStageView } from '../features/avatar/AvatarImage';
 import { ChooseHero } from '../features/avatar/ChooseHero';
 import { CoinPill, ItemThumb, LevelBadge, RARITY } from '../features/avatar/ui';
@@ -32,6 +33,7 @@ function tryOn(look: Look, item: Item | null): Look {
 
 export function StorePage() {
   const state = useAvatarState();
+  const catalogVersion = useCatalogVersion();
   const { gender } = state;
   const [category, setCategory] = useState<Category>('outfits');
   const [query, setQuery] = useState('');
@@ -47,7 +49,9 @@ export function StorePage() {
       .filter((i) => rarity === 'all' || i.rarity === rarity)
       .filter((i) => !q || i.name.toLowerCase().includes(q))
       .sort((a, b) => priceOf(a, state.owned) - priceOf(b, state.owned) || a.name.localeCompare(b.name));
-  }, [gender, category, query, rarity, state.owned]);
+    // catalogVersion changes when admin-made items finish loading
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gender, category, query, rarity, state.owned, catalogVersion]);
 
   if (!gender) {
     return (
@@ -63,7 +67,7 @@ export function StorePage() {
 
   const status = (item: Item) => {
     const pieces = item.slot === 'set' ? (item.pieces ?? []) : [item.id];
-    const owned = pieces.every((p) => state.owned.includes(p));
+    const owned = pieces.every((p) => isOwned(state, p));
     const equipped = item.slot === 'set' ? pieces.every((p) => Object.values(look).includes(p)) : look[item.slot] === item.id;
     return { owned, equipped, price: priceOf(item, state.owned) };
   };

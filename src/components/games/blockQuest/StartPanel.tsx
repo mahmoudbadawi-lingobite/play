@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAvatarState } from '../../../features/avatar/avatarStore';
 import { AvatarImage } from '../../../features/avatar/AvatarImage';
 import { ChooseHero } from '../../../features/avatar/ChooseHero';
-import { WORLDS } from './worlds';
+import { WorldCards } from './WorldCards';
 
 export function StartPanel({
   worldId,
@@ -45,20 +45,7 @@ export function StartPanel({
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5" role="group" aria-label="Worlds">
-        {WORLDS.map((w) => (
-          <button
-            key={w.id}
-            type="button"
-            aria-pressed={worldId === w.id}
-            onClick={() => onWorld(w.id)}
-            className={`rounded-xl border-2 px-2 py-2 text-center text-sm font-bold ${worldId === w.id ? 'border-secondary bg-secondary/20 text-primary' : 'border-border text-primary'}`}
-          >
-            <span className="block text-2xl" aria-hidden="true">{w.emoji}</span>
-            {w.name}
-          </button>
-        ))}
-      </div>
+      <WorldCards worldId={worldId} onWorld={onWorld} />
 
       <label className="mt-3 flex items-center gap-2 text-sm text-primary">
         <input type="checkbox" checked={raceMode} disabled={raceLocked} onChange={(e) => onRace(e.target.checked)} className="h-4 w-4" />

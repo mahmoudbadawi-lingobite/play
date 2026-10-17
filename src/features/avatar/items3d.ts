@@ -1,13 +1,64 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { GLOW, HEAD, LEG_H, ball, box, cone, cyl, group, torus } from './kit';
 import type { Rig } from './model3d';
 
 type Spec = Record<string, string | number | boolean>;
+
+// ---------------------------------------------------------------- admin-made items with their own 3D model (.glb)
+const loader = new GLTFLoader();
+const modelCache = new Map<string, Promise<THREE.Object3D>>();
+const pending = new Set<Promise<unknown>>();
+
+/** Resolves when every model that is still loading has arrived (or after a short wait). */
+export function modelsReady(timeout = 9000): Promise<void> {
+  return Promise.race([Promise.allSettled(pending).then(() => undefined), new Promise<void>((r) => setTimeout(r, timeout))]);
+}
+
+const num = (v: unknown, d: number) => (typeof v === 'number' && Number.isFinite(v) ? v : Number.isFinite(Number(v)) && v !== '' && v !== undefined ? Number(v) : d);
+
+/**
+ * Loads spec.modelUrl and attaches it to `parent`, scaled so its biggest side is `targetSize`
+ * (times spec.modelScale), standing on y = 0, then moved by modelX / modelY / modelZ and turned by modelRotY degrees.
+ */
+export function attachModel(parent: THREE.Object3D, spec: Spec, targetSize: number) {
+  const url = String(spec.modelUrl ?? '');
+  const holder = group(parent, num(spec.modelX, 0), num(spec.modelY, 0), num(spec.modelZ, 0));
+  holder.rotation.y = (num(spec.modelRotY, 0) * Math.PI) / 180;
+  let job = modelCache.get(url);
+  if (!job) {
+    job = loader.loadAsync(url).then((g) => g.scene);
+    modelCache.set(url, job);
+  }
+  const p = job
+    .then((src) => {
+      const m = src.clone(true);
+      const b = new THREE.Box3().setFromObject(m);
+      const size = b.getSize(new THREE.Vector3());
+      const k = (targetSize * Math.max(0.05, num(spec.modelScale, 1))) / (Math.max(size.x, size.y, size.z) || 1);
+      m.scale.setScalar(k);
+      const b2 = new THREE.Box3().setFromObject(m);
+      const c = b2.getCenter(new THREE.Vector3());
+      m.position.set(-c.x, -b2.min.y, -c.z);
+      m.traverse((o) => {
+        if ((o as THREE.Mesh).isMesh) (o as THREE.Mesh).castShadow = true;
+      });
+      holder.add(m);
+    })
+    .catch(() => undefined);
+  pending.add(p);
+  void p.finally(() => pending.delete(p));
+  return holder;
+}
 const str = (v: unknown, d: string) => (typeof v === 'string' ? v : d);
 const T = HEAD / 2;
 
 // ---------------------------------------------------------------- hats (parent = head group)
 export function buildHat(head: THREE.Group, spec: Spec) {
+  if (spec.modelUrl) {
+    attachModel(group(head, 0, T - 0.1, 0), spec, 1.9);
+    return;
+  }
   const style = str(spec.style, 'cap');
   const c = str(spec.color, '#E8453C');
   const a = str(spec.accent, '#FFFFFF');
@@ -68,6 +119,14 @@ export function buildHat(head: THREE.Group, spec: Spec) {
 
 // ---------------------------------------------------------------- accessories
 export function buildAccessory(rig: Rig, spec: Spec, wings: THREE.Object3D[]) {
+  if (spec.modelUrl) {
+    const at = str(spec.attach, 'head');
+    if (at === 'back') attachModel(group(rig.root, 0, 2.0, -0.7), spec, 3.2);
+    else if (at === 'chest') attachModel(group(rig.root, 0, 1.9, 0.6), spec, 1.6);
+    else if (at === 'face') attachModel(group(rig.head, 0, -0.3, T + 0.05), spec, 1.4);
+    else attachModel(group(rig.head, 0, T - 0.1, 0), spec, 1.9);
+    return;
+  }
   const style = str(spec.style, 'round');
   const c = str(spec.color, '#2B2B3A');
   const a = str(spec.accent, '#FFFFFF');
@@ -192,6 +251,10 @@ export function buildShoes(rig: Rig, spec: Spec) {
 
 // ---------------------------------------------------------------- backpacks (parent = root)
 export function buildBackpack(rig: Rig, spec: Spec) {
+  if (spec.modelUrl) {
+    attachModel(group(rig.root, 0, 1.7, -1.0), spec, 2.2);
+    return;
+  }
   const style = str(spec.style, 'school');
   const c = str(spec.color, '#E8453C');
   const a = str(spec.accent, '#FFC83D');
@@ -261,6 +324,12 @@ function eyes(g: THREE.Group, y: number, z: number, x = 0.25, color = '#22223B')
 }
 
 export function buildPet(spec: Spec): THREE.Group {
+  if (spec.modelUrl) {
+    const pg = group(null);
+    attachModel(pg, spec, 2.4);
+    pg.scale.setScalar(0.85);
+    return pg;
+  }
   const style = str(spec.style, 'corgi');
   const c = str(spec.color, '#F29B3D');
   const a = str(spec.accent, '#FFFFFF');

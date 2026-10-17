@@ -51,6 +51,9 @@ export function Header() {
               </span>
             )}
           </Link>
+          <Link to="/admin/store" onClick={() => setMenuOpen(false)} className="hover:text-secondary">
+            🛍️ Store Admin
+          </Link>
         </>
       )}
     </>

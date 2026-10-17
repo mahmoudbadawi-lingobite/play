@@ -1,8 +1,10 @@
 import { useSyncExternalStore } from 'react';
+import './remoteCatalog'; // registers cached admin items before the avatar is loaded
 import {
   FREE_ITEM_IDS,
   STARTER,
   getItem,
+  isFreeItem,
   priceOf,
   suitsGender,
   type Gender,
@@ -91,7 +93,7 @@ function cleanLook(raw: unknown, g: Gender, owned: Set<string>): Look {
   const pick = (id: unknown, slot: Slot, fallback: string | null): string | null => {
     if (typeof id !== 'string') return fallback;
     const item = getItem(id);
-    return item && item.slot === slot && owned.has(id) && suitsGender(item, g) ? id : fallback;
+    return item && item.slot === slot && (owned.has(id) || isFreeItem(item)) && suitsGender(item, g) ? id : fallback;
   };
   return {
     hair: pick(r.hair, 'hair', base.hair) as string,
@@ -101,6 +103,7 @@ function cleanLook(raw: unknown, g: Gender, owned: Set<string>): Look {
     accessory: pick(r.accessory, 'accessory', null),
     backpack: pick(r.backpack, 'backpack', null),
     pet: pick(r.pet, 'pet', null),
+    character: pick(r.character, 'character', null),
     skin: typeof r.skin === 'string' ? r.skin : base.skin,
     hairColor: typeof r.hairColor === 'string' ? r.hairColor : base.hairColor,
   };
@@ -154,6 +157,13 @@ function subscribe(listener: () => void) {
 
 export const getAvatarState = () => state;
 
+/** Owned = bought, or free (price 0, e.g. starter items and free admin-made items). */
+export function isOwned(s: AvatarState, id: string): boolean {
+  if (s.owned.includes(id)) return true;
+  const item = getItem(id);
+  return !!item && isFreeItem(item);
+}
+
 export function useAvatarState(): AvatarState {
   return useSyncExternalStore(subscribe, () => state, () => state);
 }
@@ -179,7 +189,7 @@ export function equipItem(id: string) {
   const item = getItem(id);
   if (!g || !item || !suitsGender(item, g)) return;
   if (item.slot === 'set') {
-    const pieces = (item.pieces ?? []).filter((p) => state.owned.includes(p));
+    const pieces = (item.pieces ?? []).filter((p) => isOwned(state, p));
     if (pieces.length === 0) return;
     const patch: Partial<Look> = {};
     for (const pid of pieces) {
@@ -189,7 +199,7 @@ export function equipItem(id: string) {
     commit(withLook(g, patch));
     return;
   }
-  if (!state.owned.includes(id)) return;
+  if (!isOwned(state, id)) return;
   commit(withLook(g, { [item.slot]: id }));
 }
 
@@ -212,7 +222,7 @@ export function buyItem(id: string): 'ok' | 'poor' | 'owned' | 'invalid' {
   const g = state.gender;
   const item = getItem(id);
   if (!g || !item || !suitsGender(item, g)) return 'invalid';
-  const ownedAll = item.slot === 'set' ? (item.pieces ?? []).every((p) => state.owned.includes(p)) : state.owned.includes(id);
+  const ownedAll = item.slot === 'set' ? (item.pieces ?? []).every((p) => isOwned(state, p)) : isOwned(state, id);
   if (ownedAll) return 'owned';
   const price = priceOf(item, state.owned);
   if (state.coins < price) return 'poor';

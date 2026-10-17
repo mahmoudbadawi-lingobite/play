@@ -69,9 +69,20 @@ function place(mesh: THREE.Mesh, p: THREE.Object3D, x: number, y: number, z: num
   return mesh;
 }
 
+/**
+ * How round boxes are drawn: 2 = soft (characters), 1 = light, 0 = plain cubes (cheapest).
+ * The 3D worlds switch this while they are being built so they stay fast on phones and tablets.
+ */
+let boxQuality: 0 | 1 | 2 = 2;
+export const getBoxQuality = () => boxQuality;
+export const setBoxQuality = (q: 0 | 1 | 2) => {
+  boxQuality = q;
+};
+
 export function box(p: THREE.Object3D, w: number, h: number, d: number, color: string, x = 0, y = 0, z = 0, o: Opt = {}) {
   const r = Math.min(o.r ?? 0.08, w / 2.01, h / 2.01, d / 2.01);
-  const g = geo(`b${w}|${h}|${d}|${r}`, () => new RoundedBoxGeometry(w, h, d, 2, r));
+  const q = boxQuality;
+  const g = geo(`b${q}|${w}|${h}|${d}|${q === 0 ? 0 : r}`, () => (q === 0 ? new THREE.BoxGeometry(w, h, d) : new RoundedBoxGeometry(w, h, d, q === 2 ? 2 : 1, r)));
   return place(new THREE.Mesh(g, mat(color, o.m)), p, x, y, z, o);
 }
 

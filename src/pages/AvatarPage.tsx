@@ -17,6 +17,7 @@ import {
   chooseGender,
   deleteSavedLook,
   equipItem,
+  isOwned,
   saveLook,
   setHairColor,
   setSkin,
@@ -27,12 +28,14 @@ import {
 import { AvatarImage, AvatarStageView } from '../features/avatar/AvatarImage';
 import type { StageApi } from '../features/avatar/stage';
 import { ChooseHero } from '../features/avatar/ChooseHero';
+import { useCatalogVersion } from '../features/avatar/useCatalog';
 import { CoinPill, ItemThumb, LevelBadge } from '../features/avatar/ui';
 
 const SLOTS: Slot[] = [...REQUIRED_SLOTS, ...OPTIONAL_SLOTS];
 
 export function AvatarPage() {
   const state = useAvatarState();
+  useCatalogVersion();
   const { gender } = state;
   const [api, setApi] = useState<StageApi | null>(null);
   const [openSlot, setOpenSlot] = useState<Slot | null>(null);
@@ -50,7 +53,7 @@ export function AvatarPage() {
   const look = state.looks[gender];
   const saved = state.saved[gender];
   const other = gender === 'boy' ? 'girl' : 'boy';
-  const ownedFor = (slot: Slot) => ITEMS.filter((i) => i.slot === slot && suitsGender(i, gender) && state.owned.includes(i.id));
+  const ownedFor = (slot: Slot) => ITEMS.filter((i) => i.slot === slot && suitsGender(i, gender) && isOwned(state, i.id));
 
   const doSave = () => {
     const ok = saveLook(name);

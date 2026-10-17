@@ -7,7 +7,7 @@
 
 export type Gender = 'boy' | 'girl';
 export type ItemGender = Gender | 'unisex';
-export type Slot = 'hair' | 'outfit' | 'shoes' | 'hat' | 'accessory' | 'backpack' | 'pet';
+export type Slot = 'hair' | 'outfit' | 'shoes' | 'hat' | 'accessory' | 'backpack' | 'pet' | 'character';
 export type Category = 'outfits' | 'hats' | 'hair' | 'accessories' | 'shoes' | 'backpacks' | 'pets' | 'sets';
 export type Rarity = 'common' | 'rare' | 'epic';
 
@@ -27,6 +27,8 @@ export interface Item {
   hidden?: boolean;
   /** Sets: ids of the pieces they contain. */
   pieces?: string[];
+  /** Added by an admin (not part of the built-in catalog). */
+  custom?: boolean;
 }
 
 export interface Look {
@@ -37,6 +39,8 @@ export interface Look {
   accessory: string | null;
   backpack: string | null;
   pet: string | null;
+  /** A full character skin (animal, robot, mascot...). Replaces the hero's body while worn. */
+  character: string | null;
   skin: string;
   hairColor: string;
 }
@@ -220,10 +224,76 @@ const SETS: Item[] = [
 ];
 
 // Set-only pieces cost nothing on their own; their value comes from the set price.
-const PIECE_VALUE: Record<string, number> = { 'outfit-b-lava': 200, 'outfit-b-candy': 180, 'outfit-b-pilot': 180, 'outfit-g-lava': 200, 'outfit-g-candy': 180, 'outfit-g-pilot': 180 };
+export const PIECE_VALUE: Record<string, number> = { 'outfit-b-lava': 200, 'outfit-b-candy': 180, 'outfit-b-pilot': 180, 'outfit-g-lava': 200, 'outfit-g-candy': 180, 'outfit-g-pilot': 180 };
 
-export const ITEMS: Item[] = [...OUTFITS, ...HAIR, ...HATS, ...ACCESSORIES, ...SHOES, ...BACKPACKS, ...PETS, ...SETS];
-const BY_ID = new Map(ITEMS.map((i) => [i.id, i]));
+// ---------------------------------------------------------------- Adventurous Girl / Boy sets
+const ADVENTURE_PIECES: Item[] = [
+  outfit('g-adventure', 'Adventure Hoodie', 'girl', 0, 'epic', 'A pink hoodie with jeans.', { kind: 'hoodie', top: '#FF7FB5', bottom: '#4A6FA5', bottomKind: 'pants', accent: '#FFFFFF' }, true),
+  outfit('b-adventure', 'Adventure Hoodie', 'boy', 0, 'epic', 'A blue hoodie with dark pants.', { kind: 'hoodie', top: '#2F6BFF', bottom: '#27324F', bottomKind: 'pants', accent: '#FFFFFF' }, true),
+  mk('hat-cap-pink', 'Pink Cap', 'hat', 'hats', 'girl', 0, 'epic', 'A bright pink cap.', { style: 'cap', color: '#FF4F9A', accent: '#D93580' }, { hidden: true }),
+  mk('hat-cap-blue', 'Blue Cap', 'hat', 'hats', 'boy', 0, 'epic', 'A sporty blue cap.', { style: 'cap', color: '#2F6BFF', accent: '#1F4FCC' }, { hidden: true }),
+  mk('pack-adv-girl', 'Adventure Pack', 'backpack', 'backpacks', 'girl', 0, 'epic', 'A pink explorer pack.', { style: 'explorer', color: '#FF7FB5', accent: '#FFC83D' }, { hidden: true }),
+  mk('pack-adv-boy', 'Adventure Pack', 'backpack', 'backpacks', 'boy', 0, 'epic', 'A blue explorer pack.', { style: 'explorer', color: '#2F6BFF', accent: '#FFC83D' }, { hidden: true }),
+];
+PIECE_VALUE['outfit-g-adventure'] = 180;
+PIECE_VALUE['outfit-b-adventure'] = 180;
+PIECE_VALUE['hat-cap-pink'] = 40;
+PIECE_VALUE['hat-cap-blue'] = 40;
+PIECE_VALUE['pack-adv-girl'] = 80;
+PIECE_VALUE['pack-adv-boy'] = 80;
+SETS.push(
+  set('g-adventure', 'Adventurous Girl', 'girl', 'Pink cap, adventure hoodie and explorer pack.', ['outfit-g-adventure', 'hat-cap-pink', 'pack-adv-girl']),
+  set('b-adventure', 'Adventurous Boy', 'boy', 'Blue cap, adventure hoodie and explorer pack.', ['outfit-b-adventure', 'hat-cap-blue', 'pack-adv-boy']),
+);
+
+// ---------------------------------------------------------------- Character skins (Sets & Collections)
+const ch = (id: string, name: string, price: number, rarity: Rarity, blurb: string): Item =>
+  mk(`char-${id}`, name, 'character', 'sets', 'unisex', price, rarity, blurb, { model: id });
+
+const CHARACTERS: Item[] = [
+  ch('gray-cat', 'Gray Cat', 160, 'common', 'A sleepy gray cat with a fluffy tail.'),
+  ch('brown-mouse', 'Brown Mouse', 160, 'common', 'Small, quick and full of cheese ideas.'),
+  ch('jellyfish', 'Sunny Jellyfish', 380, 'epic', 'A glowing yellow jellyfish from the deep sea.'),
+  ch('starfish', 'Pink Starfish', 380, 'epic', 'A cheerful starfish with a snorkel mask.'),
+  ch('duck', 'Rainy Duck', 160, 'common', 'A duck in a yellow raincoat and red boots.'),
+  ch('dog', 'Floppy Dog', 160, 'common', 'A happy dog with big floppy ears.'),
+  ch('rabbit', 'Long-Eared Rabbit', 160, 'common', 'Super long ears and a green scarf.'),
+  ch('coyote', 'Desert Coyote', 240, 'rare', 'A clever coyote from the desert.'),
+  ch('bluebird', 'Speedy Bird', 240, 'rare', 'A bluebird that never stops running.'),
+  ch('bulldog', 'Grumpy Bulldog', 240, 'rare', 'Grumpy face, kind heart.'),
+  ch('tuxedo-cat', 'Comic Cat', 240, 'rare', 'A tuxedo cat with a big grin.'),
+  ch('chick', 'Tiny Chick', 160, 'common', 'A tiny fluffy yellow chick.'),
+  ch('bear', 'Explorer Bear', 240, 'rare', 'A bear with a safari hat and backpack.'),
+  ch('fox', 'Clever Fox', 240, 'rare', 'A fox in a green jacket.'),
+  ch('wolf', 'Gray Wolf', 240, 'rare', 'A calm gray wolf.'),
+  ch('panda', 'Panda', 240, 'rare', 'Black, white and very cuddly.'),
+  ch('elephant', 'Elephant', 240, 'rare', 'A friendly blue elephant.'),
+  ch('lion', 'King Lion', 380, 'epic', 'A lion with a golden crown and red cape.'),
+  ch('penguin', 'Penguin', 240, 'rare', 'A penguin with a red scarf.'),
+  ch('croc', 'Crocodile', 240, 'rare', 'A friendly green crocodile.'),
+  ch('monkey', 'Monkey', 160, 'common', 'A playful monkey with a curly tail.'),
+  ch('horse', 'Horse', 160, 'common', 'A strong brown horse.'),
+  ch('cow', 'Cow', 160, 'common', 'A spotted cow with a little bell.'),
+  ch('pilot-penguin', 'Pilot Penguin', 380, 'epic', 'A penguin pilot with flying goggles.'),
+  ch('dino', 'Baby Dinosaur', 380, 'epic', 'A baby dino with orange spikes.'),
+  ch('robot', 'Robot Friend', 380, 'epic', 'A friendly helper robot.'),
+  ch('cookie', 'LingoBite Cookie', 450, 'epic', 'The LingoBite mascot, ready to play!'),
+];
+
+/** Built-in style names used by the Style Store admin tool. */
+export const STYLE_OPTIONS: Record<string, string[]> = {
+  hat: ['cap', 'beanie', 'party', 'explorer', 'catears', 'wizard', 'crown', 'helmet'],
+  accessory: ['round', 'shades', 'goggles', 'headphones', 'scarf', 'medal', 'wingsStar', 'wingsFairy'],
+  shoes: ['sneaker', 'hightop', 'boot', 'runner', 'cloud', 'space'],
+  backpack: ['school', 'explorer', 'star', 'dino', 'candy', 'jet'],
+  pet: ['corgi', 'cat', 'bunny', 'fox', 'robot', 'dragon'],
+  outfit: ['tee', 'stripes', 'hoodie', 'jacket', 'dress', 'robe', 'suit', 'armor', 'candy'],
+  hair: ['short', 'spiky', 'sidepart', 'curly', 'mohawk', 'messy', 'ponytail', 'bob', 'pigtails', 'long', 'braid', 'buns'],
+  character: CHARACTERS.map((c) => String(c.spec.model)),
+};
+
+export const ITEMS: Item[] = [...OUTFITS, ...HAIR, ...HATS, ...ACCESSORIES, ...SHOES, ...BACKPACKS, ...PETS, ...ADVENTURE_PIECES, ...SETS, ...CHARACTERS];
+const BY_ID = new Map<string, Item>(ITEMS.map((i) => [i.id, i]));
 
 export const getItem = (id: string | null | undefined): Item | undefined => (id ? BY_ID.get(id) : undefined);
 
@@ -246,11 +316,36 @@ export const suitsGender = (item: Item, g: Gender) => item.gender === 'unisex' |
 /** Items a character may see in the store (set-only pieces are hidden). */
 export const itemsFor = (g: Gender): Item[] => ITEMS.filter((i) => !i.hidden && suitsGender(i, g));
 
-export const FREE_ITEM_IDS = ITEMS.filter((i) => i.slot !== 'set' && i.price === 0 && !i.hidden).map((i) => i.id);
+/** Free (price 0), visible, single items are owned from the start - including free items an admin adds later. */
+export const isFreeItem = (i: Item) => i.slot !== 'set' && i.price === 0 && !i.hidden;
+export const FREE_ITEM_IDS = ITEMS.filter(isFreeItem).map((i) => i.id);
+
+// ---------------------------------------------------------------- items added by an admin at runtime
+let catalogVersion = 0;
+const catalogListeners = new Set<() => void>();
+
+/** Adds (or replaces) admin-created items. Built-in items can't be overwritten. */
+export function registerCustomItems(list: Item[]) {
+  const builtIn = new Set(ITEMS.filter((i) => !i.custom).map((i) => i.id));
+  const fresh = list.filter((i) => !builtIn.has(i.id)).map((i) => ({ ...i, custom: true }));
+  for (let n = ITEMS.length - 1; n >= 0; n--) if (ITEMS[n].custom) ITEMS.splice(n, 1);
+  ITEMS.push(...fresh);
+  BY_ID.clear();
+  ITEMS.forEach((i) => BY_ID.set(i.id, i));
+  catalogVersion++;
+  catalogListeners.forEach((l) => l());
+}
+export const subscribeCatalog = (fn: () => void) => {
+  catalogListeners.add(fn);
+  return () => {
+    catalogListeners.delete(fn);
+  };
+};
+export const getCatalogVersion = () => catalogVersion;
 
 export const STARTER: Record<Gender, Look> = {
-  boy: { hair: 'hair-b-short', outfit: 'outfit-b-tee', shoes: 'shoes-b-blue', hat: null, accessory: null, backpack: null, pet: null, skin: 'skin2', hairColor: 'brown' },
-  girl: { hair: 'hair-g-ponytail', outfit: 'outfit-g-tee', shoes: 'shoes-g-pink', hat: null, accessory: null, backpack: null, pet: null, skin: 'skin2', hairColor: 'brown' },
+  boy: { hair: 'hair-b-short', outfit: 'outfit-b-tee', shoes: 'shoes-b-blue', hat: null, accessory: null, backpack: null, pet: null, character: null, skin: 'skin2', hairColor: 'brown' },
+  girl: { hair: 'hair-g-ponytail', outfit: 'outfit-g-tee', shoes: 'shoes-g-pink', hat: null, accessory: null, backpack: null, pet: null, character: null, skin: 'skin2', hairColor: 'brown' },
 };
 
 export const CATEGORIES: { id: Category; label: string; icon: string }[] = [
@@ -272,7 +367,8 @@ export const SLOT_LABEL: Record<Slot, string> = {
   accessory: 'Accessory',
   backpack: 'Backpack',
   pet: 'Pet',
+  character: 'Character',
 };
 
 export const REQUIRED_SLOTS: Slot[] = ['hair', 'outfit', 'shoes'];
-export const OPTIONAL_SLOTS: Slot[] = ['hat', 'accessory', 'backpack', 'pet'];
+export const OPTIONAL_SLOTS: Slot[] = ['hat', 'accessory', 'backpack', 'pet', 'character'];
