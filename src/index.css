@@ -417,12 +417,22 @@ button:not(:disabled):active {
 [data-theme="kid"][data-sidebar="collapsed"] header nav a[href$="/store"]::after {
   display: none;
 }
-/* admin link has no icon of its own: clip its label so only the 🔔 shows */
+/* store link: drop the label gap so its icon centers like the others */
+[data-theme="kid"][data-sidebar="collapsed"] header nav a[href$="/store"]::before {
+  margin-right: 0;
+}
+/* admin link has no icon of its own (its label starts with a 🔔 emoji):
+   hide the label and draw a bell icon so every rail icon is the same size
+   and sits on the same centre line */
 [data-theme="kid"][data-sidebar="collapsed"] header nav a[href$="/admin"] {
-  font-size: 1.1rem;
-  overflow: hidden;
-  justify-content: flex-start;
-  padding: 0.55rem 0 0.55rem 1.05rem;
+  font-size: 0;
+  gap: 0;
+  justify-content: center;
+  padding: 0.7rem 0;
+  --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 22a2.500 2.500 0 0 0 2.400-1.800h-4.800A2.500 2.500 0 0 0 12 22zm7-6.500V11a7 7 0 0 0-5.500-6.800V3.500a1.500 1.500 0 0 0-3 0v.7A7 7 0 0 0 5 11v4.500L3 17.500V19h18v-1.500z'/%3E%3C/svg%3E");
+}
+[data-theme="kid"][data-sidebar="collapsed"] header nav a[href$="/admin"]::before {
+  display: block !important;
 }
 /* unread badges become a dot on the icon corner */
 [data-theme="kid"][data-sidebar="collapsed"] header nav a span {
