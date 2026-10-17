@@ -238,29 +238,104 @@ button:not(:disabled):active {
   outline-color: hsl(var(--kid-blue) / 0.5);
 }
 
-/* ---- Navigation: blue top bar on phones, blue sidebar on desktop -------- */
+/* ---- Navigation: one blue sidebar on every screen size -------------------
+   Expanded = icons + labels. Collapsed = icon rail. The toggle button and the
+   data-sidebar="expanded|collapsed" attribute come from src/lib/kidSidebar.ts
+   (default: expanded on tablet/desktop, collapsed on phones).
+   On phones the expanded sidebar overlays the page instead of pushing it. */
+[data-theme="kid"] {
+  --kid-sb-w: 13.5rem;
+  --kid-rail: 4.75rem;
+}
+[data-theme="kid"][data-sidebar="collapsed"] {
+  --kid-sb-w: var(--kid-rail);
+}
+[data-theme="kid"] #root > div {
+  padding-left: var(--kid-rail);
+  transition: padding-left 200ms ease;
+}
+@media (min-width: 768px) {
+  [data-theme="kid"] #root > div {
+    padding-left: var(--kid-sb-w);
+  }
+}
 [data-theme="kid"] #root > div > header {
-  background-color: hsl(var(--kid-blue));
-  border-color: transparent;
-  backdrop-filter: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--kid-sb-w);
+  height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 0;
   color: #fff;
+  backdrop-filter: none;
+  transition: width 200ms ease;
+  /* playful corner blobs (mockup): pure CSS, no image */
+  background:
+    radial-gradient(circle at 14% 100%, hsl(var(--kid-green)) 0 3.6rem, transparent 3.65rem),
+    radial-gradient(circle at 70% 104%, hsl(var(--secondary)) 0 4.6rem, transparent 4.65rem),
+    radial-gradient(circle at 100% 94%, hsl(205 95% 56%) 0 2.6rem, transparent 2.65rem),
+    linear-gradient(180deg, hsl(var(--kid-blue)) 0%, hsl(213 97% 42%) 100%);
+}
+@media (max-width: 767px) {
+  [data-theme="kid"][data-sidebar="expanded"] #root > div > header {
+    box-shadow: 10px 0 28px -8px hsl(220 60% 10% / 0.45);
+  }
+}
+[data-theme="kid"] #root > div > header > div {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 1rem;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 1.25rem 0.9rem 5.5rem;
 }
 [data-theme="kid"] header a,
 [data-theme="kid"] header nav,
 [data-theme="kid"] header .font-display {
   color: #fff;
 }
-[data-theme="kid"] header nav {
+[data-theme="kid"] header > div > a:first-child {
+  justify-content: center;
+}
+[data-theme="kid"] header > div > a:first-child img {
+  width: 7.5rem;
+  height: 7.5rem;
+  border-radius: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px hsl(213 90% 20% / 0.35));
+  transition: width 200ms ease, height 200ms ease;
+}
+[data-theme="kid"] header > div > a:first-child .font-display {
+  display: none; /* sidebar shows the mascot logo only */
+}
+/* the desktop nav is hidden by Tailwind below md; the sidebar always shows it,
+   and the old phone dropdown + hamburger are no longer needed */
+[data-theme="kid"] header nav.hidden {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  font-size: 0.95rem;
   background: transparent;
-  border-color: hsl(0 0% 100% / 0.2);
+}
+[data-theme="kid"] header nav.md\:hidden,
+[data-theme="kid"] header > div > div:last-child > button.md\:hidden {
+  display: none;
 }
 [data-theme="kid"] header nav a {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.65rem;
   padding: 0.6rem 0.9rem;
   border-radius: 0.9rem;
   font-weight: 700;
+  white-space: nowrap;
   transition: background-color 120ms ease, color 120ms ease;
 }
 [data-theme="kid"] header nav a:hover {
@@ -292,7 +367,18 @@ button:not(:disabled):active {
 [data-theme="kid"] header nav a[href$="/store"]::before { margin-right: 0.65rem; }
 [data-theme="kid"] header nav a[href$="/store"]::after { content: "Style Store"; font-size: 0.95rem; }
 
-/* header controls on the blue bar */
+/* header controls (profile row at the bottom of the sidebar) */
+[data-theme="kid"] header > div > div:last-child {
+  margin-top: auto;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+[data-theme="kid"] header > div > div:last-child > * {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
 [data-theme="kid"] header button.border-border,
 [data-theme="kid"] header a.border-border {
   border-color: hsl(0 0% 100% / 0.55);
@@ -309,70 +395,105 @@ button:not(:disabled):active {
   box-shadow: none;
   border: 2px solid hsl(0 0% 100% / 0.55);
 }
+[data-theme="kid"] header > div > div:last-child > button.sm\:inline-flex {
+  display: inline-flex; /* mode toggle is visible on phones too */
+}
 
-@media (min-width: 768px) {
-  /* page content shifts right to make room for the sidebar */
-  [data-theme="kid"] #root > div {
-    padding-left: 13.5rem;
-  }
-  [data-theme="kid"] #root > div > header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 13.5rem;
-    height: 100dvh;
-    overflow-y: auto;
-    /* playful corner blobs (mockup): pure CSS, no image */
-    background:
-      radial-gradient(circle at 14% 100%, hsl(var(--kid-green)) 0 3.6rem, transparent 3.65rem),
-      radial-gradient(circle at 70% 104%, hsl(var(--secondary)) 0 4.6rem, transparent 4.65rem),
-      radial-gradient(circle at 100% 94%, hsl(205 95% 56%) 0 2.6rem, transparent 2.65rem),
-      linear-gradient(180deg, hsl(var(--kid-blue)) 0%, hsl(213 97% 42%) 100%);
-  }
-  [data-theme="kid"] #root > div > header > div {
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
-    gap: 1rem;
-    height: 100%;
-    max-width: none;
-    padding: 1.25rem 0.9rem 5.5rem;
-  }
-  [data-theme="kid"] header > div > a:first-child {
-    justify-content: center;
-  }
-  [data-theme="kid"] header > div > a:first-child img {
-    width: 7.5rem;
-    height: 7.5rem;
-    border-radius: 0;
-    object-fit: contain;
-    filter: drop-shadow(0 4px 6px hsl(213 90% 20% / 0.35));
-  }
-  [data-theme="kid"] header > div > a:first-child .font-display {
-    display: none; /* sidebar shows the mascot logo only */
-  }
-  [data-theme="kid"] header nav:not(.md\:hidden) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.35rem;
-    font-size: 0.95rem;
-  }
-  /* control cluster sits at the bottom of the sidebar, like the profile row */
-  [data-theme="kid"] header > div > div:last-child {
-    margin-top: auto;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
-  }
-  [data-theme="kid"] header > div > div:last-child > * {
-    width: 100%;
-    justify-content: center;
-    text-align: center;
-  }
-  [data-theme="kid"] header > div > div:last-child > button.md\:hidden {
-    display: none;
-  }
+/* ---- Collapsed icon rail ------------------------------------------------- */
+[data-theme="kid"][data-sidebar="collapsed"] header > div {
+  padding-left: 0.6rem;
+  padding-right: 0.6rem;
+}
+[data-theme="kid"][data-sidebar="collapsed"] header > div > a:first-child img {
+  width: 3.2rem;
+  height: 3.2rem;
+}
+[data-theme="kid"][data-sidebar="collapsed"] header nav a {
+  font-size: 0;
+  gap: 0;
+  justify-content: center;
+  padding: 0.7rem 0;
+}
+[data-theme="kid"][data-sidebar="collapsed"] header nav a[href$="/store"]::after {
+  display: none;
+}
+/* admin link has no icon of its own: clip its label so only the 🔔 shows */
+[data-theme="kid"][data-sidebar="collapsed"] header nav a[href$="/admin"] {
+  font-size: 1.1rem;
+  overflow: hidden;
+  justify-content: flex-start;
+  padding: 0.55rem 0 0.55rem 1.05rem;
+}
+/* unread badges become a dot on the icon corner */
+[data-theme="kid"][data-sidebar="collapsed"] header nav a span {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.35rem;
+}
+[data-theme="kid"][data-sidebar="collapsed"] header a.border-border {
+  padding: 0.2rem;
+}
+[data-theme="kid"][data-sidebar="collapsed"] header a.border-border > span:last-child {
+  display: none; /* coin count (the avatar sits in the first span) */
+}
+[data-theme="kid"][data-sidebar="collapsed"] header > div > div:last-child > button:not(.md\:hidden) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+[data-theme="kid"][data-sidebar="collapsed"] header > div > div:last-child > button.sm\:inline-flex {
+  font-size: 0; /* mode toggle: just the 🎓 */
+}
+[data-theme="kid"][data-sidebar="collapsed"] header > div > div:last-child > button.sm\:inline-flex::before {
+  content: "🎓";
+  font-size: 1rem;
+}
+[data-theme="kid"][data-sidebar="collapsed"] header > div > div:last-child > button.bg-primary,
+[data-theme="kid"][data-sidebar="collapsed"] header > div > div:last-child > button.bg-secondary {
+  font-size: 0; /* sign in / sign out: icon only */
+}
+[data-theme="kid"][data-sidebar="collapsed"] header > div > div:last-child > button.bg-primary::before,
+[data-theme="kid"][data-sidebar="collapsed"] header > div > div:last-child > button.bg-secondary::before {
+  content: "";
+  width: 1.2rem;
+  height: 1.2rem;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5zm6.6 4.6L15.2 9l2 2H9v2h8.200l-2 2 1.400 1.400L21 12z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5zm6.6 4.6L15.2 9l2 2H9v2h8.200l-2 2 1.400 1.400L21 12z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* ---- Sidebar collapse / expand button (created by kidSidebar.ts) --------- */
+.kid-sb-toggle {
+  display: none;
+}
+[data-theme="kid"] .kid-sb-toggle {
+  position: fixed;
+  z-index: 60;
+  top: 1.6rem;
+  left: calc(var(--kid-sb-w) - 0.95rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border: 2px solid hsl(var(--kid-blue));
+  border-radius: 9999px;
+  background: #fff;
+  color: hsl(var(--kid-blue));
+  box-shadow: 0 3px 8px -2px hsl(220 60% 10% / 0.35);
+  cursor: pointer;
+  transition: left 200ms ease, transform 150ms ease;
+}
+[data-theme="kid"] .kid-sb-toggle svg {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 200ms ease;
+}
+[data-theme="kid"][data-sidebar="collapsed"] .kid-sb-toggle svg {
+  transform: rotate(180deg);
 }
 
 /* ---- Home / sign-in screen: friendly yellow banner (mockup hero) -------- */
