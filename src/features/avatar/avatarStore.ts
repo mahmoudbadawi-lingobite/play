@@ -2,6 +2,8 @@ import { useSyncExternalStore } from 'react';
 import './remoteCatalog'; // registers cached admin items before the avatar is loaded
 import {
   FREE_ITEM_IDS,
+  cleanOutfitText,
+  textOfSpec,
   STARTER,
   getItem,
   isFreeItem,
@@ -104,6 +106,7 @@ function cleanLook(raw: unknown, g: Gender, owned: Set<string>): Look {
     backpack: pick(r.backpack, 'backpack', null),
     pet: pick(r.pet, 'pet', null),
     character: pick(r.character, 'character', null),
+    outfitText: cleanOutfitText(r.outfitText),
     skin: typeof r.skin === 'string' ? r.skin : base.skin,
     hairColor: typeof r.hairColor === 'string' ? r.hairColor : base.hairColor,
   };
@@ -191,7 +194,7 @@ export function equipItem(id: string) {
   if (item.slot === 'set') {
     const pieces = (item.pieces ?? []).filter((p) => isOwned(state, p));
     if (pieces.length === 0) return;
-    const patch: Partial<Look> = {};
+    const patch: Partial<Look> = { outfitText: textOfSpec(item.spec) };
     for (const pid of pieces) {
       const piece = getItem(pid);
       if (piece && piece.slot !== 'set') (patch as Record<string, string>)[piece.slot] = pid;
@@ -200,7 +203,7 @@ export function equipItem(id: string) {
     return;
   }
   if (!isOwned(state, id)) return;
-  commit(withLook(g, { [item.slot]: id }));
+  commit(withLook(g, item.slot === 'outfit' ? { outfit: id, outfitText: null } : { [item.slot]: id }));
 }
 
 export function unequipSlot(slot: Slot) {

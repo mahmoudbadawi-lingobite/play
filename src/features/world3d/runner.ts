@@ -320,8 +320,10 @@ export function createRunner(container: HTMLElement, stateRef: { current: Runner
       camera.updateProjectionMatrix();
     }
     if (facing) {
-      camera.position.set(camX + 1.2, 3.6, camDist);
-      camera.lookAt(camX * 0.6, 3.1, -8);
+      // after the run, a side panel sits on the right of wide screens: slide the view so the hero stays fully visible
+      const shift = st.phase === 'done' && size.w / size.h > 1.2 ? 2.6 : 0;
+      camera.position.set(camX + 1.2 + shift, 3.6, camDist);
+      camera.lookAt(camX * 0.6 + shift, 3.1, -8);
     } else {
       camera.position.set(camX, 6.1, camDist + 1.4);
       camera.lookAt(camX * 0.6, 3.5, -11);

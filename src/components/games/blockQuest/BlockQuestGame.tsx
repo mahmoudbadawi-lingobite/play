@@ -41,9 +41,9 @@ function useFrame(callback: (dt: number, now: number) => void, active: boolean) 
   }, [active]);
 }
 
-function Star({ filled, delay }: { filled: boolean; delay: number }) {
+function Star({ filled, delay, size = 48 }: { filled: boolean; delay: number; size?: number }) {
   return (
-    <svg viewBox="0 0 24 24" width="48" height="48" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
       <polygon
         className={filled ? 'bq-star' : undefined}
         style={{ animationDelay: `${delay}s` }}
@@ -379,23 +379,22 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
 
         {/* HUD */}
         <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-2 sm:p-3">
-          <div className="flex min-w-0 flex-col gap-1.5">
+          <div className="flex w-28 min-w-0 flex-col gap-1 sm:w-32">
             <span className="w-fit rounded-full border-2 border-white/70 bg-[#2B2B6B]/90 px-3 py-1 text-xs font-extrabold text-white shadow sm:text-sm">
               {phase === 'start' ? `${gates.length} gates` : `Gate ${Math.min(gateIndex + 1, gates.length)} / ${gates.length}`}
             </span>
             <div
-              className="flex gap-1"
+              className="h-2 w-full overflow-hidden rounded-full border border-white/70 bg-[#2B2B6B]/60"
               role="progressbar"
               aria-label="Gates cleared"
               aria-valuemin={0}
               aria-valuemax={gates.length}
               aria-valuenow={phase === 'start' ? 0 : phase === 'done' ? gates.length : gateIndex}
             >
-              {gates.map((g, i) => {
-                const cleared = phase === 'done' || (phase !== 'start' && i < gateIndex);
-                const current = playing && i === gateIndex;
-                return <span key={g.id} className={`h-2.5 w-4 rounded-full border border-white/70 sm:w-7 ${cleared ? 'bg-[#2DB36B]' : current ? 'bg-[#FFB020]' : 'bg-[#2B2B6B]/60'}`} />;
-              })}
+              <div
+                className="h-full rounded-full bg-[#2DB36B] transition-all duration-500"
+                style={{ width: `${phase === 'start' ? 0 : phase === 'done' ? 100 : (gateIndex / gates.length) * 100 + (playing ? 100 / gates.length / 2 : 0)}%` }}
+              />
             </div>
           </div>
           <div className="pointer-events-auto flex items-center gap-1.5">
@@ -419,28 +418,25 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
           </div>
         </div>
 
-        {/* Question - a slim card so the action stays visible */}
+        {/* Question - a small card tucked at the top so the action stays visible */}
         {playing && (
-          <div className="pointer-events-none absolute inset-x-0 top-[3.6rem] flex justify-center px-2 sm:top-16">
-            <div className="pointer-events-auto max-w-xl rounded-2xl border-2 border-white/80 bg-white/90 px-4 py-2 text-center shadow-lg backdrop-blur-sm">
-              <div className="flex items-center justify-center gap-2">
-                <span className="rounded-full bg-secondary px-3 py-0.5 text-[11px] font-extrabold text-secondary-foreground sm:text-xs">{bannerLabel}</span>
-                {gate.kind === 'listen' && speechAvailable() && (
-                  <button
-                    type="button"
-                    onClick={() => speak(gate.item.term)}
-                    aria-label="Hear the word again"
-                    className="bq-btn rounded-full bg-primary px-3 py-0.5 text-sm font-bold text-primary-foreground"
-                  >
-                    🔊 Hear it
-                  </button>
-                )}
-              </div>
+          <div className="pointer-events-none absolute inset-x-0 top-[3.1rem] flex justify-center px-2 sm:top-2">
+            <div className="pointer-events-auto flex max-w-full items-center gap-2 rounded-xl border border-white/80 bg-white/85 px-2.5 py-1.5 shadow-md backdrop-blur-sm sm:min-w-[13rem] sm:max-w-[min(26rem,calc(100%-19rem))]">
               {gate.item.imageUrl && gate.kind !== 'listen' && (
-                <img src={gate.item.imageUrl} alt="" className="mx-auto mt-1 h-16 w-auto max-w-full rounded-lg object-contain sm:h-20" />
+                <img src={gate.item.imageUrl} alt="" className="h-10 w-14 shrink-0 rounded-md object-cover sm:h-12 sm:w-16" />
               )}
-              {gate.kind !== 'listen' && <p className="mt-1 font-display text-base font-bold leading-snug text-primary sm:text-xl">{gate.item.clue}</p>}
-              {bannerHelp && <p className="text-xs text-muted-foreground">{bannerHelp}</p>}
+              <div className="min-w-0 text-center">
+                <div className="flex items-center justify-center gap-1.5">
+                  <span className="rounded-full bg-secondary px-2 py-px text-[10px] font-extrabold text-secondary-foreground">{bannerLabel}</span>
+                  {gate.kind === 'listen' && speechAvailable() && (
+                    <button type="button" onClick={() => speak(gate.item.term)} aria-label="Hear the word again" className="bq-btn rounded-full bg-primary px-2 py-px text-[11px] font-bold text-primary-foreground">
+                      🔊 Hear it
+                    </button>
+                  )}
+                </div>
+                {gate.kind !== 'listen' && <p className="font-display text-[13px] font-bold leading-snug text-primary sm:text-[15px]">{gate.item.clue}</p>}
+                {bannerHelp && <p className="text-[10px] leading-tight text-muted-foreground sm:text-[11px]">{bannerHelp}</p>}
+              </div>
             </div>
           </div>
         )}
@@ -459,18 +455,18 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
           </div>
         )}
         {phase === 'done' && result && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/35 p-4">
-            <div className="w-full max-w-sm rounded-3xl border-4 border-primary bg-card/95 p-5 text-center backdrop-blur-sm">
-              <p className="font-display text-2xl font-bold text-primary">{result.title}</p>
-              <div className="mt-2 flex justify-center gap-1" aria-label={`${result.stars} out of 3 stars`}>
+          <div className="pointer-events-none absolute inset-x-2 top-12 flex justify-center sm:inset-x-auto sm:right-4 sm:top-1/2 sm:-translate-y-1/2">
+            <div className="pointer-events-auto w-full max-w-xs rounded-2xl border-2 border-primary bg-card/90 p-3 text-center shadow-xl backdrop-blur-sm sm:w-56">
+              <p className="font-display text-lg font-bold leading-tight text-primary sm:text-xl">{result.title}</p>
+              <div className="mt-1 flex justify-center gap-0.5" aria-label={`${result.stars} out of 3 stars`}>
                 {[1, 2, 3].map((n) => (
-                  <Star key={n} filled={n <= result.stars} delay={n * 0.25} />
+                  <Star key={n} filled={n <= result.stars} delay={n * 0.25} size={34} />
                 ))}
               </div>
-              <p className="mt-2 text-lg font-bold text-primary">
-                {result.accuracy}% first-try · 🪙 +{runCoins} coins
+              <p className="mt-1 text-sm font-bold text-primary">
+                {result.accuracy}% first-try · 🪙 +{runCoins}
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">Saving your score…</p>
+              <p className="text-xs text-muted-foreground">Saving your score…</p>
             </div>
           </div>
         )}

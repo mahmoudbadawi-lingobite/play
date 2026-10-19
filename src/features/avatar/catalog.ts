@@ -29,6 +29,31 @@ export interface Item {
   pieces?: string[];
   /** Added by an admin (not part of the built-in catalog). */
   custom?: boolean;
+  /** A built-in item that an admin changed (price, name, colors, text...). */
+  edited?: boolean;
+  /** Hidden from the store by an admin (students who own it can still wear it). */
+  disabled?: boolean;
+}
+
+/** Optional printed text on an outfit: front and back, Arabic or English. */
+export interface OutfitText {
+  front: string;
+  back: string;
+  color: string;
+}
+
+export function cleanOutfitText(raw: unknown): OutfitText | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const t = raw as Partial<OutfitText>;
+  const front = typeof t.front === 'string' ? t.front.trim().slice(0, 30) : '';
+  const back = typeof t.back === 'string' ? t.back.trim().slice(0, 30) : '';
+  if (!front && !back) return null;
+  return { front, back, color: typeof t.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(t.color) ? t.color : '#FFFFFF' };
+}
+
+/** The printed text (front / back) written in an item's spec, if any. */
+export function textOfSpec(spec: Record<string, string | number | boolean>): OutfitText | null {
+  return cleanOutfitText({ front: spec.frontText, back: spec.backText, color: spec.textColor });
 }
 
 export interface Look {
@@ -41,6 +66,8 @@ export interface Look {
   pet: string | null;
   /** A full character skin (animal, robot, mascot...). Replaces the hero's body while worn. */
   character: string | null;
+  /** Printed text of the equipped set (outfits carry their own text in their spec). */
+  outfitText: OutfitText | null;
   skin: string;
   hairColor: string;
 }
@@ -302,9 +329,16 @@ export const pieceValue = (id: string): number => PIECE_VALUE[id] ?? getItem(id)
 
 /** Sets are cheaper than buying the pieces one by one, and only count pieces you don't own yet. */
 export function bundlePrice(setItem: Item, owned: string[]): number {
-  const missing = (setItem.pieces ?? []).filter((p) => !owned.includes(p));
+  const pieces = setItem.pieces ?? [];
+  const missing = pieces.filter((p) => !owned.includes(p));
   if (missing.length === 0) return 0;
-  return roundTo5(missing.reduce((s, p) => s + pieceValue(p), 0) * PRICE_FACTOR);
+  const missingValue = missing.reduce((s, p) => s + pieceValue(p), 0);
+  // an admin can give a set its own price (price > 0); students then pay their share for the pieces they don't own yet
+  if (setItem.price > 0) {
+    const total = pieces.reduce((s, p) => s + pieceValue(p), 0) || 1;
+    return Math.max(1, Math.round((setItem.price * missingValue) / total));
+  }
+  return roundTo5(missingValue * PRICE_FACTOR);
 }
 
 export function priceOf(item: Item, owned: string[]): number {
@@ -314,7 +348,7 @@ export function priceOf(item: Item, owned: string[]): number {
 export const suitsGender = (item: Item, g: Gender) => item.gender === 'unisex' || item.gender === g;
 
 /** Items a character may see in the store (set-only pieces are hidden). */
-export const itemsFor = (g: Gender): Item[] => ITEMS.filter((i) => !i.hidden && suitsGender(i, g));
+export const itemsFor = (g: Gender): Item[] => ITEMS.filter((i) => !i.hidden && !i.disabled && suitsGender(i, g));
 
 /** Free (price 0), visible, single items are owned from the start - including free items an admin adds later. */
 export const isFreeItem = (i: Item) => i.slot !== 'set' && i.price === 0 && !i.hidden;
@@ -324,12 +358,33 @@ export const FREE_ITEM_IDS = ITEMS.filter(isFreeItem).map((i) => i.id);
 let catalogVersion = 0;
 const catalogListeners = new Set<() => void>();
 
-/** Adds (or replaces) admin-created items. Built-in items can't be overwritten. */
-export function registerCustomItems(list: Item[]) {
-  const builtIn = new Set(ITEMS.filter((i) => !i.custom).map((i) => i.id));
-  const fresh = list.filter((i) => !builtIn.has(i.id)).map((i) => ({ ...i, custom: true }));
-  for (let n = ITEMS.length - 1; n >= 0; n--) if (ITEMS[n].custom) ITEMS.splice(n, 1);
-  ITEMS.push(...fresh);
+/** The built-in catalog exactly as shipped (used to undo admin edits). */
+const ORIGINALS = new Map<string, Item>(ITEMS.map((i) => [i.id, i]));
+export const isBuiltInId = (id: string) => ORIGINALS.has(id);
+export const getOriginalItem = (id: string) => ORIGINALS.get(id);
+
+/**
+ * Applies what admins did in the Style Editor:
+ *  - `list`: brand-new items
+ *  - `overrides`: edited versions of built-in items (name, price, colors, text...).
+ * Calling it again replaces everything the previous call did.
+ */
+export function registerCustomItems(list: Item[], overrides: Item[] = []) {
+  for (let n = ITEMS.length - 1; n >= 0; n--) {
+    if (ITEMS[n].custom) ITEMS.splice(n, 1);
+    else {
+      const o = ORIGINALS.get(ITEMS[n].id);
+      if (o) ITEMS[n] = o;
+    }
+  }
+  for (const ov of overrides) {
+    const base = ORIGINALS.get(ov.id);
+    const at = ITEMS.findIndex((i) => i.id === ov.id);
+    if (!base || at < 0) continue;
+    // the kind of item and its "set-only" flag never change; everything else can
+    ITEMS[at] = { ...ov, slot: base.slot, category: base.category, hidden: base.hidden, pieces: ov.pieces?.length ? ov.pieces : base.pieces, edited: true, custom: undefined };
+  }
+  ITEMS.push(...list.filter((i) => !ORIGINALS.has(i.id)).map((i) => ({ ...i, custom: true })));
   BY_ID.clear();
   ITEMS.forEach((i) => BY_ID.set(i.id, i));
   catalogVersion++;
@@ -344,8 +399,8 @@ export const subscribeCatalog = (fn: () => void) => {
 export const getCatalogVersion = () => catalogVersion;
 
 export const STARTER: Record<Gender, Look> = {
-  boy: { hair: 'hair-b-short', outfit: 'outfit-b-tee', shoes: 'shoes-b-blue', hat: null, accessory: null, backpack: null, pet: null, character: null, skin: 'skin2', hairColor: 'brown' },
-  girl: { hair: 'hair-g-ponytail', outfit: 'outfit-g-tee', shoes: 'shoes-g-pink', hat: null, accessory: null, backpack: null, pet: null, character: null, skin: 'skin2', hairColor: 'brown' },
+  boy: { hair: 'hair-b-short', outfit: 'outfit-b-tee', shoes: 'shoes-b-blue', hat: null, accessory: null, backpack: null, pet: null, character: null, outfitText: null, skin: 'skin2', hairColor: 'brown' },
+  girl: { hair: 'hair-g-ponytail', outfit: 'outfit-g-tee', shoes: 'shoes-g-pink', hat: null, accessory: null, backpack: null, pet: null, character: null, outfitText: null, skin: 'skin2', hairColor: 'brown' },
 };
 
 export const CATEGORIES: { id: Category; label: string; icon: string }[] = [

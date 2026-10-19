@@ -1,8 +1,8 @@
 import { supabase } from '../../lib/supabase';
-import { STYLE_OPTIONS, registerCustomItems, type Category, type Item, type ItemGender, type Rarity, type Slot } from './catalog';
+import { STYLE_OPTIONS, isBuiltInId, registerCustomItems, type Category, type Item, type ItemGender, type Rarity, type Slot } from './catalog';
 
 /**
- * Items created in the Style Store admin page live in the `store_items` table.
+ * Items created or edited in the Style Editor (admin) live in the `store_items` table.
  * They are cached on the device so the store works offline and loads instantly.
  */
 
@@ -50,7 +50,7 @@ export function rowToItem(row: StoreItemRow): Item | null {
   const hasShape = (STYLE_OPTIONS[row.slot] ?? []).includes(style);
   if (!isSet && !hasShape && !spec.modelUrl) return null;
   return {
-    id: row.id.startsWith('x-') ? row.id : `x-${row.id}`,
+    id: row.id.startsWith('x-') || isBuiltInId(row.id) ? row.id : `x-${row.id}`,
     name: String(row.name).slice(0, 40),
     slot: row.slot as Item['slot'],
     category,
@@ -61,13 +61,15 @@ export function rowToItem(row: StoreItemRow): Item | null {
     spec,
     hidden: !!row.hidden,
     pieces: isSet ? (row.pieces ?? []) : undefined,
+    disabled: spec.disabled === true,
     custom: true,
   };
 }
 
 function applyRows(rows: StoreItemRow[]) {
   const items = rows.filter((r) => r.active !== false).map(rowToItem).filter((i): i is Item => !!i);
-  registerCustomItems(items);
+  // a row whose id is a built-in item is an EDIT of that item (price, name, colors, text...)
+  registerCustomItems(items.filter((i) => !isBuiltInId(i.id)), items.filter((i) => isBuiltInId(i.id)));
   return items;
 }
 

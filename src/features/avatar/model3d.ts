@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { getItem, hairColor, skinColor, type Gender, type Look } from './catalog';
+import { getItem, hairColor, skinColor, textOfSpec, type Gender, type Look, type OutfitText } from './catalog';
 import { ARM_H, GLOW, HEAD, HEAD_Y, LEG_H, SHOULDER_Y, TORSO_D, TORSO_W, TORSO_Y, ball, box, cone, cyl, group, torus } from './kit';
 import { buildAccessory, buildBackpack, buildHat, buildPet, buildShoes } from './items3d';
 import { buildCharacter } from './characters3d';
@@ -199,6 +199,62 @@ function addOutfit(rig: Rig, spec: Spec) {
   }
 }
 
+// ---------------------------------------------------------------- printed text (front / back), Arabic or English
+const printCache = new Map<string, THREE.Texture>();
+function printTexture(text: string, color: string) {
+  const key = `${text}|${color}`;
+  const hit = printCache.get(key);
+  if (hit) return hit;
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 256;
+  const g = c.getContext('2d')!;
+  const arabic = /[\u0600-\u06FF]/.test(text);
+  g.direction = arabic ? 'rtl' : 'ltr';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  let size = 130;
+  const font = (n: number) => `800 ${n}px Cairo, "Noto Sans Arabic", "Baloo 2", Nunito, Tahoma, Arial, sans-serif`;
+  g.font = font(size);
+  while (size > 24 && g.measureText(text).width > 470) {
+    size -= 4;
+    g.font = font(size);
+  }
+  const n = parseInt(color.slice(1), 16);
+  const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+  g.lineJoin = 'round';
+  g.lineWidth = Math.max(6, size * 0.14);
+  g.strokeStyle = lum > 0.55 ? 'rgba(20,20,40,0.85)' : 'rgba(255,255,255,0.85)';
+  g.strokeText(text, 256, 132);
+  g.fillStyle = color;
+  g.fillText(text, 256, 132);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  printCache.set(key, t);
+  return t;
+}
+
+function addPrint(rig: Rig, text: OutfitText | null) {
+  if (!text) return;
+  const make = (str: string) =>
+    new THREE.Mesh(
+      new THREE.PlaneGeometry(1.5, 0.75),
+      new THREE.MeshStandardMaterial({ map: printTexture(str, text.color), transparent: true, roughness: 0.85, polygonOffset: true, polygonOffsetFactor: -2, depthWrite: false }),
+    );
+  if (text.front) {
+    const m = make(text.front);
+    m.position.set(0, 0.3, TORSO_D / 2 + 0.1);
+    rig.torso.add(m);
+  }
+  if (text.back) {
+    const m = make(text.back);
+    m.position.set(0, 0.3, -(TORSO_D / 2 + 0.1));
+    m.rotation.y = Math.PI;
+    rig.torso.add(m);
+  }
+}
+
 // ---------------------------------------------------------------- hair
 type Piece = [w: number, h: number, d: number, x: number, y: number, z: number, top?: boolean, rz?: number];
 
@@ -305,6 +361,7 @@ export function buildAvatar(gender: Gender, look: Look, opts: BuildOpts = {}): A
   const rig = makeRig(gender, look);
   const outfitItem = getItem(look.outfit);
   addOutfit(rig, outfitItem?.spec ?? {});
+  addPrint(rig, look.outfitText ?? (outfitItem ? textOfSpec(outfitItem.spec) : null));
 
   const hat = getItem(look.hat);
   const hairItem = getItem(look.hair);
