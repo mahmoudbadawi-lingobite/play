@@ -29,6 +29,8 @@ export const FLAGS: FlagInfo[] = [
   { id: 'bahrain', name: 'Bahrain', price: 40 },
   { id: 'sudan', name: 'Sudan', price: 40 },
   { id: 'morocco', name: 'Morocco', price: 40 },
+  { id: 'syria', name: 'Syria', price: 40 },
+  { id: 'palestine', name: 'Palestine', price: 40 },
   { id: 'mali', name: 'Mali', price: 40 },
   // Muslim-majority and nearby countries
   { id: 'turkey', name: 'Turkey', price: 40 },
