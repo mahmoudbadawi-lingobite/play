@@ -367,6 +367,10 @@ button:not(:disabled):active {
 [data-theme="kid"] header nav a[href$="/store"] { font-size: 0; gap: 0; }
 [data-theme="kid"] header nav a[href$="/store"]::before { margin-right: 0.65rem; }
 [data-theme="kid"] header nav a[href$="/store"]::after { content: "Style Store"; font-size: 0.95rem; }
+/* The admin page lives at /admin/store, which ALSO ends with "/store", so the rules above gave it the
+   "Style Store" name too. Give it its own name and a pencil icon (these rules must stay below the ones above). */
+[data-theme="kid"] header nav a[href$="/admin/store"] { --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 17.25V21h3.75L17.8 9.94l-3.75-3.75zM20.7 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75z'/%3E%3C/svg%3E"); }
+[data-theme="kid"] header nav a[href$="/admin/store"]::after { content: "Style Editor"; }
 
 /* header controls (profile row at the bottom of the sidebar) */
 [data-theme="kid"] header > div > div:last-child {

@@ -5,6 +5,8 @@
  * items that suit them.
  */
 
+import { FLAGS } from './flags';
+
 export type Gender = 'boy' | 'girl';
 export type ItemGender = Gender | 'unisex';
 export type Slot = 'hair' | 'outfit' | 'shoes' | 'hat' | 'accessory' | 'backpack' | 'pet' | 'character';
@@ -35,25 +37,71 @@ export interface Item {
   disabled?: boolean;
 }
 
-/** Optional printed text on an outfit: front and back, Arabic or English. */
+/**
+ * Optional printed text on an outfit: front and back, Arabic or English.
+ * Each side can have a main line and an optional second line, each with its own size.
+ * Sizes are a percentage of the normal size (100 = the old default). Old saved items
+ * that only have front / back keep working: every new field is optional.
+ */
 export interface OutfitText {
   front: string;
   back: string;
   color: string;
+  /** size (%) of the main line */
+  frontSize?: number;
+  backSize?: number;
+  /** optional second line under the main one */
+  front2?: string;
+  back2?: string;
+  front2Size?: number;
+  back2Size?: number;
 }
+
+export const TEXT_SIZE_MIN = 30;
+export const TEXT_SIZE_MAX = 250;
+export const TEXT_SIZE_DEFAULT = 100;
+
+const cleanLine = (v: unknown) => (typeof v === 'string' ? v.trim().slice(0, 30) : '');
+const cleanSize = (v: unknown): number | undefined => {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? Math.max(TEXT_SIZE_MIN, Math.min(TEXT_SIZE_MAX, Math.round(n))) : undefined;
+};
 
 export function cleanOutfitText(raw: unknown): OutfitText | null {
   if (!raw || typeof raw !== 'object') return null;
   const t = raw as Partial<OutfitText>;
-  const front = typeof t.front === 'string' ? t.front.trim().slice(0, 30) : '';
-  const back = typeof t.back === 'string' ? t.back.trim().slice(0, 30) : '';
-  if (!front && !back) return null;
-  return { front, back, color: typeof t.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(t.color) ? t.color : '#FFFFFF' };
+  const front = cleanLine(t.front);
+  const back = cleanLine(t.back);
+  const front2 = cleanLine(t.front2);
+  const back2 = cleanLine(t.back2);
+  if (!front && !back && !front2 && !back2) return null;
+  const out: OutfitText = { front, back, color: typeof t.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(t.color) ? t.color : '#FFFFFF' };
+  const fs = cleanSize(t.frontSize);
+  const bs = cleanSize(t.backSize);
+  const f2s = cleanSize(t.front2Size);
+  const b2s = cleanSize(t.back2Size);
+  if (fs) out.frontSize = fs;
+  if (bs) out.backSize = bs;
+  if (front2) out.front2 = front2;
+  if (back2) out.back2 = back2;
+  if (f2s) out.front2Size = f2s;
+  if (b2s) out.back2Size = b2s;
+  return out;
 }
 
 /** The printed text (front / back) written in an item's spec, if any. */
 export function textOfSpec(spec: Record<string, string | number | boolean>): OutfitText | null {
-  return cleanOutfitText({ front: spec.frontText, back: spec.backText, color: spec.textColor });
+  return cleanOutfitText({
+    front: spec.frontText,
+    back: spec.backText,
+    color: spec.textColor,
+    frontSize: spec.frontSize,
+    backSize: spec.backSize,
+    front2: spec.frontText2,
+    back2: spec.backText2,
+    front2Size: spec.frontSize2,
+    back2Size: spec.backSize2,
+  });
 }
 
 export interface Look {
@@ -187,6 +235,10 @@ const ACCESSORIES: Item[] = [
   acc('phones', 'Blue Headphones', 90, 'rare', 'Music while you run.', { style: 'headphones', color: '#3D7BFF', accent: '#FFFFFF' }),
   acc('wings-star', 'Star Wings', 200, 'epic', 'Shiny golden wings.', { style: 'wingsStar', color: '#FFC83D', accent: '#FFFFFF' }),
   acc('wings-fairy', 'Fairy Wings', 200, 'epic', 'Glittery see-through wings.', { style: 'wingsFairy', color: '#9FE8FF', accent: '#FF9BD1' }),
+  // country flags: the character holds the flag while playing (pictures in public/flags)
+  ...FLAGS.map((f) =>
+    acc(`flag-${f.id}`, `${f.name} Flag`, f.price, f.id === 'united-nations' ? 'rare' : 'common', `Wave the ${f.name} flag!`, { style: 'flag', flag: f.id, color: '#C9A66B', accent: '#FFC83D' }),
+  ),
 ];
 
 // ---------------------------------------------------------------- shoes
@@ -310,7 +362,7 @@ const CHARACTERS: Item[] = [
 /** Built-in style names used by the Style Store admin tool. */
 export const STYLE_OPTIONS: Record<string, string[]> = {
   hat: ['cap', 'beanie', 'party', 'explorer', 'catears', 'wizard', 'crown', 'helmet'],
-  accessory: ['round', 'shades', 'goggles', 'headphones', 'scarf', 'medal', 'wingsStar', 'wingsFairy'],
+  accessory: ['round', 'shades', 'goggles', 'headphones', 'scarf', 'medal', 'wingsStar', 'wingsFairy', 'flag'],
   shoes: ['sneaker', 'hightop', 'boot', 'runner', 'cloud', 'space'],
   backpack: ['school', 'explorer', 'star', 'dino', 'candy', 'jet'],
   pet: ['corgi', 'cat', 'bunny', 'fox', 'robot', 'dragon'],

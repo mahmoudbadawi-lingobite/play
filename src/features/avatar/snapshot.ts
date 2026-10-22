@@ -99,7 +99,7 @@ export function snapshotItem(gender: Gender, itemId: string, size = 176, cancell
         else if (item.slot === 'shoes') view = 'feet';
         else if (item.slot === 'character') view = 'body';
         else if (item.slot === 'backpack') view = 'back';
-        else if (item.slot === 'accessory') view = WING_STYLES.has(String(item.spec.style)) ? 'back' : item.spec.style === 'scarf' || item.spec.style === 'medal' ? 'bust' : 'head';
+        else if (item.slot === 'accessory') view = WING_STYLES.has(String(item.spec.style)) ? 'back' : item.spec.style === 'flag' ? 'body' : item.spec.style === 'scarf' || item.spec.style === 'medal' ? 'bust' : 'head';
       }
       url = await frame(view, () => buildAvatar(gender, base, { pet: false }), size);
     }

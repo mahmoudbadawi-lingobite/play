@@ -117,8 +117,111 @@ export function buildHat(head: THREE.Group, spec: Spec) {
   }
 }
 
+
+// ---------------------------------------------------------------- country flags (held in the right hand)
+/** What a held item asks the character to do (the arm is raised and the cloth waves). */
+export interface HoldInfo {
+  /** arm that holds the item and the angle it is raised to */
+  arm?: THREE.Group;
+  armAngle?: number;
+  /** called every frame with the time in seconds */
+  wave?: (t: number) => void;
+}
+
+const flagTextures = new Map<string, Promise<THREE.Texture>>();
+const flagLoader = new THREE.TextureLoader();
+
+function loadFlagTexture(id: string): Promise<THREE.Texture> {
+  let job = flagTextures.get(id);
+  if (!job) {
+    const url = `${import.meta.env.BASE_URL}flags/${id}.png`;
+    job = new Promise<THREE.Texture>((resolve, reject) =>
+      flagLoader.load(
+        url,
+        (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.anisotropy = 4;
+          resolve(tex);
+        },
+        undefined,
+        reject,
+      ),
+    );
+    flagTextures.set(id, job);
+  }
+  return job;
+}
+
+const FLAG_W = 1.5;
+const FLAG_H = 1.08;
+const FLAG_ARM = -1.1; // arm raised forward (radians)
+
+/**
+ * A flag on a gold pole. The right arm is raised to hold it, the pole stays upright,
+ * and the cloth waves in the wind. The cloth is a two-sided picture that reads correctly
+ * from the front and from behind (the game camera looks at the hero from behind).
+ */
+export function buildFlag(rig: Rig, spec: Spec, hold: HoldInfo) {
+  const id = str(spec.flag, 'saudi-arabia').replace(/[^a-z-]/g, '');
+  // where the raised hand ends up (shoulder at x 1.13, y 3.1 - arm length turned by FLAG_ARM)
+  const holder = group(rig.root, 1.13, 3.1 - 1.4 * Math.cos(FLAG_ARM), -1.4 * Math.sin(FLAG_ARM));
+  const gold = str(spec.color, '#C9A66B');
+  const knob = str(spec.accent, '#FFC83D');
+  cyl(holder, 0.07, 0.07, 3.2, gold, 0, 1.1, 0, 10);
+  ball(holder, 0.15, knob, 0, 2.72, 0, 1, 1, 1, { m: { rough: 0.3, metal: 0.4 } });
+  box(holder, 0.34, 0.3, 0.34, '#FFDDBF', 0, 0.0, 0, { r: 0.1 }); // the fist around the pole
+
+  const SEG = 10;
+  const front = new THREE.PlaneGeometry(FLAG_W, FLAG_H, SEG, 1);
+  front.translate(FLAG_W / 2, 0, 0);
+  const back = front.clone();
+  back.setAttribute('position', front.getAttribute('position')); // one set of points: the cloth waves once
+  const uv = back.getAttribute('uv') as THREE.BufferAttribute;
+  for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));
+  const mk = (geo: THREE.BufferGeometry, side: THREE.Side) => {
+    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: '#FFFFFF', transparent: true, alphaTest: 0.35, side, toneMapped: false }));
+    m.castShadow = false;
+    return m;
+  };
+  const cloth = group(holder, 0.07, 2.62 - FLAG_H / 2, 0);
+  const a = mk(front, THREE.FrontSide);
+  const b = mk(back, THREE.BackSide);
+  cloth.add(a, b);
+
+  const pos = front.getAttribute('position') as THREE.BufferAttribute;
+  const baseX: number[] = [];
+  for (let i = 0; i < pos.count; i++) baseX.push(pos.getX(i));
+  const wave = (t: number) => {
+    for (let i = 0; i < pos.count; i++) {
+      const k = baseX[i] / FLAG_W; // 0 at the pole, 1 at the free edge
+      pos.setZ(i, Math.sin(baseX[i] * 4.2 - t * 6.5) * 0.11 * k);
+    }
+    pos.needsUpdate = true;
+  };
+  wave(0);
+
+  const p = loadFlagTexture(id)
+    .then((tex) => {
+      (a.material as THREE.MeshBasicMaterial).map = tex;
+      (b.material as THREE.MeshBasicMaterial).map = tex;
+      (a.material as THREE.Material).needsUpdate = true;
+      (b.material as THREE.Material).needsUpdate = true;
+      const img = tex.image as { width: number; height: number } | undefined;
+      if (img?.width) cloth.scale.y = Math.min(1.35, Math.max(0.7, (img.height / img.width) / (FLAG_H / FLAG_W)));
+    })
+    .catch(() => {
+      // missing picture: show a plain white cloth instead of nothing
+    });
+  pending.add(p);
+  void p.finally(() => pending.delete(p));
+
+  hold.arm = rig.armR;
+  hold.armAngle = FLAG_ARM;
+  hold.wave = wave;
+}
+
 // ---------------------------------------------------------------- accessories
-export function buildAccessory(rig: Rig, spec: Spec, wings: THREE.Object3D[]) {
+export function buildAccessory(rig: Rig, spec: Spec, wings: THREE.Object3D[], hold: HoldInfo = {}) {
   if (spec.modelUrl) {
     const at = str(spec.attach, 'head');
     if (at === 'back') attachModel(group(rig.root, 0, 2.0, -0.7), spec, 3.2);
@@ -133,6 +236,9 @@ export function buildAccessory(rig: Rig, spec: Spec, wings: THREE.Object3D[]) {
   const h = rig.head;
   const fz = T + 0.03;
   switch (style) {
+    case 'flag':
+      buildFlag(rig, spec, hold);
+      break;
     case 'round':
       for (const sd of [-1, 1]) {
         torus(h, 0.25, 0.045, c, sd * 0.36, 0.04, fz);

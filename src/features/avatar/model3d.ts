@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { getItem, hairColor, skinColor, textOfSpec, type Gender, type Look, type OutfitText } from './catalog';
+import { TEXT_SIZE_DEFAULT, getItem, hairColor, skinColor, textOfSpec, type Gender, type Look, type OutfitText } from './catalog';
 import { ARM_H, GLOW, HEAD, HEAD_Y, LEG_H, SHOULDER_Y, TORSO_D, TORSO_W, TORSO_Y, ball, box, cone, cyl, group, torus } from './kit';
-import { buildAccessory, buildBackpack, buildHat, buildPet, buildShoes } from './items3d';
+import { buildAccessory, buildBackpack, buildHat, buildPet, buildShoes, type HoldInfo } from './items3d';
 import { buildCharacter } from './characters3d';
 
 /** Everything a builder needs to attach parts to the right place. */
@@ -200,34 +200,68 @@ function addOutfit(rig: Rig, spec: Spec) {
 }
 
 // ---------------------------------------------------------------- printed text (front / back), Arabic or English
+// Each side holds one or two lines. Every line has its own size (percent of the normal size).
+interface PrintLine {
+  text: string;
+  /** percent: 100 = the normal size */
+  size: number;
+}
+
+const PRINT_PX = 640; // canvas is square; it is drawn on a square plane PRINT_UNITS wide
+const PRINT_UNITS = 1.7;
+const BASE_FONT = 143; // px at 100% (the same apparent size the single line always had)
+const MAX_W = PRINT_PX * 0.95;
+const MAX_H = PRINT_PX * 0.92;
+
 const printCache = new Map<string, THREE.Texture>();
-function printTexture(text: string, color: string) {
-  const key = `${text}|${color}`;
+function printTexture(lines: PrintLine[], color: string) {
+  const key = JSON.stringify([lines, color]);
   const hit = printCache.get(key);
   if (hit) return hit;
   const c = document.createElement('canvas');
-  c.width = 512;
-  c.height = 256;
+  c.width = PRINT_PX;
+  c.height = PRINT_PX;
   const g = c.getContext('2d')!;
-  const arabic = /[\u0600-\u06FF]/.test(text);
-  g.direction = arabic ? 'rtl' : 'ltr';
   g.textAlign = 'center';
   g.textBaseline = 'middle';
-  let size = 130;
   const font = (n: number) => `800 ${n}px Cairo, "Noto Sans Arabic", "Baloo 2", Nunito, Tahoma, Arial, sans-serif`;
-  g.font = font(size);
-  while (size > 24 && g.measureText(text).width > 470) {
-    size -= 4;
-    g.font = font(size);
+
+  // 1) the size of each line, shrunk only if it would not fit the width of the shirt
+  const sized = lines.map((l) => {
+    let px = Math.round((BASE_FONT * l.size) / TEXT_SIZE_DEFAULT);
+    g.font = font(px);
+    while (px > 14 && g.measureText(l.text).width > MAX_W) {
+      px -= 4;
+      g.font = font(px);
+    }
+    return { text: l.text, px };
+  });
+  // 2) shrink all lines together if the block is taller than the shirt
+  const gap = 0.16;
+  const blockH = () => sized.reduce((h, l) => h + l.px, 0) * (1 + gap);
+  if (blockH() > MAX_H) {
+    const k = MAX_H / blockH();
+    for (const l of sized) l.px = Math.max(12, Math.floor(l.px * k));
   }
+
   const n = parseInt(color.slice(1), 16);
   const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
   g.lineJoin = 'round';
-  g.lineWidth = Math.max(6, size * 0.14);
   g.strokeStyle = lum > 0.55 ? 'rgba(20,20,40,0.85)' : 'rgba(255,255,255,0.85)';
-  g.strokeText(text, 256, 132);
   g.fillStyle = color;
-  g.fillText(text, 256, 132);
+
+  // 3) draw the block centred on the canvas
+  let y = PRINT_PX / 2 - blockH() / 2;
+  for (const l of sized) {
+    const h = l.px * (1 + gap);
+    const cy = y + h / 2;
+    g.font = font(l.px);
+    g.direction = /[\u0600-\u06FF]/.test(l.text) ? 'rtl' : 'ltr';
+    g.lineWidth = Math.max(5, l.px * 0.14);
+    g.strokeText(l.text, PRINT_PX / 2, cy);
+    g.fillText(l.text, PRINT_PX / 2, cy);
+    y += h;
+  }
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
@@ -237,19 +271,27 @@ function printTexture(text: string, color: string) {
 
 function addPrint(rig: Rig, text: OutfitText | null) {
   if (!text) return;
-  const make = (str: string) =>
+  const lines = (main: string, mainSize: number | undefined, second: string | undefined, secondSize: number | undefined): PrintLine[] => {
+    const out: PrintLine[] = [];
+    if (main) out.push({ text: main, size: mainSize ?? TEXT_SIZE_DEFAULT });
+    if (second) out.push({ text: second, size: secondSize ?? (main ? 70 : TEXT_SIZE_DEFAULT) });
+    return out;
+  };
+  const make = (ls: PrintLine[]) =>
     new THREE.Mesh(
-      new THREE.PlaneGeometry(1.5, 0.75),
-      new THREE.MeshStandardMaterial({ map: printTexture(str, text.color), transparent: true, roughness: 0.85, polygonOffset: true, polygonOffsetFactor: -2, depthWrite: false }),
+      new THREE.PlaneGeometry(PRINT_UNITS, PRINT_UNITS),
+      new THREE.MeshStandardMaterial({ map: printTexture(ls, text.color), transparent: true, roughness: 0.85, polygonOffset: true, polygonOffsetFactor: -2, depthWrite: false }),
     );
-  if (text.front) {
-    const m = make(text.front);
-    m.position.set(0, 0.3, TORSO_D / 2 + 0.1);
+  const front = lines(text.front, text.frontSize, text.front2, text.front2Size);
+  const back = lines(text.back, text.backSize, text.back2, text.back2Size);
+  if (front.length) {
+    const m = make(front);
+    m.position.set(0, 0.1, TORSO_D / 2 + 0.1);
     rig.torso.add(m);
   }
-  if (text.back) {
-    const m = make(text.back);
-    m.position.set(0, 0.3, -(TORSO_D / 2 + 0.1));
+  if (back.length) {
+    const m = make(back);
+    m.position.set(0, 0.1, -(TORSO_D / 2 + 0.1));
     m.rotation.y = Math.PI;
     rig.torso.add(m);
   }
@@ -371,11 +413,14 @@ export function buildAvatar(gender: Gender, look: Look, opts: BuildOpts = {}): A
 
   const acc = getItem(look.accessory);
   const wings: THREE.Object3D[] = [];
-  if (acc) buildAccessory(rig, acc.spec, wings);
+  const hold: HoldInfo = {};
+  if (acc) buildAccessory(rig, acc.spec, wings, hold);
   const shoes = getItem(look.shoes);
   if (shoes) buildShoes(rig, shoes.spec);
   const pack = getItem(look.backpack);
   if (pack) buildBackpack(rig, pack.spec);
+
+  if (hold.arm && hold.armAngle !== undefined) hold.arm.rotation.x = hold.armAngle; // raised from the first frame (thumbnails never tick)
 
   const avatar = new THREE.Group() as AvatarHandle;
   avatar.add(rig.root);
@@ -395,6 +440,11 @@ export function buildAvatar(gender: Gender, look: Look, opts: BuildOpts = {}): A
     const sw = run ? Math.sin(t * 11) * 0.9 : Math.sin(t * 1.6) * 0.04;
     rig.armL.rotation.x = sw;
     rig.armR.rotation.x = -sw;
+    if (hold.arm && hold.armAngle !== undefined) {
+      // holding a flag: the right arm stays raised (a tiny bob), the cloth waves
+      hold.arm.rotation.x = hold.armAngle + (run ? Math.sin(t * 11) * 0.04 : Math.sin(t * 1.6) * 0.03);
+      hold.wave?.(t);
+    }
     rig.legL.rotation.x = run ? -sw : 0;
     rig.legR.rotation.x = run ? sw : 0;
     rig.root.position.y = run ? Math.abs(Math.sin(t * 11)) * 0.18 : Math.sin(t * 1.6) * 0.03;

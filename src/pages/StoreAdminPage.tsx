@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import {
@@ -6,6 +6,9 @@ import {
   ITEMS,
   STARTER,
   STYLE_OPTIONS,
+  TEXT_SIZE_DEFAULT,
+  TEXT_SIZE_MAX,
+  TEXT_SIZE_MIN,
   getItem,
   getOriginalItem,
   isBuiltInId,
@@ -19,6 +22,7 @@ import {
   type Look,
   type Rarity,
 } from '../features/avatar/catalog';
+import { FLAGS } from '../features/avatar/flags';
 import { loadRemoteStoreItems, rowToItem, type StoreItemRow } from '../features/avatar/remoteCatalog';
 import { AvatarStageView } from '../features/avatar/AvatarImage';
 import type { StageApi } from '../features/avatar/stage';
@@ -73,7 +77,16 @@ interface Draft {
   collar: string;
   frontText: string;
   backText: string;
+  /** size of the main lines in percent (100 = normal) */
+  frontSize: number;
+  backSize: number;
+  /** optional second line on each side, with its own size */
+  frontText2: string;
+  backText2: string;
+  frontSize2: number;
+  backSize2: number;
   textColor: string;
+  flag: string;
   useModel: boolean;
   modelUrl: string;
   modelScale: number;
@@ -89,7 +102,8 @@ interface Draft {
 const emptyDraft = (): Draft => ({
   id: null, builtIn: false, baseSpec: {}, name: '', blurb: '', kind: 'hat', gender: 'unisex', price: 60, rarity: 'common', style: 'cap',
   color: '#E8453C', accent: '#FFFFFF', sole: '#FFFFFF', top: '#3D7BFF', bottom: '#2B3A67', bottomKind: 'pants', collar: '#FFFFFF',
-  frontText: '', backText: '', textColor: '#FFFFFF',
+  frontText: '', backText: '', frontSize: TEXT_SIZE_DEFAULT, backSize: TEXT_SIZE_DEFAULT,
+  frontText2: '', backText2: '', frontSize2: 70, backSize2: 70, textColor: '#FFFFFF', flag: 'saudi-arabia',
   useModel: false, modelUrl: '', modelScale: 1, modelX: 0, modelY: 0, modelZ: 0, modelRotY: 0, attach: 'head', pieces: [], visible: true,
 });
 
@@ -108,11 +122,23 @@ function draftToSpec(d: Draft): Spec {
     case 'character': put({ model: d.style }); break;
     case 'set': break;
   }
+  if (d.kind === 'accessory') {
+    if (d.style === 'flag') spec.flag = d.flag;
+    else delete spec.flag;
+  }
   if (d.kind === 'outfit' || d.kind === 'set') {
-    for (const k of ['frontText', 'backText', 'textColor']) delete spec[k];
-    if (d.frontText.trim() || d.backText.trim()) {
-      if (d.frontText.trim()) spec.frontText = d.frontText.trim();
-      if (d.backText.trim()) spec.backText = d.backText.trim();
+    for (const k of ['frontText', 'backText', 'textColor', 'frontSize', 'backSize', 'frontText2', 'backText2', 'frontSize2', 'backSize2']) delete spec[k];
+    const any = d.frontText.trim() || d.backText.trim() || d.frontText2.trim() || d.backText2.trim();
+    if (any) {
+      const line = (text: string, size: number, tk: string, sk: string) => {
+        if (!text.trim()) return;
+        spec[tk] = text.trim();
+        spec[sk] = Math.max(TEXT_SIZE_MIN, Math.min(TEXT_SIZE_MAX, Math.round(size)));
+      };
+      line(d.frontText, d.frontSize, 'frontText', 'frontSize');
+      line(d.backText, d.backSize, 'backText', 'backSize');
+      line(d.frontText2, d.frontSize2, 'frontText2', 'frontSize2');
+      line(d.backText2, d.backSize2, 'backText2', 'backSize2');
       spec.textColor = d.textColor;
     }
   }
@@ -134,6 +160,8 @@ function draftFromItem(it: Item, mode: 'edit' | 'copy', visible = !it.disabled):
   d.builtIn = mode === 'edit' && builtIn;
   d.baseSpec = { ...sp };
   delete d.baseSpec.disabled;
+  // the text settings are rebuilt from the fields below, so they are not kept twice
+  for (const k of ['frontText', 'backText', 'textColor', 'frontSize', 'backSize', 'frontText2', 'backText2', 'frontSize2', 'backSize2']) delete d.baseSpec[k];
   d.name = mode === 'edit' ? it.name : `${it.name} (copy)`;
   d.blurb = it.blurb;
   d.kind = it.slot as Kind;
@@ -150,7 +178,14 @@ function draftFromItem(it: Item, mode: 'edit' | 'copy', visible = !it.disabled):
   d.collar = str(sp.collar, d.collar);
   d.frontText = str(sp.frontText, '');
   d.backText = str(sp.backText, '');
+  d.frontSize = numv(sp.frontSize, TEXT_SIZE_DEFAULT);
+  d.backSize = numv(sp.backSize, TEXT_SIZE_DEFAULT);
+  d.frontText2 = str(sp.frontText2, '');
+  d.backText2 = str(sp.backText2, '');
+  d.frontSize2 = numv(sp.frontSize2, 70);
+  d.backSize2 = numv(sp.backSize2, 70);
   d.textColor = str(sp.textColor, '#FFFFFF');
+  d.flag = str(sp.flag, d.flag);
   if (sp.modelUrl) {
     d.useModel = true;
     d.modelUrl = String(sp.modelUrl);
@@ -233,6 +268,17 @@ function ColorField({ label: l, value, onChange }: { label: string; value: strin
   );
 }
 
+function SizeField({ label: l, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  return (
+    <Field label={`${l}: ${value}%`}>
+      <div className="flex items-center gap-2">
+        <input type="range" min={TEXT_SIZE_MIN} max={TEXT_SIZE_MAX} step={5} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full" aria-label={l} />
+        <input type="number" min={TEXT_SIZE_MIN} max={TEXT_SIZE_MAX} value={value} onChange={(e) => onChange(Number(e.target.value) || TEXT_SIZE_DEFAULT)} className="w-16 rounded-lg border-2 border-border bg-card px-1 py-1 text-xs" aria-label={`${l} (number)`} />
+      </div>
+    </Field>
+  );
+}
+
 interface Entry {
   item: Item;
   /** a custom item that is switched off */
@@ -256,6 +302,8 @@ export function StoreAdminPage() {
   const [srcFilter, setSrcFilter] = useState<'all' | 'builtin' | 'edited' | 'mine'>('all');
   const [quick, setQuick] = useState<Record<string, Quick>>({});
   const [stage, setStage] = useState<StageApi | null>(null);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
 
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
@@ -342,7 +390,12 @@ export function StoreAdminPage() {
       return;
     }
     setDraft((d) => ({ ...d, id: row.id }));
-    await done('Saved! Students will see the change in the Style Store.');
+    setLastSaved(row.id);
+    setSrcFilter('all');
+    setCatFilter('all');
+    setSearch('');
+    listRef.current?.scrollTo({ top: 0 });
+    await done('Saved! It is at the top of the "All items" list (marked NEW). Students will see it in the Style Store.');
   };
 
   const saveQuick = async () => {
@@ -389,14 +442,17 @@ export function StoreAdminPage() {
   };
 
   // ---- the list of every item
+  // Items an admin created come FIRST (newest first), straight from the saved rows, so a new item is always in the list,
+  // even while it is open in the editor (the editor swaps it for a live preview inside the catalog).
   const entries: Entry[] = useMemo(() => {
-    const live: Entry[] = ITEMS.filter((i) => i.id !== 'x-preview' && !i.hidden).map((item) => ({ item, inactive: false }));
-    const off: Entry[] = rows
-      .filter((r) => r.active === false && !isBuiltInId(r.id))
-      .map((r) => rowToItem(r))
-      .filter((i): i is Item => !!i)
-      .map((item) => ({ item, inactive: true }));
-    return [...live, ...off];
+    const mine: Entry[] = [];
+    for (const r of rows) {
+      if (isBuiltInId(r.id)) continue;
+      const it = rowToItem(r);
+      if (it) mine.push({ item: { ...it, custom: true }, inactive: r.active === false });
+    }
+    const builtIn: Entry[] = ITEMS.filter((i) => i.id !== 'x-preview' && !i.hidden && !i.custom).map((item) => ({ item, inactive: false }));
+    return [...mine, ...builtIn];
     // the catalog is changed in place; catalogVersion tells us when
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows, catalogVersion]);
@@ -421,11 +477,26 @@ export function StoreAdminPage() {
   const TextFields = (
     <div className="mt-3 rounded-xl border-2 border-dashed border-border p-3">
       <p className="text-xs font-bold text-primary">Text on the {draft.kind === 'set' ? 'set\'s outfit' : 'outfit'} (optional)</p>
-      <p className="text-[11px] text-muted-foreground">Arabic or English. Drag the preview to see the back. The back text is covered if a student wears a backpack.</p>
-      <div className="mt-2 grid gap-3 sm:grid-cols-3">
-        <Field label="Front text"><input dir="auto" value={draft.frontText} onChange={(e) => set('frontText', e.target.value)} maxLength={30} placeholder="e.g. LingoBite" className={inputCls} /></Field>
-        <Field label="Back text (rear)"><input dir="auto" value={draft.backText} onChange={(e) => set('backText', e.target.value)} maxLength={30} placeholder="مثال: نجم المدرسة" className={inputCls} /></Field>
-        <ColorField label="Text color" value={draft.textColor} onChange={(v) => set('textColor', v)} />
+      <p className="text-[11px] text-muted-foreground">Arabic or English. Each side can have two lines, and every line has its own size ({TEXT_SIZE_MIN}–{TEXT_SIZE_MAX}%, 100 = normal). A line is never wider than the shirt, so very long text is made smaller to fit. Drag the preview to see the back. The back text is covered if a student wears a backpack.</p>
+
+      <p className="mt-3 text-xs font-extrabold text-primary">Front of the outfit</p>
+      <div className="mt-1 grid gap-3 sm:grid-cols-2">
+        <Field label="Line 1"><input dir="auto" value={draft.frontText} onChange={(e) => set('frontText', e.target.value)} maxLength={30} placeholder="e.g. LingoBite" className={inputCls} /></Field>
+        <SizeField label="Line 1 size" value={draft.frontSize} onChange={(v) => set('frontSize', v)} />
+        <Field label="Line 2 (optional)"><input dir="auto" value={draft.frontText2} onChange={(e) => set('frontText2', e.target.value)} maxLength={30} placeholder="e.g. Class 5" className={inputCls} /></Field>
+        <SizeField label="Line 2 size" value={draft.frontSize2} onChange={(v) => set('frontSize2', v)} />
+      </div>
+
+      <p className="mt-3 text-xs font-extrabold text-primary">Back of the outfit</p>
+      <div className="mt-1 grid gap-3 sm:grid-cols-2">
+        <Field label="Line 1"><input dir="auto" value={draft.backText} onChange={(e) => set('backText', e.target.value)} maxLength={30} placeholder="مثال: نجم المدرسة" className={inputCls} /></Field>
+        <SizeField label="Line 1 size" value={draft.backSize} onChange={(v) => set('backSize', v)} />
+        <Field label="Line 2 (optional)"><input dir="auto" value={draft.backText2} onChange={(e) => set('backText2', e.target.value)} maxLength={30} placeholder="مثال: الصف الخامس" className={inputCls} /></Field>
+        <SizeField label="Line 2 size" value={draft.backSize2} onChange={(v) => set('backSize2', v)} />
+      </div>
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <ColorField label="Text color (both sides)" value={draft.textColor} onChange={(v) => set('textColor', v)} />
       </div>
     </div>
   );
@@ -463,7 +534,7 @@ export function StoreAdminPage() {
         <p className="mt-1 text-xs text-muted-foreground">Change a price, rarity or visibility right here, then press <b>Save changes</b>. Use <b>Edit</b> for everything else. For a set, a price of 0 means "automatic discount"; any other number is the full price of the set.</p>
 
         {loading ? <p className="mt-3 text-sm text-muted-foreground">Loading…</p> : (
-          <div className="mt-3 max-h-[28rem] overflow-auto rounded-xl border border-border">
+          <div ref={listRef} className="mt-3 max-h-[28rem] overflow-auto rounded-xl border border-border">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="sticky top-0 bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
                 <tr><th className="p-2">Item</th><th className="p-2">For</th><th className="p-2">Price 🪙</th><th className="p-2">Rarity</th><th className="p-2 text-center">Shown</th><th className="p-2" /></tr>
@@ -474,13 +545,13 @@ export function StoreAdminPage() {
                   const visible = q.visible ?? (item.custom ? !inactive : !item.disabled);
                   const dirty = item.id in quick;
                   return (
-                    <tr key={item.id} className={`border-t border-border/60 ${dirty ? 'bg-secondary/10' : ''} ${!visible ? 'opacity-60' : ''}`}>
+                    <tr key={item.id} className={`border-t border-border/60 ${dirty || item.id === lastSaved ? 'bg-secondary/10' : ''} ${!visible ? 'opacity-60' : ''}`}>
                       <td className="p-2">
                         <div className="flex items-center gap-2">
                           <ItemThumb gender={item.gender === 'boy' ? 'boy' : 'girl'} item={inactive ? null : item} size={44} />
                           <div className="min-w-0">
                             <p className="truncate font-bold text-primary">{item.name}</p>
-                            <p className="text-[11px] text-muted-foreground">{label(item.slot)}{item.edited && <span className="ml-1 rounded bg-secondary/20 px-1 font-bold text-primary">edited</span>}{item.custom && <span className="ml-1 rounded bg-primary/10 px-1 font-bold text-primary">mine</span>}</p>
+                            <p className="text-[11px] text-muted-foreground">{label(item.slot)}{item.edited && <span className="ml-1 rounded bg-secondary/20 px-1 font-bold text-primary">edited</span>}{item.custom && <span className="ml-1 rounded bg-primary/10 px-1 font-bold text-primary">mine</span>}{item.id === lastSaved && <span className="ml-1 rounded bg-secondary px-1 font-bold text-secondary-foreground">NEW</span>}</p>
                           </div>
                         </div>
                       </td>
@@ -599,6 +670,12 @@ export function StoreAdminPage() {
                       <ColorField label="Detail color" value={draft.accent} onChange={(v) => set('accent', v)} />
                       <ColorField label="Collar color (jackets)" value={draft.collar} onChange={(v) => set('collar', v)} />
                     </>
+                  ) : draft.kind === 'accessory' && draft.style === 'flag' ? (
+                    <Field label="Country flag" hint="The character holds this flag while playing.">
+                      <select value={draft.flag} onChange={(e) => set('flag', e.target.value)} className={inputCls}>
+                        {FLAGS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+                      </select>
+                    </Field>
                   ) : draft.kind === 'hair' || draft.kind === 'character' ? (
                     <p className="self-end text-xs text-muted-foreground">{draft.kind === 'hair' ? 'Students choose the hair color themselves.' : 'Built-in characters have fixed colors. Use "My own 3D model" for a brand-new character.'}</p>
                   ) : (

@@ -102,6 +102,7 @@ export function AvatarBody({ figure, running = false }: { figure: Figure; runnin
   const hat = getItem(look.hat);
   const hairStyle = str(getItem(look.hair)?.spec.style, 'short');
   const acc = str(getItem(look.accessory)?.spec.style, '');
+  const flagId = acc === 'flag' ? str(getItem(look.accessory)?.spec.flag, '').replace(/[^a-z-]/g, '') : '';
   const o = { stroke: OUTLINE, strokeWidth: 2 };
   const legColor = bk === 'pants' ? bottom : skin;
   return (
@@ -125,6 +126,13 @@ export function AvatarBody({ figure, running = false }: { figure: Figure; runnin
         {gender === 'girl' && <><circle cx="21" cy="24" r="2.5" fill="#FF8FA3" fillOpacity="0.7" /><circle cx="39" cy="24" r="2.5" fill="#FF8FA3" fillOpacity="0.7" /></>}
         {(acc === 'round' || acc === 'shades' || acc === 'goggles') && <><rect x="20" y="14" width="9" height="8" rx="2" fill={acc === 'shades' ? OUTLINE : 'none'} stroke={OUTLINE} strokeWidth="1.5" /><rect x="31" y="14" width="9" height="8" rx="2" fill={acc === 'shades' ? OUTLINE : 'none'} stroke={OUTLINE} strokeWidth="1.5" /></>}
         {acc === 'headphones' && <><path d="M13 18 Q30 -6 47 18" fill="none" stroke="#3D7BFF" strokeWidth="3" /><rect x="9" y="14" width="7" height="12" rx="3" fill="#3D7BFF" {...o} /><rect x="44" y="14" width="7" height="12" rx="3" fill="#3D7BFF" {...o} /></>}
+        {flagId && (
+          <g>
+            <rect x="53" y="-14" width="2.2" height="80" rx="1" fill="#C9A66B" stroke={OUTLINE} strokeWidth="1" />
+            <circle cx="54.1" cy="-14" r="2.2" fill="#FFC83D" stroke={OUTLINE} strokeWidth="1" />
+            <image href={`${import.meta.env.BASE_URL}flags/${flagId}.png`} x="55.3" y="-13" width="11" height="8.5" preserveAspectRatio="xMidYMid meet" />
+          </g>
+        )}
         {hat && <Hat spec={hat.spec} />}
       </g>
     </g>
