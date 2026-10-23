@@ -1,0 +1,15 @@
+/* Treasure Hunt */
+@keyframes hunt-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-9px); }
+  40% { transform: translateX(9px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+.hunt-shake { animation: hunt-shake 0.4s; }
+@keyframes hunt-pop {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.hunt-pop { animation: hunt-pop 0.25s ease-out; }
+.hunt-stage { touch-action: none; user-select: none; -webkit-user-select: none; }

@@ -62,7 +62,8 @@ export type GameKey =
   | 'word-builder'
   | 'crossword'
   | 'picture-match'
-  | 'hangman';
+  | 'hangman'
+  | 'treasure-hunt';
 
 export interface GameResult {
   id: string;

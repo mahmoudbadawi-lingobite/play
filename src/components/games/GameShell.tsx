@@ -13,6 +13,7 @@ import { CrosswordGame } from './CrosswordGame';
 import { PictureMatchGame } from './PictureMatchGame';
 import { HangmanGame } from './HangmanGame';
 import { BlockQuestGame } from './blockQuest/BlockQuestGame';
+import { TreasureHuntGame } from './treasureHunt/TreasureHuntGame';
 import { useAvatarState } from '../../features/avatar/avatarStore';
 import { AvatarImage } from '../../features/avatar/AvatarImage';
 
@@ -25,6 +26,7 @@ export interface GameProps {
 
 const GAME_COMPONENTS: Record<GameKey, React.ComponentType<GameProps>> = {
   'block-quest': BlockQuestGame,
+  'treasure-hunt': TreasureHuntGame,
   'memory-match': MemoryMatchGame,
   'typing-race': TypingRaceGame,
   'word-builder': WordBuilderGame,

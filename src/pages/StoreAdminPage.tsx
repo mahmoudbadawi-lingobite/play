@@ -304,6 +304,8 @@ export function StoreAdminPage() {
   const [stage, setStage] = useState<StageApi | null>(null);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const editorRef = useRef<HTMLDivElement | null>(null);
+  const goToEditor = () => window.setTimeout(() => editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
 
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
@@ -564,8 +566,8 @@ export function StoreAdminPage() {
                       </td>
                       <td className="p-2 text-center"><input type="checkbox" checked={visible} onChange={(e) => setQ(item.id, { visible: e.target.checked })} aria-label={`Show ${item.name} in the store`} /></td>
                       <td className="p-2 text-right whitespace-nowrap">
-                        <button type="button" onClick={() => { setDraft(draftFromItem(item, 'edit', visible)); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="rounded-lg border-2 border-border px-2.5 py-1 text-xs font-bold text-primary hover:border-secondary">Edit</button>
-                        <button type="button" onClick={() => setDraft(draftFromItem(item, 'copy', true))} className="ml-1 rounded-lg border-2 border-border px-2.5 py-1 text-xs font-bold text-primary hover:border-secondary">Copy</button>
+                        <button type="button" onClick={() => { setDraft(draftFromItem(item, 'edit', visible)); setMessage(null); goToEditor(); }} className="rounded-lg border-2 border-border px-2.5 py-1 text-xs font-bold text-primary hover:border-secondary">Edit</button>
+                        <button type="button" onClick={() => { setDraft(draftFromItem(item, 'copy', true)); setMessage(null); goToEditor(); }} className="ml-1 rounded-lg border-2 border-border px-2.5 py-1 text-xs font-bold text-primary hover:border-secondary">Copy</button>
                         {item.custom && <button type="button" onClick={() => remove(item.id)} className="ml-1 rounded-lg border-2 border-destructive/60 px-2.5 py-1 text-xs font-bold text-destructive">Delete</button>}
                       </td>
                     </tr>
@@ -585,7 +587,7 @@ export function StoreAdminPage() {
       </section>
 
       {/* ----------------------------------------------------------- editor */}
-      <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_380px]">
+      <div ref={editorRef} className="mt-5 grid scroll-mt-4 gap-5 lg:grid-cols-[1fr_380px]">
         <div className="space-y-4">
           <section className="card-surface p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">

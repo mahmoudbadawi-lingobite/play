@@ -12,6 +12,15 @@ export interface GameDefinition {
 
 export const GAME_DEFINITIONS: GameDefinition[] = [
   {
+    key: 'treasure-hunt',
+    name: 'Treasure Hunt',
+    description: 'Explore jungle and desert worlds, follow clues to hidden places and unlock chests with answers.',
+    icon: '🗺️',
+    minItems: 4,
+    requiresImages: false,
+    isCompatible: (items) => items.length >= 4,
+  },
+  {
     key: 'block-quest',
     name: 'Block Quest',
     description: 'Run through blocky worlds and pick the right portal at every gate.',
