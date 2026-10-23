@@ -65,7 +65,12 @@ export class HuntEngine {
   events: EngineEvents = {};
   character = 'pink';
 
-  constructor(private canvas: HTMLCanvasElement, private assets: HuntAssets) {
+  private canvas: HTMLCanvasElement;
+  private assets: HuntAssets;
+
+  constructor(canvas: HTMLCanvasElement, assets: HuntAssets) {
+    this.canvas = canvas;
+    this.assets = assets;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('No 2D canvas');
     this.ctx = ctx;
