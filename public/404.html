@@ -13,7 +13,7 @@
       // request back to index.html with the intended path encoded in the
       // query string; a matching script in index.html decodes it back
       // into the real URL before React Router loads.
-      var pathSegmentsToKeep = 1; // "play" - the repo name segment of the URL
+      var pathSegmentsToKeep = 0; // site is served from the domain root (play.lingobite.org), so keep no path segments
 
       var l = window.location;
       l.replace(
