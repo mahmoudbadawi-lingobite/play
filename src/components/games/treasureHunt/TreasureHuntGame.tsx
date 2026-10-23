@@ -8,6 +8,7 @@ import { HuntEngine } from './huntEngine';
 import { DIFFICULTY, TIER_COINS, TIER_LABEL, buildQuestions, splitChests, type Difficulty, type HuntQuestion } from './huntQuestions';
 import { generateWorld, type WorldMap } from './huntWorld';
 import type { WorldId } from './huntAssets';
+import { getVolume, isMuted, playMusic, playSfx, preloadSounds, setMuted as setSfxMuted, setVolume as setSfxVolume, stopMusic, stopSfx } from './huntSound';
 import './treasureHunt.css';
 
 /**
@@ -69,6 +70,8 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
   const [near, setNear] = useState(false);
   const [hintText, setHintText] = useState<string | null>(null);
   const [touch, setTouch] = useState(false);
+  const [muted, setMutedState] = useState(() => isMuted());
+  const [volume, setVolumeState] = useState(() => getVolume());
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -89,6 +92,8 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
     return () => {
       alive = false;
       timers.current.forEach((t) => window.clearTimeout(t));
+      stopMusic();
+      stopSfx();
     };
   }, []);
 
@@ -126,6 +131,7 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
     finishedRef.current = false;
     writeLS(CHAR_KEY, explorer);
     writeLS(DIFF_KEY, difficulty);
+    preloadSounds();
     setPhase('intro');
   };
 
@@ -133,6 +139,8 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
     setWon(didWin);
     setModal(null);
     engineRef.current?.setPaused(true);
+    stopMusic();
+    if (didWin) playSfx('victory');
     setPhase('end');
   };
 
@@ -182,6 +190,12 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
     engineRef.current?.setPaused(phase !== 'play' || !!modal);
   }, [phase, modal]);
 
+  // ambient music: jungle music on the jungle map, desert music on the desert map
+  useEffect(() => {
+    if ((phase === 'intro' || phase === 'play') && world) playMusic(world.id);
+    else if (phase === 'start' || phase === 'loading') stopMusic();
+  }, [phase, world?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const openChest = useCallback(() => {
     if (!currentQ) return;
     setWrongHere(0);
@@ -196,7 +210,10 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
     if (!e) return;
     e.events = {
       onBump: () => openRef.current(),
-      onNear: (n) => setNear(n),
+      onNear: (n) => {
+        setNear(n);
+        if (n) playSfx('ding'); // the explorer found the chest
+      },
     };
   }, [phase === 'play' || phase === 'intro']); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -218,6 +235,7 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
     setCoins((c) => c + earned);
     addCoins(earned);
     engineRef.current?.markOpened(chestIdx);
+    playSfx('open');
     setModal({ q, result: { coins: earned, firstTry } });
     timers.current.push(
       window.setTimeout(() => {
@@ -337,6 +355,39 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
     <div>
       <div ref={wrapRef} className="hunt-stage relative w-full overflow-hidden rounded-2xl border-4 border-[#2B2B6B] bg-sky-200" style={{ height: 'min(72vh, 560px)' }}>
         <canvas ref={canvasRef} className="block h-full w-full" aria-label="Treasure map" />
+
+        {/* sound controls: mute + volume for the ambient music */}
+        <div className="absolute left-2 top-12 z-40 flex items-center gap-1.5 rounded-full border-2 border-white/70 bg-[#2B2B6B]/90 px-2 py-1 shadow">
+          <button
+            type="button"
+            onClick={() => {
+              const m = !muted;
+              setSfxMuted(m);
+              setMutedState(m);
+              if (!m) setVolumeState(getVolume());
+            }}
+            aria-label={muted ? 'Unmute sound' : 'Mute sound'}
+            aria-pressed={muted}
+            className="text-base leading-none"
+          >
+            {muted || volume === 0 ? '🔇' : '🔊'}
+          </button>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={muted ? 0 : volume}
+            onChange={(e) => {
+              const v = parseFloat(e.target.value);
+              setSfxVolume(v);
+              setVolumeState(v);
+              setMutedState(isMuted());
+            }}
+            aria-label="Music volume"
+            className="h-1.5 w-16 cursor-pointer accent-[#FF9A1F] sm:w-24"
+          />
+        </div>
 
         {/* top bar */}
         <div className="pointer-events-none absolute left-2 right-2 top-2 flex items-start justify-between gap-2">

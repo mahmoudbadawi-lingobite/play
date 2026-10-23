@@ -12,10 +12,10 @@ export interface Explorer {
 
 /** The five explorers a player can choose from (sprite sheets in public/treasure/chars). */
 export const EXPLORERS: Explorer[] = [
-  { id: 'pink', name: 'Maya' },
-  { id: 'goggles', name: 'Zed' },
-  { id: 'hijab', name: 'Noor' },
-  { id: 'redcap', name: 'Sami' },
+  { id: 'pink', name: 'Rawan' },
+  { id: 'goggles', name: 'Nour' },
+  { id: 'hijab', name: 'Mayar' },
+  { id: 'redcap', name: 'Mohamed' },
   { id: 'robot', name: 'Robo' },
 ];
 
