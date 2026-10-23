@@ -295,7 +295,7 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
         <p className="mt-1 text-sm text-muted-foreground">Explore two worlds. Read the clues, find the hidden chests, and answer the question that locks each one.</p>
 
         <p className="mt-4 text-sm font-extrabold text-primary">Choose your explorer</p>
-        <div className="mt-2 grid grid-cols-5 gap-2">
+        <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
           {EXPLORERS.map((e) => (
             <button key={e.id} type="button" onClick={() => setExplorer(e.id)} aria-pressed={explorer === e.id} className={`flex flex-col items-center rounded-2xl border-2 px-1 py-2 ${explorer === e.id ? 'border-[#FF9A1F] bg-[#FF9A1F]/15' : 'border-border'}`}>
               <ExplorerFace id={e.id} size={56} />
