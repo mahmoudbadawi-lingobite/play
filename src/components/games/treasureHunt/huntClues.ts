@@ -4,7 +4,7 @@ import type { WorldId } from './huntAssets';
  * Indirect clues: they describe a landmark without naming it exactly.
  * Every landmark has a few versions so a replay does not read the same.
  */
-export const CLUES: Record<WorldId, Record<string, string[]>> = {
+const BASE_CLUES: Partial<Record<WorldId, Record<string, string[]>>> = {
   jungle: {
     waterfall: [
       'Listen for the roar of rushing water. The chest is hiding where the river tumbles over the rocks.',
@@ -171,6 +171,47 @@ export const CLUES: Record<WorldId, Record<string, string[]>> = {
       'Glowing flowers with purple and blue petals grow beside a crystal. Find the garden of the cave.',
       'Look for flowers that shine in the dark, with a little crystal growing among their leaves.',
       'Where the cave floor turns into a tiny garden, a chest is hiding among the petals.',
+    ],
+  },
+};
+
+const retell = (src: Record<string, string[]>, swaps: [RegExp, string][]) =>
+  Object.fromEntries(Object.entries(src).map(([k, v]) => [k, v.map((t) => swaps.reduce((acc, [re, to]) => acc.replace(re, to), t))]));
+
+export const CLUES: Record<WorldId, Record<string, string[]>> = {
+  ...(BASE_CLUES as Record<WorldId, Record<string, string[]>>),
+  autumn: retell(BASE_CLUES.jungle as Record<string, string[]>, [[/in the jungle/g, 'in the woods'], [/this jungle/g, 'these woods'], [/the jungle/g, 'the woods'], [/jungle/g, 'forest'], [/green vines/g, 'red and orange vines']]),
+  night: retell(BASE_CLUES.jungle as Record<string, string[]>, [[/in the jungle/g, 'in the dark'], [/this jungle/g, 'this night'], [/the jungle/g, 'the night'], [/jungle/g, 'night'], [/green vines/g, 'vines glowing in the moonlight']]),
+  frost: {
+    well: [
+      'A round stone ring with a frozen bucket on a rope. The chest is resting beside it.',
+      'Where the villagers once drew water, now covered in ice, a treasure is hiding.',
+      'Look for a deep, round hole with a wooden beam above it. Snow has piled up around it.',
+    ],
+    house: [
+      'A little stone house with a striped awning, covered in snow. The chest sits by its door.',
+      'Someone left a cosy home in the snow. Find the roof with the red rug.',
+      'Look for the only house in the valley. A chest is waiting at its front step.',
+    ],
+    arch: [
+      'Pass through an old gateway of ice-covered stone. The chest waits beside it.',
+      'A curved doorway stands alone in the snow. Find it.',
+      'Look for ruins with a round top where a door once stood, now dusted with frost.',
+    ],
+    statue: [
+      'A guardian of stone with crossed arms stands very still in the snow. Look at his feet.',
+      'Someone carved a tall, silent figure and the snow has covered his shoulders.',
+      'A stone watcher has been standing in the cold longer than anyone remembers.',
+    ],
+    column: [
+      'One lonely pillar is still standing tall while the rest has fallen into the snow.',
+      'Look for a broken column that once held up a roof.',
+      'A tall stone pole rises from the white ground. The treasure sits at its base.',
+    ],
+    torch: [
+      'A flame burns on top of a stone pillar even in the snow. Find the fire.',
+      'Follow the flickering light of an old torch in the cold.',
+      'Where a warm flame dances in the frozen valley, a chest waits close by.',
     ],
   },
 };

@@ -45,6 +45,16 @@ export function GamePickerPage() {
           </Link>
         ))}
       </div>
+
+      {games.some((g) => g.key === 'treasure-hunt') && !ref && (
+        <Link to={`/hunt?set=${encodeURIComponent(set.id)}`} className="card-surface mt-4 flex items-center gap-4 border-2 border-secondary p-5 hover:bg-secondary/10">
+          <span className="text-3xl">👥</span>
+          <div>
+            <p className="font-display font-semibold text-primary">Treasure Hunt with friends</p>
+            <p className="text-sm text-muted-foreground">Open a live room (2–10 players). Race each other or hunt as a team.</p>
+          </div>
+        </Link>
+      )}
     </div>
   );
 }

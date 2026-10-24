@@ -4,10 +4,10 @@
  * (the pictures of a world are only loaded when a hunt in that world starts).
  */
 
-export type WorldId = 'jungle' | 'desert' | 'saudi' | 'crystal';
+export type WorldId = 'jungle' | 'desert' | 'saudi' | 'crystal' | 'autumn' | 'night' | 'frost';
 
 /** The worlds in the order the player sees them on the start screen. */
-export const WORLD_IDS: WorldId[] = ['jungle', 'desert', 'saudi', 'crystal'];
+export const WORLD_IDS: WorldId[] = ['jungle', 'desert', 'saudi', 'crystal', 'autumn', 'night', 'frost'];
 
 export interface Explorer {
   id: string;
@@ -46,6 +46,19 @@ export const GROUND_ANCHOR: Record<string, number> = {
   'crystal/path': 89,
   'crystal/water': 89,
   'crystal/bridge': 89,
+  // the re-coloured worlds use the same tiles as the jungle and the desert
+  'autumn/grass': 92,
+  'autumn/path': 90,
+  'autumn/water': 102,
+  'autumn/bridge': 104,
+  'night/grass': 92,
+  'night/path': 90,
+  'night/water': 102,
+  'night/bridge': 104,
+  'frost/snow': 93,
+  'frost/stone-path': 95,
+  'frost/drift': 96,
+  'frost/ice': 98,
 };
 
 /**
@@ -83,12 +96,18 @@ const PROPS: Record<WorldId, string[]> = {
   desert: ['palm', 'palm-small', 'palm-dates', 'cactus', 'bush', 'rock', 'crate', 'pot', 'column', 'statue', 'arch', 'house', 'well', 'camel', 'wall'],
   saudi: ['palm', 'palm-trio', 'bush', 'rock', 'canyon', 'oasis', 'palm-grove', 'tomb', 'haram', 'medina', 'albalad', 'fort', 'cliff', 'tower', 'asir', 'maraya', 'fountain'],
   crystal: ['crystal-cluster', 'crystal-small', 'boulder', 'stone', 'crystal-purple', 'crystal-blue', 'cave', 'statue', 'waterfall', 'gate', 'shrine', 'arch', 'lamp', 'flowers'],
+  autumn: ['tree-big', 'tree-small', 'bush', 'rock', 'flowers', 'statue', 'waterfall', 'arch', 'wall', 'torch'],
+  night: ['tree-big', 'tree-small', 'bush', 'rock', 'flowers', 'statue', 'waterfall', 'arch', 'wall', 'torch'],
+  frost: ['tree-big', 'tree-small', 'bush', 'rock', 'crate', 'pot', 'column', 'statue', 'arch', 'house', 'well', 'torch', 'wall'],
 };
 const GROUND: Record<WorldId, string[]> = {
   jungle: ['grass', 'path', 'water', 'bridge'],
   desert: ['sand', 'stone-path', 'dune', 'shore'],
   saudi: ['sand', 'path', 'redsand', 'water'],
   crystal: ['floor', 'path', 'water', 'bridge'],
+  autumn: ['grass', 'path', 'water', 'bridge'],
+  night: ['grass', 'path', 'water', 'bridge'],
+  frost: ['snow', 'stone-path', 'drift', 'ice'],
 };
 const UI = ['chest-bronze', 'chest-silver', 'chest-gold', 'open-bronze', 'open-silver', 'open-gold', 'coin', 'star', 'key', 'heart', 'compass'];
 

@@ -25,6 +25,7 @@ import { CreateEscapeRoomPage } from './pages/CreateEscapeRoomPage';
 import { EditEscapeRoomPage } from './pages/EditEscapeRoomPage';
 import { EscapeRoomPlayPage } from './pages/EscapeRoomPlayPage';
 import { ConsentGate } from './components/auth/ConsentGate';
+import { HuntEntryPage, HuntRoomPage } from './pages/HuntRoomPage';
 
 import { loadRemoteStoreItems } from './features/avatar/remoteCatalog';
 
@@ -54,6 +55,8 @@ export default function App() {
                 <Route path="/library" element={<LibraryPage />} />
                 <Route path="/play/:setId" element={<ConsentGate><GamePickerPage /></ConsentGate>} />
                 <Route path="/play/:setId/:gameKey" element={<ConsentGate><GameShell /></ConsentGate>} />
+                <Route path="/hunt" element={<ConsentGate><HuntEntryPage /></ConsentGate>} />
+                <Route path="/hunt/:code" element={<ConsentGate><HuntRoomPage /></ConsentGate>} />
                 <Route path="/avatar" element={<Suspense fallback={pageFallback}><AvatarPage /></Suspense>} />
                 <Route path="/store" element={<Suspense fallback={pageFallback}><StorePage /></Suspense>} />
                 <Route

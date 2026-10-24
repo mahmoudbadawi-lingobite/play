@@ -39,11 +39,16 @@ let volume = (() => {
 })();
 let muted = read(MUTE_KEY) === '1';
 
-const music: Partial<Record<WorldId, HTMLAudioElement>> = {};
-const sfx: Record<string, HTMLAudioElement> = {};
-let currentWorld: WorldId | null = null;
+type Track = 'jungle' | 'desert' | 'saudi' | 'crystal';
+/** which music file a world plays (the re-coloured worlds share the loops of the others) */
+const TRACK: Record<WorldId, Track> = { jungle: 'jungle', desert: 'desert', saudi: 'saudi', crystal: 'crystal', autumn: 'jungle', night: 'crystal', frost: 'crystal' };
 
-function musicEl(w: WorldId) {
+const music: Partial<Record<Track, HTMLAudioElement>> = {};
+const sfx: Record<string, HTMLAudioElement> = {};
+let currentWorld: Track | null = null;
+
+function musicEl(id: WorldId) {
+  const w = TRACK[id];
   let a = music[w];
   if (!a && typeof Audio !== 'undefined') {
     a = new Audio(url(w));
@@ -69,7 +74,8 @@ function applyMusicVolume() {
 }
 
 /** Plays the ambient loop of a world (the other world's loop is stopped). */
-export function playMusic(world: WorldId) {
+export function playMusic(worldId: WorldId) {
+  const world = TRACK[worldId];
   if (currentWorld && currentWorld !== world) {
     const old = music[currentWorld];
     if (old) {
@@ -78,7 +84,7 @@ export function playMusic(world: WorldId) {
     }
   }
   currentWorld = world;
-  const a = musicEl(world);
+  const a = musicEl(worldId);
   if (!a) return;
   a.volume = muted ? 0 : volume;
   void a.play().catch(() => {

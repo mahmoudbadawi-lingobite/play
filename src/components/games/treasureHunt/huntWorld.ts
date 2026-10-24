@@ -190,7 +190,64 @@ export const WORLD_DEFS: Record<WorldId, WorldDef> = {
     ],
     sky: ['#0d1235', '#26306b'],
   },
+  autumn: {
+    name: 'Autumn Woods',
+    blurb: 'Golden leaves, an old stone trail and a stream',
+    tagline: 'Golden leaves cover the old trail. The chests are hiding between the trees.',
+    terrain: 'river',
+    base: 'grass',
+    path: 'path',
+    water: 'water',
+    landmarks: [],
+    decor: [],
+    sky: ['#ffd8a8', '#fdf0cf'],
+  },
+  night: {
+    name: 'Moonlit Ruins',
+    blurb: 'The old temple at night. Follow the torches',
+    tagline: 'The temple sleeps under the moon. Follow the torches and stay sharp!',
+    terrain: 'river',
+    base: 'grass',
+    path: 'path',
+    water: 'water',
+    landmarks: [],
+    decor: [],
+    sky: ['#233a73', '#4a6aa8'],
+  },
+  frost: {
+    name: 'Frozen Valley',
+    blurb: 'Snow, a frozen pond and icy ruins',
+    tagline: 'Snow everywhere and icy ruins. Every landmark guards a chest.',
+    terrain: 'pond',
+    base: 'snow',
+    path: 'stone-path',
+    water: 'ice',
+    extraGround: 'drift',
+    landmarks: [
+      { kind: 'well', asset: 'well' },
+      { kind: 'house', asset: 'house' },
+      { kind: 'arch', asset: 'arch' },
+      { kind: 'statue', asset: 'statue' },
+      { kind: 'column', asset: 'column' },
+      { kind: 'torch', asset: 'torch' },
+    ],
+    decor: [
+      { asset: 'tree-small', weight: 0.34, block: true },
+      { asset: 'bush', weight: 0.22, block: true },
+      { asset: 'rock', weight: 0.16, block: true },
+      { asset: 'tree-big', weight: 0.06, block: true },
+      { asset: 'crate', weight: 0.04, block: true },
+      { asset: 'pot', weight: 0.04, block: true },
+    ],
+    sky: ['#cfeaff', '#f4fbff'],
+  },
 };
+
+// the re-coloured jungle worlds have the same landmarks and scenery as the jungle
+for (const id of ['autumn', 'night'] as const) {
+  WORLD_DEFS[id].landmarks = WORLD_DEFS.jungle.landmarks;
+  WORLD_DEFS[id].decor = WORLD_DEFS.jungle.decor;
+}
 
 /** How many chests a world can hold: one per landmark. */
 export function worldCapacity(id: WorldId): number {

@@ -26,6 +26,21 @@ interface Particle {
   max: number;
 }
 
+export interface Ghost {
+  id: string;
+  name: string;
+  character: string;
+  /** where the other player is on the map (cells) */
+  x: number;
+  y: number;
+  dir: number;
+  moving: boolean;
+  /** drawn position (eased towards x, y) */
+  dx?: number;
+  dy?: number;
+  walkT?: number;
+}
+
 export interface EngineEvents {
   /** the explorer walked into the active chest */
   onBump?: () => void;
@@ -56,6 +71,7 @@ export class HuntEngine {
   private particles: Particle[] = [];
   private bumpArmed = true;
   private actionLatch = false;
+  private ghosts = new Map<string, Ghost>();
   private near = false;
   private raf = 0;
   private last = 0;
@@ -110,6 +126,7 @@ export class HuntEngine {
 
   loadWorld(world: WorldMap) {
     this.world = world;
+    this.ghosts.clear();
     this.opened = new Set();
     this.active = null;
     this.tiers = [];
@@ -131,10 +148,10 @@ export class HuntEngine {
     this.bumpArmed = true;
     this.setNear(false);
   }
-  markOpened(i: number) {
+  markOpened(i: number, quiet = false) {
     this.opened.add(i);
     const w = this.world;
-    if (!w) return;
+    if (!w || quiet) return;
     const c = w.chests[i];
     const [x, y] = proj(c.gx + 0.5, c.gy + 0.5);
     for (let k = 0; k < 14; k++) {
@@ -143,6 +160,22 @@ export class HuntEngine {
       this.particles.push({ x, y: y - 40, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 260, life: 0, max: 0.9 + Math.random() * 0.5 });
     }
   }
+  /** where the explorer is right now (sent to the other players) */
+  getState() {
+    return { x: this.px, y: this.py, dir: this.dir as number, moving: this.moving };
+  }
+  /** other players on this map (names and positions come from the network) */
+  setGhost(g: Ghost) {
+    const old = this.ghosts.get(g.id);
+    this.ghosts.set(g.id, { ...g, dx: old?.dx ?? g.x, dy: old?.dy ?? g.y, walkT: old?.walkT ?? 0 });
+  }
+  removeGhost(id: string) {
+    this.ghosts.delete(id);
+  }
+  clearGhosts() {
+    this.ghosts.clear();
+  }
+
   setPaused(p: boolean) {
     this.paused = p;
     if (p) {
@@ -277,6 +310,12 @@ export class HuntEngine {
       if (d > 2.2) this.bumpArmed = true;
     } else this.setNear(false);
 
+    for (const g of this.ghosts.values()) {
+      const f2 = Math.min(1, dt * 9);
+      g.dx = (g.dx ?? g.x) + (g.x - (g.dx ?? g.x)) * f2;
+      g.dy = (g.dy ?? g.y) + (g.y - (g.dy ?? g.y)) * f2;
+      g.walkT = g.moving ? (g.walkT ?? 0) + dt : 0;
+    }
     if (this.hintT > 0) this.hintT -= dt;
     this.particles = this.particles.filter((p) => (p.life += dt) < p.max);
     for (const p of this.particles) {
@@ -382,6 +421,40 @@ export class HuntEngine {
         });
       }
     });
+    // the other players
+    for (const g of this.ghosts.values()) {
+      const gsheet = this.img(`chars/${g.character}`);
+      const gx = g.dx ?? g.x;
+      const gy = g.dy ?? g.y;
+      const gcx = sx(gx, gy);
+      const gcy = sy(gx, gy);
+      if (gcx < -200 || gcx > W + 200 || gcy < -200 || gcy > H + 300) continue;
+      const gframe = g.moving ? [0, 1, 0, 2][Math.floor((g.walkT ?? 0) * 8) % 4] : 0;
+      const gk = z * 1.5;
+      items.push({
+        depth: gx + gy,
+        draw: () => {
+          ctx.save();
+          ctx.globalAlpha = 0.3;
+          ctx.fillStyle = '#000';
+          ctx.beginPath();
+          ctx.ellipse(gcx, gcy, 30 * gk * 0.5, 10 * gk * 0.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 0.88;
+          if (gsheet) ctx.drawImage(gsheet, gframe * FRAME_W, g.dir * FRAME_H, FRAME_W, FRAME_H, gcx - (FRAME_W / 2) * gk, gcy - (FRAME_H - 6) * gk, FRAME_W * gk, FRAME_H * gk);
+          ctx.globalAlpha = 1;
+          ctx.font = 'bold 12px system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = '#2B2B6B';
+          ctx.fillStyle = '#fff';
+          const ty = gcy - (FRAME_H - 2) * gk;
+          ctx.strokeText(g.name, gcx, ty);
+          ctx.fillText(g.name, gcx, ty);
+          ctx.restore();
+        },
+      });
+    }
     // the explorer
     {
       const sheet = this.img(`chars/${this.character}`);
