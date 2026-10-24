@@ -14,7 +14,7 @@ export const GAME_DEFINITIONS: GameDefinition[] = [
   {
     key: 'treasure-hunt',
     name: 'Treasure Hunt',
-    description: 'Explore jungle and desert worlds, follow clues to hidden places and unlock chests with answers.',
+    description: 'Pick a world (jungle, desert, Saudi landmarks or a crystal cave), follow clues to hidden places and unlock chests with answers.',
     icon: '🗺️',
     minItems: 4,
     requiresImages: false,

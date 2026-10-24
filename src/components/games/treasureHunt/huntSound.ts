@@ -1,6 +1,6 @@
 /**
  * Treasure Hunt sound: ambient music per world (with volume + mute) and short effects.
- * Files live in public/treasure/sounds/: jungle.mp3, desert.mp3, ding.mp3, open.mp3, victory.mp3
+ * Files live in public/treasure/sounds/: jungle.mp3, desert.mp3, saudi.mp3, crystal.mp3, ding.mp3, open.mp3, victory.mp3
  */
 
 import type { WorldId } from './huntAssets';
@@ -131,9 +131,8 @@ export function setMuted(m: boolean) {
   applyMusicVolume();
 }
 
-/** Preloads the files (call when the player presses Start, a user gesture). */
-export function preloadSounds() {
-  musicEl('jungle');
-  musicEl('desert');
+/** Preloads the effects and the music of the worlds of this hunt (call when the player presses Start, a user gesture). */
+export function preloadSounds(worlds: WorldId[] = []) {
+  worlds.forEach(musicEl);
   (['ding', 'open', 'victory'] as const).forEach(sfxEl);
 }

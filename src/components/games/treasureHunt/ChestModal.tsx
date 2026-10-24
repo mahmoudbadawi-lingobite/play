@@ -11,12 +11,15 @@ import { TIER_COINS, TIER_LABEL, type HuntQuestion } from './huntQuestions';
 export function ChestModal({
   q,
   result,
+  place,
   onAnswer,
   onClose,
 }: {
   q: HuntQuestion;
   /** set once the chest has been opened */
   result: { coins: number; firstTry: boolean } | null;
+  /** the name of the landmark the chest was hiding at (shown once it is open) */
+  place?: string | null;
   onAnswer: (correct: boolean) => void;
   onClose: () => void;
 }) {
@@ -87,6 +90,7 @@ export function ChestModal({
             <p className="text-xs font-bold text-[#7a5b00]">
               {open ? `+${result?.coins} 🪙${result?.firstTry ? ' · first try bonus!' : ''}` : `Answer correctly to win ${TIER_COINS[q.tier]} 🪙`}
             </p>
+            {open && place && <p className="mt-0.5 text-sm font-extrabold text-[#2B2B6B]">📍 You found: {place}</p>}
           </div>
           {!open && left !== null && (
             <span className={`ml-auto rounded-full px-2.5 py-1 text-sm font-extrabold ${left <= 8 ? 'bg-red-500 text-white' : 'bg-[#2B2B6B] text-white'}`} aria-label={`${left} seconds left`}>⏱ {left}</span>

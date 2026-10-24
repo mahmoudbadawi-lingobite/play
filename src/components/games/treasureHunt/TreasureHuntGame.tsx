@@ -2,23 +2,37 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GameProps } from '../GameShell';
 import { addCoins } from '../../../features/avatar/avatarStore';
 import { ChestModal } from './ChestModal';
-import { EXPLORERS, huntImageUrl, loadHuntAssets, type HuntAssets } from './huntAssets';
-import { directionWords } from './huntClues';
+import { EXPLORERS, WORLD_IDS, huntImageUrl, loadHuntAssets, worldPreviewUrl, type HuntAssets } from './huntAssets';
+import { LANDMARK_LABELS, directionWords } from './huntClues';
 import { HuntEngine } from './huntEngine';
 import { DIFFICULTY, TIER_COINS, TIER_LABEL, buildQuestions, splitChests, type Difficulty, type HuntQuestion } from './huntQuestions';
-import { generateWorld, type WorldMap } from './huntWorld';
+import { WORLD_DEFS, generateWorld, worldBlurb, worldCapacity, worldName, type WorldMap } from './huntWorld';
 import type { WorldId } from './huntAssets';
 import { getVolume, isMuted, playMusic, playSfx, preloadSounds, setMuted as setSfxMuted, setVolume as setSfxVolume, stopMusic, stopSfx } from './huntSound';
 import './treasureHunt.css';
 
 /**
- * Treasure Hunt (solo): explore two worlds, read the clues, find the chests and
- * answer the question that locks each one.
+ * Treasure Hunt (solo): pick a world (or a surprise mix of two), read the clues, find the
+ * chests and answer the question that locks each one.
  */
 
-const WORLD_ORDER: WorldId[] = ['jungle', 'desert'];
+/** 'mix' = two different worlds picked at random, one after the other */
+type WorldChoice = WorldId | 'mix';
 const CHAR_KEY = 'lingobite:hunt:explorer';
 const DIFF_KEY = 'lingobite:hunt:difficulty';
+const WORLD_KEY = 'lingobite:hunt:world';
+const MAX_CHESTS = 12;
+
+const isWorldChoice = (v: string): v is WorldChoice => v === 'mix' || (WORLD_IDS as string[]).includes(v);
+
+/** the most chests a hunt in this choice can hold */
+const capacityOf = (c: WorldChoice) => (c === 'mix' ? MAX_CHESTS : worldCapacity(c));
+
+/** two different worlds, in random order */
+function randomPair(): WorldId[] {
+  const a = [...WORLD_IDS].sort(() => Math.random() - 0.5);
+  return a.slice(0, 2);
+}
 
 type Phase = 'loading' | 'start' | 'intro' | 'play' | 'end';
 
@@ -53,6 +67,10 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
   const [phase, setPhase] = useState<Phase>('loading');
   const [explorer, setExplorer] = useState(() => (EXPLORERS.some((e) => e.id === readLS(CHAR_KEY, '')) ? readLS(CHAR_KEY, '') : EXPLORERS[0].id));
   const [difficulty, setDifficulty] = useState<Difficulty>(() => (['easy', 'medium', 'hard'].includes(readLS(DIFF_KEY, '')) ? (readLS(DIFF_KEY, '') as Difficulty) : 'easy'));
+  const [worldChoice, setWorldChoice] = useState<WorldChoice>(() => {
+    const v = readLS(WORLD_KEY, '');
+    return isWorldChoice(v) ? v : 'mix';
+  });
 
   // the run
   const [worlds, setWorlds] = useState<WorldMap[]>([]);
@@ -112,11 +130,14 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
   // ---------------------------------------------------------------- run control
   const startRun = () => {
     const def = DIFFICULTY[difficulty];
-    const qs = buildQuestions(items, skill, difficulty);
-    const [a, b] = splitChests(qs.length);
+    // which worlds this hunt visits, and how many chests each one holds
+    const ids: WorldId[] = worldChoice === 'mix' ? randomPair() : [worldChoice];
+    const room = ids.reduce((n, id) => n + worldCapacity(id), 0);
+    const qs = buildQuestions(items, skill, difficulty, Math.min(def.chests, room));
+    const counts: number[] = ids.length === 1 ? [qs.length] : splitChests(qs.length);
     const seed = Math.floor(Math.random() * 1e9);
     setQuestions(qs);
-    setWorlds([generateWorld(WORLD_ORDER[0], seed, a), generateWorld(WORLD_ORDER[1], seed + 101, b)]);
+    setWorlds(ids.map((id, i) => generateWorld(id, seed + i * 101, counts[i])));
     setStage(0);
     setChestIdx(0);
     setLives(def.lives);
@@ -131,8 +152,14 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
     finishedRef.current = false;
     writeLS(CHAR_KEY, explorer);
     writeLS(DIFF_KEY, difficulty);
-    preloadSounds();
-    setPhase('intro');
+    writeLS(WORLD_KEY, worldChoice);
+    preloadSounds(ids);
+    // the pictures of the chosen world(s) are only fetched now (the first time they are needed)
+    setPhase('loading');
+    void loadHuntAssets(ids).then((a) => {
+      setAssets(a);
+      setPhase('intro');
+    });
   };
 
   const finish = (didWin: boolean) => {
@@ -237,6 +264,7 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
     engineRef.current?.markOpened(chestIdx);
     playSfx('open');
     setModal({ q, result: { coins: earned, firstTry } });
+    const found = world ? LANDMARK_LABELS[world.id]?.[world.chests[chestIdx]?.landmark ?? ''] : undefined;
     timers.current.push(
       window.setTimeout(() => {
         setModal(null);
@@ -246,7 +274,7 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
           setChestIdx(0);
           setPhase('intro');
         } else finish(true);
-      }, 1500),
+      }, found ? 2600 : 1500),
     );
   };
 
@@ -288,11 +316,47 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
 
   if (phase === 'start') {
     const def = DIFFICULTY[difficulty];
-    const total = Math.max(2, Math.min(def.chests, items.length));
+    const room = capacityOf(worldChoice);
+    const total = Math.max(2, Math.min(def.chests, items.length, room));
+    const cards: { id: WorldChoice; name: string; blurb: string; max: string }[] = [
+      ...WORLD_IDS.map((id) => ({ id: id as WorldChoice, name: worldName(id), blurb: worldBlurb(id), max: `Up to ${worldCapacity(id)} chests` })),
+      { id: 'mix', name: 'Surprise me', blurb: 'Two different worlds picked for you, one after the other', max: 'Up to 12 chests' },
+    ];
     return (
       <div className="rounded-2xl border-2 border-border bg-card p-4">
         <p className="font-display text-xl font-bold text-primary">🗺️ Treasure Hunt</p>
-        <p className="mt-1 text-sm text-muted-foreground">Explore two worlds. Read the clues, find the hidden chests, and answer the question that locks each one.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Pick a world. Read the clues, find the hidden chests, and answer the question that locks each one.</p>
+
+        <p className="mt-4 text-sm font-extrabold text-primary">Choose your world</p>
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5" role="radiogroup" aria-label="World">
+          {cards.map((c) => {
+            const on = worldChoice === c.id;
+            const sky = c.id === 'mix' ? (['#c9b6ff', '#ffd9a0'] as const) : WORLD_DEFS[c.id].sky;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onClick={() => setWorldChoice(c.id)}
+                className={`flex flex-col overflow-hidden rounded-2xl border-2 text-left transition ${on ? 'border-[#FF9A1F] bg-[#FF9A1F]/15 ring-2 ring-[#FF9A1F]/40' : 'border-border hover:border-[#FF9A1F]/60'}`}
+              >
+                <span className="flex h-24 w-full items-center justify-center sm:h-28" style={{ background: `linear-gradient(180deg, ${sky[0]}, ${sky[1]})` }}>
+                  {c.id === 'mix' ? (
+                    <span className="text-5xl" aria-hidden="true">🎲</span>
+                  ) : (
+                    <img src={worldPreviewUrl(c.id)} alt="" loading="lazy" draggable={false} className="h-full w-full object-contain p-1" />
+                  )}
+                </span>
+                <span className="px-2 pb-2 pt-1.5">
+                  <span className="block font-display text-sm font-bold leading-tight text-primary">{c.name}</span>
+                  <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">{c.blurb}</span>
+                  <span className="mt-1 inline-block rounded-full bg-[#2B2B6B]/10 px-2 py-0.5 text-[10px] font-extrabold text-primary">{c.max}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
         <p className="mt-4 text-sm font-extrabold text-primary">Choose your explorer</p>
         <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
@@ -313,7 +377,10 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
             </button>
           ))}
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">{total} chests in this hunt{items.length < def.chests ? ' (that is all this set has)' : ''}.</p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {total} chests in this hunt
+          {items.length < def.chests ? ' (that is all this set has)' : room < def.chests ? ` (this world has ${room} landmarks)` : ''}.
+        </p>
 
         <button type="button" onClick={startRun} className="mt-4 w-full rounded-xl bg-secondary px-6 py-4 text-xl font-extrabold text-secondary-foreground shadow">
           Start the hunt
@@ -452,7 +519,7 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
         {phase === 'intro' && world && (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/45 p-4">
             <div className="hunt-pop w-full max-w-sm rounded-3xl border-4 border-[#2B2B6B] bg-[#FFF8E6] p-5 text-center shadow-2xl">
-              <p className="text-xs font-extrabold uppercase tracking-wide text-[#7a5b00]">World {stage + 1} of {worlds.length}</p>
+              <p className="text-xs font-extrabold uppercase tracking-wide text-[#7a5b00]">{worlds.length === 1 ? 'Your world' : `World ${stage + 1} of ${worlds.length}`}</p>
               <p className="font-display text-2xl font-extrabold text-[#2B2B6B]">{world.name}</p>
               <div className="my-2 flex justify-center"><ExplorerFace id={explorer} size={72} /></div>
               <p className="text-sm text-[#2B2B6B]">{world.tagline}</p>
@@ -462,7 +529,7 @@ export function TreasureHuntGame({ items, skill, onFinish }: GameProps) {
           </div>
         )}
 
-        {modal && <ChestModal key={modal.q.id} q={modal.q} result={modal.result} onAnswer={handleAnswer} onClose={() => setModal(null)} />}
+        {modal && <ChestModal key={modal.q.id} q={modal.q} result={modal.result} place={modal.result && world ? LANDMARK_LABELS[world.id]?.[world.chests[chestIdx]?.landmark ?? ''] : null} onAnswer={handleAnswer} onClose={() => setModal(null)} />}
       </div>
     </div>
   );

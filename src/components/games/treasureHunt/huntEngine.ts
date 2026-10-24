@@ -1,4 +1,4 @@
-import { FRAME_H, FRAME_W, GROUND_ANCHOR, type HuntAssets } from './huntAssets';
+import { FRAME_H, FRAME_W, GROUND_ANCHOR, PROP_ANCHOR, type HuntAssets } from './huntAssets';
 import type { Tier } from './huntQuestions';
 import type { Cell, WorldMap } from './huntWorld';
 
@@ -340,7 +340,7 @@ export class HuntEngine {
       const cx = sx(gx + 0.5, gy + 0.5);
       const cy = sy(gx + 0.5, gy + 0.5);
       if (cx < -TW * z * 1.5 || cx > W + TW * z * 1.5 || cy < -TH * z * 2 || cy > H + TH * z * 2) return;
-      const foot = im.height - Math.max(12, Math.min(34, im.width * 0.11));
+      const foot = PROP_ANCHOR[assetKey] ?? im.height - Math.max(12, Math.min(34, im.width * 0.11));
       const k = z * scale;
       items.push({ depth: gx + gy + 1, draw: () => ctx.drawImage(im, cx - (im.width / 2) * k, cy - foot * k, im.width * k, im.height * k) });
     };

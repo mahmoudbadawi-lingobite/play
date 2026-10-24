@@ -1,4 +1,4 @@
-import type { WorldId } from './huntAssets';
+import { WORLD_IDS, type WorldId } from './huntAssets';
 import { CLUES } from './huntClues';
 
 /**
@@ -7,6 +7,7 @@ import { CLUES } from './huntClues';
  * The map is a square grid; the engine draws it in isometric view.
  */
 
+/** Default size of a map (a world can ask for a bigger one with `size`). */
 export const GRID = 24;
 
 export interface Cell {
@@ -54,11 +55,19 @@ interface DecorDef {
 }
 interface WorldDef {
   name: string;
+  /** one short line for the world card on the start screen */
+  blurb: string;
   tagline: string;
   base: string;
   path: string;
   water: string;
+  /** 'river' runs from top to bottom and is crossed on bridges; 'pond' is a lake in the middle */
+  terrain: 'river' | 'pond';
   extraGround?: string;
+  /** side of the square map in cells (default GRID) */
+  size?: number;
+  /** how far apart two landmarks must stand (default 5.5 cells) */
+  gap?: number;
   landmarks: LandmarkDef[];
   decor: DecorDef[];
   sky: [string, string];
@@ -67,6 +76,8 @@ interface WorldDef {
 export const WORLD_DEFS: Record<WorldId, WorldDef> = {
   jungle: {
     name: 'Jungle Temple',
+    blurb: 'Vines, ruins and a rushing waterfall',
+    terrain: 'river',
     tagline: 'Old ruins hide under the vines. Follow the clues and find the chests!',
     base: 'grass',
     path: 'path',
@@ -89,6 +100,8 @@ export const WORLD_DEFS: Record<WorldId, WorldDef> = {
   },
   desert: {
     name: 'Desert Oasis',
+    blurb: 'Sand, palms and a sleepy camel',
+    terrain: 'pond',
     tagline: 'Sand, palms and sandstone ruins. A chest waits at every landmark.',
     base: 'sand',
     path: 'stone-path',
@@ -113,7 +126,86 @@ export const WORLD_DEFS: Record<WorldId, WorldDef> = {
     ],
     sky: ['#ffd9a0', '#ffb27a'],
   },
+  saudi: {
+    name: 'Saudi Landmarks',
+    blurb: 'Ten famous places of the Kingdom, from Makkah to AlUla',
+    tagline: 'Visit the famous places of Saudi Arabia. Every landmark hides a chest, so read the clue and find the right one!',
+    terrain: 'pond',
+    base: 'sand',
+    path: 'path',
+    water: 'water',
+    extraGround: 'redsand',
+    size: 30,
+    gap: 5.2,
+    landmarks: [
+      { kind: 'haram', asset: 'haram' },
+      { kind: 'medina', asset: 'medina' },
+      { kind: 'tower', asset: 'tower' },
+      { kind: 'tomb', asset: 'tomb' },
+      { kind: 'albalad', asset: 'albalad' },
+      { kind: 'fort', asset: 'fort' },
+      { kind: 'cliff', asset: 'cliff' },
+      { kind: 'asir', asset: 'asir' },
+      { kind: 'maraya', asset: 'maraya' },
+      { kind: 'fountain', asset: 'fountain', bank: true },
+    ],
+    decor: [
+      { asset: 'palm', weight: 0.2, block: true },
+      { asset: 'palm-trio', weight: 0.1, block: true },
+      { asset: 'bush', weight: 0.2, block: true },
+      { asset: 'rock', weight: 0.18, block: true },
+      { asset: 'canyon', weight: 0.07, block: true },
+      { asset: 'oasis', weight: 0.04, block: true },
+      { asset: 'palm-grove', weight: 0.05, block: true },
+    ],
+    sky: ['#bfe9ff', '#ffe6b0'],
+  },
+  crystal: {
+    name: 'Crystal Cave',
+    blurb: 'Glowing crystals, runes and a hidden waterfall',
+    tagline: 'Deep under the mountain, crystals glow and old stone doors wait in the dark. Follow the clues and find the chests!',
+    terrain: 'river',
+    base: 'floor',
+    path: 'path',
+    water: 'water',
+    size: 30,
+    gap: 5.2,
+    landmarks: [
+      { kind: 'waterfall', asset: 'waterfall', bank: true },
+      { kind: 'gate', asset: 'gate' },
+      { kind: 'shrine', asset: 'shrine' },
+      { kind: 'arch', asset: 'arch' },
+      { kind: 'statue', asset: 'statue' },
+      { kind: 'lamp', asset: 'lamp' },
+      { kind: 'bluecrystal', asset: 'crystal-blue' },
+      { kind: 'purplecrystal', asset: 'crystal-purple' },
+      { kind: 'cave', asset: 'cave' },
+      { kind: 'flowers', asset: 'flowers' },
+    ],
+    decor: [
+      { asset: 'crystal-small', weight: 0.25, block: true },
+      { asset: 'crystal-cluster', weight: 0.2, block: true },
+      { asset: 'boulder', weight: 0.2, block: true },
+      { asset: 'stone', weight: 0.2, block: false },
+    ],
+    sky: ['#0d1235', '#26306b'],
+  },
 };
+
+/** How many chests a world can hold: one per landmark. */
+export function worldCapacity(id: WorldId): number {
+  return WORLD_DEFS[id].landmarks.length;
+}
+
+export function worldBlurb(id: WorldId): string {
+  return WORLD_DEFS[id].blurb;
+}
+
+export function worldName(id: WorldId): string {
+  return WORLD_DEFS[id].name;
+}
+
+export const ALL_WORLDS: WorldId[] = WORLD_IDS;
 
 export const MAX_CHESTS_PER_WORLD = 6;
 
@@ -133,14 +225,15 @@ const NB8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1
 function attempt(worldId: WorldId, seed: number, chestCount: number): WorldMap | null {
   const def = WORLD_DEFS[worldId];
   const rng = rngFrom(seed);
-  const N = GRID;
+  const N = def.size ?? GRID;
+  const gap = def.gap ?? 5.5;
   const idx = (x: number, y: number) => y * N + x;
   const inside = (x: number, y: number) => x >= 0 && y >= 0 && x < N && y < N;
   const cells: Cell[] = Array.from({ length: N * N }, () => ({ ground: def.base, water: false, block: false, keep: false }));
   const at = (x: number, y: number) => cells[idx(x, y)];
 
   // ---------------------------------------------------------------- water
-  if (worldId === 'jungle') {
+  if (def.terrain === 'river') {
     const phase = rng() * 6;
     const bridgeRows = [Math.round(N * 0.3 + rng() * 2), Math.round(N * 0.7 - rng() * 2)];
     for (let y = 0; y < N; y++) {
@@ -157,19 +250,20 @@ function attempt(worldId: WorldId, seed: number, chestCount: number): WorldMap |
       }
     }
   } else {
+    const k = N / GRID; // a bigger map gets a bigger lake
     const px = N * 0.5 + (rng() - 0.5) * 4;
     const py = N * 0.46 + (rng() - 0.5) * 4;
     for (let y = 0; y < N; y++)
       for (let x = 0; x < N; x++) {
-        const dx = (x + 0.5 - px) / 3.3;
-        const dy = (y + 0.5 - py) / 2.6;
+        const dx = (x + 0.5 - px) / (3.3 * k);
+        const dy = (y + 0.5 - py) / (2.6 * k);
         if (dx * dx + dy * dy < 1) {
           const c = at(x, y);
           c.ground = def.water;
           c.water = true;
         }
       }
-    for (let b = 0; b < 6; b++) {
+    for (let b = 0; b < Math.round(6 * k); b++) {
       const bx = rng() * N;
       const by = rng() * N;
       for (let y = 0; y < N; y++)
@@ -200,7 +294,7 @@ function attempt(worldId: WorldId, seed: number, chestCount: number): WorldMap |
       if (lm.bank && !nearWater(x, y)) continue;
       if (!lm.bank && nearWater(x, y)) continue;
       if (Math.hypot(x - start.gx, y - start.gy) < 7) continue;
-      if (picked.some((p) => Math.hypot(p.x - x, p.y - y) < 5.5)) continue;
+      if (picked.some((p) => Math.hypot(p.x - x, p.y - y) < gap)) continue;
       picked.push({ x, y, def: lm });
       at(x, y).prop = lm.asset;
       at(x, y).block = true;
