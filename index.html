@@ -7,6 +7,25 @@
     <link rel="icon" type="image/png" sizes="16x16" href="%BASE_URL%favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="%BASE_URL%apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0560f0" />
+    <script>
+      // Kid mode is the default skin for everyone. Set it (and the sidebar state)
+      // before first paint so there is no flash of the classic look. Only an
+      // explicit "classic" choice (made with the mode button) is remembered.
+      (function () {
+        var root = document.documentElement;
+        var theme = 'kid', side = 'expanded';
+        try {
+          if (localStorage.getItem('lingobite-play-theme-v2') === 'classic') theme = 'classic';
+          if (window.matchMedia('(max-width: 767px)').matches) side = 'collapsed';
+          else if (localStorage.getItem('lingobite-play-sidebar:wide') === 'collapsed') side = 'collapsed';
+        } catch (e) {
+          if (window.matchMedia && window.matchMedia('(max-width: 767px)').matches) side = 'collapsed';
+        }
+        root.setAttribute('data-theme', theme);
+        root.setAttribute('data-sidebar', side);
+      })();
+    </script>
     <title>LingoBite Play</title>
     <script type="text/javascript">
       // Single Page Apps for GitHub Pages

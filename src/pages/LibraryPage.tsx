@@ -47,15 +47,16 @@ export function LibraryPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <div className="kid-sticky-head">
-      <h1 className="font-display text-3xl font-bold text-primary">Game Library</h1>
-      <p className="mt-1 text-muted-foreground">Public games shared by teachers across LingoBite Play.</p>
+    <div className="kid-lib mx-auto max-w-6xl px-4 py-10">
+      <div className="kid-sticky-head kid-page-head">
+      <p className="kid-pill kid-only">Library</p>
+      <h1 className="kid-big-title font-display text-3xl font-bold text-primary">Game Library</h1>
+      <p className="kid-sub mt-1 text-muted-foreground">Public games shared by teachers across LingoBite Play.</p>
       <Link to="/hunt" className="mt-3 inline-flex items-center gap-2 rounded-xl border-2 border-secondary px-4 py-2 text-sm font-bold text-primary hover:bg-secondary/10">
         🗺️ Treasure Hunt rooms: host or join a live game
       </Link>
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="kid-chips mt-5 flex flex-wrap gap-2">
         {SKILLS.map((s) => (
           <button
             key={s}
@@ -77,7 +78,7 @@ export function LibraryPage() {
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sets.map((set) => (
-            <div key={set.id} className="card-surface flex flex-col p-5">
+            <div key={set.id} data-skill={set.skill} className="kid-set-card card-surface flex flex-col p-5">
               <div className="flex items-center justify-between">
                 <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold capitalize text-muted-foreground">
                   {set.skill}

@@ -2,7 +2,10 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 
 export type AppTheme = "classic" | "kid";
 
-const STORAGE_KEY = "lingobite-play-theme";
+// v2: kid mode is now the default for everyone. Only an explicit "classic"
+// choice is stored, so people who never touched the mode button (including
+// everyone who was auto-saved as "classic" under the old key) get kid mode.
+const STORAGE_KEY = "lingobite-play-theme-v2";
 
 interface ThemeContextValue {
   theme: AppTheme;
@@ -13,9 +16,12 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 function readStoredTheme(): AppTheme {
-  if (typeof window === "undefined") return "classic";
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  return stored === "kid" ? "kid" : "classic";
+  if (typeof window === "undefined") return "kid";
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) === "classic" ? "classic" : "kid";
+  } catch {
+    return "kid";
+  }
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -23,15 +29,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
-    window.localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);
 
   function setTheme(next: AppTheme) {
     setThemeState(next);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      /* storage unavailable */
+    }
   }
 
   function toggleTheme() {
-    setThemeState((prev) => (prev === "kid" ? "classic" : "kid"));
+    setTheme(theme === "kid" ? "classic" : "kid");
   }
 
   return (

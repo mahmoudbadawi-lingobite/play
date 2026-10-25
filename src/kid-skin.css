@@ -1,0 +1,819 @@
+/* ==========================================================================
+ * KID MODE SKIN  (everything here only applies under <html data-theme="kid">)
+ *
+ * Kid mode is the DEFAULT skin for every visitor (see index.html +
+ * src/contexts/ThemeContext.tsx). Classic mode is one tap away.
+ *
+ * The artwork (card illustrations, round arrow buttons, sidebar icons, the
+ * clouds / plane / star scenery and the grass + books at the bottom of the
+ * sidebar) is cut straight out of the approved "Game Library" design and lives
+ * in public/kid/. The cookie-with-controller logo is the app's own
+ * public/logo.png. Text is always live HTML, never baked into an image.
+ * ========================================================================== */
+
+[data-theme="kid"] {
+  --kid-sb-w: 13.5rem;
+  --kid-rail: 4.75rem;
+  --kid-ink: #0b1f8a;
+  --kid-sb-grad: linear-gradient(180deg, #066ffa 0%, #0561f4 38%, #034fe0 72%, #0346cf 100%);
+  --kid-sb-art: url(/kid/sidebar-bottom.webp) left bottom / 100% auto no-repeat;
+}
+[data-theme="kid"][data-sidebar="collapsed"] {
+  --kid-sb-w: var(--kid-rail);
+  --kid-sb-art: url(/kid/sidebar-bottom.webp) left bottom / auto 8.6rem no-repeat;
+}
+@media (max-height: 680px) {
+  [data-theme="kid"] { --kid-sb-art: none; }
+}
+
+/* the blue behind the rounded corner of the page panel */
+html[data-theme="kid"],
+[data-theme="kid"] body {
+  background-color: #0560f0;
+}
+
+/* ---- Page panel: rounded white sheet with the sky at the top ------------- */
+[data-theme="kid"] #root > div {
+  position: relative;
+  margin-left: var(--kid-rail);
+  min-height: 100dvh;
+  border-radius: 2rem 0 0 2rem;
+  overflow-x: clip;
+  background-image: linear-gradient(180deg, #b5e8fc 0, #dcf2fc 6.5rem, hsl(var(--background)) 10.5rem);
+  transition: margin-left 200ms ease;
+}
+@media (min-width: 768px) {
+  [data-theme="kid"] #root > div {
+    margin-left: var(--kid-sb-w);
+  }
+}
+/* clouds, plane and the star on its books (top right of every page) */
+[data-theme="kid"] #root > div::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 0;
+  width: min(51.2rem, 100%);
+  height: 9.6rem;
+  background: url(/kid/sky.webp) right top / auto 100% no-repeat;
+  pointer-events: none;
+}
+@media (max-width: 767px) {
+  [data-theme="kid"] #root > div::before {
+    height: 6.4rem;
+  }
+}
+[data-theme="kid"] #root > div > :not(header) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Buttons: yellow call-to-action + blue primary ------------------------ */
+[data-theme="kid"] button.bg-secondary,
+[data-theme="kid"] a.bg-secondary {
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  border-radius: 0.95rem;
+  font-weight: 800;
+  box-shadow: 0 3px 0 hsl(var(--kid-yellow-dark) / 0.85);
+  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 150ms ease;
+}
+[data-theme="kid"] button.bg-primary,
+[data-theme="kid"] a.bg-primary {
+  background-color: hsl(var(--kid-blue));
+  color: #fff;
+  border-radius: 9999px;
+  font-weight: 800;
+  box-shadow: 0 3px 0 hsl(var(--kid-blue-dark));
+  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 150ms ease;
+}
+[data-theme="kid"] button.bg-secondary:hover,
+[data-theme="kid"] a.bg-secondary:hover,
+[data-theme="kid"] button.bg-primary:hover,
+[data-theme="kid"] a.bg-primary:hover {
+  transform: translateY(-2px);
+  opacity: 1;
+}
+[data-theme="kid"] button.bg-secondary:active,
+[data-theme="kid"] a.bg-secondary:active,
+[data-theme="kid"] button.bg-primary:active,
+[data-theme="kid"] a.bg-primary:active {
+  transform: translateY(2px) scale(0.98);
+  box-shadow: none;
+}
+[data-theme="kid"] main button.border-border,
+[data-theme="kid"] main a.border-border {
+  border-color: hsl(218 55% 85%);
+  font-weight: 700;
+}
+[data-theme="kid"] main .hover\:text-secondary:hover,
+[data-theme="kid"] main .hover\:border-secondary:hover {
+  color: hsl(var(--kid-blue));
+  border-color: hsl(var(--kid-blue));
+}
+[data-theme="kid"] main span.rounded-full.bg-muted {
+  background-color: hsl(213 100% 95%);
+  color: hsl(var(--kid-blue));
+  font-weight: 700;
+}
+
+/* ---- Form fields ----------------------------------------------------------- */
+[data-theme="kid"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+[data-theme="kid"] select,
+[data-theme="kid"] textarea {
+  border-color: hsl(var(--input));
+  border-radius: 0.9rem;
+}
+[data-theme="kid"] input:focus,
+[data-theme="kid"] select:focus,
+[data-theme="kid"] textarea:focus {
+  border-color: hsl(var(--kid-blue));
+  outline-color: hsl(var(--kid-blue) / 0.5);
+}
+
+/* ---- Student dashboard banner: hard-coded purple gradient -> theme blue ---- */
+[data-theme="kid"] main .from-\[\#6C4DFF\] {
+  background-image: linear-gradient(135deg, hsl(213 97% 40%), hsl(207 100% 58%));
+}
+@media (min-width: 640px) {
+  [data-theme="kid"] main > div.max-w-7xl > div.rounded-3xl.overflow-hidden:first-child {
+    position: sticky;
+    top: 0.5rem;
+    z-index: 30;
+  }
+}
+
+/* ==========================================================================
+ * SIDEBAR  (the <header>, one blue sidebar on every screen size)
+ * Expanded = icons + labels. Collapsed = icon rail.
+ * data-sidebar="expanded|collapsed" is kept by src/lib/kidSidebar.ts:
+ *   phones (portrait)  -> collapsed by default, opens as an overlay
+ *   tablet / desktop   -> expanded by default
+ * ========================================================================== */
+[data-theme="kid"] #root > div > header {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 50;
+  width: var(--kid-sb-w);
+  height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+  border: 0;
+  color: #fff;
+  backdrop-filter: none;
+  transition: width 200ms ease;
+  background:
+    var(--kid-sb-art),
+    radial-gradient(circle at 10% 16%, hsl(0 0% 100% / 0.07) 0 3.4rem, transparent 3.45rem),
+    var(--kid-sb-grad);
+}
+[data-theme="kid"] #root > div > header::-webkit-scrollbar {
+  display: none;
+}
+@media (max-width: 767px) {
+  [data-theme="kid"][data-sidebar="expanded"] #root > div > header {
+    box-shadow: 10px 0 28px -8px hsl(220 60% 10% / 0.45);
+  }
+}
+[data-theme="kid"] #root > div > header > div {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0.9rem;
+  height: auto;
+  min-height: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 1.1rem 0.9rem 11.5rem;
+}
+@media (max-height: 680px) {
+  [data-theme="kid"] #root > div > header > div {
+    padding-bottom: 1.2rem;
+  }
+}
+[data-theme="kid"][data-sidebar="collapsed"] #root > div > header > div {
+  padding-left: 0.6rem;
+  padding-right: 0.6rem;
+  padding-bottom: 9.4rem;
+}
+@media (max-height: 680px) {
+  [data-theme="kid"][data-sidebar="collapsed"] #root > div > header > div {
+    padding-bottom: 1.2rem;
+  }
+}
+
+/* logo: the app's own cookie mascot, with the yellow sparkle strokes */
+[data-theme="kid"] header .kid-logo {
+  position: relative;
+  justify-content: center;
+  padding: 0.3rem 0 0;
+  color: #fff;
+}
+[data-theme="kid"] header .kid-logo::before {
+  content: "";
+  position: absolute;
+  inset: -0.2rem 0 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 130' fill='none' stroke='%23ffd02a' stroke-width='6' stroke-linecap='round'%3E%3Cpath d='M16 36l13 6M12 62l15 1M20 88l12-7M184 36l-13 6M188 62l-15 1M180 88l-12-7'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+[data-theme="kid"] header .kid-logo img {
+  position: relative;
+  width: 7.4rem;
+  height: 7.4rem;
+  border-radius: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px hsl(213 90% 20% / 0.35));
+  transition: width 200ms ease, height 200ms ease;
+}
+[data-theme="kid"] header .kid-logo .font-display {
+  display: none;
+}
+[data-theme="kid"][data-sidebar="collapsed"] header .kid-logo img {
+  width: 3.4rem;
+  height: 3.4rem;
+}
+[data-theme="kid"][data-sidebar="collapsed"] header .kid-logo::before {
+  display: none;
+}
+
+/* nav list: shown on phones too, the old dropdown + hamburger are not needed */
+[data-theme="kid"] header nav.hidden {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
+  margin-top: 0.2rem;
+  font-size: 1.05rem;
+  background: transparent;
+}
+[data-theme="kid"] header nav.md\:hidden,
+[data-theme="kid"] header .kid-controls > button.md\:hidden {
+  display: none;
+}
+[data-theme="kid"] header a.kid-nav-item {
+  gap: 0.75rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 1.15rem;
+  color: #fff;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+[data-theme="kid"] header a.kid-nav-item:hover {
+  background: hsl(0 0% 100% / 0.16);
+  color: #fff;
+}
+[data-theme="kid"] header a.kid-nav-item[aria-current="page"] {
+  background: linear-gradient(180deg, #ffe65a, #ffc61c);
+  color: #0c2392;
+  box-shadow: 0 3px 0 #d99b00, inset 0 2px 0 hsl(0 0% 100% / 0.55);
+}
+[data-theme="kid"] header .kid-ic {
+  display: block;
+  flex: none;
+  width: 2.15rem;
+  height: 2.15rem;
+  background: center / contain no-repeat;
+  filter: drop-shadow(0 2px 2px hsl(220 90% 20% / 0.3));
+}
+[data-theme="kid"] header .kid-badge {
+  margin-left: auto;
+}
+/* icons cut from the design */
+[data-theme="kid"] header a[data-nav="library"] .kid-ic { background-image: url(/kid/ic-controller-white.webp); }
+[data-theme="kid"] header a[data-nav="escape"] .kid-ic { background-image: url(/kid/ic-door.webp); }
+[data-theme="kid"] header a[data-nav="store"] .kid-ic { background-image: url(/kid/ic-shirt.webp); }
+/* active page: the controller turns blue (as in the design); door + shirt become navy */
+[data-theme="kid"] header a[data-nav="library"][aria-current="page"] .kid-ic {
+  background-image: url(/kid/ic-controller-blue.webp);
+  filter: none;
+}
+[data-theme="kid"] header a[data-nav="escape"][aria-current="page"] .kid-ic {
+  background: #0c2a9c;
+  -webkit-mask: url(/kid/ic-door.webp) center / contain no-repeat;
+  mask: url(/kid/ic-door.webp) center / contain no-repeat;
+  filter: none;
+}
+[data-theme="kid"] header a[data-nav="store"][aria-current="page"] .kid-ic {
+  background: #0c2a9c;
+  -webkit-mask: url(/kid/ic-shirt.webp) center / contain no-repeat;
+  mask: url(/kid/ic-shirt.webp) center / contain no-repeat;
+  filter: none;
+}
+/* pages that are not in the design keep simple one-colour icons */
+[data-theme="kid"] header a[data-nav="dashboard"] .kid-ic,
+[data-theme="kid"] header a[data-nav="classes"] .kid-ic,
+[data-theme="kid"] header a[data-nav="admin"] .kid-ic,
+[data-theme="kid"] header a[data-nav="chat"] .kid-ic,
+[data-theme="kid"] header a[data-nav="styleeditor"] .kid-ic {
+  width: 1.6rem;
+  height: 1.6rem;
+  margin: 0.275rem;
+  background: currentColor;
+  -webkit-mask: var(--kid-m) center / contain no-repeat;
+  mask: var(--kid-m) center / contain no-repeat;
+  filter: none;
+}
+[data-theme="kid"] header a[data-nav="dashboard"] .kid-ic { --kid-m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 21V11h4.5v10zm6.8 0V3h4.5v18zm6.7 0v-7H21v7z'/%3E%3C/svg%3E"); }
+[data-theme="kid"] header a[data-nav="classes"] .kid-ic { --kid-m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM9 13c-3.3 0-7 1.7-7 4v3h14v-3c0-2.300-3.700-4-7-4zm8.200.1c2.600.4 4.800 1.700 4.800 3.900v3h-4v-3c0-1.400-.3-2.600-.8-3.900z'/%3E%3C/svg%3E"); }
+[data-theme="kid"] header a[data-nav="admin"] .kid-ic { --kid-m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 22a2.500 2.500 0 0 0 2.400-1.800h-4.800A2.500 2.500 0 0 0 12 22zm7-6.500V11a7 7 0 0 0-5.500-6.800V3.500a1.500 1.500 0 0 0-3 0v.7A7 7 0 0 0 5 11v4.500L3 17.500V19h18v-1.500z'/%3E%3C/svg%3E"); }
+[data-theme="kid"] header a[data-nav="chat"] .kid-ic { --kid-m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 3h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H9l-5 4v-4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z'/%3E%3C/svg%3E"); }
+[data-theme="kid"] header a[data-nav="styleeditor"] .kid-ic { --kid-m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 17.25V21h3.75L17.8 9.94l-3.75-3.75zM20.7 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75z'/%3E%3C/svg%3E"); }
+
+/* controls (profile, mode, language, sign in) sit at the bottom of the sidebar */
+[data-theme="kid"] header .kid-controls {
+  margin-top: auto;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
+}
+[data-theme="kid"] header .kid-controls > * {
+  width: 100%;
+  justify-content: center;
+}
+[data-theme="kid"] header button { white-space: nowrap; }
+[data-theme="kid"] header .kid-btn-ic {
+  display: block;
+  flex: none;
+  width: 1.9rem;
+  height: 1.5rem;
+  background: center / contain no-repeat;
+}
+[data-theme="kid"] header a.kid-profile {
+  justify-content: flex-start;
+  gap: 0.5rem;
+  padding: 0.3rem 0.9rem 0.3rem 0.45rem;
+  border: 0;
+  border-radius: 9999px;
+  background: #fff;
+  color: #0b2090;
+  font-size: 1.05rem;
+  font-weight: 800;
+  box-shadow: 0 3px 0 hsl(220 90% 25% / 0.35);
+}
+[data-theme="kid"] header .kid-coin {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+[data-theme="kid"] header .kid-coin::before {
+  content: "";
+  width: 1.7rem;
+  height: 1.7rem;
+  background: url(/kid/coin.webp) center / contain no-repeat;
+}
+[data-theme="kid"] header button.kid-mode-btn,
+[data-theme="kid"] header button.kid-lang {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.8rem;
+  padding: 0.55rem 1rem 0.55rem 1.2rem;
+  border: 2px solid hsl(0 0% 100% / 0.3);
+  border-radius: 1.15rem;
+  background: linear-gradient(180deg, #3f79ff, #2459f0);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  box-shadow: inset 0 2px 0 hsl(0 0% 100% / 0.28), 0 3px 0 hsl(220 90% 25% / 0.5);
+}
+[data-theme="kid"] header button.kid-mode-btn .kid-btn-ic { background-image: url(/kid/ic-controller-white.webp); }
+/* The design shows a headset icon on this button (it is the AR / Arabic language switch) */
+[data-theme="kid"] header button.kid-lang .kid-btn-ic { background-image: url(/kid/ic-vr.webp); }
+[data-theme="kid"] header button.kid-signin {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.6rem;
+  padding: 0.45rem 0.9rem 0.45rem 0.55rem;
+  border: 0;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #ffe65a, #ffc41c);
+  color: #0c2392;
+  font-size: 0.92rem;
+  font-weight: 800;
+  box-shadow: 0 3px 0 #d99b00, inset 0 2px 0 hsl(0 0% 100% / 0.55);
+}
+[data-theme="kid"] header button.kid-signin .kid-btn-ic {
+  width: 2rem;
+  height: 2rem;
+  background-image: url(/kid/google-g.webp);
+}
+[data-theme="kid"] header button.kid-signin .kid-label {
+  flex: 1;
+  text-align: center;
+}
+[data-theme="kid"] header button.kid-signout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.9rem;
+  border: 2px solid hsl(0 0% 100% / 0.55);
+  border-radius: 9999px;
+  background: hsl(0 0% 100% / 0.18);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 800;
+  box-shadow: none;
+}
+[data-theme="kid"] header button.kid-signout .kid-btn-ic {
+  width: 1.3rem;
+  height: 1.3rem;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5zm6.6 4.6L15.2 9l2 2H9v2h8.200l-2 2 1.400 1.400L21 12z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5zm6.6 4.6L15.2 9l2 2H9v2h8.200l-2 2 1.400 1.400L21 12z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+/* classic-only emoji / icons never show in the kid skin */
+[data-theme="kid"] .classic-emoji {
+  display: none;
+}
+:root:not([data-theme="kid"]) .kid-btn-ic,
+:root:not([data-theme="kid"]) .kid-ic {
+  display: none;
+}
+
+/* ---- Collapsed icon rail ---------------------------------------------------- */
+[data-theme="kid"][data-sidebar="collapsed"] header .kid-label {
+  display: none;
+}
+[data-theme="kid"][data-sidebar="collapsed"] header a.kid-nav-item {
+  justify-content: center;
+  padding: 0.55rem 0;
+}
+[data-theme="kid"][data-sidebar="collapsed"] header .kid-badge {
+  position: absolute;
+  top: 0.1rem;
+  right: 0.3rem;
+  margin: 0;
+}
+[data-theme="kid"][data-sidebar="collapsed"] header a.kid-profile {
+  justify-content: center;
+  padding: 0.3rem;
+}
+[data-theme="kid"][data-sidebar="collapsed"] header .kid-coin {
+  display: none;
+}
+[data-theme="kid"][data-sidebar="collapsed"] header button.kid-mode-btn,
+[data-theme="kid"][data-sidebar="collapsed"] header button.kid-lang,
+[data-theme="kid"][data-sidebar="collapsed"] header button.kid-signin,
+[data-theme="kid"][data-sidebar="collapsed"] header button.kid-signout {
+  justify-content: center;
+  gap: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* ---- Sidebar collapse / expand button (created by kidSidebar.ts) -------------- */
+.kid-sb-toggle {
+  display: none;
+}
+[data-theme="kid"] .kid-sb-toggle {
+  position: fixed;
+  z-index: 60;
+  top: 1.6rem;
+  left: calc(var(--kid-sb-w) - 0.95rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border: 2px solid hsl(var(--kid-blue));
+  border-radius: 9999px;
+  background: #fff;
+  color: hsl(var(--kid-blue));
+  box-shadow: 0 3px 8px -2px hsl(220 60% 10% / 0.35);
+  cursor: pointer;
+  transition: left 200ms ease, transform 150ms ease;
+}
+[data-theme="kid"] .kid-sb-toggle svg {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 200ms ease;
+}
+[data-theme="kid"][data-sidebar="collapsed"] .kid-sb-toggle svg {
+  transform: rotate(180deg);
+}
+
+/* ==========================================================================
+ * PAGE HEADERS  (yellow pill + big navy title + sparkles)
+ * ========================================================================== */
+.kid-only {
+  display: none;
+}
+[data-theme="kid"] .kid-only {
+  display: block;
+}
+[data-theme="kid"] .kid-page-head {
+  position: relative;
+}
+[data-theme="kid"] .kid-pill {
+  display: block;
+  width: fit-content;
+  padding: 0.28rem 1.2rem;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #ffe66a, #ffcf2a);
+  color: #12309c;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: 0 3px 0 #e2a900, inset 0 2px 0 hsl(0 0% 100% / 0.5);
+}
+[data-theme="kid"] .kid-big-title {
+  position: relative;
+  display: block;
+  width: fit-content;
+  margin-top: 0.35rem;
+  color: var(--kid-ink);
+  font-size: clamp(2.3rem, 4.6vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.05;
+}
+[data-theme="kid"] .kid-big-title::before,
+[data-theme="kid"] .kid-big-title::after {
+  content: "";
+  position: absolute;
+  top: 0.05rem;
+  width: 2rem;
+  height: 2.3rem;
+  background: center / contain no-repeat;
+  pointer-events: none;
+}
+[data-theme="kid"] .kid-big-title::before {
+  left: -2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 44' fill='none' stroke='%23ffcf1f' stroke-width='5' stroke-linecap='round'%3E%3Cpath d='M6 10l13 7M4 24l15 1M10 38l10-8'/%3E%3C/svg%3E");
+}
+[data-theme="kid"] .kid-big-title::after {
+  right: -2.6rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 44' fill='none' stroke='%23ffcf1f' stroke-width='5' stroke-linecap='round'%3E%3Cpath d='M34 10l-13 7M36 24l-15 1M30 38l-10-8'/%3E%3C/svg%3E");
+}
+@media (max-width: 1100px) {
+  [data-theme="kid"] .kid-big-title::before {
+    display: none;
+  }
+}
+[data-theme="kid"] .kid-sub {
+  margin-top: 0.4rem;
+  color: var(--kid-ink);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+[data-theme="kid"] .kid-picker,
+[data-theme="kid"] .kid-lib {
+  max-width: 72rem;
+  padding-top: 2.2rem;
+}
+
+/* game library: only the filter chips stay pinned while scrolling */
+[data-theme="kid"] .kid-chips {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  margin: 0.9rem -1rem 0;
+  padding: 0.6rem 1rem;
+  background: hsl(var(--background));
+  box-shadow: 0 10px 14px -12px hsl(213 80% 35% / 0.35);
+}
+
+/* ==========================================================================
+ * GAME CARDS  (picker page, home page) - colour gradient + illustration on
+ * the left + white title pill + round arrow button, exactly as in the design.
+ * Classic mode never shows .kg-art / .kg-go / .kg-people.
+ * ========================================================================== */
+.kg-art,
+.kg-go,
+.kg-people {
+  display: none;
+}
+[data-theme="kid"] .kid-game-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.1rem;
+}
+@media (min-width: 1366px) {
+  [data-theme="kid"] .kid-game-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+[data-theme="kid"] .kid-game-card {
+  --s: 1;
+  --ch: 9.5rem;
+  --ar: 1.349;
+  --aw: calc(var(--ch) * var(--ar) * var(--s));
+  --c1: #fbb21f;
+  --c2: #fb9614;
+  --c3: #f98a15;
+  --ink: #5b1a9c;
+  --art: url(/kid/card-treasure-hunt.webp);
+  --go: url(/kid/go-treasure-hunt.webp);
+  position: relative;
+  display: block;
+  overflow: hidden;
+  min-height: calc(var(--ch) * var(--s));
+  padding: 0;
+  border: 0;
+  border-radius: 1.7rem;
+  background:
+    radial-gradient(60% 120% at 82% 118%, hsl(0 0% 100% / 0.16), transparent 60%),
+    radial-gradient(50% 90% at 58% -18%, hsl(0 0% 100% / 0.14), transparent 62%),
+    linear-gradient(100deg, var(--c1) 0%, var(--c2) 42%, var(--c3) 100%);
+  box-shadow: 0 12px 22px -14px hsl(222 70% 25% / 0.55), inset 0 2px 0 hsl(0 0% 100% / 0.28);
+  color: #fff;
+}
+[data-theme="kid"] .kid-game-card:hover {
+  border-color: transparent;
+  background-color: transparent;
+  transform: translateY(-3px);
+  box-shadow: 0 18px 26px -14px hsl(222 70% 25% / 0.6), inset 0 2px 0 hsl(0 0% 100% / 0.28);
+}
+[data-theme="kid"] .kid-game-card .kg-emoji {
+  display: none;
+}
+[data-theme="kid"] .kid-game-card .kg-art {
+  display: block;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: var(--aw);
+  height: calc(var(--ch) * var(--s));
+  transform: translateY(-50%);
+  background: var(--art) left center / 100% 100% no-repeat;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 5%, #000 95%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 5%, #000 95%, transparent 100%);
+  pointer-events: none;
+}
+[data-theme="kid"] .kid-game-card .kg-body {
+  position: relative;
+  display: block;
+  padding: 1.05rem 5.2rem 1.15rem calc(var(--aw) + 0.6rem);
+}
+[data-theme="kid"] .kid-game-card .kg-title {
+  position: relative;
+  display: inline-block;
+  margin: 0;
+  padding: 0.18rem 1.15rem 0.24rem;
+  border-radius: 9999px;
+  background: #fff;
+  color: var(--ink);
+  font-family: 'Baloo 2', Georgia, serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  line-height: 1.35;
+  box-shadow: 0 3px 0 hsl(0 0% 0% / 0.1);
+}
+[data-theme="kid"] .kid-game-card .kg-title::after {
+  content: "";
+  position: absolute;
+  top: -0.2rem;
+  right: -1.5rem;
+  width: 1.15rem;
+  height: 1.1rem;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffe14a' stroke-width='3.4' stroke-linecap='round'%3E%3Cpath d='M5 18l5-10M14 20l6-8'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+[data-theme="kid"] .kid-game-card .kg-desc {
+  margin: 0.6rem 0 0;
+  color: #fff;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-shadow: 0 1px 2px hsl(0 0% 0% / 0.22);
+}
+[data-theme="kid"] .kid-game-card .kg-go {
+  display: block;
+  position: absolute;
+  right: 1.15rem;
+  bottom: 0.95rem;
+  width: 3.1rem;
+  height: 3.1rem;
+  background: var(--go) center / contain no-repeat;
+  filter: drop-shadow(0 3px 3px hsl(0 0% 0% / 0.18));
+  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+[data-theme="kid"] .kid-game-card:hover .kg-go {
+  transform: translateX(3px) scale(1.1);
+}
+[data-theme="kid"] .kid-game-card .kg-people {
+  display: block;
+  position: absolute;
+  right: 5.4rem;
+  top: 50%;
+  width: 2.4rem;
+  height: 2.4rem;
+  transform: translateY(-50%);
+  opacity: 0.45;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e4d6ff'%3E%3Ccircle cx='9' cy='8' r='3.6'/%3E%3Ccircle cx='17' cy='9.5' r='2.8'/%3E%3Cpath d='M2 20c0-3.6 3.2-6 7-6s7 2.4 7 6zM16.2 14.2c3.2.2 5.8 2 5.8 4.8h-4.2c0-1.9-.6-3.5-1.6-4.8z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* one palette + illustration per game (colours sampled from the design) */
+[data-theme="kid"] .kid-game-card[data-game="treasure-hunt"] { --ch: 9.5rem; --ar: 1.38; --c1: #fbb21f; --c2: #fb9614; --c3: #f98a15; --ink: #5b1a9c; --art: url(/kid/card-treasure-hunt.webp); --go: url(/kid/go-treasure-hunt.webp); }
+[data-theme="kid"] .kid-game-card[data-game="block-quest"]   { --ch: 9.5rem; --ar: 1.287; --c1: #1fa9fd; --c2: #18a0fc; --c3: #17a9fa; --ink: #0a1f8c; --art: url(/kid/card-block-quest.webp); --go: url(/kid/go-block-quest.webp); }
+[data-theme="kid"] .kid-game-card[data-game="memory-match"]  { --ch: 8.9rem; --ar: 1.494; --c1: #f64dd5; --c2: #f94dd2; --c3: #f13ccb; --ink: #7c1590; --art: url(/kid/card-memory-match.webp); --go: url(/kid/go-memory-match.webp); }
+[data-theme="kid"] .kid-game-card[data-game="typing-race"]   { --ch: 8.9rem; --ar: 1.468; --c1: #47ce28; --c2: #3acd2c; --c3: #4cce2d; --ink: #0a1f8c; --art: url(/kid/card-typing-race.webp); --go: url(/kid/go-typing-race.webp); }
+[data-theme="kid"] .kid-game-card[data-game="word-builder"]  { --ch: 8.2rem; --ar: 1.629; --c1: #22a6fa; --c2: #34b7fd; --c3: #2babf8; --ink: #0a1f8c; --art: url(/kid/card-word-builder.webp); --go: url(/kid/go-word-builder.webp); }
+[data-theme="kid"] .kid-game-card[data-game="crossword"]     { --ch: 8.2rem; --ar: 1.531; --c1: #a468fb; --c2: #a15efc; --c3: #ab62fc; --ink: #0a1f8c; --art: url(/kid/card-crossword.webp); --go: url(/kid/go-crossword.webp); }
+[data-theme="kid"] .kid-game-card[data-game="picture-match"] { --ch: 7rem;   --ar: 1.91; --c1: #fbaa22; --c2: #fb9f15; --c3: #f69515; --ink: #3d1290; --art: url(/kid/card-picture-match.webp); --go: url(/kid/go-picture-match.webp); }
+[data-theme="kid"] .kid-game-card[data-game="hangman"]       { --ch: 7rem;   --ar: 1.795; --c1: #02aac2; --c2: #02aac2; --c3: #05b6cc; --ink: #0a1f8c; --art: url(/kid/card-hangman.webp); --go: url(/kid/go-hangman.webp); }
+[data-theme="kid"] .kid-game-card[data-game="friends"]       { --ch: 5.6rem; --ar: 3.126; --c1: #986efb; --c2: #a474fc; --c3: #ab62fc; --ink: #5b1fb3; --art: url(/kid/card-friends.webp); --go: url(/kid/go-friends.webp); margin-top: 1.1rem; }
+
+/* tablet / phone: shrink the artwork, never the text */
+@media (max-width: 1023px) {
+  [data-theme="kid"] .kid-game-card { --s: 0.85; }
+}
+@media (max-width: 639px) {
+  [data-theme="kid"] .kid-game-card { --s: 0.62; }
+  [data-theme="kid"] .kid-game-card .kg-body { padding: 0.9rem 0.9rem 3.6rem calc(var(--aw) + 0.4rem); }
+  [data-theme="kid"] .kid-game-card .kg-title { font-size: 1.05rem; }
+  [data-theme="kid"] .kid-game-card .kg-desc { font-size: 0.84rem; }
+  [data-theme="kid"] .kid-game-card .kg-go { right: 0.8rem; bottom: 0.7rem; width: 2.6rem; height: 2.6rem; }
+  [data-theme="kid"] .kid-game-card .kg-people { display: none; }
+  [data-theme="kid"] .kid-game-card .kg-art {
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 22%, #000 78%, transparent 100%);
+    mask-image: linear-gradient(180deg, transparent 0, #000 22%, #000 78%, transparent 100%);
+  }
+}
+
+/* compact tiles on the home page: art + title pill only */
+[data-theme="kid"] .kid-game-card.kid-mini { --s: 0.5; cursor: default; }
+[data-theme="kid"] .kid-game-card.kid-mini:hover { transform: none; }
+[data-theme="kid"] .kid-game-card.kid-mini .kg-body { padding: 0.9rem 1rem 0.9rem calc(var(--aw) + 0.5rem); }
+[data-theme="kid"] .kid-game-card.kid-mini .kg-title { font-size: 1.05rem; }
+[data-theme="kid"] .kid-game-card.kid-mini .kg-title::after { display: none; }
+@media (max-width: 639px) {
+  [data-theme="kid"] .kid-game-card.kid-mini { --s: 0.46; }
+  [data-theme="kid"] .kid-game-card.kid-mini .kg-body { padding: 0.8rem 0.8rem 0.8rem calc(var(--aw) + 0.4rem); }
+}
+
+/* ==========================================================================
+ * HOME / SIGN-IN SCREEN
+ * ========================================================================== */
+[data-theme="kid"] .kid-home {
+  padding-top: 2.5rem;
+}
+[data-theme="kid"] .kid-hero-logo {
+  width: 11rem;
+  height: 11rem;
+  border-radius: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 10px hsl(213 80% 25% / 0.3));
+}
+[data-theme="kid"] .kid-home-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  text-align: left;
+}
+@media (max-width: 639px) {
+  [data-theme="kid"] .kid-home-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ==========================================================================
+ * GAME LIBRARY CARDS  (one colour per skill)
+ * ========================================================================== */
+[data-theme="kid"] .kid-set-card {
+  --c1: #fbb21f;
+  --c2: #f98a15;
+  border: 0;
+  border-radius: 1.7rem;
+  color: #fff;
+  background:
+    radial-gradient(70% 110% at 90% 120%, hsl(0 0% 100% / 0.18), transparent 60%),
+    linear-gradient(135deg, var(--c1), var(--c2));
+  box-shadow: 0 12px 22px -14px hsl(222 70% 25% / 0.55), inset 0 2px 0 hsl(0 0% 100% / 0.28);
+}
+[data-theme="kid"] .kid-set-card[data-skill="grammar"]  { --c1: #2db3ff; --c2: #1a8cf5; }
+[data-theme="kid"] .kid-set-card[data-skill="reading"]  { --c1: #55d62f; --c2: #2fbf3a; }
+[data-theme="kid"] .kid-set-card[data-skill="spelling"] { --c1: #b57cff; --c2: #8f55f0; }
+[data-theme="kid"] .kid-set-card .text-primary,
+[data-theme="kid"] .kid-set-card h3 {
+  color: #fff;
+}
+[data-theme="kid"] .kid-set-card .text-muted-foreground {
+  color: hsl(0 0% 100% / 0.9);
+}
+[data-theme="kid"] .kid-set-card span.rounded-full.bg-muted {
+  background-color: #fff;
+  color: #12309c;
+}
+[data-theme="kid"] .kid-set-card button.border-border {
+  border-color: hsl(0 0% 100% / 0.75);
+  background: hsl(0 0% 100% / 0.2);
+  color: #fff;
+}
+[data-theme="kid"] .kid-set-card .text-destructive {
+  color: #fff;
+  text-decoration: underline;
+}
+[data-theme="kid"] .kid-set-card .disabled\:text-success:disabled {
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="kid"] .kid-game-card,
+  [data-theme="kid"] .kid-game-card .kg-go {
+    transition: none;
+  }
+}

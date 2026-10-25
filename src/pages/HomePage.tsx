@@ -2,16 +2,12 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
-import { CloudLayer, StudyMascot } from '../components/common/decorations';
 
 const PENDING_JOIN_CODE_KEY = 'pendingJoinCode';
 
 export function HomePage() {
   const { t } = useTranslation();
   const { profile, signInWithGoogle, continueAsGuest } = useAuth();
-  const { theme } = useTheme();
-  const isKid = theme === 'kid';
   const navigate = useNavigate();
 
   // Google sign-in always redirects back to "/". If the person got here via
@@ -34,14 +30,8 @@ export function HomePage() {
   }
 
   return (
-    <div className="relative mx-auto flex max-w-4xl flex-col items-center overflow-hidden px-4 py-16 text-center">
-      {isKid && <CloudLayer className="pointer-events-none absolute inset-0 h-full w-full" />}
-      {isKid && (
-        <div className="relative z-10 mb-2 flex justify-center">
-          <StudyMascot size={88} />
-        </div>
-      )}
-      <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" className="relative z-10 mb-4 h-16 w-16 rounded-2xl object-cover" />
+    <div className="kid-home relative mx-auto flex max-w-4xl flex-col items-center overflow-hidden px-4 py-16 text-center">
+      <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" className="kid-hero-logo relative z-10 mb-4 h-16 w-16 rounded-2xl object-cover" />
       <h1 className="relative z-10 font-display text-4xl font-bold text-primary sm:text-5xl">{t('appName')}</h1>
       <p className="relative z-10 mt-3 text-lg text-muted-foreground">{t('tagline')}</p>
 
@@ -60,19 +50,23 @@ export function HomePage() {
         </button>
       </div>
 
-      <div className="relative z-10 mt-14 grid gap-4 sm:grid-cols-3">
+      <div className="kid-home-grid relative z-10 mt-14 grid w-full gap-4 sm:grid-cols-3">
         {[
-          { icon: '🧱', title: 'Block Quest' },
-          { icon: '🧠', title: 'Memory Match' },
-          { icon: '⌨️', title: 'Typing Race' },
-          { icon: '🔤', title: 'Word Builder' },
-          { icon: '🔳', title: 'Crossword' },
-          { icon: '🖼️', title: 'Picture Match' },
-          { icon: '🎯', title: 'Hangman' },
+          { key: 'treasure-hunt', icon: '🗺️', title: 'Treasure Hunt' },
+          { key: 'block-quest', icon: '🧱', title: 'Block Quest' },
+          { key: 'memory-match', icon: '🧠', title: 'Memory Match' },
+          { key: 'typing-race', icon: '⌨️', title: 'Typing Race' },
+          { key: 'word-builder', icon: '🔤', title: 'Word Builder' },
+          { key: 'crossword', icon: '🔳', title: 'Crossword' },
+          { key: 'picture-match', icon: '🖼️', title: 'Picture Match' },
+          { key: 'hangman', icon: '🎯', title: 'Hangman' },
         ].map((g) => (
-          <div key={g.title} className="card-surface flex items-center gap-3 px-4 py-3">
-            <span className="text-2xl">{g.icon}</span>
-            <span className="font-medium text-primary">{g.title}</span>
+          <div key={g.key} data-game={g.key} className="kid-game-card kid-mini card-surface flex items-center gap-3 px-4 py-3">
+            <span className="kg-art" aria-hidden="true" />
+            <span className="kg-emoji text-2xl">{g.icon}</span>
+            <span className="kg-body">
+              <span className="kg-title font-medium text-primary">{g.title}</span>
+            </span>
           </div>
         ))}
       </div>

@@ -22,12 +22,14 @@ export function GamePickerPage() {
   const games = compatibleGames(set.items, set.skill);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
-      <p className="text-sm uppercase tracking-wide text-secondary">{set.skill}</p>
-      <h1 className="font-display text-3xl font-bold text-primary">{set.title}</h1>
-      <p className="mt-1 text-muted-foreground">Pick how you want to play this one.</p>
+    <div className="kid-picker mx-auto max-w-4xl px-4 py-10">
+      <div className="kid-page-head">
+        <p className="kid-pill text-sm uppercase tracking-wide text-secondary">{set.skill}</p>
+        <h1 className="kid-big-title font-display text-3xl font-bold text-primary">{set.title}</h1>
+        <p className="kid-sub mt-1 text-muted-foreground">Pick how you want to play this one.</p>
+      </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      <div className="kid-game-grid mt-6 grid gap-4 sm:grid-cols-2">
         {games.map((g) => (
           <Link
             key={g.key}
@@ -35,24 +37,34 @@ export function GamePickerPage() {
             // (if present) so the finished score can still be attributed and
             // reported back — the picker itself never needs it otherwise.
             to={`/play/${set.id}/${g.key}${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`}
-            className="card-surface flex items-center gap-4 p-5 hover:border-secondary"
+            data-game={g.key}
+            className="kid-game-card card-surface flex items-center gap-4 p-5 hover:border-secondary"
           >
-            <span className="text-3xl">{g.icon}</span>
-            <div>
-              <p className="font-display font-semibold text-primary">{g.name}</p>
-              <p className="text-sm text-muted-foreground">{g.description}</p>
+            <span className="kg-art" aria-hidden="true" />
+            <span className="kg-emoji text-3xl">{g.icon}</span>
+            <div className="kg-body">
+              <p className="kg-title font-display font-semibold text-primary">{g.name}</p>
+              <p className="kg-desc text-sm text-muted-foreground">{g.description}</p>
             </div>
+            <span className="kg-go" aria-hidden="true" />
           </Link>
         ))}
       </div>
 
       {games.some((g) => g.key === 'treasure-hunt') && !ref && (
-        <Link to={`/hunt?set=${encodeURIComponent(set.id)}`} className="card-surface mt-4 flex items-center gap-4 border-2 border-secondary p-5 hover:bg-secondary/10">
-          <span className="text-3xl">👥</span>
-          <div>
-            <p className="font-display font-semibold text-primary">Treasure Hunt with friends</p>
-            <p className="text-sm text-muted-foreground">Open a live room (2–10 players). Race each other or hunt as a team.</p>
+        <Link
+          to={`/hunt?set=${encodeURIComponent(set.id)}`}
+          data-game="friends"
+          className="kid-game-card card-surface mt-4 flex items-center gap-4 border-2 border-secondary p-5 hover:bg-secondary/10"
+        >
+          <span className="kg-art" aria-hidden="true" />
+          <span className="kg-emoji text-3xl">👥</span>
+          <div className="kg-body">
+            <p className="kg-title font-display font-semibold text-primary">Treasure Hunt with friends</p>
+            <p className="kg-desc text-sm text-muted-foreground">Open a live room (2–10 players). Race each other or hunt as a team.</p>
           </div>
+          <span className="kg-people" aria-hidden="true" />
+          <span className="kg-go" aria-hidden="true" />
         </Link>
       )}
     </div>
