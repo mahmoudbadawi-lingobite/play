@@ -27,6 +27,8 @@ export interface Chest {
   /** which landmark it hides next to, and the clue text that points to it */
   landmark: string;
   clue: string;
+  /** which copy of the landmark this is (1 for the first or the only one) */
+  copy?: number;
 }
 
 export interface WorldMap {
@@ -47,6 +49,32 @@ interface LandmarkDef {
   asset: string;
   /** must stand on a river bank */
   bank?: boolean;
+  /** how many of this landmark the world can hold (default 1). Extra copies are only placed when a big hunt needs them. */
+  copies?: number;
+  /** a landmark that is only placed when a hunt has more chests than the world's main landmarks */
+  extra?: boolean;
+}
+
+/** One placed landmark: a copy of a landmark kind. */
+interface LandmarkInstance {
+  /** unique inside the world: 'statue', 'statue2' ... */
+  key: string;
+  copy: number;
+  def: LandmarkDef;
+}
+
+/** every landmark a world can hold, main ones first, then the extras (first copies of extra kinds, then 2nd copies and so on) */
+function landmarkInstances(def: WorldDef): { main: LandmarkInstance[]; extra: LandmarkInstance[] } {
+  const main: LandmarkInstance[] = [];
+  const extra: LandmarkInstance[] = [];
+  def.landmarks.forEach((lm) => {
+    for (let c = 1; c <= (lm.copies ?? 1); c++) {
+      const inst = { key: c === 1 ? lm.kind : `${lm.kind}${c}`, copy: c, def: lm };
+      (c === 1 && !lm.extra ? main : extra).push(inst);
+    }
+  });
+  extra.sort((a, b) => a.copy - b.copy);
+  return { main, extra };
 }
 interface DecorDef {
   asset: string;
@@ -89,6 +117,16 @@ export const WORLD_DEFS: Record<WorldId, WorldDef> = {
       { kind: 'ruins', asset: 'wall' },
       { kind: 'tree', asset: 'tree-big' },
       { kind: 'torch', asset: 'torch' },
+      // only placed in hunts with more than 6 chests
+      { kind: 'treehouse', asset: 'treehouse', extra: true },
+      { kind: 'hut', asset: 'hut', extra: true },
+      { kind: 'jaguar', asset: 'jaguar', extra: true },
+      { kind: 'totem', asset: 'totem', extra: true },
+      { kind: 'lookout', asset: 'lookout', extra: true },
+      { kind: 'hollow', asset: 'hollow', extra: true },
+      { kind: 'pyramid', asset: 'pyramid', extra: true },
+      { kind: 'canoe', asset: 'canoe', extra: true },
+      { kind: 'parrot', asset: 'parrot', extra: true },
     ],
     decor: [
       { asset: 'tree-small', weight: 0.4, block: true },
@@ -114,6 +152,16 @@ export const WORLD_DEFS: Record<WorldId, WorldDef> = {
       { kind: 'arch', asset: 'arch' },
       { kind: 'statue', asset: 'statue' },
       { kind: 'column', asset: 'column' },
+      // only placed in hunts with more than 6 chests
+      { kind: 'tent', asset: 'tent', extra: true },
+      { kind: 'lookout', asset: 'lookout', extra: true },
+      { kind: 'skull', asset: 'skull', extra: true },
+      { kind: 'signpost', asset: 'signpost', extra: true },
+      { kind: 'campfire', asset: 'campfire', extra: true },
+      { kind: 'oasispool', asset: 'oasispool', extra: true },
+      { kind: 'sandfort', asset: 'sandfort', extra: true },
+      { kind: 'fossil', asset: 'fossil', extra: true },
+      { kind: 'mesa', asset: 'mesa', extra: true },
     ],
     decor: [
       { asset: 'palm', weight: 0.18, block: true },
@@ -128,7 +176,7 @@ export const WORLD_DEFS: Record<WorldId, WorldDef> = {
   },
   saudi: {
     name: 'Saudi Landmarks',
-    blurb: 'Ten famous places of the Kingdom, from Makkah to AlUla',
+    blurb: 'Famous places of the Kingdom, from Makkah and AlUla to the Eastern Province',
     tagline: 'Visit the famous places of Saudi Arabia. Every landmark hides a chest, so read the clue and find the right one!',
     terrain: 'pond',
     base: 'sand',
@@ -148,6 +196,23 @@ export const WORLD_DEFS: Record<WorldId, WorldDef> = {
       { kind: 'asir', asset: 'asir' },
       { kind: 'maraya', asset: 'maraya' },
       { kind: 'fountain', asset: 'fountain', bank: true },
+      // only placed in hunts with more than 10 chests
+      { kind: 'khobar', asset: 'khobar', extra: true },
+      { kind: 'ithra', asset: 'ithra', extra: true },
+      { kind: 'halfmoon', asset: 'halfmoon', extra: true },
+      { kind: 'fanateer', asset: 'fanateer', extra: true },
+      { kind: 'tarout', asset: 'tarout', extra: true },
+      { kind: 'ibrahim', asset: 'ibrahim', extra: true },
+      { kind: 'uqair', asset: 'uqair', extra: true },
+      { kind: 'jawatha', asset: 'jawatha', extra: true },
+      { kind: 'qaisariya', asset: 'qaisariya', extra: true },
+      { kind: 'qatif', asset: 'qatif', extra: true },
+      { kind: 'dammam', asset: 'dammam', extra: true },
+      { kind: 'dougha', asset: 'dougha', extra: true },
+      { kind: 'qarah', asset: 'qarah', extra: true },
+      { kind: 'asfar', asset: 'asfar', extra: true },
+      { kind: 'ahsa', asset: 'ahsa', extra: true },
+      { kind: 'darin', asset: 'darin', extra: true },
     ],
     decor: [
       { asset: 'palm', weight: 0.2, block: true },
@@ -157,6 +222,42 @@ export const WORLD_DEFS: Record<WorldId, WorldDef> = {
       { asset: 'canyon', weight: 0.07, block: true },
       { asset: 'oasis', weight: 0.04, block: true },
       { asset: 'palm-grove', weight: 0.05, block: true },
+    ],
+    sky: ['#bfe9ff', '#ffe6b0'],
+  },
+  egypt: {
+    name: 'Egyptian Wonders',
+    blurb: 'Pyramids, temples and a river Nile winding through the sand',
+    tagline: 'Walk beside the Nile and visit the great wonders of Egypt. Every landmark hides a chest, so read the clue and find the right one!',
+    terrain: 'river',
+    base: 'sand',
+    path: 'path',
+    water: 'water',
+    size: 30,
+    gap: 5.2,
+    landmarks: [
+      { kind: 'giza', asset: 'giza' },
+      { kind: 'sphinx', asset: 'sphinx' },
+      { kind: 'karnak', asset: 'karnak' },
+      { kind: 'valleykings', asset: 'valleykings' },
+      { kind: 'abusimbel', asset: 'abusimbel' },
+      { kind: 'philae', asset: 'philae', bank: true },
+      { kind: 'citadel', asset: 'citadel' },
+      { kind: 'luxor', asset: 'luxor' },
+      // only placed in hunts with more than 8 chests
+      { kind: 'hatshepsut', asset: 'hatshepsut', extra: true },
+      { kind: 'djoser', asset: 'djoser', extra: true },
+      { kind: 'stcatherine', asset: 'stcatherine', extra: true },
+      { kind: 'qaitbay', asset: 'qaitbay', bank: true, extra: true },
+      { kind: 'edfu', asset: 'edfu', extra: true },
+      { kind: 'gem', asset: 'gem', extra: true },
+      { kind: 'catacombs', asset: 'catacombs', extra: true },
+    ],
+    decor: [
+      { asset: 'palm', weight: 0.3, block: true },
+      { asset: 'palm-small', weight: 0.25, block: true },
+      { asset: 'bush', weight: 0.25, block: true },
+      { asset: 'rock', weight: 0.2, block: true },
     ],
     sky: ['#bfe9ff', '#ffe6b0'],
   },
@@ -172,11 +273,11 @@ export const WORLD_DEFS: Record<WorldId, WorldDef> = {
     gap: 5.2,
     landmarks: [
       { kind: 'waterfall', asset: 'waterfall', bank: true },
-      { kind: 'gate', asset: 'gate' },
-      { kind: 'shrine', asset: 'shrine' },
-      { kind: 'arch', asset: 'arch' },
-      { kind: 'statue', asset: 'statue' },
-      { kind: 'lamp', asset: 'lamp' },
+      { kind: 'gate', asset: 'gate', copies: 2 },
+      { kind: 'shrine', asset: 'shrine', copies: 2 },
+      { kind: 'arch', asset: 'arch', copies: 2 },
+      { kind: 'statue', asset: 'statue', copies: 2 },
+      { kind: 'lamp', asset: 'lamp', copies: 2 },
       { kind: 'bluecrystal', asset: 'crystal-blue' },
       { kind: 'purplecrystal', asset: 'crystal-purple' },
       { kind: 'cave', asset: 'cave' },
@@ -224,12 +325,12 @@ export const WORLD_DEFS: Record<WorldId, WorldDef> = {
     water: 'ice',
     extraGround: 'drift',
     landmarks: [
-      { kind: 'well', asset: 'well' },
-      { kind: 'house', asset: 'house' },
-      { kind: 'arch', asset: 'arch' },
-      { kind: 'statue', asset: 'statue' },
-      { kind: 'column', asset: 'column' },
-      { kind: 'torch', asset: 'torch' },
+      { kind: 'well', asset: 'well', copies: 2 },
+      { kind: 'house', asset: 'house', copies: 3 },
+      { kind: 'arch', asset: 'arch', copies: 2 },
+      { kind: 'statue', asset: 'statue', copies: 3 },
+      { kind: 'column', asset: 'column', copies: 3 },
+      { kind: 'torch', asset: 'torch', copies: 2 },
     ],
     decor: [
       { asset: 'tree-small', weight: 0.34, block: true },
@@ -249,9 +350,10 @@ for (const id of ['autumn', 'night'] as const) {
   WORLD_DEFS[id].decor = WORLD_DEFS.jungle.decor;
 }
 
-/** How many chests a world can hold: one per landmark. */
+/** How many chests a world can hold: one per landmark, counting the extra ones (at least 15 in every world). */
 export function worldCapacity(id: WorldId): number {
-  return WORLD_DEFS[id].landmarks.length;
+  const { main, extra } = landmarkInstances(WORLD_DEFS[id]);
+  return main.length + extra.length;
 }
 
 export function worldBlurb(id: WorldId): string {
@@ -264,7 +366,8 @@ export function worldName(id: WorldId): string {
 
 export const ALL_WORLDS: WorldId[] = WORLD_IDS;
 
-export const MAX_CHESTS_PER_WORLD = 6;
+/** The most chests one hunt can have, whatever the world. */
+export const MAX_CHESTS = 15;
 
 export function rngFrom(seed: number) {
   let a = seed >>> 0;
@@ -282,8 +385,19 @@ const NB8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1
 function attempt(worldId: WorldId, seed: number, chestCount: number): WorldMap | null {
   const def = WORLD_DEFS[worldId];
   const rng = rngFrom(seed);
-  const N = def.size ?? GRID;
-  const gap = def.gap ?? 5.5;
+  // the main landmarks are always placed; the extra ones only when the hunt has more chests than that
+  const { main, extra } = landmarkInstances(def);
+  const wantExtra = Math.max(0, Math.min(extra.length, chestCount - main.length));
+  // which extras a hunt gets is picked by the seed (the 1st copies of a landmark before the 2nd copies)
+  if (wantExtra > 0 && wantExtra < extra.length) {
+    const key = new Map(extra.map((e) => [e, e.copy + rng() * 0.9]));
+    extra.sort((a, b) => (key.get(a) as number) - (key.get(b) as number));
+  }
+  const placeList = [...main, ...extra.slice(0, wantExtra)];
+  // a hunt with many landmarks gets a bigger map: 34 cells wide at 11 landmarks, growing by 2 for each one more (42 at 15)
+  const crowded = placeList.length > 10;
+  const N = crowded ? Math.max(def.size ?? GRID, 32 + (placeList.length - 10) * 2) : def.size ?? GRID;
+  const gap = crowded ? Math.min(def.gap ?? 5.5, 5) : def.gap ?? 5.5;
   const idx = (x: number, y: number) => y * N + x;
   const inside = (x: number, y: number) => x >= 0 && y >= 0 && x < N && y < N;
   const cells: Cell[] = Array.from({ length: N * N }, () => ({ ground: def.base, water: false, block: false, keep: false }));
@@ -338,11 +452,12 @@ function attempt(worldId: WorldId, seed: number, chestCount: number): WorldMap |
   const nearWater = (x: number, y: number) => NB4.some(([dx, dy]) => inside(x + dx, y + dy) && at(x + dx, y + dy).water);
 
   // ---------------------------------------------------------------- landmarks (each one gets a chest beside it)
-  const picked: { x: number; y: number; def: LandmarkDef }[] = [];
-  const order = [...def.landmarks].sort(() => rng() - 0.5);
+  const picked: { x: number; y: number; inst: LandmarkInstance }[] = [];
+  const order = [...placeList].sort(() => rng() - 0.5);
   // a bank landmark goes first so it still finds a free bank
-  order.sort((a, b) => Number(!!b.bank) - Number(!!a.bank));
-  for (const lm of order) {
+  order.sort((a, b) => Number(!!b.def.bank) - Number(!!a.def.bank));
+  for (const inst of order) {
+    const lm = inst.def;
     let ok = false;
     for (let t = 0; t < 600 && !ok; t++) {
       const x = 2 + Math.floor(rng() * (N - 4));
@@ -352,7 +467,7 @@ function attempt(worldId: WorldId, seed: number, chestCount: number): WorldMap |
       if (!lm.bank && nearWater(x, y)) continue;
       if (Math.hypot(x - start.gx, y - start.gy) < 7) continue;
       if (picked.some((p) => Math.hypot(p.x - x, p.y - y) < gap)) continue;
-      picked.push({ x, y, def: lm });
+      picked.push({ x, y, inst });
       at(x, y).prop = lm.asset;
       at(x, y).block = true;
       ok = true;
@@ -367,7 +482,7 @@ function attempt(worldId: WorldId, seed: number, chestCount: number): WorldMap |
       .filter((c) => isLand(c.x, c.y) && !at(c.x, c.y).prop && c.x >= 1 && c.y >= 1 && c.x < N - 1 && c.y < N - 1)
       .sort((a, b) => b.x + b.y - (a.x + a.y) + (rng() - 0.5) * 0.4);
     if (!opts.length) return null;
-    chestPos.set(p.def.kind, opts[0]);
+    chestPos.set(p.inst.key, opts[0]);
     for (const [dx, dy] of NB8) {
       for (const q of [p, opts[0]]) if (inside(q.x + dx, q.y + dy)) at(q.x + dx, q.y + dy).keep = true;
     }
@@ -375,7 +490,7 @@ function attempt(worldId: WorldId, seed: number, chestCount: number): WorldMap |
   }
 
   // ---------------------------------------------------------------- paths (cheapest way, so rivers are crossed on bridges)
-  const nodes = [{ x: start.gx, y: start.gy }, ...picked.map((p) => chestPos.get(p.def.kind) as { x: number; y: number })];
+  const nodes = [{ x: start.gx, y: start.gy }, ...picked.map((p) => chestPos.get(p.inst.key) as { x: number; y: number })];
   const connected: { x: number; y: number }[] = [nodes[0]];
   const rest = nodes.slice(1);
   const chestCells = new Set(nodes.slice(1).map((c) => idx(c.x, c.y)));
@@ -467,10 +582,23 @@ function attempt(worldId: WorldId, seed: number, chestCount: number): WorldMap |
 
   // ---------------------------------------------------------------- chests in play order
   const play = [...picked].sort(() => rng() - 0.5).slice(0, Math.min(chestCount, picked.length));
+  // copies of the same landmark come in order (1st, 2nd, 3rd), so a clue can say "the one you have not opened yet"
+  const slots = new Map<string, number[]>();
+  play.forEach((p, i) => slots.set(p.inst.def.kind, [...(slots.get(p.inst.def.kind) ?? []), i]));
+  for (const idxs of slots.values()) {
+    const sorted = idxs.map((i) => play[i]).sort((a, b) => a.inst.copy - b.inst.copy);
+    idxs.forEach((slot, k) => { play[slot] = sorted[k]; });
+  }
+  // a landmark that appears more than once in this hunt needs a warning in its clue
+  const times = new Map<string, number>();
+  play.forEach((p) => times.set(p.inst.def.kind, (times.get(p.inst.def.kind) ?? 0) + 1));
   const chests: Chest[] = play.map((p) => {
-    const pos = chestPos.get(p.def.kind) as { x: number; y: number };
-    const variants = CLUES[worldId][p.def.kind] ?? ['Find the next chest!'];
-    return { gx: pos.x, gy: pos.y, landmark: p.def.kind, clue: variants[Math.floor(rng() * variants.length)] };
+    const kind = p.inst.def.kind;
+    const pos = chestPos.get(p.inst.key) as { x: number; y: number };
+    const variants = CLUES[worldId][kind] ?? ['Find the next chest!'];
+    let clue = variants[Math.floor(rng() * variants.length)];
+    if ((times.get(kind) ?? 0) > 1) clue += ' There is more than one of these here, so check each one and skip any chest that is already open.';
+    return { gx: pos.x, gy: pos.y, landmark: kind, clue, copy: p.inst.copy };
   });
 
   return { id: worldId, name: def.name, tagline: def.tagline, seed, n: N, cells, start, chests, sky: def.sky };

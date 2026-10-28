@@ -1,6 +1,6 @@
 import type { ContentItem, SkillTemplate } from '../../../types';
 import { norm, shuffle as shuffleRandom } from '../blockQuest/engine';
-import { rngFrom } from './huntWorld';
+import { MAX_CHESTS, rngFrom } from './huntWorld';
 
 type Shuffler = <T>(a: T[]) => T[];
 
@@ -32,8 +32,6 @@ export interface DifficultyDef {
   blurb: string;
   lives: number;
   hints: number;
-  /** how many chests a run has (never more than the set has items) */
-  chests: number;
   /** the chest tiers, in play order */
   tiers: Tier[];
 }
@@ -44,7 +42,6 @@ export const DIFFICULTY: Record<Difficulty, DifficultyDef> = {
     blurb: '5 hearts, pick the answer, no timers',
     lives: 5,
     hints: 4,
-    chests: 6,
     tiers: ['bronze', 'bronze', 'bronze', 'silver', 'bronze', 'silver'],
   },
   medium: {
@@ -52,7 +49,6 @@ export const DIFFICULTY: Record<Difficulty, DifficultyDef> = {
     blurb: '4 hearts, some chests need you to type',
     lives: 4,
     hints: 3,
-    chests: 8,
     tiers: ['bronze', 'silver', 'bronze', 'silver', 'gold', 'silver', 'silver', 'gold'],
   },
   hard: {
@@ -60,7 +56,6 @@ export const DIFFICULTY: Record<Difficulty, DifficultyDef> = {
     blurb: '3 hearts, timers, lots of typing',
     lives: 3,
     hints: 2,
-    chests: 10,
     tiers: ['silver', 'gold', 'silver', 'gold', 'gold', 'silver', 'gold', 'gold', 'silver', 'gold'],
   },
 };
@@ -97,7 +92,7 @@ export function buildQuestions(items: ContentItem[], _skill: SkillTemplate | und
     };
   }
   const def = DIFFICULTY[difficulty];
-  const count = Math.max(2, Math.min(wanted ?? def.chests, def.chests, items.length, 12));
+  const count = Math.max(2, Math.min(wanted ?? items.length, items.length, MAX_CHESTS));
   const picked = shuffle(items).slice(0, count);
   return picked.map((item, i) => {
     let tier: Tier = def.tiers[i % def.tiers.length];
@@ -126,7 +121,10 @@ export function splitChests(total: number, parts = 2): number[] {
   return Array.from({ length: parts }, (_, i) => base + (i < extra ? 1 : 0));
 }
 
-/** How many chests a run can have: the difficulty's count, the set's size and what the chosen worlds can hold (one chest per landmark). */
-export function chestTotal(difficulty: Difficulty, itemCount: number, room: number): number {
-  return Math.max(2, Math.min(DIFFICULTY[difficulty].chests, itemCount, room, 12));
+/**
+ * How many chests a run has: one per item the teacher put in the set (so the teacher decides),
+ * up to 15, and never more than the chosen worlds can hold (one chest per landmark).
+ */
+export function chestTotal(itemCount: number, room: number): number {
+  return Math.max(2, Math.min(itemCount, room, MAX_CHESTS));
 }

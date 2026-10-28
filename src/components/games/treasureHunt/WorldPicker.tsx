@@ -1,15 +1,15 @@
 import { WORLD_IDS, worldPreviewUrl, type WorldId } from './huntAssets';
-import { WORLD_DEFS, worldBlurb, worldCapacity, worldName } from './huntWorld';
+import { MAX_CHESTS, WORLD_DEFS, worldBlurb, worldCapacity, worldName } from './huntWorld';
 
 /** 'mix' = two different worlds picked at random, one after the other */
 export type WorldChoice = WorldId | 'mix';
 
-export const MAX_CHESTS = 12;
+export { MAX_CHESTS };
 
 export const isWorldChoice = (v: string): v is WorldChoice => v === 'mix' || (WORLD_IDS as string[]).includes(v);
 
 /** the most chests a hunt in this choice can hold */
-export const capacityOf = (c: WorldChoice) => (c === 'mix' ? MAX_CHESTS : worldCapacity(c));
+export const capacityOf = (c: WorldChoice) => (c === 'mix' ? MAX_CHESTS : Math.min(MAX_CHESTS, worldCapacity(c)));
 
 /** two different worlds, in random order */
 export function randomPair(): WorldId[] {
@@ -20,7 +20,7 @@ export function randomPair(): WorldId[] {
 /** The world cards (a picture, a name and a line about each world, plus "Surprise me"). */
 export function WorldPicker({ value, onChange, disabled = false }: { value: WorldChoice; onChange: (c: WorldChoice) => void; disabled?: boolean }) {
   const cards: { id: WorldChoice; name: string; blurb: string; max: string }[] = [
-    ...WORLD_IDS.map((id) => ({ id: id as WorldChoice, name: worldName(id), blurb: worldBlurb(id), max: `Up to ${worldCapacity(id)} chests` })),
+    ...WORLD_IDS.map((id) => ({ id: id as WorldChoice, name: worldName(id), blurb: worldBlurb(id), max: `Up to ${Math.min(MAX_CHESTS, worldCapacity(id))} chests` })),
     { id: 'mix', name: 'Surprise me', blurb: 'Two different worlds picked for you, one after the other', max: `Up to ${MAX_CHESTS} chests` },
   ];
   return (

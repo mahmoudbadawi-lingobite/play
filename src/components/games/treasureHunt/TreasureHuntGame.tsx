@@ -222,7 +222,7 @@ export function TreasureHuntGame({ items, skill, onFinish, multi }: GameProps & 
     const diff = runDifficulty;
     const def = DIFFICULTY[diff];
     const room = ids.reduce((n, id) => n + worldCapacity(id), 0);
-    const total = chestTotal(diff, items.length, room);
+    const total = chestTotal(items.length, room);
     const qs = buildQuestions(items, skill, diff, total, multi ? seed : undefined);
     const split = ids.length === 1 ? [qs.length] : splitChests(qs.length, ids.length);
     setQuestions(qs);
@@ -631,7 +631,7 @@ export function TreasureHuntGame({ items, skill, onFinish, multi }: GameProps & 
   if (phase === 'start') {
     const def = DIFFICULTY[difficulty];
     const room = capacityOf(worldChoice);
-    const total = chestTotal(difficulty, items.length, room);
+    const total = chestTotal(items.length, room);
     return (
       <div className="rounded-2xl border-2 border-border bg-card p-4">
         <p className="font-display text-xl font-bold text-primary">🗺️ Treasure Hunt</p>
@@ -661,7 +661,7 @@ export function TreasureHuntGame({ items, skill, onFinish, multi }: GameProps & 
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
           {total} chests in this hunt
-          {items.length < def.chests ? ' (that is all this set has)' : room < def.chests ? ` (this world has ${room} landmarks)` : ''}.
+          {items.length <= total ? ' (one for each question in this set)' : ` (${items.length} questions in this set, ${total} picked at random)`}.
         </p>
 
         <button type="button" onClick={startRun} className="mt-4 w-full rounded-xl bg-secondary px-6 py-4 text-xl font-extrabold text-secondary-foreground shadow">

@@ -283,8 +283,10 @@ export class HuntEngine {
       const ux = (ix / len) * m;
       const uy = (iy / len) * m;
       // a step on the screen (picture pixels) turned into a step on the map grid
-      const sx = ux * SPEED * dt;
-      const sy = uy * SPEED * dt;
+      // on a bigger map the explorer walks a little faster, so the long way between chests stays fun
+      const speed = SPEED * Math.min(1.4, Math.max(1, w.n / 30));
+      const sx = ux * speed * dt;
+      const sy = uy * speed * dt;
       const dx = sx / TW + sy / TH;
       const dy = sy / TH - sx / TW;
       if (!this.blocked(this.px + dx, this.py)) this.px += dx;

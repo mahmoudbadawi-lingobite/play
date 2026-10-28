@@ -41,7 +41,7 @@ let muted = read(MUTE_KEY) === '1';
 
 type Track = 'jungle' | 'desert' | 'saudi' | 'crystal';
 /** which music file a world plays (the re-coloured worlds share the loops of the others) */
-const TRACK: Record<WorldId, Track> = { jungle: 'jungle', desert: 'desert', saudi: 'saudi', crystal: 'crystal', autumn: 'jungle', night: 'crystal', frost: 'crystal' };
+const TRACK: Record<WorldId, Track> = { jungle: 'jungle', desert: 'desert', saudi: 'saudi', egypt: 'desert', crystal: 'crystal', autumn: 'jungle', night: 'crystal', frost: 'crystal' };
 
 const music: Partial<Record<Track, HTMLAudioElement>> = {};
 const sfx: Record<string, HTMLAudioElement> = {};

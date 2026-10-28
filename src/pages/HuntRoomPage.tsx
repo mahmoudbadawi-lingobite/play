@@ -412,7 +412,7 @@ export function HuntRoomPage() {
   // ---- the lobby
   const s = settings;
   const sorted = [...players].sort((a, b) => a.joinedAt - b.joinedAt);
-  const total = s && set ? chestTotal(s.difficulty, set.items.length, capacityOf(s.world)) : 0;
+  const total = s && set ? chestTotal(set.items.length, capacityOf(s.world)) : 0;
   const waitingOn = players.filter((p) => p.locked).length;
 
   return (
