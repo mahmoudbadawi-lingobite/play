@@ -12,6 +12,23 @@ import type { Cell, WorldMap } from './huntWorld';
 export const TW = 256;
 export const TH = 174;
 
+/** Scenery that moves in the wind: how much (1 = a tree). The base stays on the ground, the top sways. */
+const SWAY: Record<string, number> = {
+  'tree-big': 1,
+  'tree-small': 1.2,
+  palm: 1.5,
+  'palm-small': 1.6,
+  'palm-dates': 1.5,
+  'palm-trio': 1.3,
+  'palm-grove': 0.7,
+  bush: 0.6,
+  flowers: 0.9,
+  parrot: 0.5,
+  treehouse: 0.25,
+  oasis: 0.3,
+};
+const REDUCED_MOTION = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
 const SPEED = 420; // picture pixels per second
 const RADIUS = 0.26; // the explorer's size in cells (for collision)
 
@@ -367,6 +384,21 @@ export class HuntEngine {
         if (!im) continue;
         const ay = GROUND_ANCHOR[key] ?? 92;
         ctx.drawImage(im, cx - (im.width / 2) * z, cy - ay * z, im.width * z, im.height * z);
+        // water glitters: a soft light that drifts over the tiles
+        if (!REDUCED_MOTION && w.cells[y * w.n + x].water) {
+          const a = 0.5 + 0.5 * Math.sin(this.time * 1.6 + x * 0.55 - y * 0.4);
+          ctx.save();
+          ctx.globalAlpha = 0.1 * a;
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - (TH / 2) * z * 0.9);
+          ctx.lineTo(cx + (TW / 2) * z * 0.9, cy);
+          ctx.lineTo(cx, cy + (TH / 2) * z * 0.9);
+          ctx.lineTo(cx - (TW / 2) * z * 0.9, cy);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
       }
 
     // 2) everything that stands on it, sorted by depth
@@ -383,7 +415,27 @@ export class HuntEngine {
       if (cx < -TW * z * 1.5 || cx > W + TW * z * 1.5 || cy < -TH * z * 2 || cy > H + TH * z * 2) return;
       const foot = PROP_ANCHOR[assetKey] ?? im.height - Math.max(12, Math.min(34, im.width * 0.11));
       const k = z * scale;
-      items.push({ depth: gx + gy + 1, draw: () => ctx.drawImage(im, cx - (im.width / 2) * k, cy - foot * k, im.width * k, im.height * k) });
+      const sway = REDUCED_MOTION ? 0 : SWAY[assetKey.slice(assetKey.indexOf('/') + 1)] ?? 0;
+      if (!sway) {
+        items.push({ depth: gx + gy + 1, draw: () => ctx.drawImage(im, cx - (im.width / 2) * k, cy - foot * k, im.width * k, im.height * k) });
+        return;
+      }
+      // wind: a slow wave that rolls across the map, plus a quicker little flutter, so no two trees move together
+      const windAngle = () => {
+        const wave = Math.sin(this.time * 1.3 + gx * 0.35 + gy * 0.22);
+        const flutter = Math.sin(this.time * 3.1 + gx * 1.7 + gy * 0.9) * 0.35;
+        return (wave + flutter) * 0.03 * sway;
+      };
+      items.push({
+        depth: gx + gy + 1,
+        draw: () => {
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.transform(1, 0, windAngle(), 1, 0, 0); // shear around the foot
+          ctx.drawImage(im, -(im.width / 2) * k, -foot * k, im.width * k, im.height * k);
+          ctx.restore();
+        },
+      });
     };
     for (let y = 0; y < w.n; y++)
       for (let x = 0; x < w.n; x++) {

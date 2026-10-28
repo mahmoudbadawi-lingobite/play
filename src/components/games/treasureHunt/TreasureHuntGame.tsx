@@ -629,7 +629,6 @@ export function TreasureHuntGame({ items, skill, onFinish, multi }: GameProps & 
   if (phase === 'start' && multi) return <p className="p-8 text-center text-muted-foreground">Getting the worlds ready…</p>;
 
   if (phase === 'start') {
-    const def = DIFFICULTY[difficulty];
     const room = capacityOf(worldChoice);
     const total = chestTotal(items.length, room);
     return (
