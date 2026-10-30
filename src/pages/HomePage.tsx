@@ -2,12 +2,14 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { AnimatedLogo, AnimatedName, useLogoAnimation } from '../components/common/AnimatedLogo';
 
 const PENDING_JOIN_CODE_KEY = 'pendingJoinCode';
 
 export function HomePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { profile, signInWithGoogle, continueAsGuest } = useAuth();
+  const logoAnim = useLogoAnimation('home');
   const navigate = useNavigate();
 
   // Google sign-in always redirects back to "/". If the person got here via
@@ -31,8 +33,14 @@ export function HomePage() {
 
   return (
     <div className="kid-home relative mx-auto flex max-w-4xl flex-col items-center overflow-hidden px-4 py-16 text-center">
-      <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" className="kid-hero-logo relative z-10 mb-4 h-16 w-16 rounded-2xl object-cover" />
-      <h1 className="relative z-10 font-display text-4xl font-bold text-primary sm:text-5xl">{t('appName')}</h1>
+      <AnimatedLogo variant={logoAnim.variant} className="kid-hero-logo relative z-10 mb-4 h-16 w-16" />
+      <AnimatedName
+        as="h1"
+        text={t('appName')}
+        style={logoAnim.nameStyle}
+        isArabic={i18n.language.startsWith('ar')}
+        className="relative z-10 font-display text-4xl font-bold text-primary sm:text-5xl"
+      />
       <p className="relative z-10 mt-3 text-lg text-muted-foreground">{t('tagline')}</p>
 
       <div className="relative z-10 mt-8 flex flex-wrap justify-center gap-3">

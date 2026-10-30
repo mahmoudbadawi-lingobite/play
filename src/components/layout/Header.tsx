@@ -6,6 +6,7 @@ import { useAdminNotifications } from '../../contexts/AdminNotificationsContext'
 import { ThemeToggle } from '../common/ThemeToggle';
 import { useAvatarState } from '../../features/avatar/avatarStore';
 import { AvatarImage } from '../../features/avatar/AvatarImage';
+import { AnimatedLogo, AnimatedName, useLogoAnimation } from '../common/AnimatedLogo';
 
 /**
  * One sidebar / top-nav link.
@@ -46,6 +47,8 @@ function NavItem({
 export function Header() {
   const { t, i18n } = useTranslation();
   const { profile, isGuest, signInWithGoogle, signOut } = useAuth();
+  // New random logo/name animation on every refresh and whenever a different person signs in.
+  const logoAnim = useLogoAnimation(profile?.uid ?? (isGuest ? 'guest' : 'signed-out'));
   const { unreadDmCount, pendingTeacherCount } = useAdminNotifications();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -134,12 +137,13 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3">
         <Link to="/" onClick={close} className="kid-logo flex min-w-0 shrink-0 items-center gap-2 sm:shrink">
-          <img
-            src={`${import.meta.env.BASE_URL}logo.png`}
-            alt=""
-            className="h-10 w-10 shrink-0 rounded-xl object-cover sm:h-[72px] sm:w-[72px]"
+          <AnimatedLogo variant={logoAnim.variant} className="h-10 w-10 sm:h-[72px] sm:w-[72px]" />
+          <AnimatedName
+            text={t('appName')}
+            style={logoAnim.nameStyle}
+            isArabic={i18n.language.startsWith('ar')}
+            className="kid-logo-name hidden truncate font-display text-base font-semibold text-primary min-[480px]:inline sm:text-lg"
           />
-          <span className="hidden truncate font-display text-base font-semibold text-primary min-[480px]:inline sm:text-lg">{t('appName')}</span>
         </Link>
 
         <nav className="hidden items-center gap-5 text-sm font-medium text-primary/80 md:flex">
