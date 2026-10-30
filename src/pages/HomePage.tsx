@@ -33,11 +33,12 @@ export function HomePage() {
 
   return (
     <div className="kid-home relative mx-auto flex max-w-4xl flex-col items-center overflow-hidden px-4 py-16 text-center">
-      <AnimatedLogo variant={logoAnim.variant} className="kid-hero-logo relative z-10 mb-4 h-16 w-16" />
+      <AnimatedLogo variant={logoAnim.variant} onLoop={logoAnim.nextVariant} className="kid-hero-logo relative z-10 mb-4 h-16 w-16" />
       <AnimatedName
         as="h1"
         text={t('appName')}
         style={logoAnim.nameStyle}
+        onLoop={logoAnim.nextNameStyle}
         isArabic={i18n.language.startsWith('ar')}
         className="relative z-10 font-display text-4xl font-bold text-primary sm:text-5xl"
       />
