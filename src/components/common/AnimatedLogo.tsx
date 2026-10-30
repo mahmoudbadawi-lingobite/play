@@ -36,7 +36,7 @@ function pickDifferent<T extends string>(list: readonly T[], storageKey: string)
 }
 
 /** How many times an effect loops before the next one takes over. */
-const LOOPS_BEFORE_SWITCH = 3;
+const LOOPS_BEFORE_SWITCH = 6;
 
 /**
  * Current logo movement + name effect. Both re-pick when `key` changes
