@@ -73,7 +73,7 @@ export function Header() {
         {t('nav_library')}
       </NavItem>
       <NavItem to="/monster-quest" nav="monster-quest" active={on('/monster-quest')} onClick={close}>
-        🐲 Monster Quest
+        <span className="classic-emoji">🐲 </span>Monster Quest
       </NavItem>
       <NavItem
         to="/escape-rooms"
