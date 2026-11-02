@@ -56,6 +56,10 @@ export function LibraryPage() {
         🗺️ Treasure Hunt rooms: host or join a live game
       </Link>
 
+      <Link to="/monster-quest" className="mt-3 ml-2 inline-flex items-center gap-2 rounded-xl border-2 border-secondary px-4 py-2 text-sm font-bold text-primary hover:bg-secondary/10">
+        🐲 Monster Quest: explore, answer questions, capture monsters
+      </Link>
+
       <div className="kid-chips mt-5 flex flex-wrap gap-2">
         {SKILLS.map((s) => (
           <button

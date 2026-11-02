@@ -69,6 +69,7 @@ export function HomePage() {
           { key: 'crossword', icon: '🔳', title: 'Crossword' },
           { key: 'picture-match', icon: '🖼️', title: 'Picture Match' },
           { key: 'hangman', icon: '🎯', title: 'Hangman' },
+          { key: 'monster-quest', icon: '🐲', title: 'Monster Quest' },
         ].map((g) => (
           <div key={g.key} data-game={g.key} className="kid-game-card kid-mini card-surface flex items-center gap-3 px-4 py-3">
             <span className="kg-art" aria-hidden="true" />

@@ -72,6 +72,9 @@ export function Header() {
       <NavItem to="/library" nav="library" active={on('/library', '/play', '/hunt')} onClick={close}>
         {t('nav_library')}
       </NavItem>
+      <NavItem to="/monster-quest" nav="monster-quest" active={on('/monster-quest')} onClick={close}>
+        🐲 Monster Quest
+      </NavItem>
       <NavItem
         to="/escape-rooms"
         nav="escape"

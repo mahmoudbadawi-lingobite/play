@@ -31,6 +31,7 @@ import { loadRemoteStoreItems } from './features/avatar/remoteCatalog';
 
 const AvatarPage = lazy(() => import('./pages/AvatarPage').then((m) => ({ default: m.AvatarPage })));
 const StoreAdminPage = lazy(() => import('./pages/StoreAdminPage').then((m) => ({ default: m.StoreAdminPage })));
+const MonsterQuestPage = lazy(() => import('./features/monsterQuest/MonsterQuestPage').then((m) => ({ default: m.MonsterQuestPage })));
 const StorePage = lazy(() => import('./pages/StorePage').then((m) => ({ default: m.StorePage })));
 const pageFallback = <p className="p-10 text-center text-muted-foreground">Loading...</p>;
 import './i18n/config';
@@ -57,6 +58,7 @@ export default function App() {
                 <Route path="/play/:setId/:gameKey" element={<ConsentGate><GameShell /></ConsentGate>} />
                 <Route path="/hunt" element={<ConsentGate><HuntEntryPage /></ConsentGate>} />
                 <Route path="/hunt/:code" element={<ConsentGate><HuntRoomPage /></ConsentGate>} />
+                <Route path="/monster-quest/*" element={<ConsentGate><Suspense fallback={pageFallback}><MonsterQuestPage /></Suspense></ConsentGate>} />
                 <Route path="/avatar" element={<Suspense fallback={pageFallback}><AvatarPage /></Suspense>} />
                 <Route path="/store" element={<Suspense fallback={pageFallback}><StorePage /></Suspense>} />
                 <Route
