@@ -1,3 +1,5 @@
+import type { ReactElement } from 'react';
+
 // Illustrations for the Game Library cards (one per skill).
 // Pure inline SVG so they stay sharp on every screen and need no extra files.
 // Only shown in the Kid theme (parent adds the `kid-only` class).
@@ -217,7 +219,7 @@ function Revision() {
   );
 }
 
-const ART: Record<string, () => JSX.Element> = {
+const ART: Record<string, () => ReactElement> = {
   vocabulary: Vocabulary,
   grammar: Grammar,
   reading: Reading,
