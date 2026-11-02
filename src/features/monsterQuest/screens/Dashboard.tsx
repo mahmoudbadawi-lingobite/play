@@ -1,15 +1,12 @@
 import { Link } from 'react-router-dom';
 import { levelInfo } from '../../avatar/level';
-import { AvatarImage } from '../../avatar/AvatarImage';
-import { useAvatarState } from '../../avatar/avatarStore';
 import { Trainer } from '../art/Trainer';
 import { MonsterArt } from '../art/MonsterArt';
 import { useMq } from '../context';
 import { Bar, Panel, RarityBadge, fmt } from '../ui';
 
 export function Dashboard() {
-  const { state, monsters, speciesById, name, isStaff, species } = useMq();
-  const avatar = useAvatarState();
+  const { state, monsters, speciesById, name, isStaff, species, look } = useMq();
   const lv = levelInfo(state.xp);
   const answered = state.correct_total + state.wrong_total;
   const acc = answered ? Math.round((state.correct_total / answered) * 100) : null;
@@ -18,6 +15,9 @@ export function Dashboard() {
   const tiles: { to: string; icon: string; label: string; sub: string }[] = [
     { to: '/monster-quest/explore', icon: '🗺️', label: 'Explore World', sub: 'Find & capture monsters' },
     { to: '/monster-quest/monsters', icon: '🐾', label: 'My Monsters', sub: `${monsters.length} captured` },
+    { to: '/monster-quest/arena', icon: '⚔️', label: 'Battle Arena', sub: `${state.battles_won} wins` },
+    { to: '/monster-quest/quests', icon: '📜', label: 'Quests', sub: 'Daily & weekly missions' },
+    { to: '/monster-quest/style', icon: '👕', label: 'Style', sub: 'Customize your trainer' },
     { to: '/monster-quest/dex', icon: '📖', label: 'Encyclopedia', sub: `${caughtSpecies}/${species.length} species` },
     { to: '/monster-quest/inventory', icon: '🎒', label: 'Inventory', sub: 'Your orbs' },
     { to: '/monster-quest/shop', icon: '🛍️', label: 'Shop', sub: 'Spend coins & gems' },
@@ -29,7 +29,7 @@ export function Dashboard() {
     <div className="space-y-4">
       <Panel className="flex flex-wrap items-center gap-4">
         <div className="mq-avatar-ring">
-          {avatar.gender ? <AvatarImage gender={avatar.gender} look={avatar.looks[avatar.gender]} size={84} /> : <Trainer size={92} />}
+          <Trainer size={92} look={look} />
         </div>
         <div className="min-w-[180px] flex-1">
           <p className="font-display text-xl font-extrabold text-white">{name}</p>
@@ -51,8 +51,6 @@ export function Dashboard() {
               <span className="text-3xl">{t.icon}</span><span className="font-display text-base font-extrabold">{t.label}</span><span className="text-xs font-semibold opacity-80">{t.sub}</span>
             </Link>
           ))}
-          <div className="mq-tile mq-tile-locked" aria-disabled="true"><span className="text-3xl">⚔️</span><span className="font-display text-base font-extrabold">Battle Arena</span><span className="text-xs font-semibold">Coming in Phase 3</span></div>
-          <div className="mq-tile mq-tile-locked" aria-disabled="true"><span className="text-3xl">📜</span><span className="font-display text-base font-extrabold">Quests</span><span className="text-xs font-semibold">Coming in Phase 2</span></div>
         </div>
 
         <div className="space-y-4">

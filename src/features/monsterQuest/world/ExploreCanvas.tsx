@@ -1,5 +1,5 @@
 import { useEffect, useRef, type MutableRefObject } from 'react';
-import type { ZonePalette } from '../types';
+import type { Look, ZonePalette } from '../types';
 import { trainerDataUrl, type Facing } from '../art/Trainer';
 import { findPath, generateMap, GROUND, PATH, ROCK, TALL, TREE, WATER, walkable, type GameMap, type Tile } from './map';
 
@@ -8,15 +8,58 @@ const TW = 64, TH = 32, STEP_S = 0.2;
 const KEYMAP: Record<string, DPad> = { ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down', ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right' };
 
 interface Props {
-  zoneId: string; palette: ZonePalette; paused: boolean;
+  zoneId: string; palette: ZonePalette; paused: boolean; look?: Look;
   pad: MutableRefObject<Set<DPad>>;
   onStep: (tile: Tile) => void;
 }
 interface Mote { x: number; y: number; vx: number; vy: number; r: number; a: number; ph: number }
 
+function drawScenery(ctx: CanvasRenderingContext2D, pal: ZonePalette, cx: number, cy: number, gx: number, gy: number, time: number) {
+  const style = pal.style ?? 'tree', sw = Math.sin(time * 1.5 + gx * 1.3 + gy) * 2.5;
+  ctx.fillStyle = 'rgba(0,0,0,.14)'; ctx.beginPath(); ctx.ellipse(cx, cy + 4, 22, 9, 0, 0, 6.3); ctx.fill();
+  const hash = (gx * 7 + gy * 13) % 5;
+  if (style === 'cactus') {
+    ctx.fillStyle = pal.tree; ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.lineWidth = 2;
+    const rr = (x: number, y: number, w: number, h: number) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, w / 2); ctx.fill(); ctx.stroke(); };
+    rr(cx - 8, cy - 52 - hash * 2, 16, 56 + hash * 2); rr(cx - 26, cy - 36, 12, 24); rr(cx - 26, cy - 20, 20, 10); rr(cx + 14, cy - 42, 12, 26); rr(cx + 6, cy - 24, 20, 10);
+  } else if (style === 'pine') {
+    ctx.fillStyle = pal.trunk; ctx.fillRect(cx - 4, cy - 14, 8, 18);
+    for (let k = 0; k < 3; k++) { ctx.fillStyle = k % 2 ? pal.tree : '#3b9c88'; ctx.beginPath(); ctx.moveTo(cx + sw * 0.3 * k, cy - 70 + k * 6); ctx.lineTo(cx + 24 + k * 6, cy - 14 - (2 - k) * 4 + 6 * (k - 1) + 14); ctx.lineTo(cx - 24 - k * 6, cy - 14 - (2 - k) * 4 + 6 * (k - 1) + 14); ctx.closePath(); ctx.fill(); }
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(cx, cy - 70); ctx.lineTo(cx + 9, cy - 52); ctx.lineTo(cx - 9, cy - 52); ctx.closePath(); ctx.fill();
+  } else if (style === 'palm') {
+    ctx.strokeStyle = pal.trunk; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(cx, cy + 2); ctx.quadraticCurveTo(cx + 10 + sw, cy - 30, cx + 4 + sw, cy - 56); ctx.stroke();
+    ctx.fillStyle = pal.tree;
+    for (let k = 0; k < 6; k++) { const a = (k / 6) * 6.28 + sw * 0.03; ctx.beginPath(); ctx.ellipse(cx + 4 + sw + Math.cos(a) * 20, cy - 58 + Math.sin(a) * 9, 20, 6, a, 0, 6.3); ctx.fill(); }
+    ctx.fillStyle = '#8d5a2b'; ctx.beginPath(); ctx.arc(cx + 2 + sw, cy - 54, 4, 0, 6.3); ctx.arc(cx + 9 + sw, cy - 52, 4, 0, 6.3); ctx.fill();
+  } else if (style === 'crystal') {
+    const cols = [pal.tree, '#e599f7', '#66d9e8'];
+    for (let k = 0; k < 3; k++) {
+      const ox = (k - 1) * 14, h = 38 + ((hash + k * 3) % 4) * 8 - (k === 1 ? 0 : 8), col = cols[(hash + k) % 3];
+      ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(cx + ox, cy - h); ctx.lineTo(cx + ox + 11, cy - 10); ctx.lineTo(cx + ox, cy + 2); ctx.lineTo(cx + ox - 11, cy - 10); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.moveTo(cx + ox, cy - h); ctx.lineTo(cx + ox - 11, cy - 10); ctx.lineTo(cx + ox - 2, cy - 12); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle = `rgba(255,255,255,${0.5 + 0.4 * Math.sin(time * 3 + gx + gy)})`; ctx.beginPath(); ctx.arc(cx + 10, cy - 38, 2.5, 0, 6.3); ctx.fill();
+  } else if (style === 'rock') {
+    ctx.fillStyle = pal.trunk; ctx.beginPath(); ctx.moveTo(cx - 24, cy + 2); ctx.lineTo(cx - 14, cy - 34 - hash * 3); ctx.lineTo(cx + 2, cy - 46 - hash * 2); ctx.lineTo(cx + 18, cy - 28); ctx.lineTo(cx + 26, cy + 2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,120,60,.55)'; ctx.beginPath(); ctx.moveTo(cx - 4, cy - 30); ctx.lineTo(cx + 2, cy - 12); ctx.lineTo(cx + 8, cy - 28); ctx.closePath(); ctx.fill();
+  } else if (style === 'building') {
+    const h = 50 + hash * 10, w = 22, tops = [pal.tree, '#7950f2', '#339af0', '#f06595'][hash % 4];
+    ctx.fillStyle = tops; ctx.beginPath(); ctx.moveTo(cx - w, cy - 10); ctx.lineTo(cx, cy + 2); ctx.lineTo(cx, cy - h); ctx.lineTo(cx - w, cy - h - 12); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.moveTo(cx + w, cy - 10); ctx.lineTo(cx, cy + 2); ctx.lineTo(cx, cy - h); ctx.lineTo(cx + w, cy - h - 12); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.beginPath(); ctx.moveTo(cx - w, cy - h - 12); ctx.lineTo(cx, cy - h); ctx.lineTo(cx + w, cy - h - 12); ctx.lineTo(cx, cy - h - 24); ctx.closePath(); ctx.fill();
+    for (let r = 0; r < Math.floor(h / 16); r++) { const on = Math.sin(time * 0.8 + r * 2 + gx * 3 + gy) > -0.3; ctx.fillStyle = on ? '#ffe066' : '#364fc7'; ctx.fillRect(cx - 15, cy - 20 - r * 16 - 2, 7, 8); ctx.fillRect(cx - 5, cy - 14 - r * 16 - 2, 7, 8); }
+  } else {
+    ctx.fillStyle = pal.trunk; ctx.fillRect(cx - 5, cy - 22, 10, 26);
+    ctx.fillStyle = pal.tree;
+    for (const [ox, oy, r] of [[0, -50, 22], [-14, -34, 18], [14, -34, 18], [0, -34, 22]] as const) { ctx.beginPath(); ctx.arc(cx + ox + sw * (oy / -50), cy + oy, r, 0, 6.3); ctx.fill(); }
+    ctx.fillStyle = 'rgba(255,255,255,.16)'; ctx.beginPath(); ctx.arc(cx - 7 + sw, cy - 56, 9, 0, 6.3); ctx.fill();
+  }
+}
+
 const iso = (gx: number, gy: number) => ({ x: (gx - gy) * (TW / 2), y: (gx + gy) * (TH / 2) });
 
-export function ExploreCanvas({ zoneId, palette, paused, pad, onStep }: Props) {
+export function ExploreCanvas({ zoneId, palette, paused, pad, onStep, look }: Props) {
+  const lookKey = JSON.stringify(look ?? null);
   const wrap = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const pausedRef = useRef(paused); pausedRef.current = paused;
@@ -24,7 +67,7 @@ export function ExploreCanvas({ zoneId, palette, paused, pad, onStep }: Props) {
 
   useEffect(() => {
     const cv = canvas.current!, host = wrap.current!, ctx = cv.getContext('2d')!;
-    const map: GameMap = generateMap(zoneId);
+    const map: GameMap = generateMap(zoneId, { waterBias: palette.water_bias, treeDensity: palette.tree_density });
     const S = map.size;
     const me = { x: map.spawn.x, y: map.spawn.y, fx: map.spawn.x, fy: map.spawn.y, tx: map.spawn.x, ty: map.spawn.y, t: 1, facing: 'down' as Facing, flip: false, queue: [] as { x: number; y: number }[], target: null as { x: number; y: number } | null };
     const cam = { x: 0, y: 0 };
@@ -32,7 +75,7 @@ export function ExploreCanvas({ zoneId, palette, paused, pad, onStep }: Props) {
 
     const imgs: Record<string, HTMLImageElement> = {};
     for (const f of ['down', 'up', 'side'] as Facing[]) for (const s of [0, 1, 2] as const) {
-      const im = new Image(); im.src = trainerDataUrl({ facing: f, step: s }, 96); imgs[`${f}${s}`] = im;
+      const im = new Image(); im.src = trainerDataUrl({ facing: f, step: s }, 96, look); imgs[`${f}${s}`] = im;
     }
     const rng = Math.random;
     const motes: Mote[] = Array.from({ length: 26 }, () => ({ x: rng(), y: rng(), vx: 0.01 + rng() * 0.02, vy: 0.008 + rng() * 0.02, r: 2 + rng() * 3, a: 0.3 + rng() * 0.5, ph: rng() * 6.28 }));
@@ -133,9 +176,11 @@ export function ExploreCanvas({ zoneId, palette, paused, pad, onStep }: Props) {
         if (c.x < cam.x - W / scale / 2 - 80 || c.x > cam.x + W / scale / 2 + 80 || c.y < cam.y - H / scale / 2 - 80 || c.y > cam.y + H / scale / 2 + 80) continue;
         const checker = (x + y) & 1;
         if (t === WATER) {
+          const lava = palette.liquid === 'lava';
           diamond(c.x, c.y, palette.water);
           const w = Math.sin(time * 2 + x * 0.9 + y * 0.7);
-          ctx.strokeStyle = `rgba(255,255,255,${0.35 + 0.25 * w})`; ctx.lineWidth = 2; ctx.beginPath();
+          if (lava) { diamond(c.x, c.y, `rgba(255,214,102,${0.25 + 0.2 * w})`, 0); }
+          ctx.strokeStyle = lava ? `rgba(255,236,150,${0.5 + 0.3 * w})` : `rgba(255,255,255,${0.35 + 0.25 * w})`; ctx.lineWidth = 2; ctx.beginPath();
           ctx.moveTo(c.x - 12, c.y + w * 2); ctx.quadraticCurveTo(c.x - 4, c.y - 4 + w * 2, c.x + 4, c.y + w * 2); ctx.stroke();
         } else if (t === PATH) diamond(c.x, c.y, palette.path[checker]);
         else {
@@ -152,14 +197,7 @@ export function ExploreCanvas({ zoneId, palette, paused, pad, onStep }: Props) {
           const col = ['#ff6b6b', '#ffd43b', '#fff', '#da77f2'][(x * 3 + y) % 4];
           ctx.fillStyle = col; ctx.beginPath(); ctx.arc(c.x - 6, c.y + 1, 3, 0, 6.3); ctx.arc(c.x + 5, c.y - 2, 2.5, 0, 6.3); ctx.fill();
         }
-        if (t === TREE) drawables.push({ d: x + y, f: () => {
-          const sw = Math.sin(time * 1.5 + x * 1.3 + y) * 2.5;
-          ctx.fillStyle = 'rgba(0,0,0,.14)'; ctx.beginPath(); ctx.ellipse(c.x, c.y + 4, 22, 9, 0, 0, 6.3); ctx.fill();
-          ctx.fillStyle = palette.trunk; ctx.fillRect(c.x - 5, c.y - 22, 10, 26);
-          ctx.fillStyle = palette.tree;
-          for (const [ox, oy, r] of [[0, -50, 22], [-14, -34, 18], [14, -34, 18], [0, -34, 22]] as const) { ctx.beginPath(); ctx.arc(c.x + ox + sw * (oy / -50), c.y + oy, r, 0, 6.3); ctx.fill(); }
-          ctx.fillStyle = 'rgba(255,255,255,.16)'; ctx.beginPath(); ctx.arc(c.x - 7 + sw, c.y - 56, 9, 0, 6.3); ctx.fill();
-        } });
+        if (t === TREE) drawables.push({ d: x + y, f: () => drawScenery(ctx, palette, c.x, c.y, x, y, time) });
         if (t === ROCK) drawables.push({ d: x + y, f: () => {
           ctx.fillStyle = 'rgba(0,0,0,.14)'; ctx.beginPath(); ctx.ellipse(c.x, c.y + 4, 20, 8, 0, 0, 6.3); ctx.fill();
           ctx.fillStyle = palette.rock; ctx.beginPath(); ctx.ellipse(c.x, c.y - 6, 18, 14, 0, 0, 6.3); ctx.fill();
@@ -202,7 +240,8 @@ export function ExploreCanvas({ zoneId, palette, paused, pad, onStep }: Props) {
       window.removeEventListener('keydown', keyDown); window.removeEventListener('keyup', keyUp); window.removeEventListener('blur', blur);
       cv.removeEventListener('pointerdown', onPointer); pad.current.clear();
     };
-  }, [zoneId, palette, pad]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoneId, palette, pad, lookKey]);
 
   return (
     <div ref={wrap} className="relative h-full w-full touch-none select-none overflow-hidden rounded-2xl">

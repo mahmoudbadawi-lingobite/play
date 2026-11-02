@@ -66,3 +66,24 @@
 @keyframes mq-floatup { 0% { transform: translateY(14px) scale(.8); opacity: 0; } 20% { opacity: 1; transform: translateY(0) scale(1.1); } 100% { transform: translateY(-46px); opacity: 0; } }
 @keyframes mq-burst { 0% { transform: rotate(var(--a)) translateX(0) scale(1); opacity: 1; } 100% { transform: rotate(var(--a)) translateX(var(--d)) scale(.3); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .mq-idle, .mq-hit, .mq-attack, .mq-float, .mq-burst span { animation: none; } }
+
+/* ---------- Phase 2: battle arena, evolution, wardrobe */
+.mq-arena { position: relative; overflow: hidden; border-radius: 1.4rem; border: 4px solid #1b4fb3; box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+.mq-arena-bg { position: absolute; inset: 0; background: radial-gradient(600px 260px at 50% 20%, #bfe9ff, transparent 70%), linear-gradient(180deg, #7ccbff 0%, #a8e6a1 48%, #5cbf63 100%); }
+.mq-field { position: relative; height: 330px; }
+@media (min-width: 640px) { .mq-field { height: 380px; } }
+.mq-plate { position: absolute; width: min(46%, 230px); border-radius: 1rem; background: rgba(11,37,102,.88); border: 3px solid #1b4fb3; padding: .4rem .6rem; }
+.mq-plate-opp { left: 2%; top: 2%; } .mq-plate-player { right: 2%; bottom: 2%; }
+.mq-mon-opp { position: absolute; right: 8%; top: 4%; transition: transform .25s, opacity .5s; } .mq-mon-player { position: absolute; left: 6%; bottom: 3%; transition: transform .25s, opacity .5s; }
+.mq-mon-opp.is-attacking-opp { transform: translate(-90px, 70px) scale(1.1); } .mq-mon-player.is-attacking-player { transform: translate(110px, -80px) scale(1.1); }
+.mq-mon-opp.is-hit, .mq-mon-player.is-hit { animation: mq-hit .5s linear; }
+.mq-mon-opp.is-fainted, .mq-mon-player.is-fainted { opacity: 0; transform: translateY(40px) scale(.6); }
+.mq-mon-opp svg, .mq-mon-player svg { width: clamp(100px, 26vw, 170px); height: auto; }
+.mq-trainer-corner { position: absolute; right: 4%; top: 36%; opacity: .0; pointer-events: none; }
+.mq-log { background: rgba(11,37,102,.92); color: #fff; border: 3px solid #1b4fb3; border-radius: 1rem; padding: .6rem .9rem; font-weight: 800; min-height: 3rem; }
+.mq-avatar-stage { display: flex; align-items: center; justify-content: center; width: 100%; padding: .5rem; border-radius: 1.2rem; background: radial-gradient(circle at 50% 70%, #7dd3fc, #3b82f6); }
+.mq-evolve-aura { position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(255,255,255,.9), rgba(120,180,255,.0) 60%); animation: mq-aura 2.2s ease-in forwards; }
+.mq-evolve-mon { position: relative; animation: mq-evolve-pulse 2.2s ease-in forwards; }
+.mq-evolve-flash { position: absolute; inset: 0; background: #fff; opacity: 0; transition: opacity .35s; } .mq-evolve-flash.is-on { opacity: 1; }
+@keyframes mq-aura { 0% { opacity: 0; transform: scale(.3); } 100% { opacity: 1; transform: scale(1.6); } }
+@keyframes mq-evolve-pulse { 0% { filter: brightness(1); transform: scale(1); } 25% { filter: brightness(2.2) saturate(0); transform: scale(1.12); } 50% { filter: brightness(1); transform: scale(.95); } 75% { filter: brightness(3) saturate(0); transform: scale(1.2); } 100% { filter: brightness(6) saturate(0); transform: scale(1.35); } }

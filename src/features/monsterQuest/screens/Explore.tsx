@@ -64,9 +64,6 @@ export function Explore() {
               </Panel>
             );
           })}
-          {['Jungle', 'Volcano', 'Ocean', 'Crystal Cave', 'Monster City'].length > 0 && (
-            <Panel className="opacity-60"><p className="font-display text-lg font-extrabold text-white">More worlds coming</p><p className="mt-1 text-xs font-semibold text-white/75">Jungle, Volcano, Ocean, Crystal Cave and Monster City are planned for Phase 2. They will appear here automatically once added to the database.</p></Panel>
-          )}
         </div>
       </div>
     );
@@ -84,7 +81,7 @@ export function Explore() {
       </div>
 
       <div className="relative h-[58vh] min-h-[340px] overflow-hidden rounded-2xl border-4 border-[#1b4fb3] shadow-lg">
-        <ExploreCanvas zoneId={zone.id} palette={zone.palette} paused={!!encounter} pad={pad} onStep={onStep} />
+        <ExploreCanvas zoneId={zone.id} palette={zone.palette} paused={!!encounter} pad={pad} onStep={onStep} look={mq.look} />
         <div className="pointer-events-none absolute left-2 top-2 rounded-xl bg-black/35 px-2.5 py-1 text-[11px] font-bold text-white">Walk through the <span className="text-green-300">tall grass</span> to find monsters</div>
         <DPadControl pad={pad} forceShow={showPad} />
         <div className="absolute bottom-3 right-3">

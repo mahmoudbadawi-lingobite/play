@@ -3,7 +3,9 @@ import * as api from '../api';
 import { MAX_TEAM, RARITY_META, STAT_MAX, TYPE_META, TYPE_ORDER } from '../config';
 import { useMq } from '../context';
 import { MonsterArt } from '../art/MonsterArt';
-import { GameButton, Modal, Panel, RarityBadge, StatRow, TypeBadge } from '../ui';
+import { Bar, GameButton, Modal, Panel, RarityBadge, StatRow, TypeBadge } from '../ui';
+import { TrainModal } from './TrainModal';
+import { EvolveModal } from './EvolveModal';
 import type { ElementType, OwnedMonster, Rarity } from '../types';
 
 export function Collection() {
@@ -15,6 +17,9 @@ export function Collection() {
   const [favOnly, setFavOnly] = useState(false);
   const [open, setOpen] = useState<OwnedMonster | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [train, setTrain] = useState<OwnedMonster | null>(null);
+  const [evo, setEvo] = useState<OwnedMonster | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   const team = useMemo(() => mq.monsters.filter((m) => m.team_slot).sort((a, b) => a.team_slot! - b.team_slot!), [mq.monsters]);
   const list = useMemo(() => {
@@ -51,7 +56,7 @@ export function Collection() {
               {m && sp ? (<><MonsterArt spec={sp.art} spriteUrl={sp.sprite_url} size={58} anim="none" /><span className="text-[11px] font-bold">{sp.name}</span></>) : <span className="text-xs font-bold opacity-60">Slot {i + 1}</span>}
             </button>); })}
         </div>
-        <p className="mt-2 text-xs font-semibold text-white/70">Your team is saved to your account. It will be used in the Battle Arena when that opens.</p>
+        <p className="mt-2 text-xs font-semibold text-white/70">Your team is saved to your account and is used in the Battle Arena.</p>
       </Panel>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -77,7 +82,7 @@ export function Collection() {
       </div>
 
       {open && (() => { const m = mq.monsters.find((x) => x.id === open.id) ?? open; const sp = mq.speciesById.get(m.species_id)!; return (
-        <Modal onClose={() => setOpen(null)}>
+        <Modal onClose={() => { setOpen(null); setToast(null); }}>
           <div className="text-center">
             <MonsterArt spec={sp.art} spriteUrl={sp.sprite_url} size={150} />
             <p className="font-display text-2xl font-extrabold text-[#10285a]">{m.nickname || sp.name}</p>
@@ -88,13 +93,27 @@ export function Collection() {
             <StatRow label="HP" value={m.hp} max={STAT_MAX.hp} color="#22c55e" /><StatRow label="ATK" value={m.attack} max={STAT_MAX.attack} color="#ef4444" />
             <StatRow label="DEF" value={m.defense} max={STAT_MAX.defense} color="#3b82f6" /><StatRow label="SPD" value={m.speed} max={STAT_MAX.speed} color="#facc15" />
           </div>
-          <p className="mt-2 text-center text-xs font-semibold text-[#3d5a94]">Stage 1 · Caught {new Date(m.captured_at).toLocaleDateString()}{m.zone_id ? ` in the ${mq.zones.find((z) => z.id === m.zone_id)?.name ?? m.zone_id}` : ''}</p>
+          <div className="mt-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#3d5a94]"><span className="w-12">XP</span><div className="flex-1"><Bar pct={(m.xp / (20 + m.level * 10)) * 100} color="linear-gradient(90deg,#38bdf8,#818cf8)" label="Monster XP" /></div><span className="tabular-nums">{m.xp}/{20 + m.level * 10}</span></div>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <GameButton tone="blue" onClick={() => { setOpen(null); setTrain(m); }}>🥋 Train</GameButton>
+            {sp.evolves_to ? <GameButton tone="gold" onClick={() => { setOpen(null); setEvo(m); }}>✨ Evolve</GameButton> : <GameButton tone="ghost" disabled className="!text-[#10285a]">Final form</GameButton>}
+          </div>
+          {mq.items.filter((i) => i.kind === 'booster' && (mq.state.inventory[i.key] ?? 0) > 0).map((i) => (
+            <GameButton key={i.key} tone="ghost" className="mt-2 w-full !text-[#10285a]" onClick={() => run(async () => { const r = await api.useItem(i.key, m.id); setToast(`${i.name}: +${i.effect} XP${r.levels_gained ? `, level up to ${r.level}!` : ''}`); })}>
+              🍬 Use {i.name} (x{mq.state.inventory[i.key]})
+            </GameButton>))}
+          {toast && <p className="mt-2 text-center text-sm font-extrabold text-green-700" role="status">{toast}</p>}
+          <p className="mt-2 text-center text-xs font-semibold text-[#3d5a94]">Stage {sp.stage} · Caught {new Date(m.captured_at).toLocaleDateString()}{m.zone_id ? ` in the ${mq.zones.find((z) => z.id === m.zone_id)?.name ?? m.zone_id}` : ''}</p>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <GameButton tone={m.favorite ? 'gold' : 'ghost'} className="!text-[#10285a]" onClick={() => run(() => api.toggleFavorite(m.id))}>{m.favorite ? '⭐ Favorite' : '☆ Favorite'}</GameButton>
             <GameButton tone={m.team_slot ? 'red' : 'green'} onClick={() => toggleTeam(m)}>{m.team_slot ? 'Remove from team' : 'Add to team'}</GameButton>
           </div>
           <GameButton tone="blue" className="mt-2 w-full" onClick={() => setOpen(null)}>Close</GameButton>
         </Modal>); })()}
+      {train && <TrainModal monster={train} onClose={() => setTrain(null)} />}
+      {evo && <EvolveModal monster={evo} onClose={() => setEvo(null)} />}
     </div>
   );
 }

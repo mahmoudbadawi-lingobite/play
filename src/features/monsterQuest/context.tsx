@@ -1,12 +1,14 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import * as api from './api';
-import type { Item, OwnedMonster, PlayerState, Species, Zone } from './types';
+import { DEFAULT_LOOK } from './art/Trainer';
+import type { Cosmetic, Item, Look, OwnedMonster, PlayerState, Species, Zone } from './types';
 
 interface MqCtx {
   userId: string; name: string; isStaff: boolean;
   zones: Zone[]; species: Species[]; speciesById: Map<string, Species>; items: Item[]; itemsByKey: Map<string, Item>;
   state: PlayerState; monsters: OwnedMonster[];
+  cosmetics: Cosmetic[]; ownedCosmetics: Set<string>; look: Look;
   setState: (s: PlayerState) => void;
   refresh: () => Promise<void>;
 }
@@ -18,31 +20,38 @@ export function MqProvider({ children }: { children: ReactNode }) {
   const [defs, setDefs] = useState<{ zones: Zone[]; species: Species[]; items: Item[] } | null>(null);
   const [state, setState] = useState<PlayerState | null>(null);
   const [monsters, setMonsters] = useState<OwnedMonster[]>([]);
+  const [cos, setCos] = useState<{ cosmetics: Cosmetic[]; owned: string[] }>({ cosmetics: [], owned: [] });
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const userIdRef = useRef<string | null>(null); userIdRef.current = profile?.uid ?? null;
 
   const refresh = useCallback(async () => {
     const [s, m] = await Promise.all([api.getState(), api.loadMonsters()]);
     setState(s); setMonsters(m);
+    if (userIdRef.current) api.loadCosmetics(userIdRef.current).then(setCos).catch(() => undefined);
   }, []);
 
   useEffect(() => {
     let alive = true;
     setError(null);
-    Promise.all([api.loadDefinitions(), api.getState(), api.loadMonsters()])
-      .then(([d, s, m]) => { if (!alive) return; setDefs(d); setState(s); setMonsters(m); })
+    Promise.all([api.loadDefinitions(), api.getState(), api.loadMonsters(), profile ? api.loadCosmetics(profile.uid) : Promise.resolve({ cosmetics: [], owned: [] })])
+      .then(([d, s, m, c]) => { if (!alive) return; setDefs(d); setState(s); setMonsters(m); setCos(c); })
       .catch((e: Error) => alive && setError(e.message));
     return () => { alive = false; };
-  }, [attempt]);
+  }, [attempt, profile?.uid]);
 
   const value = useMemo<MqCtx | null>(() => {
     if (!defs || !state || !profile) return null;
+    const byKey = new Map(cos.cosmetics.map((c) => [c.key, c]));
+    const look: Look = { ...DEFAULT_LOOK };
+    for (const key of Object.values(state.outfit ?? {})) { const c = byKey.get(key); if (c) Object.assign(look, c.data); }
     return {
+      cosmetics: cos.cosmetics, ownedCosmetics: new Set(cos.owned), look,
       userId: profile.uid, name: profile.displayName ?? 'Trainer', isStaff: profile.role === 'teacher' || profile.role === 'admin',
       ...defs, speciesById: new Map(defs.species.map((s) => [s.id, s])), itemsByKey: new Map(defs.items.map((i) => [i.key, i])),
       state, monsters, setState, refresh,
     };
-  }, [defs, state, monsters, profile, refresh]);
+  }, [defs, state, monsters, profile, refresh, cos]);
 
   if (error) {
     const missing = /mq_|relation|function|schema cache/i.test(error);

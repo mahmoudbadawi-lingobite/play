@@ -26,7 +26,9 @@ export const walkable = (m: GameMap, x: number, y: number) => {
   return t === GROUND || t === PATH || t === TALL;
 };
 
-export function generateMap(zoneId: string): GameMap {
+export interface MapOpts { waterBias?: number; treeDensity?: number }
+
+export function generateMap(zoneId: string, opts: MapOpts = {}): GameMap {
   const rng = mulberry(hashStr(`monster-quest:${zoneId}`));
   const S = SIZE, tiles: Tile[] = new Array(S * S).fill(GROUND);
   const grassN = noiseField(rng, S, 5), waterN = noiseField(rng, S, 7);
@@ -35,8 +37,8 @@ export function generateMap(zoneId: string): GameMap {
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
     const i = y * S + x;
     if (grassN(x, y) > 0.5) tiles[i] = TALL;
-    if (waterN(x + 3, y + 5) > 0.72 && dist(x, y) > 5) tiles[i] = WATER;
-    else if (rng() < 0.09 && tiles[i] === GROUND) tiles[i] = TREE;
+    if (waterN(x + 3, y + 5) > 0.72 + (opts.waterBias ?? 0) && dist(x, y) > 5) tiles[i] = WATER;
+    else if (rng() < (opts.treeDensity ?? 0.09) && tiles[i] === GROUND) tiles[i] = TREE;
     else if (rng() < 0.03 && tiles[i] !== WATER) tiles[i] = ROCK;
     if (x === 0 || y === 0 || x === S - 1 || y === S - 1) tiles[i] = TREE;
   }

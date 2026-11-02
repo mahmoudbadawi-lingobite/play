@@ -2,6 +2,9 @@ import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { MqProvider, useMq } from './context';
 import { MqLogo } from './art/Logo';
+import { Arena } from './screens/Arena';
+import { Quests } from './screens/Quests';
+import { Wardrobe } from './screens/Wardrobe';
 import { Dashboard } from './screens/Dashboard';
 import { Explore } from './screens/Explore';
 import { Collection } from './screens/Collection';
@@ -16,7 +19,7 @@ import './monsterQuest.css';
 function Shell() {
   const mq = useMq();
   const nav = [
-    { to: '', icon: '🏠', label: 'Home', end: true }, { to: 'explore', icon: '🗺️', label: 'Explore' }, { to: 'monsters', icon: '🐾', label: 'Monsters' },
+    { to: '', icon: '🏠', label: 'Home', end: true }, { to: 'explore', icon: '🗺️', label: 'Explore' }, { to: 'monsters', icon: '🐾', label: 'Monsters' }, { to: 'arena', icon: '⚔️', label: 'Arena' }, { to: 'quests', icon: '📜', label: 'Quests' }, { to: 'style', icon: '👕', label: 'Style' },
     { to: 'dex', icon: '📖', label: 'Dex' }, { to: 'inventory', icon: '🎒', label: 'Bag' }, { to: 'shop', icon: '🛍️', label: 'Shop' },
     { to: 'leaderboard', icon: '🏆', label: 'Ranks' }, { to: 'profile', icon: '👤', label: 'Profile' },
     ...(mq.isStaff ? [{ to: 'questions', icon: '📝', label: 'Questions' }] : []),
@@ -31,14 +34,15 @@ function Shell() {
         <div className="md:grid md:grid-cols-[150px_1fr] md:gap-4">
           <nav className="mq-nav" aria-label="Monster Quest">
             {nav.map((n) => <NavLink key={n.label} to={n.to ? `/monster-quest/${n.to}` : '/monster-quest'} end={n.end} className={({ isActive }) => `mq-nav-item ${isActive ? 'is-active' : ''}`}><span className="text-xl">{n.icon}</span><span>{n.label}</span></NavLink>)}
-            <span className="mq-nav-item is-locked" aria-disabled="true" title="Coming in Phase 3"><span className="text-xl">⚔️</span><span>Arena</span></span>
-            <span className="mq-nav-item is-locked" aria-disabled="true" title="Coming in Phase 2"><span className="text-xl">📜</span><span>Quests</span></span>
           </nav>
           <main className="min-w-0">
             <Routes>
               <Route index element={<Dashboard />} />
               <Route path="explore" element={<Explore />} />
               <Route path="monsters" element={<Collection />} />
+              <Route path="arena" element={<Arena />} />
+              <Route path="quests" element={<Quests />} />
+              <Route path="style" element={<Wardrobe />} />
               <Route path="dex" element={<Encyclopedia />} />
               <Route path="inventory" element={<Inventory />} />
               <Route path="shop" element={<Shop />} />

@@ -3,9 +3,9 @@ import * as api from '../api';
 import { useMq } from '../context';
 import { GameButton, Panel, fmt } from '../ui';
 
-type Kind = 'xp' | 'monsters' | 'weekly';
+type Kind = 'xp' | 'monsters' | 'weekly' | 'wins';
 const TABS: { k: Kind; label: string; unit: string }[] = [
-  { k: 'xp', label: 'Highest XP', unit: 'XP' }, { k: 'monsters', label: 'Most monsters', unit: 'monsters' }, { k: 'weekly', label: 'This week', unit: 'caught' },
+  { k: 'xp', label: 'Highest XP', unit: 'XP' }, { k: 'monsters', label: 'Most monsters', unit: 'monsters' }, { k: 'weekly', label: 'Caught this week', unit: 'caught' }, { k: 'wins', label: 'Battle wins', unit: 'wins' },
 ];
 
 export function Leaderboard() {
@@ -31,7 +31,7 @@ export function Leaderboard() {
               <span className="w-24 text-right font-extrabold tabular-nums text-yellow-300">{fmt(Number(r.value))} <span className="text-[10px] opacity-70">{unit}</span></span>
             </li>))}
         </ol>
-        <p className="mt-3 text-xs font-semibold text-white/60">Battle wins and ranked points will join the board when the Battle Arena opens.</p>
+        <p className="mt-3 text-xs font-semibold text-white/60">Ranked points will join the boards when online battles open (Phase 3).</p>
       </Panel>
     </div>
   );

@@ -1,5 +1,5 @@
 import { supabase } from '../../lib/supabase';
-import type { AnswerResult, BankQuestion, Encounter, Item, OwnedMonster, PlayerState, Question, Species, ThrowResult, Zone } from './types';
+import type { AnswerResult, BankQuestion, Battle, Cosmetic, Encounter, Item, Mission, MonsterXpResult, OwnedMonster, PlayerState, Question, Species, ThrowResult, Zone } from './types';
 
 function fail(error: { message: string } | null): never {
   throw new Error(error?.message ?? 'Something went wrong');
@@ -19,10 +19,37 @@ export const flee = (id: string) => rpc<void>('mq_flee', { p_encounter: id });
 export const buy = (item: string, qty: number) => rpc<PlayerState>('mq_buy', { p_item: item, p_qty: qty });
 export const setTeam = (ids: string[]) => rpc<void>('mq_set_team', { p_ids: ids });
 export const toggleFavorite = (id: string) => rpc<void>('mq_toggle_favorite', { p_id: id });
-export const leaderboard = (kind: 'xp' | 'monsters' | 'weekly') =>
+export const leaderboard = (kind: 'xp' | 'monsters' | 'weekly' | 'wins') =>
   rpc<{ rank: number; user_id: string; display_name: string | null; value: number; level: number }[]>('mq_leaderboard', { p_kind: kind });
 
 // Definitions (read-only for students)
+export const trainStart = (monsterId: string) => rpc<{ id: string; monster_id: string; total_questions: number }>('mq_train_start', { p_monster: monsterId });
+export const evolve = (monsterId: string) => rpc<{ from: string; to: string; monster_id: string }>('mq_evolve', { p_monster: monsterId });
+export const useItem = (item: string, monsterId: string) => rpc<MonsterXpResult>('mq_use_item', { p_item: item, p_monster: monsterId });
+export const buyCosmetic = (key: string) => rpc<PlayerState>('mq_buy_cosmetic', { p_key: key });
+export const equip = (key: string) => rpc<PlayerState>('mq_equip', { p_key: key });
+export const missionsList = () => rpc<Mission[]>('mq_missions_list');
+export const claimMission = (key: string) => rpc<PlayerState>('mq_claim_mission', { p_key: key });
+export const battleStart = (zone: string, difficulty: string) => rpc<Battle>('mq_battle_start', { p_zone: zone, p_difficulty: difficulty });
+export const battleState = (id: string) => rpc<Battle>('mq_battle_state', { p_battle: id });
+export const battleAct = (id: string, action: string, arg?: string | null, answer?: unknown) =>
+  rpc<Battle>('mq_battle_act', { p_battle: id, p_action: action, p_arg: arg ?? null, p_answer: answer ?? null });
+export const battleForfeit = (id: string) => rpc<Battle>('mq_battle_forfeit', { p_battle: id });
+export async function activeBattleId(userId: string): Promise<string | null> {
+  const { data, error } = await supabase.from('mq_battles').select('id').eq('user_id', userId).eq('status', 'active').order('created_at', { ascending: false }).limit(1);
+  if (error) fail(error);
+  return data?.[0]?.id ?? null;
+}
+export async function loadCosmetics(userId: string): Promise<{ cosmetics: Cosmetic[]; owned: string[] }> {
+  const [c, o] = await Promise.all([
+    supabase.from('mq_cosmetics').select('*').eq('active', true).order('sort'),
+    supabase.from('mq_player_cosmetics').select('cosmetic_key').eq('user_id', userId),
+  ]);
+  if (c.error) fail(c.error);
+  if (o.error) fail(o.error);
+  return { cosmetics: c.data as Cosmetic[], owned: (o.data ?? []).map((r: any) => r.cosmetic_key as string) };
+}
+
 export async function loadDefinitions(): Promise<{ zones: Zone[]; species: Species[]; items: Item[] }> {
   const [z, s, i] = await Promise.all([
     supabase.from('mq_zones').select('*').eq('active', true).order('sort'),
