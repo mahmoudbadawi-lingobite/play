@@ -82,51 +82,54 @@ export function LibraryPage() {
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sets.map((set) => (
-            <div key={set.id} data-skill={set.skill} className="kid-set-card card-surface flex flex-col p-5">
-              <div className="flex items-center justify-between">
+            <div key={set.id} data-skill={set.skill} className="kid-set-card card-surface flex flex-col p-4">
+              <div className="flex items-center justify-between gap-2">
                 <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold capitalize text-muted-foreground">
                   {set.skill}
                 </span>
                 <span className="text-xs text-muted-foreground">{set.playCount} plays</span>
               </div>
-              <h3 className="mt-3 font-display text-lg font-semibold text-primary">{set.title}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">by {set.teacherName} · {set.items.length} items</p>
-              <div className="mt-3 flex flex-wrap gap-1.5">
+              <h3 className="mt-2 font-display text-base font-semibold leading-tight text-primary">{set.title}</h3>
+              <p className="text-xs text-muted-foreground">by {set.teacherName} · {set.items.length} items</p>
+              <div className="mt-2 flex flex-wrap gap-1">
                 {compatibleGames(set.items, set.skill).map((g) => (
-                  <span key={g.key} title={g.name} className="text-lg">{g.icon}</span>
+                  <span key={g.key} title={g.name} className="text-base leading-none">{g.icon}</span>
                 ))}
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="mt-3 grid grid-cols-[1.5fr_1fr] gap-2">
                 <Link
                   to={`/play/${set.id}`}
-                  className="rounded-lg bg-secondary px-4 py-2 text-center text-sm font-semibold text-secondary-foreground hover:opacity-90"
+                  className="whitespace-nowrap rounded-lg bg-secondary px-3 py-1.5 text-center text-sm font-semibold text-secondary-foreground hover:opacity-90"
                 >
                   Choose a game →
                 </Link>
                 <button
                   onClick={() => handleShare(set.id)}
-                  className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-primary hover:border-secondary"
+                  className="whitespace-nowrap rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-primary hover:border-secondary"
                 >
                   {copiedId === set.id ? '✓ Copied' : 'Copy link'}
                 </button>
               </div>
               {profile && (
-                <button
-                  onClick={() => handleReport(set.id)}
-                  disabled={reportedIds.includes(set.id)}
-                  className="mt-2 text-left text-xs text-muted-foreground hover:text-destructive disabled:text-success"
-                >
-                  {reportedIds.includes(set.id) ? '✓ Reported - thanks' : '⚑ Report this content'}
-                </button>
-              )}
-              {profile && (profile.uid === set.teacherId || profile.role === 'admin') && (
-                <div className="mt-2 flex gap-2">
-                  <Link to={`/teacher/edit/${set.id}`} className="text-xs font-semibold text-primary hover:text-secondary">
-                    Edit
-                  </Link>
-                  <button onClick={() => handleDelete(set.id, set.title)} className="text-xs font-semibold text-destructive hover:opacity-80">
-                    Delete
+                <div className="mt-2 flex items-center gap-3 text-xs">
+                  <button
+                    onClick={() => handleReport(set.id)}
+                    disabled={reportedIds.includes(set.id)}
+                    title="Report this content"
+                    className="text-left text-muted-foreground hover:text-destructive disabled:text-success"
+                  >
+                    {reportedIds.includes(set.id) ? '✓ Reported' : '⚑ Report'}
                   </button>
+                  {(profile.uid === set.teacherId || profile.role === 'admin') && (
+                    <>
+                      <Link to={`/teacher/edit/${set.id}`} className="font-semibold text-primary hover:text-secondary">
+                        Edit
+                      </Link>
+                      <button onClick={() => handleDelete(set.id, set.title)} className="font-semibold text-destructive hover:opacity-80">
+                        Delete
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
