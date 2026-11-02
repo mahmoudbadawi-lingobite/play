@@ -846,51 +846,154 @@ html[data-theme="kid"],
  * GAME LIBRARY CARDS  (one colour per skill)
  * ========================================================================== */
 [data-theme="kid"] .kid-set-card {
-  /* vibrant gradients, every stop keeps white text at >= 4.5:1 */
-  --c1: #d1480c;
-  --c2: #cf2f6a;
-  border: 0;
-  border-radius: 1.3rem;
-  color: #fff;
+  /* colours sampled from the approved design: --c1 light corner, --c2 deep corner,
+     --cloud soft glow behind the text, --deep badge + Copy-link button */
+  --c1: #3d9bff; --c2: #0a5de8; --cloud: #5fb4ff; --deep: #0a3fae;
+  --ink: #0f1f66;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding: 0.75rem 0.9rem 0.6rem;
+  border: 2px solid hsl(0 0% 100% / 0.55);
+  border-radius: 1.5rem;
+  color: var(--ink);
   background:
-    radial-gradient(70% 110% at 90% 120%, hsl(0 0% 100% / 0.12), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-9 -9 18 18'%3E%3Cpath fill='%23fff' fill-opacity='.55' d='M0-8 2.4-2.6 8-2 3.8 2 5 8 0 5-5 8-3.8 2-8-2-2.4-2.6Z'/%3E%3C/svg%3E") right 40% top 24% / 15px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-9 -9 18 18'%3E%3Cpath fill='%23fff' fill-opacity='.4' d='M0-8 2.4-2.6 8-2 3.8 2 5 8 0 5-5 8-3.8 2-8-2-2.4-2.6Z'/%3E%3C/svg%3E") right 7% bottom 28% / 22px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-9 -9 18 18'%3E%3Cpath fill='%23fff' fill-opacity='.55' d='M0-8 2.4-2.6 8-2 3.8 2 5 8 0 5-5 8-3.8 2-8-2-2.4-2.6Z'/%3E%3C/svg%3E") left 5% top 46% / 13px no-repeat,
+    radial-gradient(65% 55% at 66% 52%, var(--cloud), transparent 72%),
+    radial-gradient(90% 70% at 8% 0%, hsl(0 0% 100% / 0.38), transparent 60%),
     linear-gradient(135deg, var(--c1), var(--c2));
-  box-shadow: 0 10px 18px -14px hsl(222 70% 25% / 0.55), inset 0 2px 0 hsl(0 0% 100% / 0.22);
+  box-shadow:
+    0 12px 22px -12px var(--deep),
+    inset 0 0 0 2px hsl(0 0% 100% / 0.18),
+    inset 0 -10px 18px -8px hsl(0 0% 0% / 0.18);
+  transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 200ms ease;
 }
-[data-theme="kid"] .kid-set-card[data-skill="grammar"]  { --c1: #136fe7; --c2: #3e67ef; }
-[data-theme="kid"] .kid-set-card[data-skill="reading"]  { --c1: #0f8358; --c2: #0f853a; }
-[data-theme="kid"] .kid-set-card[data-skill="spelling"] { --c1: #934de2; --c2: #ad3adf; }
-[data-theme="kid"] .kid-set-card .text-primary,
-[data-theme="kid"] .kid-set-card h3 {
+[data-theme="kid"] .kid-set-card[data-skill="vocabulary"] { --c1: #4aa6fe; --c2: #015be2; --cloud: #4db2ff; --deep: #0a3fae; }
+[data-theme="kid"] .kid-set-card[data-skill="grammar"]    { --c1: #90db15; --c2: #3f9901; --cloud: #cffc58; --deep: #2d7a0a; }
+[data-theme="kid"] .kid-set-card[data-skill="reading"]    { --c1: #b761f2; --c2: #7227d4; --cloud: #e0b2fc; --deep: #55209f; }
+[data-theme="kid"] .kid-set-card[data-skill="spelling"]   { --c1: #fd7a14; --c2: #d74701; --cloud: #fec15d; --deep: #b13a02; }
+[data-theme="kid"] .kid-set-card[data-skill="listening"]  { --c1: #0db7b4; --c2: #028389; --cloud: #79fae3; --deep: #016a70; }
+[data-theme="kid"] .kid-set-card[data-skill="speaking"]   { --c1: #fd6285; --c2: #d81f49; --cloud: #feb6c7; --deep: #b01a3e; }
+[data-theme="kid"] .kid-set-card[data-skill="writing"]    { --c1: #b64ef0; --c2: #7125ce; --cloud: #e3a6fe; --deep: #54199a; }
+[data-theme="kid"] .kid-set-card[data-skill="future"]     { --c1: #36d8c5; --c2: #029896; --cloud: #7ef0dc; --deep: #017a78; }
+[data-theme="kid"] .kid-set-card[data-skill="revision"]   { --c1: #fdb01b; --c2: #dd7800; --cloud: #ffd36b; --deep: #b35f00; }
+
+/* playful hover / click, same feel as the sidebar */
+[data-theme="kid"] .kid-set-card:hover {
+  transform: translateY(-5px) rotate(-0.6deg) scale(1.015);
+  box-shadow:
+    0 20px 28px -14px var(--deep),
+    inset 0 0 0 2px hsl(0 0% 100% / 0.3),
+    inset 0 -10px 18px -8px hsl(0 0% 0% / 0.18);
+}
+[data-theme="kid"] .kid-set-card:active {
+  transform: translateY(0) scale(0.985);
+  transition-duration: 90ms;
+}
+[data-theme="kid"] .kid-set-card:hover .kid-sc-art {
+  animation: kid-sc-bounce 700ms ease-in-out;
+}
+@keyframes kid-sc-bounce {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  30% { transform: translateY(-9px) rotate(-5deg) scale(1.06); }
+  60% { transform: translateY(0) rotate(3deg); }
+  80% { transform: translateY(-3px); }
+}
+
+/* top row: white title pill + dark plays badge */
+[data-theme="kid"] .kid-sc-top { align-items: flex-start; }
+[data-theme="kid"] .kid-set-card span.kid-sc-pill {
+  padding: 0.3rem 1.05rem 0.38rem;
+  background: #fff;
+  color: #0f1f66;
+  font-family: 'Baloo 2', 'Nunito', system-ui, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 hsl(0 0% 0% / 0.14), 0 6px 10px -4px hsl(0 0% 0% / 0.3);
+}
+[data-theme="kid"] .kid-set-card .kid-sc-plays {
+  margin-top: 0.15rem;
+  padding: 0.22rem 0.7rem;
+  border-radius: 999px;
+  background: var(--deep);
   color: #fff;
+  font-size: 0.74rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
-[data-theme="kid"] .kid-set-card h3 {
-  font-size: 1.1rem;
+
+/* body: illustration left, text + buttons right */
+[data-theme="kid"] .kid-sc-body {
+  display: grid;
+  grid-template-columns: 36% minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.1rem;
 }
-[data-theme="kid"] .kid-set-card .text-muted-foreground {
+[data-theme="kid"] .kid-sc-art {
+  align-self: end;
+  filter: drop-shadow(0 6px 5px hsl(0 0% 0% / 0.28));
+  transform-origin: 50% 90%;
+}
+[data-theme="kid"] .kid-sc-art svg { display: block; width: 100%; height: auto; overflow: visible; }
+[data-theme="kid"] .kid-sc-main { min-width: 0; }
+[data-theme="kid"] .kid-set-card h3.kid-sc-title {
+  margin-top: 0;
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.15;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+[data-theme="kid"] .kid-set-card .kid-sc-by {
+  color: var(--ink);
+  opacity: 0.85;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+[data-theme="kid"] .kid-sc-actions { gap: 0.4rem; margin-top: 0.55rem; }
+[data-theme="kid"] .kid-sc-actions a,
+[data-theme="kid"] .kid-sc-actions button {
+  padding: 0.38rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+[data-theme="kid"] .kid-set-card a.bg-secondary { color: #0f1f66; }
+[data-theme="kid"] .kid-set-card button.kid-sc-copy {
+  border: 2px solid #fff;
+  background: var(--deep);
   color: #fff;
+  font-weight: 800;
 }
-[data-theme="kid"] .kid-set-card span.rounded-full.bg-muted {
-  background-color: #fff;
-  color: #12309c;
-}
-/* secondary button: dark glass instead of pale glass, so the white label stays readable */
-[data-theme="kid"] .kid-set-card button.border-border {
-  border-color: hsl(0 0% 100% / 0.85);
-  background: hsl(222 70% 15% / 0.3);
+[data-theme="kid"] .kid-set-card button.kid-sc-copy:hover { filter: brightness(1.15); }
+
+/* footer row: Report / Edit / Delete, white on the deep edge of the card */
+[data-theme="kid"] .kid-sc-foot { justify-content: center; }
+[data-theme="kid"] .kid-set-card .kid-sc-foot > * {
   color: #fff;
+  font-weight: 700;
+  text-shadow: 0 1px 2px hsl(0 0% 0% / 0.55);
 }
-[data-theme="kid"] .kid-set-card button.border-border:hover {
-  background: hsl(222 70% 15% / 0.45);
-}
-[data-theme="kid"] .kid-set-card .text-destructive,
-[data-theme="kid"] .kid-set-card a.text-primary {
-  color: #fff;
+[data-theme="kid"] .kid-set-card .kid-sc-foot a,
+[data-theme="kid"] .kid-set-card .kid-sc-foot button:not(:first-child) {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-[data-theme="kid"] .kid-set-card .disabled\:text-success:disabled {
-  color: #fff;
+[data-theme="kid"] .kid-set-card .kid-sc-foot button:disabled { color: #fff; }
+
+@media (max-width: 420px) {
+  [data-theme="kid"] .kid-sc-body { grid-template-columns: 30% minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="kid"] .kid-set-card,
+  [data-theme="kid"] .kid-set-card:hover .kid-sc-art { transition: none; animation: none; }
+  [data-theme="kid"] .kid-set-card:hover { transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

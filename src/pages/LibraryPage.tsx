@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listPublicContentSets, reportContentSet, deleteContentSet } from '../lib/services';
-import { compatibleGames } from '../games/registry';
+import { SkillArt } from '../components/library/SkillArt';
 import { useAuth } from '../contexts/AuthContext';
 import type { ContentSet, SkillTemplate } from '../types';
 
@@ -83,35 +83,35 @@ export function LibraryPage() {
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sets.map((set) => (
             <div key={set.id} data-skill={set.skill} className="kid-set-card card-surface flex flex-col p-4">
-              <div className="flex items-center justify-between gap-2">
-                <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold capitalize text-muted-foreground">
+              <div className="kid-sc-top flex items-center justify-between gap-2">
+                <span className="kid-sc-pill rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold capitalize text-muted-foreground">
                   {set.skill}
                 </span>
-                <span className="text-xs text-muted-foreground">{set.playCount} plays</span>
+                <span className="kid-sc-plays text-xs text-muted-foreground">{set.playCount} plays</span>
               </div>
-              <h3 className="mt-2 font-display text-base font-semibold leading-tight text-primary">{set.title}</h3>
-              <p className="text-xs text-muted-foreground">by {set.teacherName} · {set.items.length} items</p>
-              <div className="mt-2 flex flex-wrap gap-1">
-                {compatibleGames(set.items, set.skill).map((g) => (
-                  <span key={g.key} title={g.name} className="text-base leading-none">{g.icon}</span>
-                ))}
-              </div>
-              <div className="mt-3 grid grid-cols-[1.5fr_1fr] gap-2">
-                <Link
-                  to={`/play/${set.id}`}
-                  className="whitespace-nowrap rounded-lg bg-secondary px-3 py-1.5 text-center text-sm font-semibold text-secondary-foreground hover:opacity-90"
-                >
-                  Choose a game →
-                </Link>
-                <button
-                  onClick={() => handleShare(set.id)}
-                  className="whitespace-nowrap rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-primary hover:border-secondary"
-                >
-                  {copiedId === set.id ? '✓ Copied' : 'Copy link'}
-                </button>
+              <div className="kid-sc-body">
+                <SkillArt skill={set.skill} className="kid-sc-art kid-only" />
+                <div className="kid-sc-main">
+                  <h3 className="kid-sc-title mt-2 font-display text-base font-semibold leading-tight text-primary">{set.title}</h3>
+                  <p className="kid-sc-by text-xs text-muted-foreground">by {set.teacherName} · {set.items.length} items</p>
+                  <div className="kid-sc-actions mt-3 grid grid-cols-[1.5fr_1fr] gap-2">
+                    <Link
+                      to={`/play/${set.id}`}
+                      className="whitespace-nowrap rounded-lg bg-secondary px-3 py-1.5 text-center text-sm font-semibold text-secondary-foreground hover:opacity-90"
+                    >
+                      Choose a game →
+                    </Link>
+                    <button
+                      onClick={() => handleShare(set.id)}
+                      className="kid-sc-copy whitespace-nowrap rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-primary hover:border-secondary"
+                    >
+                      {copiedId === set.id ? '✓ Copied' : 'Copy link'}
+                    </button>
+                  </div>
+                </div>
               </div>
               {profile && (
-                <div className="mt-2 flex items-center gap-3 text-xs">
+                <div className="kid-sc-foot mt-2 flex items-center gap-3 text-xs">
                   <button
                     onClick={() => handleReport(set.id)}
                     disabled={reportedIds.includes(set.id)}
