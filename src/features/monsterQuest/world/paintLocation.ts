@@ -2,7 +2,7 @@
 import { Field, CELL } from './collision';
 import { footprints, propSprite, propSpec, type Sprite } from './paintProps';
 import type { LocationDef, PropDef, ZoneDef, Pt, PathDef, LiquidKind, LiquidDef } from './types';
-import { blobPoly, darken, lighten, makeNoise, mix, outline, pointInPoly, rgba, rng, smooth, hex2rgb } from './util';
+import { darken, lighten, makeNoise, mix, outline, pointInPoly, rgba, rng, smooth, hex2rgb } from './util';
 
 type C = CanvasRenderingContext2D;
 const TAU = Math.PI * 2;
@@ -89,7 +89,7 @@ function paintLiquid(c: C, def: LocationDef, L: LiquidDef, glowPass: boolean) {
 }
 
 // --------------------------------------------------------------------------------------------------- bridges
-function paintBridge(c: C, def: LocationDef, b: { a: Pt; b: Pt; width: number; kind?: string }) {
+function paintBridge(c: C, b: { a: Pt; b: Pt; width: number; kind?: string }) {
   const [ax, ay] = b.a, [bx, by] = b.b, len = Math.hypot(bx - ax, by - ay), ang = Math.atan2(by - ay, bx - ax), hw = b.width / 2;
   c.save(); c.translate((ax + bx) / 2, (ay + by) / 2); c.rotate(ang);
   const L = len / 2 + 20; // overhang onto both banks
@@ -144,7 +144,7 @@ function paintBase(c: C, def: LocationDef, noise: (x: number, y: number) => numb
   }
 }
 
-function paintFloorShape(c: C, def: LocationDef, pts: Pt[], r: () => number, face: number, opts: { top: string; faceCol: string; rim: string }) {
+function paintFloorShape(c: C, pts: Pt[], r: () => number, face: number, opts: { top: string; faceCol: string; rim: string }) {
   const poly = smooth(pts, 8, true);
   // soft contact shadow + glow below
   c.save(); c.translate(0, face);
@@ -230,13 +230,13 @@ export function bakeLocation(def: LocationDef): Baked {
     if (def.base === 'lava') for (const f of def.floors ?? []) { c.save(); c.shadowColor = rgba(pal.lava.glow, 0.85); c.shadowBlur = 56; c.fillStyle = pal.lava.glow; strokePoly(c, smooth(f.pts, 8, true), true); c.fill(); c.restore(); }
     if (def.base === 'rock') for (const f of def.floors ?? []) { c.save(); c.shadowColor = rgba(pal.lava.glow, 0.55); c.shadowBlur = 70; c.fillStyle = pal.lava.mid; strokePoly(c, smooth(f.pts, 8, true), true); c.fill(); c.restore(); }
     for (const f of def.floors ?? []) {
-      paintFloorShape(c, def, f.pts, r, f.face ?? 26, { top: floorTop, faceCol: def.base === 'lava' ? '#4e3a40' : '#2c2028', rim: def.base === 'lava' ? 'rgba(255,236,190,.55)' : rgba(pal.lava.glow, 0.5) });
+      paintFloorShape(c, f.pts, r, f.face ?? 26, { top: floorTop, faceCol: def.base === 'lava' ? '#4e3a40' : '#2c2028', rim: def.base === 'lava' ? 'rgba(255,236,190,.55)' : rgba(pal.lava.glow, 0.5) });
       white(() => { strokePoly(m, smooth(f.pts, 8, true), true); m.fill(); });
     }
   }
   for (const p of def.plateaus ?? []) {
     const face = p.face ?? 34, poly = smooth(p.pts, 8, true);
-    paintFloorShape(c, def, p.pts, r, face, { top: mix(pal.ground[1], pal.ground[0], 0.35), faceCol: pal.cliff[1], rim: rgba(lighten(pal.cliff[0], 0.5), 0.6) });
+    paintFloorShape(c, p.pts, r, face, { top: mix(pal.ground[1], pal.ground[0], 0.35), faceCol: pal.cliff[1], rim: rgba(lighten(pal.cliff[0], 0.5), 0.6) });
     // solid face band, walkable top, solid lip; paths drawn later carve ramps through all of it
     black(() => { m.save(); m.translate(0, face); strokePoly(m, poly, true); m.fill(); m.lineWidth = 30; m.stroke(); m.restore(); });
     white(() => { strokePoly(m, poly, true); m.fill(); });
@@ -285,7 +285,7 @@ export function bakeLocation(def: LocationDef): Baked {
   }
 
   // ---- bridges
-  for (const b of def.bridges) { paintBridge(c, def, b); const [ax, ay] = b.a, [bx, by] = b.b, len = Math.hypot(bx - ax, by - ay), ang = Math.atan2(by - ay, bx - ax); white(() => { m.save(); m.translate((ax + bx) / 2, (ay + by) / 2); m.rotate(ang); m.fillRect(-len / 2 - 30, -b.width / 2 + 4, len + 60, b.width - 8); m.restore(); }); }
+  for (const b of def.bridges) { paintBridge(c, b); const [ax, ay] = b.a, [bx, by] = b.b, len = Math.hypot(bx - ax, by - ay), ang = Math.atan2(by - ay, bx - ax); white(() => { m.save(); m.translate((ax + bx) / 2, (ay + by) / 2); m.rotate(ang); m.fillRect(-len / 2 - 30, -b.width / 2 + 4, len + 60, b.width - 8); m.restore(); }); }
 
 
   // ---- gateway art painted into the ground (caves, portals, doorways)

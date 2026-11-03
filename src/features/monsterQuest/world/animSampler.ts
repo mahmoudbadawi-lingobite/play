@@ -9,7 +9,10 @@ export class AnimSampler {
   private els = new Map<string, HTMLImageElement>();
   private host: HTMLElement;
   private paused = false;
-  constructor(host: HTMLElement, private base: string, private size = 100) {
+  private base: string;
+  private size: number;
+  constructor(host: HTMLElement, base: string, size = 100) {
+    this.base = base; this.size = size;
     this.host = document.createElement('div');
     this.host.setAttribute('aria-hidden', 'true');
     this.host.style.cssText = 'position:absolute;left:-10000px;top:0;width:1px;height:1px;overflow:visible;pointer-events:none;visibility:hidden';

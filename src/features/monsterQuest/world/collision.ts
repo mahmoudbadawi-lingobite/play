@@ -30,7 +30,9 @@ function edt(f: Float64Array, w: number, h: number) {
 export class Field {
   readonly gw: number; readonly gh: number;
   readonly dist: Float32Array;
-  constructor(readonly w: number, readonly h: number, readonly blocked: Uint8Array, readonly slow: Uint8Array) {
+  readonly w: number; readonly h: number; readonly blocked: Uint8Array; readonly slow: Uint8Array;
+  constructor(w: number, h: number, blocked: Uint8Array, slow: Uint8Array) {
+    this.w = w; this.h = h; this.blocked = blocked; this.slow = slow;
     this.gw = Math.ceil(w / CELL); this.gh = Math.ceil(h / CELL);
     const f = new Float64Array(this.gw * this.gh);
     for (let i = 0; i < f.length; i++) f[i] = blocked[i] ? 0 : INF;

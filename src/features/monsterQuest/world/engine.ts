@@ -1,5 +1,5 @@
 /** The free-roam world: input, movement, camera, rendering, interactions, encounters and location transitions. */
-import { bakeLocation, PLAYER_R, type Baked, type PlacedProp } from './paintLocation';
+import { bakeLocation, PLAYER_R, type Baked } from './paintLocation';
 import { drawMarker, glow, npcSprite, propSprite, shadowEll } from './paintProps';
 import { AnimSampler, drawPose } from './animSampler';
 import { LOCATIONS } from './locations';
@@ -58,7 +58,6 @@ export class WorldEngine {
   private ripples: { x: number; y: number; t: number }[] = [];
   private stuckT = 0; private reduced: boolean; private destroyed = false; private shake = 0;
   private visited: Set<string>;
-  private visibleProps: PlacedProp[] = [];
   private ro: ResizeObserver;
   private handlers: [EventTarget, string, EventListener][] = [];
 
