@@ -939,7 +939,7 @@ html[data-theme="kid"],
   filter: drop-shadow(0 6px 5px hsl(0 0% 0% / 0.28));
   transform-origin: 50% 90%;
 }
-[data-theme="kid"] .kid-sc-art svg { display: block; width: 100%; height: auto; overflow: visible; }
+[data-theme="kid"] .kid-sc-art img { display: block; width: 100%; height: auto; max-height: 8.5rem; object-fit: contain; object-position: 50% 100%; user-select: none; }
 [data-theme="kid"] .kid-sc-main { min-width: 0; }
 [data-theme="kid"] .kid-set-card h3.kid-sc-title {
   margin-top: 0;
