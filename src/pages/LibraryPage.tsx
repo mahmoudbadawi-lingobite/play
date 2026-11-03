@@ -95,14 +95,14 @@ export function LibraryPage() {
                 <div className="kid-sc-main">
                   <div className="kid-sc-text">
                     <h3 className="kid-sc-title mt-2 font-display text-base font-semibold leading-tight text-primary">{set.title}</h3>
-                    <p className="kid-sc-by text-xs text-muted-foreground">by {set.teacherName} · {set.items.length} items</p>
+                    <p className="kid-sc-by text-xs text-muted-foreground">by <bdi>{set.teacherName}</bdi> · {set.items.length} items</p>
                   </div>
                   <div className="kid-sc-actions mt-3 grid grid-cols-[1.5fr_1fr] gap-2">
                     <Link
                       to={`/play/${set.id}`}
                       className="whitespace-nowrap rounded-lg bg-secondary px-3 py-1.5 text-center text-sm font-semibold text-secondary-foreground hover:opacity-90"
                     >
-                      Choose a game →
+                      Choose a game
                     </Link>
                     <button
                       onClick={() => handleShare(set.id)}
