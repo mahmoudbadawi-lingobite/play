@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listPublicContentSets, reportContentSet, deleteContentSet } from '../lib/services';
 import { SkillArt } from '../components/library/SkillArt';
+import { CheckIcon, EditIcon, FlagIcon, LinkIcon, TrashIcon } from '../components/library/CardIcons';
 import { useAuth } from '../contexts/AuthContext';
 import type { ContentSet, SkillTemplate } from '../types';
 
@@ -92,8 +93,10 @@ export function LibraryPage() {
               <div className="kid-sc-body">
                 <SkillArt skill={set.skill} className="kid-sc-art kid-only" />
                 <div className="kid-sc-main">
-                  <h3 className="kid-sc-title mt-2 font-display text-base font-semibold leading-tight text-primary">{set.title}</h3>
-                  <p className="kid-sc-by text-xs text-muted-foreground">by {set.teacherName} · {set.items.length} items</p>
+                  <div className="kid-sc-text">
+                    <h3 className="kid-sc-title mt-2 font-display text-base font-semibold leading-tight text-primary">{set.title}</h3>
+                    <p className="kid-sc-by text-xs text-muted-foreground">by {set.teacherName} · {set.items.length} items</p>
+                  </div>
                   <div className="kid-sc-actions mt-3 grid grid-cols-[1.5fr_1fr] gap-2">
                     <Link
                       to={`/play/${set.id}`}
@@ -103,9 +106,12 @@ export function LibraryPage() {
                     </Link>
                     <button
                       onClick={() => handleShare(set.id)}
+                      title="Copy link"
+                      aria-label="Copy link"
                       className="kid-sc-copy whitespace-nowrap rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-primary hover:border-secondary"
                     >
-                      {copiedId === set.id ? '✓ Copied' : 'Copy link'}
+                      {copiedId === set.id ? <CheckIcon className="kid-sc-ico" /> : <LinkIcon className="kid-sc-ico" />}
+                      <span className="kid-sc-copy-text">{copiedId === set.id ? '✓ Copied' : 'Copy link'}</span>
                     </button>
                   </div>
                 </div>
@@ -115,18 +121,27 @@ export function LibraryPage() {
                   <button
                     onClick={() => handleReport(set.id)}
                     disabled={reportedIds.includes(set.id)}
-                    title="Report this content"
-                    className="text-left text-muted-foreground hover:text-destructive disabled:text-success"
+                    title={reportedIds.includes(set.id) ? 'Reported - thanks' : 'Report this content'}
+                    aria-label="Report this content"
+                    className="kid-sc-act text-left text-muted-foreground hover:text-destructive disabled:text-success"
                   >
-                    {reportedIds.includes(set.id) ? '✓ Reported' : '⚑ Report'}
+                    {reportedIds.includes(set.id) ? <CheckIcon className="kid-sc-ico" /> : <FlagIcon className="kid-sc-ico" />}
+                    <span className="kid-sc-lbl">{reportedIds.includes(set.id) ? '✓ Reported' : 'Report'}</span>
                   </button>
                   {(profile.uid === set.teacherId || profile.role === 'admin') && (
                     <>
-                      <Link to={`/teacher/edit/${set.id}`} className="font-semibold text-primary hover:text-secondary">
-                        Edit
+                      <Link to={`/teacher/edit/${set.id}`} title="Edit" aria-label="Edit" className="kid-sc-act font-semibold text-primary hover:text-secondary">
+                        <EditIcon className="kid-sc-ico" />
+                        <span className="kid-sc-lbl">Edit</span>
                       </Link>
-                      <button onClick={() => handleDelete(set.id, set.title)} className="font-semibold text-destructive hover:opacity-80">
-                        Delete
+                      <button
+                        onClick={() => handleDelete(set.id, set.title)}
+                        title="Delete"
+                        aria-label="Delete"
+                        className="kid-sc-act kid-sc-del font-semibold text-destructive hover:opacity-80"
+                      >
+                        <TrashIcon className="kid-sc-ico" />
+                        <span className="kid-sc-lbl">Delete</span>
                       </button>
                     </>
                   )}
