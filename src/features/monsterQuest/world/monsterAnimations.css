@@ -1,0 +1,126 @@
+.mon{transform-origin:50% 100%;will-change:transform,filter}
+/* ===== Monster animations 1-20. Each class goes on the <img>. transform-origin is bottom-centre unless noted. ===== */
+/* 1 Flamora: flickering flame hops */
+.a-flamora{animation:flamora 1.8s ease-in-out infinite}
+@keyframes flamora{0%,100%{transform:translateY(0) scale(1,1);filter:brightness(1) saturate(1) drop-shadow(0 0 4px #ff8a2a88)}20%{transform:translateY(-6px) scale(1.03,.98);filter:brightness(1.15) saturate(1.2) drop-shadow(0 0 12px #ffb02ecc)}40%{transform:translateY(0) scale(.98,1.02);filter:brightness(1.05) drop-shadow(0 0 6px #ff6a1a99)}60%{transform:translateY(-14px) rotate(-3deg);filter:brightness(1.2) saturate(1.3) drop-shadow(0 0 16px #ffc040)}80%{transform:translateY(0) scale(1.04,.94);filter:brightness(1)}}
+/* 2 Drakko: wing-flap hover */
+.a-drakko{animation:drakko 1.2s ease-in-out infinite}
+@keyframes drakko{0%,100%{transform:translateY(-4px) scale(1,1)}25%{transform:translateY(-22px) scale(1.08,.95) rotate(-2deg)}50%{transform:translateY(-30px) scale(.92,1.06)}75%{transform:translateY(-14px) scale(1.06,.97) rotate(2deg)}}
+/* 3 Leafy: sprout sway in the breeze */
+.a-leafy{animation:leafy 3s ease-in-out infinite}
+@keyframes leafy{0%,100%{transform:rotate(-7deg) scale(1,1)}50%{transform:rotate(7deg) scale(1.03,1.06)}}
+/* 4 Furron: happy fluff wiggle */
+.a-furron{animation:furron 1.6s ease-in-out infinite}
+@keyframes furron{0%,45%,100%{transform:rotate(0) scale(1)}8%{transform:rotate(-6deg) scale(1.03,.97)}16%{transform:rotate(6deg) scale(1.03,.97)}24%{transform:rotate(-5deg)}32%{transform:rotate(5deg)}60%{transform:translateY(-16px) scale(.97,1.05)}75%{transform:translateY(0) scale(1.06,.92)}}
+/* 5 Phantix: ghostly drift and flicker */
+.a-phantix{animation:phantix 3.2s ease-in-out infinite}
+@keyframes phantix{0%,100%{transform:translate(0,-6px) skewX(0);opacity:1}25%{transform:translate(8px,-18px) skewX(-6deg);opacity:.75}50%{transform:translate(0,-8px) skewX(0);opacity:1;filter:drop-shadow(0 0 14px #b070ff)}75%{transform:translate(-8px,-18px) skewX(6deg);opacity:.7}}
+/* 6 Pingu: penguin waddle */
+.a-pingu{animation:pingu 1s ease-in-out infinite}
+@keyframes pingu{0%,100%{transform:rotate(-8deg) translateX(-8px)}50%{transform:rotate(8deg) translateX(8px)}25%,75%{transform:rotate(0) translateX(0) translateY(-4px)}}
+/* 7 Rockzor: heavy stomp with a slam */
+.a-rockzor{animation:rockzor 2.2s cubic-bezier(.6,0,.4,1) infinite}
+@keyframes rockzor{0%,40%,100%{transform:translateY(0) scale(1,1)}25%{transform:translateY(-26px) scale(.97,1.04)}45%{transform:translateY(0) scale(1.1,.88)}52%{transform:translateY(0) scale(.98,1.02)}}
+/* 8 Zappy: lightning-quick zap jitter */
+.a-zappy{animation:zappy 1.4s steps(1,end) infinite}
+@keyframes zappy{0%{transform:translate(0,0);filter:brightness(1)}60%{transform:translate(0,0)}64%{transform:translate(-8px,-4px) skewX(8deg);filter:brightness(1.7) drop-shadow(0 0 16px #ffe84a)}68%{transform:translate(8px,2px) skewX(-8deg);filter:brightness(2)}72%{transform:translate(-5px,0);filter:brightness(1.5) drop-shadow(0 0 20px #fff27a)}76%{transform:translate(4px,-3px)}80%{transform:translate(0,0);filter:brightness(1)}}
+/* 9 Pixie: tiny fast flutter */
+.a-pixie{animation:pixie .5s ease-in-out infinite alternate,pixieDrift 4s ease-in-out infinite}
+@keyframes pixie{from{transform:translateY(-14px) rotate(-2deg)}to{transform:translateY(-22px) rotate(2deg)}}
+@keyframes pixieDrift{0%,100%{margin-left:-14px}50%{margin-left:14px}}
+/* 10 Aero: swooping figure-eight glide */
+.a-aero{animation:aero 3.6s ease-in-out infinite}
+@keyframes aero{0%,100%{transform:translate(-26px,-6px) rotate(-8deg)}25%{transform:translate(0,-34px) rotate(0)}50%{transform:translate(26px,-6px) rotate(8deg) scaleX(-1)}75%{transform:translate(0,-34px) rotate(0) scaleX(-1)}}
+/* 11 Turtley: shell retreat and peek */
+.a-turtley{animation:turtley 3.4s ease-in-out infinite}
+@keyframes turtley{0%,35%,100%{transform:scale(1,1)}45%{transform:scale(.86,.8) translateY(4px)}70%{transform:scale(.86,.8) translateY(4px)}82%{transform:scale(1.07,1.08)}90%{transform:scale(1,1)}}
+/* 12 Wooly: counting-sheep hop */
+.a-wooly{animation:wooly 1.8s ease-in-out infinite}
+@keyframes wooly{0%,100%{transform:translate(-30px,0) rotate(0) scale(1.06,.92)}25%{transform:translate(-14px,-34px) rotate(-12deg) scale(.96,1.05)}50%{transform:translate(0,-44px) rotate(0)}75%{transform:translate(18px,-26px) rotate(12deg)}90%{transform:translate(30px,0) scale(1.08,.9)}}
+/* 13 Bugsy: scuttle side to side */
+.a-bugsy{animation:bugsy 1.3s linear infinite}
+@keyframes bugsy{0%,100%{transform:translateX(-32px) rotate(-3deg)}8%{transform:translateX(-26px) translateY(-3px) rotate(3deg)}16%{transform:translateX(-20px) rotate(-3deg)}24%{transform:translateX(-12px) translateY(-3px) rotate(3deg)}32%{transform:translateX(-4px) rotate(-3deg)}40%{transform:translateX(6px) rotate(3deg)}48%{transform:translateX(16px) translateY(-3px) rotate(-3deg)}56%{transform:translateX(26px) rotate(3deg)}64%{transform:translateX(32px) rotate(0)}}
+/* 14 Jellio: squishy jelly wobble */
+.a-jellio{animation:jellio 2s ease-in-out infinite}
+@keyframes jellio{0%,100%{transform:translateY(-6px) scale(1,1)}20%{transform:translateY(-18px) scale(.9,1.12)}40%{transform:translateY(-10px) scale(1.1,.92)}60%{transform:translateY(-22px) scale(.94,1.08)}80%{transform:translateY(-8px) scale(1.06,.95)}}
+/* 15 Spiksy: spike-ball roll */
+.a-spiksy{animation:spiksy 2.6s ease-in-out infinite;transform-origin:50% 60%}
+@keyframes spiksy{0%,30%,100%{transform:translateX(0) rotate(0) scale(1)}40%{transform:translateX(0) rotate(0) scale(1.05,.9)}60%{transform:translateX(30px) rotate(360deg) scale(.9)}75%{transform:translateX(30px) rotate(360deg) scale(1.08,.92)}90%{transform:translateX(0) rotate(0)}}
+/* 16 Frosti: icy shimmer float */
+.a-frosti{animation:frosti 3.4s ease-in-out infinite}
+@keyframes frosti{0%,100%{transform:translateY(0);filter:brightness(1) hue-rotate(0) drop-shadow(0 0 4px #9fe0ff88)}50%{transform:translateY(-12px);filter:brightness(1.18) hue-rotate(-12deg) drop-shadow(0 0 16px #bfeaff)}}
+/* 17 Mysti: crouch, pounce, land */
+.a-mysti{animation:mysti 2.4s cubic-bezier(.5,0,.5,1) infinite}
+@keyframes mysti{0%,100%{transform:scale(1,1)}20%{transform:scale(1.1,.82)}35%{transform:translate(18px,-46px) scale(.9,1.14) rotate(8deg)}55%{transform:translate(36px,0) scale(1.1,.86) rotate(0)}70%{transform:translate(36px,0) scale(1,1)}85%{transform:translate(0,0)}}
+/* 18 Foxy: curious head tilt */
+.a-foxy{animation:foxy 3s ease-in-out infinite}
+@keyframes foxy{0%,100%{transform:rotate(0)}15%{transform:rotate(-9deg) translateY(-2px)}35%{transform:rotate(-9deg)}45%{transform:rotate(0)}60%{transform:rotate(9deg) translateY(-2px)}80%{transform:rotate(9deg)}90%{transform:rotate(0)}}
+/* 19 Slimo: gooey blob jiggle */
+.a-slimo{animation:slimo 1.7s ease-in-out infinite}
+@keyframes slimo{0%,100%{transform:scale(1.12,.88)}25%{transform:scale(.88,1.16) translateY(-10px)}50%{transform:scale(1.1,.9)}75%{transform:scale(.94,1.1) translateY(-6px)}}
+/* 20 Dinozy: stompy walk cycle */
+.a-dinozy{animation:dinozy 1.2s ease-in-out infinite}
+@keyframes dinozy{0%,100%{transform:translateX(-18px) translateY(0) rotate(-3deg)}25%{transform:translateX(-9px) translateY(-8px) rotate(0)}50%{transform:translateX(0) translateY(0) rotate(3deg)}75%{transform:translateX(9px) translateY(-8px) rotate(0)}}
+/* ===== Monster animations 21-40 ===== */
+/* Skyro: soar up, dive down */
+.a-skyro{animation:skyro 2.8s ease-in-out infinite}
+@keyframes skyro{0%,100%{transform:translate(-20px,0) rotate(0)}30%{transform:translate(-8px,-44px) rotate(-10deg) scale(1.05)}55%{transform:translate(10px,-50px) rotate(6deg)}78%{transform:translate(22px,0) rotate(28deg) scale(.95)}90%{transform:translate(22px,0) rotate(0) scale(1.06,.94)}}
+/* Twinss: hypnotic snake sway */
+.a-twinss{animation:twinss 2.6s ease-in-out infinite}
+@keyframes twinss{0%,100%{transform:skewX(-9deg) scaleY(1)}50%{transform:skewX(9deg) scaleY(1.04)}}
+/* Rokki: rumble and crystal glint */
+.a-rokki{animation:rokki 2.4s ease-in-out infinite}
+@keyframes rokki{0%,50%,100%{transform:translate(0,0);filter:brightness(1)}55%{transform:translate(-3px,0)}60%{transform:translate(3px,0);filter:brightness(1.3) drop-shadow(0 0 14px #8fd8ff)}65%{transform:translate(-3px,0)}70%{transform:translate(3px,0);filter:brightness(1.5) drop-shadow(0 0 22px #c8f0ff)}75%{transform:translate(0,0);filter:brightness(1.1)}}
+/* Puffy: breathing fluff ball */
+.a-puffy{animation:puffy 2.2s ease-in-out infinite}
+@keyframes puffy{0%,100%{transform:scale(1,1)}40%{transform:scale(1.14,1.14)}55%{transform:scale(1.14,1.14) translateY(-6px)}80%{transform:scale(.96,.94)}}
+/* Cacty: cheer jump with arms stretched */
+.a-cacty{animation:cacty 1.5s ease-in-out infinite}
+@keyframes cacty{0%,100%{transform:scale(1,1)}30%{transform:scale(1.14,.88)}50%{transform:translateY(-30px) scale(.88,1.16)}70%{transform:translateY(0) scale(1.1,.9)}85%{transform:scale(.97,1.04)}}
+/* Shado: vanish and reappear */
+.a-shado{animation:shado 3.4s ease-in-out infinite}
+@keyframes shado{0%,40%{transform:translate(0,0) scale(1);opacity:1;filter:blur(0)}55%{transform:translate(-14px,0) scale(.7,1.3);opacity:0;filter:blur(6px)}70%{transform:translate(30px,0) scale(.7,1.3);opacity:0;filter:blur(6px)}85%{transform:translate(22px,0) scale(1.1,.95);opacity:1;filter:blur(0)}100%{transform:translate(0,0);opacity:1}}
+/* Rexi: lunge and roar */
+.a-rexi{animation:rexi 2.4s ease-in-out infinite}
+@keyframes rexi{0%,100%{transform:scale(1)}25%{transform:scale(.94,1.04) rotate(-5deg)}40%{transform:scale(1.2,1.2) rotate(4deg) translateX(8px)}45%{transform:scale(1.2,1.2) rotate(2deg) translate(4px,0)}50%{transform:scale(1.2,1.2) rotate(6deg) translate(10px,0)}55%{transform:scale(1.2,1.2) rotate(2deg) translate(4px,0)}75%{transform:scale(1)}}
+/* Aquos: swimming wave */
+.a-aquos{animation:aquos 2.8s ease-in-out infinite}
+@keyframes aquos{0%,100%{transform:translate(-14px,-6px) skewX(-6deg) rotate(-3deg)}25%{transform:translate(0,-20px) skewX(0) rotate(0)}50%{transform:translate(14px,-6px) skewX(6deg) rotate(3deg)}75%{transform:translate(0,-20px) skewX(0) rotate(0)}}
+/* Flora: slow bloom pulse */
+.a-flora{animation:flora 3s ease-in-out infinite}
+@keyframes flora{0%,100%{transform:scale(1,1) rotate(0);filter:saturate(1)}50%{transform:scale(1.1,1.12) rotate(-3deg);filter:saturate(1.35) brightness(1.06)}}
+/* Vampi: frantic bat flutter */
+.a-vampi{animation:vampi .45s ease-in-out infinite alternate,vampiDrift 3s ease-in-out infinite}
+@keyframes vampi{from{transform:translateY(-10px) scaleX(1)}to{transform:translateY(-24px) scaleX(.9) rotate(-2deg)}}
+@keyframes vampiDrift{0%,100%{margin-left:-18px}50%{margin-left:18px}}
+/* Froggy: big hop with squash and croak */
+.a-froggy{animation:froggy 1.8s cubic-bezier(.4,0,.4,1) infinite}
+@keyframes froggy{0%,10%{transform:scale(1,1)}22%{transform:scale(1.16,.82)}45%{transform:translateY(-52px) scale(.9,1.16)}70%{transform:translateY(0) scale(1.14,.86)}80%{transform:scale(.96,1.05)}90%,100%{transform:scale(1.07,.95)}}
+/* Starry: twinkle spin */
+.a-starry{animation:starry 2.4s ease-in-out infinite;transform-origin:50% 55%}
+@keyframes starry{0%,100%{transform:rotate(-8deg) scale(1);filter:brightness(1) drop-shadow(0 0 6px #ffe06a)}30%{transform:rotate(8deg) scale(1.15);filter:brightness(1.3) drop-shadow(0 0 20px #fff2a0)}60%{transform:rotate(360deg) scale(1)}}
+/* Unicorny: prance and rear */
+.a-unicorny{animation:unicorny 2.2s ease-in-out infinite}
+@keyframes unicorny{0%,100%{transform:translateY(0) rotate(0)}15%{transform:translateY(-8px) rotate(-3deg)}30%{transform:translateY(0)}50%{transform:translateY(-14px) rotate(-14deg) scale(1,1.05)}65%{transform:translateY(-14px) rotate(-14deg)}85%{transform:translateY(0) rotate(0) scale(1.04,.96)}}
+/* Lavaro: molten glow pulse */
+.a-lavaro{animation:lavaro 2.2s ease-in-out infinite}
+@keyframes lavaro{0%,100%{transform:translateX(0);filter:brightness(1) saturate(1) drop-shadow(0 0 6px #ff6a00aa)}50%{transform:scale(1.04,1.02);filter:brightness(1.35) saturate(1.5) drop-shadow(0 0 22px #ff9a1a)}25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+/* Buzzy: antenna-wiggle hop */
+.a-buzzy{animation:buzzy 1.4s ease-in-out infinite}
+@keyframes buzzy{0%,100%{transform:rotate(0) translateY(0)}15%{transform:rotate(-6deg) translateY(-4px)}30%{transform:rotate(6deg) translateY(-8px)}45%{transform:rotate(-4deg) translateY(-18px) scale(.96,1.05)}60%{transform:rotate(0) translateY(0) scale(1.06,.94)}}
+/* Owly: head swivel and blink */
+.a-owly{animation:owly 3.6s ease-in-out infinite}
+@keyframes owly{0%,100%{transform:skewX(0) rotate(0) scaleY(1)}12%{transform:skewX(8deg) rotate(6deg)}30%{transform:skewX(8deg) rotate(6deg)}40%{transform:skewX(-8deg) rotate(-6deg)}58%{transform:skewX(-8deg) rotate(-6deg)}68%{transform:none}78%{transform:scaleY(.9) translateY(2px)}84%{transform:none}}
+/* Sharki: fin dart and snap */
+.a-sharki{animation:sharki 2.4s ease-in-out infinite}
+@keyframes sharki{0%,100%{transform:translate(-30px,-4px) rotate(-6deg)}35%{transform:translate(-34px,-8px) rotate(-10deg) scale(.95)}50%{transform:translate(32px,-14px) rotate(8deg) scale(1.15)}58%{transform:translate(28px,-12px) rotate(-4deg) scale(1.1)}80%{transform:translate(0,-6px) rotate(0)}}
+/* Stormy: brooding thundercloud */
+.a-stormy{animation:stormy 3s ease-in-out infinite}
+@keyframes stormy{0%,100%{transform:translateY(-8px) scale(1);filter:brightness(.92)}20%{filter:brightness(.78)}50%{transform:translateY(-18px) scale(1.06,1.02);filter:brightness(.85)}62%{filter:brightness(1.9) drop-shadow(0 0 20px #fff6a0)}66%{filter:brightness(.8)}70%{filter:brightness(1.6) drop-shadow(0 0 16px #fff6a0)}78%{filter:brightness(.88)}}
+/* Crabby: sidestep and pinch */
+.a-crabby{animation:crabby 2s steps(1,end) infinite}
+@keyframes crabby{0%{transform:translateX(-28px) scale(1,1)}12%{transform:translateX(-14px) scale(1,.94)}24%{transform:translateX(0) scale(1,1)}36%{transform:translateX(14px) scale(1,.94)}48%{transform:translateX(28px) scale(1.08,.92)}58%{transform:translateX(28px) scale(.94,1.06)}68%{transform:translateX(28px) scale(1.08,.92)}78%{transform:translateX(14px) scale(1,.94)}90%{transform:translateX(0) scale(1,1)}}
+/* Zeezy: zig-zag dragonfly hover */
+.a-zeezy{animation:zeezy 2.6s ease-in-out infinite}
+@keyframes zeezy{0%{transform:translate(-28px,-8px) rotate(-6deg)}15%{transform:translate(-8px,-30px) rotate(6deg)}30%{transform:translate(-26px,-44px) rotate(-8deg)}45%{transform:translate(10px,-22px) rotate(8deg)}60%{transform:translate(28px,-40px) rotate(-4deg)}80%{transform:translate(12px,-10px) rotate(6deg)}100%{transform:translate(-28px,-8px) rotate(-6deg)}}
+@media (prefers-reduced-motion:reduce){.mon,.p{animation-duration:12s!important}}
