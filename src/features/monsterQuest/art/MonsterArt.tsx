@@ -1,5 +1,12 @@
 import { useId, type CSSProperties } from 'react';
 import type { ArtSpec } from '../types';
+import { ANIM_NAMES } from '../world/monsterSprites';
+import '../world/monsterAnimations.css';
+
+/** Sprite paths saved in the database are relative to the site root (e.g. monster-quest/sprites/flamora.png). */
+export const spriteSrc = (u: string) => (/^(https?:|data:|\/)/.test(u) ? u : `${import.meta.env.BASE_URL}${u.replace(/^\.?\//, '')}`);
+/** The supplied animation for a sprite, picked from its file name (flamora.png -> a-flamora). */
+const spriteAnim = (u: string) => { const n = u.split('/').pop()?.replace(/\.\w+$/, '') ?? ''; return (ANIM_NAMES as readonly string[]).includes(n) ? n : null; };
 
 const BODY = {
   round: { cy: 122, rx: 58, ry: 52 },
@@ -23,7 +30,10 @@ export function MonsterArt({
   };
   const cls = `${anim === 'idle' ? 'mq-idle' : anim === 'hit' ? 'mq-hit' : anim === 'attack' ? 'mq-attack' : ''} ${className ?? ''}`;
   if (spriteUrl) {
-    return <span style={wrap} className={cls}><img src={spriteUrl} alt="" width={size} height={size} style={{ objectFit: 'contain' }} /></span>;
+    // the supplied keyframe animation runs on an inner wrapper so the flip transform on the outer span is kept
+    const an = anim === 'idle' ? spriteAnim(spriteUrl) : null;
+    const img = <img src={spriteSrc(spriteUrl)} alt="" width={size} height={size} style={{ objectFit: 'contain' }} />;
+    return <span style={wrap} className={an ? (className ?? '') : cls}>{an ? <span className={`mon a-${an}`} style={{ display: 'inline-block', lineHeight: 0 }}>{img}</span> : img}</span>;
   }
   const { cy, rx, ry } = BODY[spec.body];
   const top = cy - ry;

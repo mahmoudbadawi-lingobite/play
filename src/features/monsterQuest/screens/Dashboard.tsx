@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
 import { levelInfo } from '../../avatar/level';
-import { Trainer } from '../art/Trainer';
+import { CharacterAvatar } from '../art/CharacterAvatar';
 import { MonsterArt } from '../art/MonsterArt';
 import { useMq } from '../context';
 import { Bar, Panel, RarityBadge, fmt } from '../ui';
 
 export function Dashboard() {
-  const { state, monsters, speciesById, name, isStaff, species, look } = useMq();
+  const { state, monsters, speciesById, name, isStaff, species } = useMq();
   const lv = levelInfo(state.xp);
   const answered = state.correct_total + state.wrong_total;
   const acc = answered ? Math.round((state.correct_total / answered) * 100) : null;
@@ -17,7 +17,7 @@ export function Dashboard() {
     { to: '/monster-quest/monsters', icon: '🐾', label: 'My Monsters', sub: `${monsters.length} captured` },
     { to: '/monster-quest/arena', icon: '⚔️', label: 'Battle Arena', sub: `${state.battles_won} wins` },
     { to: '/monster-quest/quests', icon: '📜', label: 'Quests', sub: 'Daily & weekly missions' },
-    { to: '/monster-quest/style', icon: '👕', label: 'Style', sub: 'Customize your trainer' },
+    { to: '/monster-quest/style', icon: '👕', label: 'Style', sub: 'Props for your explorer' },
     { to: '/monster-quest/dex', icon: '📖', label: 'Encyclopedia', sub: `${caughtSpecies}/${species.length} species` },
     { to: '/monster-quest/inventory', icon: '🎒', label: 'Inventory', sub: 'Your orbs' },
     { to: '/monster-quest/shop', icon: '🛍️', label: 'Shop', sub: 'Spend coins & gems' },
@@ -29,7 +29,7 @@ export function Dashboard() {
     <div className="space-y-4">
       <Panel className="flex flex-wrap items-center gap-4">
         <div className="mq-avatar-ring">
-          <Trainer size={92} look={look} />
+          <CharacterAvatar size={84} />
         </div>
         <div className="min-w-[180px] flex-1">
           <p className="font-display text-xl font-extrabold text-white">{name}</p>

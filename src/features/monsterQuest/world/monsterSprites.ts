@@ -19,4 +19,5 @@ export const SPECIES_ANIM: Record<string, AnimName> = {
 };
 const BY_TYPE: Record<ElementType, AnimName> = { fire: 'flamora', water: 'jellio', grass: 'leafy', electric: 'stormy', earth: 'rokki', ice: 'frosti', air: 'skyro', shadow: 'phantix', light: 'starry', crystal: 'spiksy' };
 /** CSS class list for the animation wrapper around a monster. */
-export const animClassFor = (id: string, type?: ElementType) => `mon a-${SPECIES_ANIM[id] ?? (type ? BY_TYPE[type] : 'slimo')}`;
+/** New species ids are the animation names themselves (flamora, drakko, ...). Older ids fall back to the table above. */
+export const animClassFor = (id: string, type?: ElementType) => `mon a-${SPECIES_ANIM[id] ?? ((ANIM_NAMES as readonly string[]).includes(id) ? id : type ? BY_TYPE[type] : 'slimo')}`;

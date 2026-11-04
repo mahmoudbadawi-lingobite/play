@@ -2,6 +2,7 @@
 import { bakeLocation, PLAYER_R, type Baked } from './paintLocation';
 import { drawMarker, glow, npcSprite, propSprite, shadowEll } from './paintProps';
 import { characterById, frameUrl, type Character } from './characters';
+import { PROP_BY_ID, measureFrame, placeProp, propUrl, type PropDef } from './props';
 import { LOCATIONS } from './locations';
 import type { Facing, InteractDef, LocationDef, Pt } from './types';
 import { pointInPoly, rng } from './util';
@@ -32,7 +33,7 @@ export interface EngineCallbacks {
   onLoading?: (on: boolean) => void;
 }
 export interface EngineOptions {
-  canvas: HTMLCanvasElement; host: HTMLElement; mini: HTMLCanvasElement | null; playerBase: string; character: string;
+  canvas: HTMLCanvasElement; host: HTMLElement; mini: HTMLCanvasElement | null; playerBase: string; character: string; /** wardrobe prop ids worn by the explorer */ props?: string[];
   progress: Progress; reduced: boolean; cb: EngineCallbacks;
 }
 
@@ -42,6 +43,7 @@ export class WorldEngine {
   private cv: HTMLCanvasElement; private c: CanvasRenderingContext2D; private o: EngineOptions;
   private frames: Record<string, HTMLImageElement> = {};
   private who: Character;
+  private propDefs: PropDef[] = []; private propImgs = new Map<string, HTMLImageElement>();
   private loc: Baked | null = null;
   private raf = 0; private last = 0; private time = 0;
   private W = 0; private H = 0; private dpr = 1; private scale = 1;
@@ -66,7 +68,7 @@ export class WorldEngine {
     this.o = o; this.cv = o.canvas; this.c = o.canvas.getContext('2d')!; this.reduced = o.reduced;
     this.who = characterById(o.character);
     this.flags = new Set(o.progress.flags); this.visited = new Set(o.progress.visited); this.opened = new Set(o.progress.chests);
-    this.loadFrames();
+    this.loadFrames(); this.setProps(o.props ?? []);
     for (let i = 0; i < 46; i++) { const r = rng(i + 7); this.particles.push({ x: r(), y: r(), v: 0.02 + r() * 0.05, ph: r() * 6.28, r: 1.5 + r() * 2.5 }); }
     this.resize(); this.ro = new ResizeObserver(() => this.resize()); this.ro.observe(o.host);
     const on = (t: EventTarget, e: string, f: (ev: any) => void) => { t.addEventListener(e, f as EventListener); this.handlers.push([t, e, f as EventListener]); };
@@ -81,6 +83,11 @@ export class WorldEngine {
   setPaused(p: boolean) { this.paused = p; if (p) { this.keys.clear(); this.joy = [0, 0]; } }
   setReduced(r: boolean) { this.reduced = r; }
   setCharacter(id: string) { this.who = characterById(id); this.o.character = id; this.loadFrames(); }
+  /** Wardrobe props worn by the explorer (ids from props.ts). */
+  setProps(ids: string[]) {
+    this.propDefs = ids.map((id) => PROP_BY_ID.get(id)).filter((p): p is PropDef => !!p);
+    for (const p of this.propDefs) if (!this.propImgs.has(p.id)) { const im = new Image(); im.src = propUrl(p); this.propImgs.set(p.id, im); }
+  }
   private loadFrames() { this.frames = {}; for (const f of ['down', 'up', 'side'] as Facing[]) for (const st of [0, 1, 2] as const) { const im = new Image(); im.src = frameUrl(this.o.playerBase, this.who.id, f, st); this.frames[`${f}${st}`] = im; } }
   get location() { return this.loc?.def ?? null; }
   get position(): Pt { return [this.p.x, this.p.y]; }
@@ -342,7 +349,18 @@ export class WorldEngine {
       const im = this.frames[`${face}${stepIdx}`]; shadowEllAt(c, p.x, p.y, 24);
       if (!im || !im.complete || !im.naturalWidth) return;
       const w = FRAME_W * PLAYER_K, h = FRAME_H * PLAYER_K;
-      c.save(); c.translate(p.x, p.y + 4); if (face === 'side' && p.flip) c.scale(-1, 1); c.drawImage(im, -w / 2, -FRAME_FEET * PLAYER_K - bob, w, h); c.restore();
+      c.save(); c.translate(p.x, p.y + 4); if (face === 'side' && p.flip) c.scale(-1, 1);
+      // props are placed from the measured head of this very frame, so they follow the walk bob and fit any explorer art
+      const box = this.propDefs.length ? measureFrame(im) : null, ox = -w / 2, oy = -FRAME_FEET * PLAYER_K - bob;
+      const layer = (behind: boolean) => {
+        if (!box) return;
+        for (const pd of this.propDefs) {
+          const pl = placeProp(pd, box, face), pi = this.propImgs.get(pd.id);
+          if (!pl || pl.behind !== behind || !pi || !pi.complete || !pi.naturalWidth) continue;
+          c.drawImage(pi, ox + pl.x * PLAYER_K, oy + pl.y * PLAYER_K, pl.w * PLAYER_K, pl.h * PLAYER_K);
+        }
+      };
+      layer(true); c.drawImage(im, ox, oy, w, h); layer(false); c.restore();
     } });
     ents.sort((a, b2) => a.y - b2.y); for (const e of ents) e.draw();
 

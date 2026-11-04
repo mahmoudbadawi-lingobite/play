@@ -28,6 +28,9 @@ export const evolve = (monsterId: string) => rpc<{ from: string; to: string; mon
 export const useItem = (item: string, monsterId: string) => rpc<MonsterXpResult>('mq_use_item', { p_item: item, p_monster: monsterId });
 export const buyCosmetic = (key: string) => rpc<PlayerState>('mq_buy_cosmetic', { p_key: key });
 export const equip = (key: string) => rpc<PlayerState>('mq_equip', { p_key: key });
+export const unequip = (slot: string) => rpc<PlayerState>('mq_unequip', { p_slot: slot });
+/** Free, once per player: the first explorer. More explorers are bought with buyCosmetic and worn with equip. */
+export const chooseCharacter = (key: string) => rpc<PlayerState>('mq_choose_character', { p_key: key });
 export const missionsList = () => rpc<Mission[]>('mq_missions_list');
 export const claimMission = (key: string) => rpc<PlayerState>('mq_claim_mission', { p_key: key });
 export const battleStart = (zone: string, difficulty: string) => rpc<Battle>('mq_battle_start', { p_zone: zone, p_difficulty: difficulty });

@@ -9,6 +9,10 @@ interface MqCtx {
   zones: Zone[]; species: Species[]; speciesById: Map<string, Species>; items: Item[]; itemsByKey: Map<string, Item>;
   state: PlayerState; monsters: OwnedMonster[];
   cosmetics: Cosmetic[]; ownedCosmetics: Set<string>; look: Look;
+  /** explorer id being played (null until the first explorer is chosen) */ character: string | null;
+  /** explorer ids this player owns */ ownedCharacters: string[];
+  /** true once the explorers/props SQL patch is installed */ hasExplorers: boolean;
+  /** prop ids currently worn */ props: string[];
   setState: (s: PlayerState) => void;
   refresh: () => Promise<void>;
 }
@@ -44,9 +48,18 @@ export function MqProvider({ children }: { children: ReactNode }) {
     if (!defs || !state || !profile) return null;
     const byKey = new Map(cos.cosmetics.map((c) => [c.key, c]));
     const look: Look = { ...DEFAULT_LOOK };
-    for (const key of Object.values(state.outfit ?? {})) { const c = byKey.get(key); if (c) Object.assign(look, c.data); }
+    const props: string[] = [];
+    for (const [slot, key] of Object.entries(state.outfit ?? {})) {
+      const c = byKey.get(key); if (!c) continue;
+      if (c.slot === 'character') continue;
+      if (c.slot.startsWith('prop_')) { if (c.data.prop && slot === c.slot) props.push(c.data.prop); continue; }
+      Object.assign(look, c.data);
+    }
+    const owned = new Set(cos.owned);
+    const character = byKey.get(state.outfit?.character ?? '')?.data.char ?? null;
+    const ownedCharacters = cos.cosmetics.filter((c) => c.slot === 'character' && owned.has(c.key)).map((c) => c.data.char!).filter(Boolean);
     return {
-      cosmetics: cos.cosmetics, ownedCosmetics: new Set(cos.owned), look,
+      cosmetics: cos.cosmetics, ownedCosmetics: owned, look, character, ownedCharacters, props, hasExplorers: cos.cosmetics.some((c) => c.slot === 'character'),
       userId: profile.uid, name: profile.displayName ?? 'Trainer', isStaff: profile.role === 'teacher' || profile.role === 'admin',
       ...defs, speciesById: new Map(defs.species.map((s) => [s.id, s])), itemsByKey: new Map(defs.items.map((i) => [i.key, i])),
       state, monsters, setState, refresh,

@@ -69,8 +69,9 @@ export interface Look {
   hat: 'cap' | 'beanie' | 'crown' | 'wizard' | 'none'; hatColor: string; top: string; pants: string; shoes: string;
   backpack: 'none' | 'pack' | 'wings'; packColor: string; accessory: 'none' | 'glasses' | 'scarf' | 'headphones' | 'cape'; accColor: string;
 }
-export type CosmeticSlot = 'body' | 'skin' | 'haircolor' | 'hairstyle' | 'hat' | 'top' | 'pants' | 'shoes' | 'backpack' | 'accessory';
-export interface Cosmetic { key: string; slot: CosmeticSlot; name: string; price_coins: number | null; price_gems: number | null; unlock_level: number; data: Partial<Look>; sort: number }
+export type CosmeticSlot = 'body' | 'skin' | 'haircolor' | 'hairstyle' | 'hat' | 'top' | 'pants' | 'shoes' | 'backpack' | 'accessory' | 'character' | 'prop_head' | 'prop_face' | 'prop_neck' | 'prop_back';
+/** `char` = explorer id (slot 'character'), `prop` = prop id (slots 'prop_*'); everything else is the old trainer look. */
+export interface Cosmetic { key: string; slot: CosmeticSlot; name: string; price_coins: number | null; price_gems: number | null; unlock_level: number; data: Partial<Look> & { char?: string; prop?: string }; sort: number }
 
 // ---- missions
 export interface Mission { key: string; title: string; period: 'daily' | 'weekly'; kind: string; target: number; progress: number; claimed: boolean; reward_coins: number; reward_gems: number }

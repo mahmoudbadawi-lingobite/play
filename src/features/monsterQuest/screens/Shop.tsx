@@ -39,7 +39,7 @@ export function Inventory() {
   );
 }
 
-export function Shop() {
+export function Shop({ onStyle }: { onStyle?: () => void } = {}) {
   const mq = useMq();
   const [tab, setTab] = useState<ItemKind>('ball');
   const [qty, setQty] = useState<Record<string, number>>({});
@@ -56,7 +56,9 @@ export function Shop() {
   return (
     <div className="space-y-3">
       <Panel className="flex flex-wrap items-center gap-6 text-white"><span className="font-extrabold">🪙 {fmt(mq.state.coins)} coins</span><span className="font-extrabold">💎 {fmt(mq.state.gems)} gems</span>
-        <Link to="/monster-quest/style" className="ml-auto"><GameButton tone="blue" type="button">👕 Trainer style shop</GameButton></Link></Panel>
+        {onStyle
+          ? <span className="ml-auto"><GameButton tone="blue" type="button" onClick={onStyle}>👕 Explorer style shop</GameButton></span>
+          : <Link to="/monster-quest/style" className="ml-auto"><GameButton tone="blue" type="button">👕 Explorer style shop</GameButton></Link>}</Panel>
       <div className="flex flex-wrap gap-2">{(Object.keys(KIND_LABEL) as ItemKind[]).map((k) => <GameButton key={k} tone={tab === k ? 'gold' : 'ghost'} onClick={() => { setTab(k); setMsg(null); }}>{KIND_LABEL[k]}</GameButton>)}</div>
       {msg && <p className={`rounded-xl px-3 py-2 text-sm font-bold text-white ${msg.ok ? 'bg-green-600/90' : 'bg-red-500/90'}`} role="status">{msg.text}</p>}
       <p className="text-xs font-semibold text-white/70">{KIND_HELP[tab]} Earn coins from answers, captures, battles and missions; gems come from weekly missions.</p>
