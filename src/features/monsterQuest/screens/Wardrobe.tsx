@@ -5,7 +5,7 @@ import { CharacterAvatar } from '../art/CharacterAvatar';
 import { useMq } from '../context';
 import { sfx } from '../sound';
 import { GameButton, Panel } from '../ui';
-import { PROP_BY_ID, propUrl, type PropSlot } from '../world/props';
+import { propUrl, usePropCatalog, type PropSlot } from '../world/props';
 import type { Cosmetic } from '../types';
 
 const SLOTS: { k: PropSlot; label: string; icon: string }[] = [
@@ -14,7 +14,7 @@ const SLOTS: { k: PropSlot; label: string; icon: string }[] = [
 
 /** Props for your explorer: try them on for free, buy with coins, wear or take off. They show in the world. */
 export function Wardrobe() {
-  const mq = useMq();
+  const mq = useMq(), catalog = usePropCatalog();
   const [slot, setSlot] = useState<PropSlot>('prop_head');
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -36,7 +36,7 @@ export function Wardrobe() {
   return (
     <div className="grid gap-3 md:grid-cols-[250px_1fr]">
       <Panel className="flex flex-col items-center">
-        <div className="mq-avatar-stage"><CharacterAvatar size={210} facing={facing} props={shown} /></div>
+        <div className="mq-avatar-stage"><CharacterAvatar width={170} facing={facing} props={shown} /></div>
         <div className="mt-2 flex gap-1.5">{(['down', 'side', 'up'] as const).map((f) => <button key={f} type="button" onClick={() => setFacing(f)} className={`rounded-full px-3 py-1 text-xs font-extrabold ${facing === f ? 'bg-yellow-300 text-[#10285a]' : 'bg-white/15 text-white'}`}>{f === 'down' ? 'Front' : f === 'side' ? 'Side' : 'Back'}</button>)}</div>
         <p className="mt-2 text-center text-xs font-semibold text-white/75">Tap any prop to try it on. What you wear shows in the world. Change explorer in Profile.</p>
         <p className="mt-1 text-sm font-extrabold text-white">🪙 {mq.state.coins} · 💎 {mq.state.gems}</p>
@@ -50,15 +50,16 @@ export function Wardrobe() {
             <p className="mt-1 text-xs font-extrabold text-white">Nothing</p>
             {wornBySlot(slot) && <GameButton tone="blue" className="mt-1 !px-3 !py-1 !text-xs" disabled={!!busy} onClick={() => run('off', async () => { mq.setState(await api.unequip(slot)); clearTry(slot); sfx.click(); })}>Take off</GameButton>}
           </div>
+          {items.length === 0 && <p className="col-span-full self-center text-sm font-bold text-white/80">New props for this part are coming soon!</p>}
           {items.map((c) => {
-            const p = c.data.prop ? PROP_BY_ID.get(c.data.prop) : null; if (!p) return null;
+            const p = catalog.find((x) => x.id === c.data.prop); if (!p) return null;
             const on = mq.state.outfit?.[c.slot] === c.key;
             const lvlLocked = !owned(c) && level < c.unlock_level;
             const afford = (c.price_coins == null || mq.state.coins >= c.price_coins) && (c.price_gems == null || mq.state.gems >= c.price_gems);
             return (
               <div key={c.key} className={`flex flex-col items-center rounded-2xl border-2 p-2 ${on ? 'border-yellow-300 bg-yellow-300/20' : 'border-white/20 bg-white/10'}`}>
                 <button type="button" className="flex h-[84px] w-full items-center justify-center rounded-xl bg-white/10" onClick={() => setTryOn({ ...tryOn, [slot]: p.id })} aria-label={`Try ${c.name}`}>
-                  <img src={propUrl(p)} alt="" style={{ maxWidth: 76, maxHeight: 76 }} draggable={false} />
+                  <img src={propUrl(p)} alt="" style={{ maxWidth: 76, maxHeight: 76, objectFit: 'contain' }} draggable={false} />
                 </button>
                 <p className="mt-1 text-center text-xs font-extrabold text-white">{c.name}</p>
                 {on ? <GameButton tone="blue" className="mt-1 !px-3 !py-1 !text-xs" disabled={busy === c.key} onClick={() => takeOff(c)}>✔ Wearing · take off</GameButton>

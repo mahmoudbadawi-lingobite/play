@@ -35,7 +35,13 @@ export function Collection() {
     return out;
   }, [mq.monsters, mq.speciesById, q, type, rarity, sort, favOnly]);
 
-  const run = async (fn: () => Promise<void>) => { setErr(null); try { await fn(); await mq.refresh(); } catch (e) { setErr((e as Error).message); } };
+  // Always reload the list afterwards, even after an error, so a stale list can never keep failing.
+  const run = async (fn: () => Promise<void>) => {
+    setErr(null);
+    try { await fn(); }
+    catch (e) { const m = (e as Error).message; setErr(/not yours/i.test(m) ? 'Your monster list was out of date, so it was refreshed. Please try again.' : m); }
+    try { await mq.refresh(); } catch { /* keep the message above */ }
+  };
   const toggleTeam = (m: OwnedMonster) => run(() => {
     const ids = team.map((t) => t.id);
     if (m.team_slot) return api.setTeam(ids.filter((i) => i !== m.id));

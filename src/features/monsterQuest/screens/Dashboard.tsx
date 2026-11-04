@@ -29,7 +29,7 @@ export function Dashboard() {
     <div className="space-y-4">
       <Panel className="flex flex-wrap items-center gap-4">
         <div className="mq-avatar-ring">
-          <CharacterAvatar size={84} />
+          <CharacterAvatar width={64} />
         </div>
         <div className="min-w-[180px] flex-1">
           <p className="font-display text-xl font-extrabold text-white">{name}</p>

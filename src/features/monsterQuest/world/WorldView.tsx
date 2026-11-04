@@ -7,7 +7,9 @@ import { EncounterModal } from '../EncounterModal';
 import type { Encounter } from '../types';
 import { WorldEngine, type Dialog, type HudInfo } from './engine';
 import { CharacterPicker } from './CharacterPicker';
-import { DEFAULT_CHARACTER, PLAYER_BASE as PLAYER_BASE_URL, characterKey } from './characters';
+import { DEFAULT_CHARACTER, characterKey } from './characters';
+import { CharacterSprite } from '../art/CharacterSprite';
+import { usePropCatalog } from './props';
 import { WorldPanel, type PanelTab } from './WorldPanel';
 import { Joystick } from './Joystick';
 import { currentQuest, loadProgress, saveProgress, type Progress } from './progress';
@@ -16,7 +18,6 @@ import './monsterAnimations.css';
 import './world.css';
 import './world-panels.css';
 
-const PLAYER_BASE = PLAYER_BASE_URL;
 const reducedPref = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () => void }) {
@@ -43,7 +44,7 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
   useEffect(() => {
     if (!host.current || !canvas.current) return;
     const e = new WorldEngine({
-      canvas: canvas.current, host: host.current, mini: mini.current, playerBase: PLAYER_BASE, character: who, props: mq.props, progress: progress.current, reduced: calm,
+      canvas: canvas.current, host: host.current, mini: mini.current, character: who, props: worn, progress: progress.current, reduced: calm,
       cb: {
         onHud: setHud, onDialog: (d) => { dialogLine.current = 0; setDialog(d); }, onShop: () => setPanel('shop'), onExitWorld: onLeave, onToast: showToast,
         onProgress: (p) => saveProgress(mq.userId, p), onLoading: setLoading,
@@ -67,9 +68,9 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
   };
   // the world stays mounted while menus are open, so these just update the explorer in place
   useEffect(() => { eng.current?.setCharacter(who); }, [who]);
-  const propsKey = mq.props.join(',');
-  useEffect(() => { eng.current?.setProps(mq.props); // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [propsKey]);
+  const catalog = usePropCatalog();
+  const worn = useMemo(() => mq.props.map((id) => catalog.find((c) => c.id === id)).filter((p): p is NonNullable<typeof p> => !!p), [mq.props, catalog]);
+  useEffect(() => { eng.current?.setProps(worn); }, [worn]);
   useEffect(() => { eng.current?.setReduced(calm); progress.current.calm = calm; saveProgress(mq.userId, progress.current); }, [calm, mq.userId]);
   useEffect(() => { if (showMap) requestAnimationFrame(() => full.current && eng.current?.drawFullMap(full.current)); }, [showMap]);
   useEffect(() => { if (!hint) return; const t = window.setTimeout(() => { setHint(false); progress.current.seenTutorial = true; saveProgress(mq.userId, progress.current); }, 9000); return () => clearTimeout(t); }, [hint, mq.userId]);
@@ -89,7 +90,7 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
 
         {/* top left: portrait, bars, location */}
         <div className="mq-hud-tl">
-          <div className="mq-portrait" aria-hidden><img src={`${PLAYER_BASE}${who}/down0.png`} alt="" /></div>
+          <div className="mq-portrait" aria-hidden><CharacterSprite id={who} width={86} style={{ marginLeft: -17, marginTop: -2 }} /></div>
           <div className="mq-bars">
             <div className="mq-bar"><b>HP</b><span><i style={{ width: '100%', background: '#ef4444' }} /></span></div>
             <div className="mq-bar"><b>MP</b><span><i style={{ width: '100%', background: '#3b82f6' }} /></span></div>

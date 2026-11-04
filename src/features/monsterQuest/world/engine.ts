@@ -1,8 +1,8 @@
 /** The free-roam world: input, movement, camera, rendering, interactions, encounters and location transitions. */
 import { bakeLocation, PLAYER_R, type Baked } from './paintLocation';
 import { drawMarker, glow, npcSprite, propSprite, shadowEll } from './paintProps';
-import { characterById, frameUrl, type Character } from './characters';
-import { PROP_BY_ID, measureFrame, placeProp, propUrl, type PropDef } from './props';
+import { SHEET, characterById, frameRect, sheetUrl, type Character } from './characters';
+import { measureFrame, placeProp, propUrl, type PropDef } from './props';
 import { LOCATIONS } from './locations';
 import type { Facing, InteractDef, LocationDef, Pt } from './types';
 import { pointInPoly, rng } from './util';
@@ -15,8 +15,7 @@ const ENCOUNTER_RATE = 0.2;          // chance per second of motion on encounter
 const RARE_RATE = 0.4;
 const SHALLOW = 0.7;
 const CAM_LAG = 0.1;
-const PLAYER_K = 0.5;                // exported frames are 260x232 with the feet on line 222; drawn at half size
-const FRAME_W = 260, FRAME_H = 232, FRAME_FEET = 222;
+const PLAYER_K = 0.8;                // Treasure Hunt sheet frames are 128x160 with the feet on line 157; drawn at 80%
 const KEY: Record<string, 'u' | 'd' | 'l' | 'r'> = { ArrowUp: 'u', w: 'u', W: 'u', ArrowDown: 'd', s: 'd', S: 'd', ArrowLeft: 'l', a: 'l', A: 'l', ArrowRight: 'r', d: 'r', D: 'r' };
 
 export interface Dialog { name: string; lines: string[]; icon?: 'npc' | 'sign' | 'chest' | 'lore' | 'stone' }
@@ -33,7 +32,7 @@ export interface EngineCallbacks {
   onLoading?: (on: boolean) => void;
 }
 export interface EngineOptions {
-  canvas: HTMLCanvasElement; host: HTMLElement; mini: HTMLCanvasElement | null; playerBase: string; character: string; /** wardrobe prop ids worn by the explorer */ props?: string[];
+  canvas: HTMLCanvasElement; host: HTMLElement; mini: HTMLCanvasElement | null; character: string; /** wardrobe props worn by the explorer */ props?: PropDef[];
   progress: Progress; reduced: boolean; cb: EngineCallbacks;
 }
 
@@ -41,7 +40,7 @@ interface Entity { y: number; draw: () => void }
 
 export class WorldEngine {
   private cv: HTMLCanvasElement; private c: CanvasRenderingContext2D; private o: EngineOptions;
-  private frames: Record<string, HTMLImageElement> = {};
+  private sheet: HTMLImageElement | null = null;
   private who: Character;
   private propDefs: PropDef[] = []; private propImgs = new Map<string, HTMLImageElement>();
   private loc: Baked | null = null;
@@ -83,12 +82,12 @@ export class WorldEngine {
   setPaused(p: boolean) { this.paused = p; if (p) { this.keys.clear(); this.joy = [0, 0]; } }
   setReduced(r: boolean) { this.reduced = r; }
   setCharacter(id: string) { this.who = characterById(id); this.o.character = id; this.loadFrames(); }
-  /** Wardrobe props worn by the explorer (ids from props.ts). */
-  setProps(ids: string[]) {
-    this.propDefs = ids.map((id) => PROP_BY_ID.get(id)).filter((p): p is PropDef => !!p);
-    for (const p of this.propDefs) if (!this.propImgs.has(p.id)) { const im = new Image(); im.src = propUrl(p); this.propImgs.set(p.id, im); }
+  /** Wardrobe props worn by the explorer. */
+  setProps(defs: PropDef[]) {
+    this.propDefs = defs;
+    for (const p of defs) if (!this.propImgs.has(p.id)) { const im = new Image(); im.src = propUrl(p); this.propImgs.set(p.id, im); }
   }
-  private loadFrames() { this.frames = {}; for (const f of ['down', 'up', 'side'] as Facing[]) for (const st of [0, 1, 2] as const) { const im = new Image(); im.src = frameUrl(this.o.playerBase, this.who.id, f, st); this.frames[`${f}${st}`] = im; } }
+  private loadFrames() { const im = new Image(); im.src = sheetUrl(this.who.id); this.sheet = im; }
   get location() { return this.loc?.def ?? null; }
   get position(): Pt { return [this.p.x, this.p.y]; }
   get field() { return this.loc?.field ?? null; }
@@ -345,22 +344,21 @@ export class WorldEngine {
     const stepIdx = !p.moving ? 0 : (Math.floor(p.dist / 22) % 2 === 0 ? 1 : 2) as 1 | 2;
     const bob = p.moving ? Math.abs(Math.sin(p.dist / 22 * Math.PI)) * 2.5 : calm ? 0 : Math.sin(t * 3) * 0.8;
     ents.push({ y: p.y, draw: () => {
-      const face: Facing = p.facing === 'up' && !this.who.hasBack ? 'down' : p.facing;
-      const im = this.frames[`${face}${stepIdx}`]; shadowEllAt(c, p.x, p.y, 24);
+      const face: Facing = p.facing, im = this.sheet, left = face === 'side' && p.flip; shadowEllAt(c, p.x, p.y, 24);
       if (!im || !im.complete || !im.naturalWidth) return;
-      const w = FRAME_W * PLAYER_K, h = FRAME_H * PLAYER_K;
-      c.save(); c.translate(p.x, p.y + 4); if (face === 'side' && p.flip) c.scale(-1, 1);
+      const r = frameRect(face, stepIdx, left), w = SHEET.w * PLAYER_K, h = SHEET.h * PLAYER_K;
+      c.save(); c.translate(p.x, p.y + 4);
       // props are placed from the measured head of this very frame, so they follow the walk bob and fit any explorer art
-      const box = this.propDefs.length ? measureFrame(im) : null, ox = -w / 2, oy = -FRAME_FEET * PLAYER_K - bob;
+      const box = this.propDefs.length ? measureFrame(im, r) : null, ox = -w / 2, oy = -SHEET.feet * PLAYER_K - bob;
       const layer = (behind: boolean) => {
         if (!box) return;
         for (const pd of this.propDefs) {
-          const pl = placeProp(pd, box, face), pi = this.propImgs.get(pd.id);
+          const pl = placeProp(pd, box, face, left), pi = this.propImgs.get(pd.id);
           if (!pl || pl.behind !== behind || !pi || !pi.complete || !pi.naturalWidth) continue;
           c.drawImage(pi, ox + pl.x * PLAYER_K, oy + pl.y * PLAYER_K, pl.w * PLAYER_K, pl.h * PLAYER_K);
         }
       };
-      layer(true); c.drawImage(im, ox, oy, w, h); layer(false); c.restore();
+      layer(true); c.drawImage(im, r.sx, r.sy, r.sw, r.sh, ox, oy, w, h); layer(false); c.restore();
     } });
     ents.sort((a, b2) => a.y - b2.y); for (const e of ents) e.draw();
 
