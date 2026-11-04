@@ -83,7 +83,7 @@ export interface PropPlacement { x: number; y: number; w: number; h: number; beh
 /** Where to draw a prop, in the frame's own pixel space (x, y = top-left corner). null = hidden from this angle. */
 export function placeProp(p: PropDef, m: HeadBox, facing: Facing, left = false): PropPlacement | null {
   if (facing === 'up' && (p.slot === 'prop_face' || p.slot === 'prop_neck')) return null;
-  const hw = m.headW, w = p.w * hw, h = w * p.ar;
+  const hw = m.headW, w = p.w * hw;
   const ref = p.at === 'top' ? m.top : p.at === 'eyes' ? m.top + hw * 0.64 : p.at === 'neck' ? m.top + hw * 0.98 : m.top + hw * 1.1;
   const dir = left ? -1 : 1; // side view: the sheet already faces left or right, so shift props towards the facing direction
   let cx = m.cx + p.ox * hw;
