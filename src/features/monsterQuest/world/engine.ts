@@ -1,7 +1,7 @@
 /** The free-roam world: input, movement, camera, rendering, interactions, encounters and location transitions. */
 import { bakeLocation, PLAYER_R, type Baked } from './paintLocation';
 import { drawMarker, glow, npcSprite, propSprite, shadowEll } from './paintProps';
-import { AnimSampler, drawPose } from './animSampler';
+import { characterById, frameUrl, type Character } from './characters';
 import { LOCATIONS } from './locations';
 import type { Facing, InteractDef, LocationDef, Pt } from './types';
 import { pointInPoly, rng } from './util';
@@ -14,7 +14,8 @@ const ENCOUNTER_RATE = 0.2;          // chance per second of motion on encounter
 const RARE_RATE = 0.4;
 const SHALLOW = 0.7;
 const CAM_LAG = 0.1;
-const PLAYER_SIZE = 96;
+const PLAYER_K = 0.5;                // exported frames are 260x232 with the feet on line 222; drawn at half size
+const FRAME_W = 260, FRAME_H = 232, FRAME_FEET = 222;
 const KEY: Record<string, 'u' | 'd' | 'l' | 'r'> = { ArrowUp: 'u', w: 'u', W: 'u', ArrowDown: 'd', s: 'd', S: 'd', ArrowLeft: 'l', a: 'l', A: 'l', ArrowRight: 'r', d: 'r', D: 'r' };
 
 export interface Dialog { name: string; lines: string[]; icon?: 'npc' | 'sign' | 'chest' | 'lore' | 'stone' }
@@ -31,16 +32,16 @@ export interface EngineCallbacks {
   onLoading?: (on: boolean) => void;
 }
 export interface EngineOptions {
-  canvas: HTMLCanvasElement; host: HTMLElement; mini: HTMLCanvasElement | null; spriteBase: string;
-  frames: (f: Facing, step: 0 | 1 | 2) => string; progress: Progress; reduced: boolean; cb: EngineCallbacks;
+  canvas: HTMLCanvasElement; host: HTMLElement; mini: HTMLCanvasElement | null; playerBase: string; character: string;
+  progress: Progress; reduced: boolean; cb: EngineCallbacks;
 }
 
 interface Entity { y: number; draw: () => void }
 
 export class WorldEngine {
   private cv: HTMLCanvasElement; private c: CanvasRenderingContext2D; private o: EngineOptions;
-  private sampler: AnimSampler;
   private frames: Record<string, HTMLImageElement> = {};
+  private who: Character;
   private loc: Baked | null = null;
   private raf = 0; private last = 0; private time = 0;
   private W = 0; private H = 0; private dpr = 1; private scale = 1;
@@ -63,9 +64,9 @@ export class WorldEngine {
 
   constructor(o: EngineOptions) {
     this.o = o; this.cv = o.canvas; this.c = o.canvas.getContext('2d')!; this.reduced = o.reduced;
-    this.sampler = new AnimSampler(o.host, o.spriteBase); this.sampler.setPaused(o.reduced);
+    this.who = characterById(o.character);
     this.flags = new Set(o.progress.flags); this.visited = new Set(o.progress.visited); this.opened = new Set(o.progress.chests);
-    for (const f of ['down', 'up', 'side'] as Facing[]) for (const s of [0, 1, 2] as const) { const im = new Image(); im.src = o.frames(f, s); this.frames[`${f}${s}`] = im; }
+    this.loadFrames();
     for (let i = 0; i < 46; i++) { const r = rng(i + 7); this.particles.push({ x: r(), y: r(), v: 0.02 + r() * 0.05, ph: r() * 6.28, r: 1.5 + r() * 2.5 }); }
     this.resize(); this.ro = new ResizeObserver(() => this.resize()); this.ro.observe(o.host);
     const on = (t: EventTarget, e: string, f: (ev: any) => void) => { t.addEventListener(e, f as EventListener); this.handlers.push([t, e, f as EventListener]); };
@@ -78,7 +79,9 @@ export class WorldEngine {
   // ------------------------------------------------------------------ public api
   setJoystick(x: number, y: number) { this.joy = [x, y]; if (x || y) this.route = null; }
   setPaused(p: boolean) { this.paused = p; if (p) { this.keys.clear(); this.joy = [0, 0]; } }
-  setReduced(r: boolean) { this.reduced = r; this.sampler.setPaused(r); }
+  setReduced(r: boolean) { this.reduced = r; }
+  setCharacter(id: string) { this.who = characterById(id); this.o.character = id; this.loadFrames(); }
+  private loadFrames() { this.frames = {}; for (const f of ['down', 'up', 'side'] as Facing[]) for (const st of [0, 1, 2] as const) { const im = new Image(); im.src = frameUrl(this.o.playerBase, this.who.id, f, st); this.frames[`${f}${st}`] = im; } }
   get location() { return this.loc?.def ?? null; }
   get position(): Pt { return [this.p.x, this.p.y]; }
   get field() { return this.loc?.field ?? null; }
@@ -103,7 +106,7 @@ export class WorldEngine {
     this.o.cb.onLoading?.(false); this.fadeDir = -1; this.hud(true);
   }
   destroy() {
-    this.destroyed = true; cancelAnimationFrame(this.raf); this.ro.disconnect(); this.sampler.destroy();
+    this.destroyed = true; cancelAnimationFrame(this.raf); this.ro.disconnect();
     for (const [t, e, f] of this.handlers) t.removeEventListener(e, f);
   }
   interact() {
@@ -306,16 +309,18 @@ export class WorldEngine {
 
     // ---- encounter tufts (sway; bend away from the player)
     const tuftOf = (tf: (typeof b.tufts)[number]) => b.tuftSprites[def.zones[tf.zone].ground][tf.k];
+    const p = this.p;
     const drawTuft = (tf: (typeof b.tufts)[number]) => {
       const img = tuftOf(tf), near = Math.hypot(tf.x - this.p.x, tf.y - this.p.y), push = near < 50 ? (1 - near / 50) * Math.sign(tf.x - this.p.x || 1) * 0.5 : 0;
-      const sway = calm ? 0 : Math.sin(t * 2 + tf.ph) * 0.12 + push;
+      const rustle = p.moving && near < 120 ? Math.sin(t * 14 + tf.ph) * 0.16 * (1 - near / 120) : 0;
+      const sway = calm ? 0 : Math.sin(t * 2 + tf.ph) * 0.12 + push + rustle;
       c.save(); c.translate(tf.x, tf.y); c.transform(1, 0, sway, 1, 0, 0); c.drawImage(img, -24, -50); c.restore();
     };
     let lo = 0, hi = b.tufts.length; while (lo < hi) { const m = (lo + hi) >> 1; if (b.tufts[m].y < T - 20) lo = m + 1; else hi = m; }
     const tufStart = lo; for (let i = tufStart; i < b.tufts.length && b.tufts[i].y < B + 60; i++) { const tf = b.tufts[i]; if (tf.x > L - 30 && tf.x < R + 30) drawTuft(tf); }
 
     // ---- entities, sorted by their ground contact point
-    const ents = this.ents; ents.length = 0; const p = this.p;
+    const ents = this.ents; ents.length = 0;
     for (const pp of b.props) {
       if (pp.overhead) continue; const d = pp.def, sp = pp.sp;
       if (d.x - sp.ox > R || d.x - sp.ox + sp.w < L || d.y - sp.oy > B || d.y - sp.oy + sp.h < T) continue;
@@ -329,18 +334,15 @@ export class WorldEngine {
       else if (it.kind === 'sign') { const sp = propSprite({ kind: 'sign', x: 0, y: 0, dir: it.dir })!; ents.push({ y: it.y, draw: () => c.drawImage(sp.cv, it.x - sp.ox, it.y - sp.oy) }); }
       else if (it.kind === 'stone') { const sp = propSprite({ kind: 'runeStone', x: 0, y: 0 })!; ents.push({ y: it.y, draw: () => c.drawImage(sp.cv, it.x - sp.ox, it.y - sp.oy) }); }
     }
-    def.critters.forEach((cr, i) => {
-      if (cr.x < L - 120 || cr.x > R + 120 || cr.y < T - 120 || cr.y > B + 160) return;
-      const pose = this.sampler.sample(`${def.id}:${i}`, cr.sprite); const size = cr.size ?? 92;
-      ents.push({ y: cr.y, draw: () => { shadowEllAt(c, cr.x, cr.y, size * 0.3); if (pose) drawPose(c, pose, cr.x, cr.y, size, cr.flip); } });
-    });
-    // player
-    const stepIdx = !p.moving ? 0 : (Math.floor(p.dist / 17) % 2 === 0 ? 1 : 2) as 1 | 2;
-    const bob = p.moving ? Math.abs(Math.sin(p.dist / 17 * Math.PI)) * 3 : calm ? 0 : Math.sin(t * 3) * 1;
+    // player: the supplied artwork. Characters without a back view reuse their front frames when walking up.
+    const stepIdx = !p.moving ? 0 : (Math.floor(p.dist / 22) % 2 === 0 ? 1 : 2) as 1 | 2;
+    const bob = p.moving ? Math.abs(Math.sin(p.dist / 22 * Math.PI)) * 2.5 : calm ? 0 : Math.sin(t * 3) * 0.8;
     ents.push({ y: p.y, draw: () => {
-      const im = this.frames[`${p.facing}${stepIdx}`]; shadowEllAt(c, p.x, p.y, 20);
+      const face: Facing = p.facing === 'up' && !this.who.hasBack ? 'down' : p.facing;
+      const im = this.frames[`${face}${stepIdx}`]; shadowEllAt(c, p.x, p.y, 24);
       if (!im || !im.complete || !im.naturalWidth) return;
-      c.save(); c.translate(p.x, p.y); if (p.flip) c.scale(-1, 1); c.drawImage(im, -PLAYER_SIZE / 2, -PLAYER_SIZE + 12 - bob, PLAYER_SIZE, PLAYER_SIZE); c.restore();
+      const w = FRAME_W * PLAYER_K, h = FRAME_H * PLAYER_K;
+      c.save(); c.translate(p.x, p.y + 4); if (face === 'side' && p.flip) c.scale(-1, 1); c.drawImage(im, -w / 2, -FRAME_FEET * PLAYER_K - bob, w, h); c.restore();
     } });
     ents.sort((a, b2) => a.y - b2.y); for (const e of ents) e.draw();
 

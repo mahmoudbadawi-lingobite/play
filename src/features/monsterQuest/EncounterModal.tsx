@@ -4,6 +4,8 @@ import * as api from './api';
 import { useMq } from './context';
 import { MonsterArt } from './art/MonsterArt';
 import { Orb } from './art/Orb';
+import { animClassFor } from './world/monsterSprites';
+import './world/monsterAnimations.css';
 import { QuestionView, formatCorrectAnswer } from './QuestionView';
 import { sfx } from './sound';
 import { Bar, GameButton, RarityBadge, TypeBadge } from './ui';
@@ -148,7 +150,10 @@ export function EncounterModal({ encounter, onClose }: { encounter: Encounter; o
         <div className="relative mt-2 flex min-h-[190px] flex-1 items-center justify-center">
           {showMonster && (
             <div className={`mq-stage-monster ${fly === 'absorb' ? 'is-absorb' : ''} ${fly === 'wobble' ? 'is-hidden' : ''} ${phase === 'escaped' ? 'is-gone' : ''}`}>
-              <MonsterArt spec={sp.art} spriteUrl={sp.sprite_url} size={spriteSize} flip anim={monsterAnim} />
+              {/* the supplied keyframe animation plays while the monster is idle; hit / absorb keep their own effects */}
+              <div className={monsterAnim === 'idle' ? animClassFor(sp.id, sp.type) : undefined} style={{ display: 'inline-block', lineHeight: 0 }}>
+                <MonsterArt spec={sp.art} spriteUrl={sp.sprite_url} size={spriteSize} flip anim={monsterAnim === 'idle' ? 'none' : monsterAnim} />
+              </div>
             </div>
           )}
           {(fly === 'fly' || fly === 'absorb') && <div className="mq-orb-fly"><Orb size={44} color={(balls[0] && mq.itemsByKey.get(balls[0].key)?.color) || '#3b82f6'} /></div>}
@@ -225,7 +230,7 @@ export function EncounterModal({ encounter, onClose }: { encounter: Encounter; o
           <div className="mq-burst" aria-hidden="true">{Array.from({ length: 22 }, (_, i) => <span key={i} style={{ ['--a' as string]: `${(i / 22) * 360}deg`, ['--d' as string]: `${90 + (i % 5) * 30}px`, ['--c' as string]: ['#facc15', '#38bdf8', '#f472b6', '#4ade80'][i % 4] }} />)}</div>
           <div className="relative z-10 w-full max-w-md px-4 text-center">
             <p className="font-display text-3xl font-extrabold text-yellow-300 drop-shadow">Gotcha!</p>
-            <div className="my-2 flex justify-center"><MonsterArt spec={sp.art} spriteUrl={sp.sprite_url} size={170} anim="idle" /></div>
+            <div className="my-2 flex justify-center"><div className={animClassFor(sp.id, sp.type)} style={{ display: 'inline-block', lineHeight: 0 }}><MonsterArt spec={sp.art} spriteUrl={sp.sprite_url} size={170} anim="none" /></div></div>
             <p className="text-xl font-extrabold text-white">{sp.name} joined your collection!</p>
             <div className="mt-1 flex items-center justify-center gap-2"><TypeBadge type={sp.type} /><RarityBadge rarity={sp.rarity} /><span className="text-sm font-bold text-white/90">Lv. {encounter.level}</span></div>
             <div className="mq-card mt-3 flex justify-around text-[#10285a]">

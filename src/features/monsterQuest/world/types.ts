@@ -62,7 +62,6 @@ export interface InteractDef {
   /** puzzle link */
   link?: string;
 }
-export interface CritterDef { sprite: string; x: number; y: number; size?: number; flip?: boolean; zone?: string }
 
 export interface LocationDef {
   id: string; world: number; name: string; kind: 'village' | 'standard' | 'large';
@@ -84,7 +83,6 @@ export interface LocationDef {
   gates: GateDef[];
   entrances: Record<string, Entrance>;
   interactables: InteractDef[];
-  critters: CritterDef[];
   /** landmark the HUD points at */
   landmark: { x: number; y: number; name: string };
   /** blocked rectangles (walls the painter does not need to know about) */

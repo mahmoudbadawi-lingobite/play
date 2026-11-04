@@ -42,7 +42,7 @@ const avoidOf = (d: { paths: any[]; liquids: any[]; zones: ZoneDef[]; bridges: a
 });
 const zone = (id: string, label: string, cx: number, cy: number, rx: number, ry: number, ground: 'ash' | 'moss', pool: string[], extra: Partial<ZoneDef> = {}): ZoneDef => ({ id, label, ground, pool, poly: blobPoly(cx, cy, rx, ry, id, 0.1, 10).filter((_, i) => i % 6 === 0), ...extra });
 
-const base = { world: 1, pal: PAL, serverZone: 'forest', particles: 'embers' as const, fords: [], liquids: [], bridges: [], zones: [], critters: [], lights: [], blockers: [], plazas: [] };
+const base = { world: 1, pal: PAL, serverZone: 'forest', particles: 'embers' as const, fords: [], liquids: [], bridges: [], zones: [], lights: [], blockers: [], plazas: [] };
 
 // ================================================================== 1.1 Ember Village
 const villageCore = {
@@ -93,7 +93,6 @@ const village: LocationDef = {
   ],
   entrances: { south: { x: 800, y: 1040, facing: 'up' }, east: { x: 1400, y: 640, facing: 'side', flip: true }, spawn: { x: 800, y: 1040, facing: 'up' } },
   props: villageCore.props, interactables: villageCore.interactables,
-  critters: [{ sprite: 'flamora', x: 880, y: 575, size: 92 }, { sprite: 'furron', x: 570, y: 925, size: 88 }, { sprite: 'puffy', x: 1140, y: 540, size: 84, flip: true }],
   landmark: { x: 800, y: 300, name: 'Mushroom lighthouse' },
   mood: 'Warm lantern glow, amber haze, small embers drifting upward.',
   lights: [{ x: 800, y: 650, r: 420, c: '#ffb347' }, { x: 500, y: 520, r: 220, c: '#ffd46a' }, { x: 1060, y: 500, r: 220, c: '#ffd46a' }, { x: 1000, y: 800, r: 200, c: '#ffd46a' }],
@@ -151,12 +150,6 @@ const valley: LocationDef = {
     { id: 's3', kind: 'sign', x: 1460, y: 650, dir: 'right', name: 'Glowing mushroom plateau', marker: 'none' },
     { id: 's4', kind: 'sign', x: 1140, y: 1100, dir: 'right', name: 'Stepping-stone shortcut east', marker: 'none' },
     { id: 's5', kind: 'sign', x: 2120, y: 1090, dir: 'right', name: 'Ancient Ember Ruins', marker: 'none' },
-  ],
-  critters: [
-    { sprite: 'flora', x: 300, y: 1050, size: 92, zone: 'mv-west' }, { sprite: 'furron', x: 400, y: 1100, size: 88, zone: 'mv-west' },
-    { sprite: 'pixie', x: 1930, y: 700, size: 86, zone: 'mv-plateau' }, { sprite: 'flamora', x: 2010, y: 740, size: 90, zone: 'mv-plateau' },
-    { sprite: 'furron', x: 2040, y: 1330, size: 88, zone: 'mv-east' }, { sprite: 'rokki', x: 2130, y: 1370, size: 92, zone: 'mv-east' },
-    { sprite: 'pixie', x: 900, y: 1090, size: 90, zone: 'mv-rare' },
   ],
   landmark: { x: 900, y: 985, name: 'Giant spotted mushroom' },
   mood: 'Glowing plants light the shade, soft sparkles over the water.',
@@ -223,11 +216,6 @@ const ruins: LocationDef = {
     { id: 's1', kind: 'sign', x: 170, y: 1040, dir: 'left', name: 'Mushroom Valley', marker: 'none' },
     { id: 's2', kind: 'sign', x: 1100, y: 250, dir: 'up', name: 'Molten Caverns', marker: 'none' },
   ],
-  critters: [
-    { sprite: 'rokki', x: 240, y: 960, size: 90, zone: 'er-w' }, { sprite: 'pixie', x: 610, y: 400, size: 86, zone: 'er-ha' },
-    { sprite: 'lavaro', x: 1860, y: 1520, size: 96, zone: 'er-hb' }, { sprite: 'puffy', x: 1130, y: 1540, size: 86, zone: 'er-s' },
-    { sprite: 'rockzor', x: 2110, y: 1000, size: 96, zone: 'er-altar' },
-  ],
   landmark: { x: 1200, y: 780, name: 'Seated fire statue' },
   mood: 'Sunset gold on weathered stone, slow lava glow, drifting ash motes.',
   lights: [{ x: 1200, y: 800, r: 520, c: '#ffb347' }, { x: 2100, y: 900, r: 300, c: '#ffd46a' }, { x: 1200, y: 1500, r: 400, c: '#ff8a2a' }],
@@ -278,11 +266,6 @@ const caverns: LocationDef = {
     { id: 's1', kind: 'sign', x: 1100, y: 1650, dir: 'down', name: 'Back to Ancient Ember Ruins', marker: 'none' },
     { id: 's2', kind: 'sign', x: 1300, y: 1000, dir: 'up', name: 'Bridge across the lava pool', marker: 'none' },
     { id: 's3', kind: 'sign', x: 1670, y: 520, dir: 'up', name: 'Deep chamber and the glowing doorway', marker: 'none' },
-  ],
-  critters: [
-    { sprite: 'lavaro', x: 800, y: 1520, size: 98, zone: 'mc-entrance' }, { sprite: 'furron', x: 890, y: 1560, size: 86, zone: 'mc-entrance' },
-    { sprite: 'puffy', x: 1740, y: 700, size: 86, zone: 'mc-middle' }, { sprite: 'lavaro', x: 940, y: 280, size: 96, zone: 'mc-spires' },
-    { sprite: 'rexi', x: 780, y: 660, size: 100, zone: 'mc-rare' },
   ],
   landmark: { x: 800, y: 540, name: 'Lava-fall' },
   mood: 'Orange and obsidian black with cool crystal highlights for contrast.',

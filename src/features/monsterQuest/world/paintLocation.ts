@@ -1,6 +1,6 @@
 /** Bakes a LocationDef into: a painted ground canvas, a collision field, sorted props, encounter tufts and a mini-map. */
 import { Field, CELL } from './collision';
-import { footprints, propSprite, propSpec, type Sprite } from './paintProps';
+import { applyGrain, footprints, propSprite, propSpec, setFringeStyle, type Sprite } from './paintProps';
 import type { LocationDef, PropDef, ZoneDef, Pt, PathDef, LiquidKind, LiquidDef } from './types';
 import { darken, lighten, makeNoise, mix, outline, pointInPoly, rgba, rng, smooth, hex2rgb } from './util';
 
@@ -98,8 +98,13 @@ function paintBridge(c: C, b: { a: Pt; b: Pt; width: number; kind?: string }) {
   // deck
   const g = c.createLinearGradient(0, -hw, 0, hw); g.addColorStop(0, lighten('#b8a898', 0.12)); g.addColorStop(1, '#8d7d72');
   c.fillStyle = g; c.beginPath(); c.roundRect(-L, -hw, L * 2, b.width, 8); c.fill(); c.lineWidth = 3; c.strokeStyle = '#3d2c34'; c.stroke();
-  c.strokeStyle = 'rgba(60,40,44,.45)'; c.lineWidth = 2;
-  for (let x = -L + 22; x < L - 10; x += 26) { c.beginPath(); c.moveTo(x, -hw + 12); c.lineTo(x + 2, hw - 12); c.stroke(); }
+  // stone blocks in staggered rows, with a few moss patches
+  c.save(); c.beginPath(); c.roundRect(-L, -hw, L * 2, b.width, 8); c.clip();
+  const rows = Math.max(3, Math.round(b.width / 22));
+  for (let row = 0; row < rows; row++) { const y = -hw + row * (b.width / rows), off = row % 2 ? 17 : 0;
+    for (let x = -L - 17 + off; x < L; x += 34) { c.strokeStyle = 'rgba(54,36,44,.55)'; c.lineWidth = 1.8; c.beginPath(); c.roundRect(x, y + 1, 33, b.width / rows - 2, 4); c.stroke(); c.fillStyle = ((row * 7 + Math.round(x)) & 3) === 0 ? 'rgba(255,240,210,.14)' : 'rgba(40,24,34,.08)'; c.fill(); } }
+  c.fillStyle = 'rgba(120,170,70,.75)'; for (const [mx, my] of [[-L * 0.5, -hw + 20], [L * 0.3, hw - 24], [L * 0.7, -hw + 26]]) { c.beginPath(); c.ellipse(mx, my, 14, 6, 0.2, 0, TAU); c.fill(); }
+  c.restore();
   // rails (low stone walls)
   for (const sy of [-1, 1]) {
     const y0 = sy < 0 ? -hw - 2 : hw - 14, wall = c.createLinearGradient(0, y0, 0, y0 + 16); wall.addColorStop(0, lighten('#a69584', 0.25)); wall.addColorStop(1, '#6c5c58');
@@ -193,6 +198,46 @@ function paintPath(c: C, def: LocationDef, p: PathDef, r: () => number, carveMod
   c.restore();
 }
 
+
+/** Blades pushing in over the edge of a path (like the reference: grass overlaps the dirt), plus a few edge stones. */
+function edgeFringe(c: C, def: LocationDef, pts: Pt[], width: number, r: () => number) {
+  if (def.mode !== 'open') return;
+  const g = [def.pal.tuft, lighten(def.pal.ground[1], 0.1), darken(def.pal.ground[2], 0.15), def.pal.ground[0]];
+  c.save(); c.lineCap = 'round';
+  let acc = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], seg = Math.hypot(x1 - x0, y1 - y0) || 1; acc += seg; if (acc < 9) continue; acc = 0;
+    const nx = -(y1 - y0) / seg, ny = (x1 - x0) / seg;
+    for (const side of [-1, 1]) {
+      const off = width / 2 + 2 + r() * 5, bx = x1 + nx * off * side, by = y1 + ny * off * side;
+      if (r() < 0.14) { c.fillStyle = r() < 0.5 ? '#a79a8e' : '#8a7c74'; c.strokeStyle = '#4a3a3a'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(bx, by, 4 + r() * 4, 3 + r() * 2.4, r(), 0, TAU); c.fill(); c.stroke(); continue; }
+      for (let k = 0; k < 2; k++) {
+        const l = 7 + r() * 9, a = Math.atan2(ny * side, nx * side) + (r() - 0.5) * 1.6 - Math.PI / 2 * 0.0, col = g[Math.floor(r() * g.length)];
+        const ex = bx + Math.cos(a) * l * 0.5 + (r() - 0.5) * 4, ey = by - l;
+        c.strokeStyle = rgba(darken(col, 0.6), 0.9); c.lineWidth = 3.2; c.beginPath(); c.moveTo(bx, by); c.quadraticCurveTo(bx + (ex - bx) * 0.3, by - l * 0.6, ex, ey); c.stroke();
+        c.strokeStyle = col; c.lineWidth = 1.8; c.beginPath(); c.moveTo(bx, by); c.quadraticCurveTo(bx + (ex - bx) * 0.3, by - l * 0.6, ex, ey); c.stroke();
+      }
+    }
+  }
+  c.restore();
+}
+/** Small leafy ground clumps and ferns scattered on open ground, painted flat under everything else. */
+function groundClumps(c: C, def: LocationDef, r: () => number) {
+  if (def.mode !== 'open') return;
+  const { w, h, pal } = def, cols = [darken(pal.ground[2], 0.1), pal.tuft, lighten(pal.ground[1], 0.1)];
+  c.save(); c.lineCap = 'round';
+  for (let i = 0; i < (w * h) / 15000; i++) {
+    const x = 110 + r() * (w - 220), y = 110 + r() * (h - 220), n = 5 + Math.floor(r() * 4), big = 12 + r() * 12;
+    c.fillStyle = 'rgba(40,24,30,.16)'; c.beginPath(); c.ellipse(x + 2, y + 3, big * 0.9, 4, 0, 0, TAU); c.fill();
+    for (let k = 0; k < n; k++) {
+      const a = -Math.PI / 2 + (k - (n - 1) / 2) * 0.36 + (r() - 0.5) * 0.15, l = big + r() * 8, ex = x + Math.cos(a) * l, ey = y + Math.sin(a) * l, col = cols[k % cols.length];
+      c.strokeStyle = rgba(darken(col, 0.55), 0.9); c.lineWidth = 4.4; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + Math.cos(a) * l * 0.4, y - l * 0.1 + Math.sin(a) * l * 0.4, ex, ey); c.stroke();
+      c.strokeStyle = col; c.lineWidth = 2.6; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + Math.cos(a) * l * 0.4, y - l * 0.1 + Math.sin(a) * l * 0.4, ex, ey); c.stroke();
+    }
+  }
+  c.restore();
+}
+
 // --------------------------------------------------------------------------------------------------- encounter tufts
 function tuftSprites(def: LocationDef): Record<string, HTMLCanvasElement[]> {
   const mk = (kind: 'ash' | 'moss', k: number) => {
@@ -265,8 +310,10 @@ export function bakeLocation(def: LocationDef): Baked {
     if (def.mode === 'open') white(() => { m.beginPath(); m.ellipse(pz.x, pz.y, pz.rx, pz.ry, 0, 0, TAU); m.fill(); });
   }
   const paths = def.paths.map((p) => ({ ...p, pts: sm(p.pts) }));
+  groundClumps(c, def, r);
   for (const p of def.paths) {
     paintPath(c, def, p, r, def.mode === 'carve');
+    edgeFringe(c, def, sm(p.pts), p.width, r);
     white(() => { m.lineWidth = p.width; m.lineCap = 'round'; m.lineJoin = 'round'; strokePoly(m, sm(p.pts)); m.stroke(); });
   }
 
@@ -322,9 +369,12 @@ export function bakeLocation(def: LocationDef): Baked {
     }
   } else { const g = c.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.25, w / 2, h / 2, Math.max(w, h) * 0.75); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, rgba(pal.vignette, 0.65)); c.fillStyle = g; c.fillRect(0, 0, w, h); }
 
+  applyGrain(c, w, h);
+
   // ---- props (authored + gates + border) -> sprites and collision
   const all: PropDef[] = [...def.props, ...gateProps(def), ...borderProps(def)];
   const placed: PlacedProp[] = [];
+  setFringeStyle(def.mode === 'open' ? 'grass' : 'stone');
   for (const d of all) {
     const sp = propSprite(d), spec = propSpec(d.kind); if (!sp || !spec) continue;
     placed.push({ def: d, sp, overhead: !!spec.overhead, canopy: !!spec.canopy, fx: spec.fx, fade: 1 });

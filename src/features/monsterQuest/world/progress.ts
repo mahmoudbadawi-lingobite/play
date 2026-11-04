@@ -1,9 +1,9 @@
 /** Client-side world progress (visited places, flags, opened chests). Rewards are never decided here; see the notes in Explore. */
-export interface Progress { flags: string[]; visited: string[]; chests: string[]; seenTutorial: boolean; calm: boolean }
+export interface Progress { flags: string[]; visited: string[]; chests: string[]; seenTutorial: boolean; calm: boolean; character: string }
 const key = (uid: string) => `mq.world.v1.${uid}`;
 export function loadProgress(uid: string): Progress {
-  try { const raw = localStorage.getItem(key(uid)); if (raw) return { flags: [], visited: [], chests: [], seenTutorial: false, calm: false, ...JSON.parse(raw) }; } catch { /* private mode */ }
-  return { flags: [], visited: [], chests: [], seenTutorial: false, calm: false };
+  try { const raw = localStorage.getItem(key(uid)); if (raw) return { flags: [], visited: [], chests: [], seenTutorial: false, calm: false, character: '', ...JSON.parse(raw) }; } catch { /* private mode */ }
+  return { flags: [], visited: [], chests: [], seenTutorial: false, calm: false, character: '' };
 }
 export function saveProgress(uid: string, p: Progress) { try { localStorage.setItem(key(uid), JSON.stringify(p)); } catch { /* ignore */ } }
 

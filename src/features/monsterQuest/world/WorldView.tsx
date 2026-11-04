@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { trainerDataUrl } from '../art/Trainer';
 import { Orb } from '../art/Orb';
 import { useMq } from '../context';
 import { sfx } from '../sound';
@@ -8,12 +7,15 @@ import * as api from '../api';
 import { EncounterModal } from '../EncounterModal';
 import type { Encounter } from '../types';
 import { WorldEngine, type Dialog, type HudInfo } from './engine';
+import { CharacterPicker } from './CharacterPicker';
+import { DEFAULT_CHARACTER, frameUrl } from './characters';
 import { Joystick } from './Joystick';
 import { currentQuest, loadProgress, saveProgress, type Progress } from './progress';
 import { world as worldDef } from './worlds';
 import './monsterAnimations.css';
 import './world.css';
 
+const PLAYER_BASE = `${import.meta.env.BASE_URL}monster-quest/players/`;
 const reducedPref = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () => void }) {
@@ -23,17 +25,17 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
   const [hud, setHud] = useState<HudInfo | null>(null), [dialog, setDialog] = useState<Dialog | null>(null), [toast, setToast] = useState<string | null>(null);
   const [encounter, setEncounter] = useState<Encounter | null>(null), [showMap, setShowMap] = useState(false), [calm, setCalm] = useState(progress.current.calm || reducedPref());
   const [hint, setHint] = useState(!progress.current.seenTutorial), [loading, setLoading] = useState(true), [fs, setFs] = useState(false);
+  const [who, setWho] = useState(progress.current.character || DEFAULT_CHARACTER), [picking, setPicking] = useState(!progress.current.character);
   const dialogLine = useRef(0), [, force] = useState(0);
   const encResolve = useRef<(() => void) | null>(null);
   const showToast = useCallback((m: string) => { setToast(m); window.setTimeout(() => setToast((t) => (t === m ? null : t)), 3200); }, []);
-  const paused = !!encounter || !!dialog || showMap;
+  const paused = !!encounter || !!dialog || showMap || picking;
 
   // engine lifecycle
   useEffect(() => {
     if (!host.current || !canvas.current) return;
     const e = new WorldEngine({
-      canvas: canvas.current, host: host.current, mini: mini.current, spriteBase: `${import.meta.env.BASE_URL}monster-quest/sprites/`, progress: progress.current, reduced: calm,
-      frames: (f, s) => trainerDataUrl({ facing: f, step: s }, 96, mq.look),
+      canvas: canvas.current, host: host.current, mini: mini.current, playerBase: PLAYER_BASE, character: who, progress: progress.current, reduced: calm,
       cb: {
         onHud: setHud, onDialog: (d) => { dialogLine.current = 0; setDialog(d); }, onShop: () => nav('/monster-quest/shop'), onExitWorld: onLeave, onToast: showToast,
         onProgress: (p) => saveProgress(mq.userId, p), onLoading: setLoading,
@@ -46,6 +48,7 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [worldId]);
   useEffect(() => { eng.current?.setPaused(paused); }, [paused]);
+  const pick = (id: string) => { setWho(id); setPicking(false); progress.current.character = id; saveProgress(mq.userId, progress.current); eng.current?.setCharacter(id); };
   useEffect(() => { eng.current?.setReduced(calm); progress.current.calm = calm; saveProgress(mq.userId, progress.current); }, [calm, mq.userId]);
   useEffect(() => { if (showMap) requestAnimationFrame(() => full.current && eng.current?.drawFullMap(full.current)); }, [showMap]);
   useEffect(() => { if (!hint) return; const t = window.setTimeout(() => { setHint(false); progress.current.seenTutorial = true; saveProgress(mq.userId, progress.current); }, 9000); return () => clearTimeout(t); }, [hint, mq.userId]);
@@ -65,7 +68,7 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
 
         {/* top left: portrait, bars, location */}
         <div className="mq-hud-tl">
-          <div className="mq-portrait" aria-hidden><img src={trainerDataUrl({ facing: 'down', step: 0 }, 96, mq.look)} alt="" /></div>
+          <div className="mq-portrait" aria-hidden><img src={frameUrl(PLAYER_BASE, who, 'down', 0)} alt="" /></div>
           <div className="mq-bars">
             <div className="mq-bar"><b>HP</b><span><i style={{ width: '100%', background: '#ef4444' }} /></span></div>
             <div className="mq-bar"><b>MP</b><span><i style={{ width: '100%', background: '#3b82f6' }} /></span></div>
@@ -79,6 +82,7 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
         <div className="mq-hud-loc" aria-live="polite"><button className="mq-back" onClick={onLeave} aria-label="Back to world map">← Worlds</button><span>{hud?.loc?.name ?? w.name}</span>{hud?.zoneLabel && <em>🌿 {hud.zoneLabel}</em>}</div>
         <div className="mq-hud-tools">
           <button className={`mq-tool ${calm ? 'on' : ''}`} onClick={() => setCalm(!calm)} aria-pressed={calm} title="Calm mode: stops ambient motion and animations">🌙</button>
+          <button className="mq-tool" onClick={() => setPicking(true)} aria-label="Change explorer" title="Change explorer">👤</button>
           <button className="mq-tool" onClick={toggleFs} aria-label="Toggle full screen">⛶</button>
         </div>
 
@@ -103,6 +107,7 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
             <button className="mq-dialog-next" autoFocus>{dialogLine.current < dialog.lines.length - 1 ? 'Next ▸' : 'Close'}</button>
           </div>
         )}
+        {picking && <CharacterPicker base={PLAYER_BASE} current={who} onPick={pick} onClose={progress.current.character ? () => setPicking(false) : undefined} />}
         {showMap && (
           <div className="mq-fullmap" onClick={() => setShowMap(false)} role="dialog" aria-label="Map">
             <div><canvas ref={full} width={640} height={480} /><p>{hud?.loc?.name} · tap to close</p></div>

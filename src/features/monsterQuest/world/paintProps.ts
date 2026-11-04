@@ -13,12 +13,18 @@ const TAU = Math.PI * 2;
 function shadowEll(c: C, rx: number, ry: number, a = 0.3, ox = 8, oy = 3) {
   c.save(); c.fillStyle = `rgba(36,20,40,${a})`; c.beginPath(); c.ellipse(ox, oy, rx, ry, 0, 0, TAU); c.fill(); c.restore();
 }
-/** A shaded, outlined blob. */
+/** A shaded, outlined blob with an inner shadow crescent (lower right) and a thin rim light (upper left). */
 function ball(c: C, cx: number, cy: number, rx: number, ry: number, col: string, lw = 2.5, rot = 0) {
   const g = c.createRadialGradient(cx - rx * 0.38, cy - ry * 0.5, Math.min(rx, ry) * 0.08, cx, cy, Math.max(rx, ry) * 1.1);
   g.addColorStop(0, lighten(col, 0.42)); g.addColorStop(0.42, col); g.addColorStop(1, darken(col, 0.4));
   c.fillStyle = g; c.beginPath(); c.ellipse(cx, cy, rx, ry, rot, 0, TAU); c.fill();
-  c.lineWidth = lw; c.strokeStyle = outline(col); c.stroke();
+  if (Math.min(rx, ry) > 7) {
+    c.save(); c.beginPath(); c.ellipse(cx, cy, rx, ry, rot, 0, TAU); c.clip();
+    c.strokeStyle = rgba(darken(col, 0.55), 0.38); c.lineWidth = Math.min(rx, ry) * 0.42; c.beginPath(); c.ellipse(cx - rx * 0.16, cy - ry * 0.18, rx * 1.02, ry * 1.02, rot, 0, TAU); c.stroke();
+    c.strokeStyle = rgba(lighten(col, 0.7), 0.5); c.lineWidth = Math.max(1.6, Math.min(rx, ry) * 0.08); c.beginPath(); c.ellipse(cx + rx * 0.05, cy + ry * 0.06, rx * 0.93, ry * 0.93, rot, Math.PI * 0.95, Math.PI * 1.65); c.stroke();
+    c.restore();
+  }
+  c.lineWidth = lw; c.strokeStyle = outline(col); c.beginPath(); c.ellipse(cx, cy, rx, ry, rot, 0, TAU); c.stroke();
 }
 function gloss(c: C, cx: number, cy: number, rx: number, ry: number, a = 0.5, rot = -0.55) {
   c.save(); c.fillStyle = `rgba(255,252,235,${a})`; c.beginPath(); c.ellipse(cx, cy, rx, ry, rot, 0, TAU); c.fill(); c.restore();
@@ -43,6 +49,55 @@ function poly(c: C, pts: number[][], fill: string, lw = 2.2, stroke?: string) {
   c.fillStyle = fill; c.fill(); c.lineJoin = 'round'; c.lineWidth = lw; c.strokeStyle = stroke ?? outline(fill); c.stroke();
 }
 
+
+// ------------------------------------------------------------------ painterly helpers
+/** Foliage as many small outlined leaf clumps (back to front), like hand-painted tree crowns. */
+function leafMass(c: C, col: string, seed: string, cx: number, cy: number, rx: number, ry: number, n: number) {
+  const r = rng(seed), pts: [number, number, number][] = [];
+  // solid dark base so no gaps show between clumps
+  c.beginPath(); c.ellipse(cx, cy + 4, rx * 0.95, ry * 0.95, 0, 0, TAU); c.fillStyle = darken(col, 0.42); c.fill();
+  const ring = 15;
+  for (let i = 0; i < ring; i++) { const a = (i / ring) * TAU + r() * 0.2; pts.push([cx + Math.cos(a) * rx * 0.88, cy + Math.sin(a) * ry * 0.88, 17 + r() * 8]); }
+  for (let i = 0; i < n; i++) { const a = r() * TAU, d = Math.sqrt(r()) * 0.78; pts.push([cx + Math.cos(a) * rx * d, cy + Math.sin(a) * ry * d, 15 + r() * 9]); }
+  pts.sort((a, b) => a[1] - b[1]);
+  for (const [x, y, rad] of pts) {
+    const t = (y - (cy - ry)) / (ry * 2), tone = mix(lighten(col, 0.2), darken(col, 0.28), Math.min(1, Math.max(0, t * 0.9 + (r() - 0.5) * 0.25)));
+    ball(c, x, y, rad, rad * 0.86, tone, 2.2);
+    c.strokeStyle = rgba(lighten(col, 0.55), 0.65); c.lineWidth = 1.6; c.beginPath(); c.arc(x - rad * 0.1, y - rad * 0.1, rad * 0.62, Math.PI * 1.05, Math.PI * 1.55); c.stroke();
+  }
+}
+type Fringe = 'grass' | 'stone' | 'none';
+let fringeStyle: Fringe = 'grass';
+export const setFringeStyle = (f: Fringe) => { fringeStyle = f; };
+const BLADE = ['#52702c', '#76993f', '#93b552', '#5f8034'];
+/** A ring of grass blades (and the odd flower) hugging the foot of a prop, so objects sit in the ground rather than on it. */
+function fringe(c: C, rx: number, seed: string) {
+  if (fringeStyle === 'none' || rx <= 0) return;
+  const r = rng(`fr:${seed}`), n = Math.round(rx / 2.6);
+  c.save(); c.lineCap = 'round';
+  for (let i = 0; i < n; i++) {
+    const a = r() * TAU, x = Math.cos(a) * rx * (0.85 + r() * 0.3), y = Math.sin(a) * rx * 0.34 * (0.85 + r() * 0.3) + 2;
+    if (fringeStyle === 'stone') {
+      if (r() < 0.55) { c.fillStyle = ['#8d7d76', '#6e5f66', '#a08f84'][i % 3]; c.strokeStyle = '#3a2830'; c.lineWidth = 1.4; c.beginPath(); c.ellipse(x, y, 3 + r() * 4, 2 + r() * 2.4, 0, 0, TAU); c.fill(); c.stroke(); }
+      continue;
+    }
+    const l = 7 + r() * 10, lean = (r() - 0.5) * 8, col = BLADE[Math.floor(r() * BLADE.length)];
+    c.strokeStyle = '#2d3f1c'; c.lineWidth = 3.4; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + lean * 0.4, y - l * 0.6, x + lean, y - l); c.stroke();
+    c.strokeStyle = col; c.lineWidth = 1.9; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + lean * 0.4, y - l * 0.6, x + lean, y - l); c.stroke();
+    if (r() < 0.06) { c.fillStyle = ['#ff8fb8', '#ffe27a', '#fff6e0'][i % 3]; c.strokeStyle = '#4a2a3a'; c.lineWidth = 1; c.beginPath(); c.arc(x + lean, y - l, 2.6, 0, TAU); c.fill(); c.stroke(); }
+  }
+  c.restore();
+}
+/** Painted grain: short brush fibres, tiled, composited only where the sprite already has pixels. */
+let grainTile: HTMLCanvasElement | null = null;
+function grain(): HTMLCanvasElement {
+  if (grainTile) return grainTile;
+  const g = document.createElement('canvas'); g.width = g.height = 160; const c = g.getContext('2d')!, r = rng('grain'); c.lineCap = 'round';
+  for (let i = 0; i < 380; i++) { const x = r() * 160, y = r() * 160, a = r() * TAU, l = 3 + r() * 8; c.strokeStyle = r() < 0.5 ? 'rgba(255,246,220,.055)' : 'rgba(40,20,40,.06)'; c.lineWidth = 1.2 + r() * 2; c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l * 0.6); c.stroke(); }
+  grainTile = g; return g;
+}
+export function applyGrain(c: C, w: number, h: number) { c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-atop'; c.fillStyle = c.createPattern(grain(), 'repeat')!; c.fillRect(0, 0, w, h); c.restore(); }
+
 // ------------------------------------------------------------------ painters
 type Painter = (c: C, d: PropDef) => void;
 interface Spec {
@@ -53,6 +108,8 @@ interface Spec {
   fp?: (d: PropDef) => ({ t: 'e'; rx: number; ry: number; dy: number } | { t: 'r'; hw: number; hh: number; dy: number })[];
   /** player fades the sprite when standing behind it */
   canopy?: boolean;
+  /** radius of the grass fringe at the foot (0 / undefined = none) */
+  fr?: number;
   /** drawn above everything (arch lintels) */
   overhead?: boolean;
   /** animated overlay, drawn each frame at the anchor */
@@ -89,17 +146,8 @@ function mushroom(c: C, d: PropDef) {
   c.lineWidth = 2.8; c.strokeStyle = outline(cap); c.stroke();
   c.strokeStyle = rim; c.lineWidth = 3; c.beginPath(); c.moveTo(-58, -63); c.bezierCurveTo(-42, -49, 42, -49, 58, -63); c.stroke();
 }
-const mushroomSpec: Spec = { b: [-70, -140, 78, 18], draw: mushroom, canopy: true, fp: () => [{ t: 'e', rx: 19, ry: 10, dy: -3 }] };
+const mushroomSpec: Spec = { fr: 34, b: [-70, -140, 78, 18], draw: mushroom, canopy: true, fp: () => [{ t: 'e', rx: 19, ry: 10, dy: -3 }] };
 
-function puffCanopy(c: C, col: string, seed: string, cx: number, cy: number, spread: number, n: number, rad: number) {
-  const r = rng(seed), pts: [number, number, number][] = [];
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * TAU + r() * 0.5, d = i === 0 ? 0 : spread * (0.55 + r() * 0.45);
-    pts.push([cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.62, rad * (0.8 + r() * 0.35)]);
-  }
-  pts.sort((a, b) => a[1] - b[1]);
-  for (const [x, y, rr_] of pts) ball(c, x, y, rr_, rr_ * 0.9, mix(col, y > cy ? darken(col, 0.3) : lighten(col, 0.18), 0.5), 2.4);
-}
 const TREEC = ['#e0772f', '#86a84d', '#e8b73f', '#b9552b'];
 function ashTree(c: C, d: PropDef) {
   const v = (d.v ?? 0) % TREEC.length, col = TREEC[v];
@@ -108,11 +156,14 @@ function ashTree(c: C, d: PropDef) {
   const tg = c.createLinearGradient(-30, 0, 32, 0); tg.addColorStop(0, '#9a6a42'); tg.addColorStop(0.5, '#7a4d2e'); tg.addColorStop(1, '#4e2f24');
   c.fillStyle = tg; c.fill(); c.lineWidth = 2.6; c.strokeStyle = '#3a2220'; c.stroke();
   c.strokeStyle = 'rgba(255,214,160,.35)'; c.lineWidth = 3; c.beginPath(); c.moveTo(-8, -6); c.quadraticCurveTo(-9, -30, -7, -50); c.stroke();
-  puffCanopy(c, col, `tree${v}`, 0, -112, 52, 7, 44);
+  c.strokeStyle = 'rgba(40,22,20,.45)'; c.lineWidth = 1.8; for (const x of [-3, 4, 10]) { c.beginPath(); c.moveTo(x, -4); c.bezierCurveTo(x - 3, -20, x + 3, -34, x - 1, -52); c.stroke(); }
+  ball(c, -4, -26, 4, 6, '#3a2418', 1.2);
+  c.fillStyle = 'rgba(120,170,70,.8)'; c.beginPath(); c.ellipse(10, -44, 7, 3, 0.3, 0, TAU); c.fill();
+  leafMass(c, col, `tree${v}`, 0, -118, 70, 44, 30);
   const r = rng(`emb${v}`); c.fillStyle = 'rgba(255,214,120,.9)';
   for (let i = 0; i < 6; i++) { c.beginPath(); c.arc(-60 + r() * 120, -170 + r() * 90, 2.2, 0, TAU); c.fill(); }
 }
-const ashTreeSpec: Spec = { b: [-110, -200, 112, 20], draw: ashTree, canopy: true, fp: () => [{ t: 'e', rx: 17, ry: 9, dy: -2 }] };
+const ashTreeSpec: Spec = { fr: 38, b: [-110, -200, 112, 20], draw: ashTree, canopy: true, fp: () => [{ t: 'e', rx: 17, ry: 9, dy: -2 }] };
 
 function rock(c: C, d: PropDef) {
   const v = (d.v ?? 0) % 3, base = ['#8a766c', '#74645e', '#9a8472'][v];
@@ -121,7 +172,7 @@ function rock(c: C, d: PropDef) {
   gloss(c, -12, -34, 14, 5, 0.42);
   if (v === 1) { c.fillStyle = 'rgba(120,170,70,.8)'; c.beginPath(); c.ellipse(-4, -40, 14, 5, -0.2, 0, TAU); c.fill(); }
 }
-const rockSpec: Spec = { b: [-44, -52, 52, 16], draw: rock, fp: () => [{ t: 'e', rx: 32, ry: 14, dy: -8 }] };
+const rockSpec: Spec = { fr: 36, b: [-44, -52, 52, 16], draw: rock, fp: () => [{ t: 'e', rx: 32, ry: 14, dy: -8 }] };
 
 function boulder(c: C, d: PropDef) {
   const base = ['#7b675f', '#6a5a63'][(d.v ?? 0) % 2];
@@ -130,7 +181,7 @@ function boulder(c: C, d: PropDef) {
   gloss(c, -26, -66, 26, 8, 0.4);
   c.fillStyle = 'rgba(120,170,70,.85)'; c.beginPath(); c.ellipse(-8, -80, 24, 8, -0.15, 0, TAU); c.fill(); c.beginPath(); c.ellipse(30, -62, 12, 5, 0.3, 0, TAU); c.fill();
 }
-const boulderSpec: Spec = { b: [-80, -100, 90, 24], draw: boulder, fp: () => [{ t: 'e', rx: 62, ry: 24, dy: -14 }] };
+const boulderSpec: Spec = { fr: 64, b: [-80, -100, 90, 24], draw: boulder, fp: () => [{ t: 'e', rx: 62, ry: 24, dy: -14 }] };
 
 const CRY = [['#ffb347', '#ff6a2a'], ['#ff7a6a', '#d63a3a'], ['#8fb4ff', '#8a62ff'], ['#ffe27a', '#f2a21c']];
 function fireCrystal(c: C, d: PropDef) {
@@ -149,7 +200,7 @@ function fireCrystal(c: C, d: PropDef) {
     c.restore();
   }
 }
-const fireCrystalSpec: Spec = { b: [-96, -150, 96, 16], draw: fireCrystal, fp: () => [{ t: 'e', rx: 22, ry: 10, dy: -4 }],
+const fireCrystalSpec: Spec = { fr: 38, b: [-96, -150, 96, 16], draw: fireCrystal, fp: () => [{ t: 'e', rx: 22, ry: 10, dy: -4 }],
   fx: (c, d, t) => { const [lt] = CRY[(d.v ?? 0) % CRY.length]; c.save(); c.globalCompositeOperation = 'lighter'; glow(c, 0, -40, 90 + Math.sin(t * 2 + (d.x ?? 0)) * 8, lt, 0.28); c.restore(); } };
 
 function bush(c: C, d: PropDef) {
@@ -160,14 +211,14 @@ function bush(c: C, d: PropDef) {
   const r = rng(`bush${v}`);
   for (let i = 0; i < 9; i++) { const x = -34 + r() * 68, y = -8 - r() * 30; ball(c, x, y, 4.2, 4.2, v ? '#ffb23d' : '#e53a3a', 1.2); }
 }
-const bushSpec: Spec = { b: [-56, -56, 60, 14], draw: bush, fp: () => [{ t: 'e', rx: 34, ry: 12, dy: -6 }] };
+const bushSpec: Spec = { fr: 42, b: [-56, -56, 60, 14], draw: bush, fp: () => [{ t: 'e', rx: 34, ry: 12, dy: -6 }] };
 
 function lantern(c: C) {
   shadowEll(c, 12, 4, 0.25, 3, 1);
   slab(c, -4, -70, 8, 70, 3, '#6b4630', 2); poly(c, [[-14, -86], [14, -86], [10, -72], [-10, -72]], '#4d3a43', 2);
   glow(c, 0, -62, 34, '#ffc247', 0.6); ball(c, 0, -62, 9, 11, '#ffd46a', 1.8); gloss(c, -3, -66, 3, 4, 0.8);
 }
-const lanternSpec: Spec = { b: [-30, -96, 30, 8], draw: lantern, fp: () => [{ t: 'e', rx: 7, ry: 4, dy: 0 }],
+const lanternSpec: Spec = { fr: 12, b: [-30, -96, 30, 8], draw: lantern, fp: () => [{ t: 'e', rx: 7, ry: 4, dy: 0 }],
   fx: (c, d, t) => { c.save(); c.globalCompositeOperation = 'lighter'; glow(c, 0, -60, 48 + Math.sin(t * 5 + d.x) * 5, '#ffb347', 0.26); c.restore(); } };
 
 function fence(c: C, d: PropDef) {
@@ -212,7 +263,7 @@ function house(c: C, d: PropDef) {
   c.lineWidth = 3; c.strokeStyle = outline(h.cap); c.stroke();
   c.strokeStyle = darken(h.cap, 0.45); c.lineWidth = 3.4; c.beginPath(); c.moveTo(-96, -82); c.bezierCurveTo(-66, -64, 66, -64, 96, -82); c.stroke();
 }
-const houseSpec: Spec = { b: [-112, -210, 112, 24], draw: house, canopy: true, fp: () => [{ t: 'r', hw: 72, hh: 30, dy: -34 }] };
+const houseSpec: Spec = { fr: 92, b: [-112, -210, 112, 24], draw: house, canopy: true, fp: () => [{ t: 'r', hw: 72, hh: 30, dy: -34 }] };
 
 function fountain(c: C) {
   shadowEll(c, 128, 40, 0.3, 14, 8);
@@ -280,7 +331,7 @@ function lighthouse(c: C) {
   c.lineWidth = 3.6; c.strokeStyle = '#5a1c28'; c.stroke();
   c.strokeStyle = '#6a1e26'; c.lineWidth = 4; c.beginPath(); c.moveTo(-164, -370); c.bezierCurveTo(-110, -338, 110, -338, 164, -370); c.stroke();
 }
-const lighthouseSpec: Spec = { b: [-186, -566, 186, 30], draw: lighthouse, canopy: true, fp: () => [{ t: 'e', rx: 56, ry: 18, dy: -4 }],
+const lighthouseSpec: Spec = { fr: 70, b: [-186, -566, 186, 30], draw: lighthouse, canopy: true, fp: () => [{ t: 'e', rx: 56, ry: 18, dy: -4 }],
   fx: (c, _d, t) => { c.save(); c.globalCompositeOperation = 'lighter'; glow(c, 0, -352, 130 + Math.sin(t * 3) * 10, '#ffd46a', 0.35); c.restore(); } };
 
 function statue(c: C) {
@@ -314,7 +365,7 @@ function pillar(c: C, d: PropDef) {
   else { poly(c, [[-19, -h], [-6, -h - 12], [4, -h + 4], [19, -h - 8], [19, -h + 6], [-19, -h + 6]], lighten(col, 0.12), 2.2); }
   c.fillStyle = 'rgba(110,160,70,.85)'; c.beginPath(); c.ellipse(-8, -h * 0.55, 11, 6, 0.2, 0, TAU); c.fill(); c.beginPath(); c.ellipse(10, -24, 9, 5, 0, 0, TAU); c.fill();
 }
-const pillarSpec: Spec = { b: [-36, -176, 44, 14], draw: pillar, fp: () => [{ t: 'e', rx: 24, ry: 11, dy: -4 }] };
+const pillarSpec: Spec = { fr: 26, b: [-36, -176, 44, 14], draw: pillar, fp: () => [{ t: 'e', rx: 24, ry: 11, dy: -4 }] };
 
 function archPost(c: C) {
   shadowEll(c, 40, 11, 0.28, 8, 4);
@@ -378,7 +429,7 @@ function waterfall(c: C) {
   ball(c, -96, -150, 20, 16, '#8a7a72', 2); ball(c, 98, -140, 18, 14, '#7a6a68', 2);
   c.fillStyle = 'rgba(120,170,70,.9)'; c.beginPath(); c.ellipse(-60, -190, 26, 8, -0.1, 0, TAU); c.fill(); c.beginPath(); c.ellipse(70, -188, 22, 7, 0.1, 0, TAU); c.fill();
 }
-const waterfallSpec: Spec = { b: [-136, -230, 140, 40], draw: waterfall, fp: () => [{ t: 'r', hw: 122, hh: 18, dy: -4 }],
+const waterfallSpec: Spec = { fr: 96, b: [-136, -230, 140, 40], draw: waterfall, fp: () => [{ t: 'r', hw: 122, hh: 18, dy: -4 }],
   fx: (c, _d, t) => { c.save(); c.strokeStyle = 'rgba(255,255,255,.8)'; c.lineWidth = 3; c.lineCap = 'round'; for (let i = 0; i < 6; i++) { const x = -28 + i * 11, p = (t * 1.1 + i * 0.17) % 1; c.beginPath(); c.moveTo(x, -170 + p * 160); c.lineTo(x, -150 + p * 160); c.stroke(); } c.restore(); } };
 
 function spire(c: C, d: PropDef) {
@@ -424,7 +475,7 @@ function sign(c: C, d: PropDef) {
   }
   c.restore();
 }
-const signSpec: Spec = { b: [-48, -84, 48, 10], draw: sign, fp: () => [{ t: 'e', rx: 7, ry: 4, dy: 0 }] };
+const signSpec: Spec = { fr: 16, b: [-48, -84, 48, 10], draw: sign, fp: () => [{ t: 'e', rx: 7, ry: 4, dy: 0 }] };
 
 function chest(c: C, d: PropDef) {
   const open = (d.v ?? 0) === 1;
@@ -434,7 +485,7 @@ function chest(c: C, d: PropDef) {
   else { c.beginPath(); c.moveTo(-28, -30); c.bezierCurveTo(-28, -56, 28, -56, 28, -30); c.closePath(); const g = c.createLinearGradient(0, -52, 0, -30); g.addColorStop(0, '#c98446'); g.addColorStop(1, '#9a5a2c'); c.fillStyle = g; c.fill(); c.lineWidth = 2.6; c.strokeStyle = '#4a2a1a'; c.stroke(); }
   c.fillStyle = '#ffd24a'; c.fillRect(-26, -30, 8, 30); c.fillRect(18, -30, 8, 30); ball(c, 0, -28, 5, 6, '#ffd24a', 1.6);
 }
-const chestSpec: Spec = { b: [-42, -64, 44, 12], draw: chest, fp: () => [{ t: 'e', rx: 26, ry: 10, dy: -4 }] };
+const chestSpec: Spec = { fr: 26, b: [-42, -64, 44, 12], draw: chest, fp: () => [{ t: 'e', rx: 26, ry: 10, dy: -4 }] };
 
 function runeStone(c: C) {
   shadowEll(c, 52, 14, 0.26, 8, 4);
@@ -472,17 +523,20 @@ export const propSpec = (k: PropKind): Spec | undefined => SPECS[k];
 // ------------------------------------------------------------------ sprite cache
 export interface Sprite { cv: HTMLCanvasElement; ox: number; oy: number; w: number; h: number }
 const cache = new Map<string, Sprite>();
+const PAD = 18;
 export function propSprite(d: PropDef): Sprite | null {
   const spec = SPECS[d.kind]; if (!spec) return null;
-  const s = d.s ?? 1, key = `${d.kind}|${d.v ?? 0}|${s}|${d.len ?? ''}|${d.dir ?? ''}`;
+  const s = d.s ?? 1, key = `${d.kind}|${d.v ?? 0}|${s}|${d.len ?? ''}|${d.dir ?? ''}|${fringeStyle}`;
   let sp = cache.get(key); if (sp) return sp;
   const [l, t, r, b] = spec.b, pad = d.len ? Math.abs(d.len) / 2 : 0;
   const L = d.len ? Math.min(l, -pad - 10) : l, R = d.len ? Math.max(r, pad + 10) : r;
-  const w = Math.ceil((R - L) * s), h = Math.ceil((b - t) * s);
+  const w = Math.ceil((R - L) * s) + PAD * 2, h = Math.ceil((b - t) * s) + PAD * 2;
   const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-  const c = cv.getContext('2d')!; c.translate(-L * s, -t * s); c.scale(s, s); c.lineJoin = 'round'; c.lineCap = 'round';
-  spec.draw(c, d);
-  sp = { cv, ox: -L * s, oy: -t * s, w, h }; cache.set(key, sp); return sp;
+  const c = cv.getContext('2d')!; const ox = -L * s + PAD, oy = -t * s + PAD;
+  c.save(); c.translate(ox, oy); c.scale(s, s); c.lineJoin = 'round'; c.lineCap = 'round'; spec.draw(c, d); c.restore();
+  if (spec.fr && !spec.overhead) { c.save(); c.translate(ox, oy); fringe(c, spec.fr * Math.min(s, 1.7), key); c.restore(); }
+  applyGrain(c, w, h);
+  sp = { cv, ox, oy, w, h }; cache.set(key, sp); return sp;
 }
 export function footprints(d: PropDef): { t: 'e'; rx: number; ry: number; x: number; y: number }[] | { t: 'r'; hw: number; hh: number; x: number; y: number }[] {
   const spec = SPECS[d.kind]; if (!spec || !spec.fp || d.noCollide) return [];
@@ -514,6 +568,7 @@ export function npcSprite(kind: string): Sprite {
   c.strokeStyle = '#7a3b2e'; c.lineWidth = 2; c.beginPath(); c.arc(0, -55, 4, 0.2, Math.PI - 0.2); c.stroke();
   if (kind === 'scholar') { c.strokeStyle = '#3a2a40'; c.lineWidth = 2; for (const sx of [-1, 1]) { c.beginPath(); c.arc(sx * 10, -64, 8, 0, TAU); c.stroke(); } c.beginPath(); c.moveTo(-2, -64); c.lineTo(2, -64); c.stroke(); }
   if (kind === 'guide') { c.strokeStyle = '#5a3520'; c.lineWidth = 3; c.beginPath(); c.moveTo(30, -10); c.lineTo(30, -60); c.stroke(); glow(c, 30, -66, 22, '#ffc247', 0.7); ball(c, 30, -66, 6, 8, '#ffd46a', 1.4); }
+  applyGrain(c, w, h);
   const sp = { cv, ox: 45, oy: 108, w, h }; cache.set(key, sp); return sp;
 }
 
