@@ -174,8 +174,20 @@ export class WorldEngine {
   private frame(now: number) {
     if (this.destroyed) return;
     const dt = Math.min(0.05, (now - this.last) / 1000); this.last = now; this.time += dt;
+    if (++this.chk % 90 === 0 && this.bgLost()) this.rebake();
     this.update(dt); this.render(); this.raf = requestAnimationFrame((t) => this.frame(t));
   }
+  private chk = 0;
+  /** Phones can throw away big canvases when memory is short (ground and props then draw blank). Detect that and paint the place again. */
+  private bgLost(): boolean {
+    const b = this.loc; if (!b) return false;
+    try {
+      const g = b.bg.getContext('2d'); if (!g) return true;
+      for (const [fx, fy] of [[0.5, 0.5], [0.25, 0.7], [0.75, 0.3], [0.5, 0.9]]) if (g.getImageData(Math.floor(b.def.w * fx), Math.floor(b.def.h * fy), 1, 1).data[3] > 0) return false;
+      return true;
+    } catch { return false; }
+  }
+  private rebake() { const id = this.loc?.def.id, def = id ? LOCATIONS[id] : null; if (def) this.loc = bakeLocation(def); }
 
   private update(dt: number) {
     // fades and location swaps

@@ -30,7 +30,7 @@ export function MqProvider({ children }: { children: ReactNode }) {
   const userIdRef = useRef<string | null>(null); userIdRef.current = profile?.uid ?? null;
 
   const refresh = useCallback(async () => {
-    const [s, m] = await Promise.all([api.getState(), api.loadMonsters()]);
+    const [s, m] = await Promise.all([api.getState(), userIdRef.current ? api.loadMonsters(userIdRef.current) : Promise.resolve([] as OwnedMonster[])]);
     setState(s); setMonsters(m);
     if (userIdRef.current) api.loadCosmetics(userIdRef.current).then(setCos).catch(() => undefined);
   }, []);
@@ -38,7 +38,7 @@ export function MqProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let alive = true;
     setError(null);
-    Promise.all([api.loadDefinitions(), api.getState(), api.loadMonsters(), profile ? api.loadCosmetics(profile.uid) : Promise.resolve({ cosmetics: [], owned: [] })])
+    Promise.all([api.loadDefinitions(), api.getState(), profile ? api.loadMonsters(profile.uid) : Promise.resolve([] as OwnedMonster[]), profile ? api.loadCosmetics(profile.uid) : Promise.resolve({ cosmetics: [], owned: [] })])
       .then(([d, s, m, c]) => { if (!alive) return; setDefs(d); setState(s); setMonsters(m); setCos(c); })
       .catch((e: Error) => alive && setError(e.message));
     return () => { alive = false; };

@@ -65,8 +65,9 @@ export async function loadDefinitions(): Promise<{ zones: Zone[]; species: Speci
   return { zones: z.data as Zone[], species: s.data as Species[], items: i.data as Item[] };
 }
 
-export async function loadMonsters(): Promise<OwnedMonster[]> {
-  const { data, error } = await supabase.from('mq_player_monsters').select('*').order('captured_at', { ascending: false });
+/** Only the player's OWN monsters. (Teachers and admins are allowed by the database to read every student's monsters, so the list must be filtered here.) */
+export async function loadMonsters(userId: string): Promise<OwnedMonster[]> {
+  const { data, error } = await supabase.from('mq_player_monsters').select('*').eq('user_id', userId).order('captured_at', { ascending: false });
   if (error) fail(error);
   return data as OwnedMonster[];
 }
