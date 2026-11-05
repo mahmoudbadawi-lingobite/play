@@ -1,14 +1,14 @@
 /**
  * Wardrobe props are PNG images listed in public/monster-quest/props/props.json.
  * To add or change props: drop/replace PNGs, edit props.json (or run tools/slice_props.py) and run the generated
- * supabase/monster_quest_props.sql. No code changes. Placement is automatic: for every explorer frame the head is
- * measured from the artwork (top, centre, width) and each prop is sized and placed from that.
+ * supabase/monster_quest_props.sql. No code changes. Placement is automatic: each explorer's head position and width
+ * (stored in chars.json) place and size every prop.
  */
 import { useSyncExternalStore } from 'react';
-import type { Facing, FrameRect } from './characters';
+import type { Facing, HeadBox } from './characters';
 
 export type PropSlot = 'prop_head' | 'prop_face' | 'prop_neck' | 'prop_back';
-export type { Facing };
+export type { Facing, HeadBox };
 export interface PropDef {
   id: string; slot: PropSlot; name: string; file: string;
   /** image height / width (written by tools/slice_props.py) */ ar: number;
@@ -21,7 +21,7 @@ interface RawProp { id: string; name?: string; slot: string; file?: string; pric
 
 // Defaults per slot: tune a single prop with w/ay/ox/oy in props.json
 const SLOT_DEFAULTS: Record<string, { at: PropDef['at']; w: number; ay: number; oy: number }> = {
-  head: { at: 'top', w: 1.1, ay: 0.85, oy: 0.06 },
+  head: { at: 'top', w: 1.1, ay: 0.85, oy: 0.2 },
   face: { at: 'eyes', w: 0.85, ay: 0.5, oy: 0 },
   neck: { at: 'neck', w: 0.7, ay: 0.4, oy: 0 },
   back: { at: 'back', w: 1.5, ay: 0.3, oy: 0.1 },
@@ -51,34 +51,6 @@ export function usePropCatalog(): PropDef[] {
 }
 export const propUrl = (p: PropDef) => `${base()}${p.file}`;
 
-// ------------------------------------------------------------------ measuring explorer frames
-export interface HeadBox { top: number; bottom: number; cx: number; headW: number; w: number; h: number }
-const cache = new Map<string, HeadBox | null>();
-
-/** Finds the head inside one frame of a sprite sheet from its transparent pixels (null until the image has loaded). */
-export function measureFrame(img: HTMLImageElement, r?: FrameRect): HeadBox | null {
-  const sx = r?.sx ?? 0, sy = r?.sy ?? 0, w = r?.sw ?? img.naturalWidth, h = r?.sh ?? img.naturalHeight;
-  const key = `${img.currentSrc || img.src}#${sx},${sy}`;
-  if (cache.has(key)) return cache.get(key)!;
-  if (!img.complete || !img.naturalWidth) return null;
-  let res: HeadBox | null = null;
-  try {
-    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-    const c = cv.getContext('2d', { willReadFrequently: true })!; c.drawImage(img, sx, sy, w, h, 0, 0, w, h);
-    const d = c.getImageData(0, 0, w, h).data;
-    const rowExtent = (y: number): [number, number] | null => { let a = -1, b = -1; for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 40) { if (a < 0) a = x; b = x; } return a < 0 ? null : [a, b]; };
-    let top = -1, bottom = -1;
-    for (let y = 0; y < h; y++) { if (rowExtent(y)) { if (top < 0) top = y; bottom = y; } }
-    if (top >= 0) {
-      const H = bottom - top; let lo = Infinity, hi = -Infinity;
-      for (let y = Math.round(top + H * 0.12); y <= Math.round(top + H * 0.30); y++) { const e = rowExtent(y); if (e) { lo = Math.min(lo, e[0]); hi = Math.max(hi, e[1]); } }
-      if (isFinite(lo)) res = { top, bottom, cx: (lo + hi) / 2, headW: Math.max(20, hi - lo), w, h };
-    }
-  } catch { res = null; }
-  cache.set(key, res);
-  return res;
-}
-
 export interface PropPlacement { x: number; y: number; w: number; h: number; behind: boolean }
 /** Where to draw a prop, in the frame's own pixel space (x, y = top-left corner). null = hidden from this angle. */
 export function placeProp(p: PropDef, m: HeadBox, facing: Facing, left = false): PropPlacement | null {
@@ -91,6 +63,7 @@ export function placeProp(p: PropDef, m: HeadBox, facing: Facing, left = false):
   if (facing === 'side') {
     if (p.slot === 'prop_face') { cx += dir * hw * 0.2; ww = w * 0.72; }
     else if (p.slot === 'prop_back') { cx -= dir * hw * 0.34; ww = w * 0.76; }
+    else if (p.slot === 'prop_head') { cx += dir * hw * 0.02; ww = w * 0.85; } // a front-view hat is narrower seen from the side
     else cx += dir * hw * 0.02;
   }
   return { x: cx - ww / 2, y: ref + p.oy * hw - p.ay * (ww * p.ar), w: ww, h: ww * p.ar, behind: p.slot === 'prop_back' && facing !== 'up' };

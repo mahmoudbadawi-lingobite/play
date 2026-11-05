@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { levelInfo } from '../../avatar/level';
 import { MonsterArt } from '../art/MonsterArt';
-import { CharacterAvatar } from '../art/CharacterAvatar';
+import { CharacterPortrait } from '../art/CharacterPortrait';
 import { CharacterShop } from './CharacterShop';
 import { useMq } from '../context';
 import { isMuted, setMuted, sfx } from '../sound';
@@ -20,7 +20,7 @@ export function Profile() {
   return (
     <div className="space-y-3">
       <Panel className="flex flex-wrap items-center gap-4">
-        <div className="mq-avatar-ring"><CharacterAvatar width={64} /></div>
+        <div className="mq-avatar-ring"><CharacterPortrait /></div>
         <div className="flex-1"><p className="font-display text-2xl font-extrabold text-white">{mq.name}</p><p className="font-bold text-yellow-300">Trainer level {lv.level} · {fmt(mq.state.xp)} XP</p>
           {rsp && <p className="mt-1 flex items-center gap-2 text-xs font-bold text-white/80">Rarest catch: <MonsterArt spec={rsp.art} spriteUrl={rsp.sprite_url} size={28} anim="none" /> {rsp.name} <RarityBadge rarity={rsp.rarity} /></p>}</div>
       </Panel>

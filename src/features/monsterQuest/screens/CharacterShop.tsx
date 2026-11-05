@@ -3,12 +3,12 @@ import * as api from '../api';
 import { CharacterAvatar } from '../art/CharacterAvatar';
 import { useMq } from '../context';
 import { sfx } from '../sound';
-import { CHARACTERS, characterKey } from '../world/characters';
+import { characterKey, useCharacters } from '../world/characters';
 import { GameButton, Panel } from '../ui';
 
 /** Explorers: the one being played, the ones you own (tap to switch for free) and the ones you can buy with coins. */
 export function CharacterShop() {
-  const mq = useMq();
+  const mq = useMq(), chars = useCharacters();
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   if (!mq.hasExplorers) {
@@ -26,13 +26,13 @@ export function CharacterShop() {
       <p className="mt-1 text-xs font-semibold text-white/70">Your first explorer was free. Buy more with coins and keep every explorer you buy: switch between the ones you own any time for free. Props you buy work on every explorer.</p>
       {msg && <p className={`mt-2 rounded-xl px-3 py-2 text-sm font-bold text-white ${msg.ok ? 'bg-green-600/90' : 'bg-red-500/90'}`} role="status">{msg.text}</p>}
       <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {CHARACTERS.map((c) => {
+        {chars.map((c) => {
           const cos = mq.cosmetics.find((x) => x.key === characterKey(c.id));
           if (!cos) return null;
           const owned = mq.ownedCharacters.includes(c.id), on = mq.character === c.id, price = cos.price_coins ?? 0;
           return (
             <div key={c.id} className={`flex flex-col items-center rounded-2xl border-2 p-2 ${on ? 'border-yellow-300 bg-yellow-300/20' : 'border-white/20 bg-white/10'}`}>
-              <div className="mq-avatar-stage !p-1"><CharacterAvatar id={c.id} width={92} props={on ? undefined : []} /></div>
+              <div className="mq-avatar-stage !p-1"><CharacterAvatar id={c.id} width={100} props={on ? undefined : []} /></div>
               <p className="mt-1 text-sm font-extrabold text-white">{c.name}</p>
               <p className="text-[11px] font-semibold text-white/70">{c.blurb}</p>
               {on ? <span className="mt-1 text-xs font-extrabold text-yellow-300">✔ Playing</span>

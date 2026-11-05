@@ -1,23 +1,22 @@
 # Props: prompts and how to add them
 
-The explorers are the Treasure Hunt characters (chibi, big heads, warm hand-painted game-sprite look, dark brown outlines).
-Props must be drawn in that style or they look pasted on. **Always attach a Treasure Hunt sheet** (for example
-`public/treasure/chars/pink.png` and `redcap.png`) to the image request, so the generator copies the style.
+The explorers are your six new characters (glossy chibi look, bare heads, free back and neck). Props must be drawn in the same
+style or they look pasted on. **Always attach one explorer's turnaround or `public/monster-quest/chars/adam.png`** to the image
+request so the generator copies the style.
 
-Good to know: the explorers **already wear** a hat or cap (some have goggles, a flower wreath or a helmet) and a small backpack.
-So design:
-* **head** props to sit ON TOP of a hat or hair (crowns, halos, bows, party hat, star pins, leaf crown, small wizard hat, horns, antennae)
-* **face** props (glasses, star shades, masks, moustache, clown nose)
-* **neck** props (scarf, bandana, bow tie, medal, flower garland)
-* **back** props that go BEHIND the character (wings, capes, jetpack, giant leaf, big shell, rainbow)
+Because the explorers have bare heads and nothing on the back, design:
+* **head** props: hats, crowns, wreaths, bows, party hat, wizard hat, halo, cat ears, helmets, horns
+* **face** props: glasses, star shades, masks, moustache, goggles, clown nose
+* **neck** props: scarf, bandana, bow tie, medal, garland
+* **back** props that go BEHIND the character: wings, capes, jetpack, backpacks, giant leaf, shell
 
 ---
 
 ## 1. Prompt (one sheet per slot; copy, fill the two blanks)
 
 ```
-Using the attached Treasure Hunt explorer sprite sheet as the exact style reference (same hand-painted game-sprite look,
-same dark brown outlines, same soft cel shading, same saturated warm colours, light from top left), draw a sheet of
+Using the attached explorer image as the exact style reference (same glossy cute mascot look, same thin dark outlines,
+same soft cel shading, same saturated colours, light from top left), draw a sheet of
 {N} separate dress-up ACCESSORIES for those chibi explorers. Accessory type: {SLOT TYPE AND IDEAS}.
 
 LAYOUT: exactly {COLS} columns x {ROWS} rows, equal cells, on a perfectly flat pure magenta (#FF00FF) background. One
@@ -34,7 +33,7 @@ Fill in like this:
 
 | slot | `{SLOT TYPE AND IDEAS}` |
 |---|---|
-| head | `head accessories worn on top of a hat: golden crown, flower wreath, party hat, tiny wizard hat, halo, big red bow, cat ears headband, leaf crown` |
+| head | `head accessories worn on a bare head: golden crown, flower wreath, party hat, tiny wizard hat, halo, big red bow, cat ears headband, leaf crown` |
 | face | `face accessories: round glasses, star-shaped sunglasses, pirate eye patch, fake moustache, heart glasses, ski goggles, clown nose, masked hero eye mask` |
 | neck | `neck accessories: red knitted scarf, blue bandana, bow tie, gold medal on ribbon, flower garland, bell collar, cape collar, rainbow scarf` |
 | back | `back accessories seen from behind and spread flat: fairy wings, red hero cape, dragon wings, jetpack, giant leaf, turtle shell, angel wings, rainbow` |
@@ -76,7 +75,7 @@ If one looks off, add numbers to that prop's entry in `public/monster-quest/prop
 
 | field | meaning | typical change |
 |---|---|---|
-| `w` | prop width as a multiple of the head width (head 1.1, face 0.85, neck 0.7, back 1.5 by default) | bigger/smaller prop |
+| `w` | prop width as a multiple of the head width (head 1.1, face 0.85, neck 0.7, back 1.5 by default; head props also sit 0.2 head-widths into the head by default) | bigger/smaller prop |
 | `oy` | move down (+) or up (-), in head widths | `0.1` = a bit lower |
 | `ox` | move right (+) or left (-) | rarely needed |
 | `ay` | which part of the prop sits on the anchor line: 0 = its top edge, 1 = its bottom edge | hats: raise toward 1 so the prop sits deeper on the head |

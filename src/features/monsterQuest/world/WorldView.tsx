@@ -7,8 +7,8 @@ import { EncounterModal } from '../EncounterModal';
 import type { Encounter } from '../types';
 import { WorldEngine, type Dialog, type HudInfo } from './engine';
 import { CharacterPicker } from './CharacterPicker';
-import { DEFAULT_CHARACTER, characterKey } from './characters';
-import { CharacterSprite } from '../art/CharacterSprite';
+import { DEFAULT_CHARACTER, characterKey, useCharacters } from './characters';
+import { CharacterPortrait } from '../art/CharacterPortrait';
 import { usePropCatalog } from './props';
 import { WorldPanel, type PanelTab } from './WorldPanel';
 import { Joystick } from './Joystick';
@@ -67,7 +67,8 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
     finally { setPickBusy(false); }
   };
   // the world stays mounted while menus are open, so these just update the explorer in place
-  useEffect(() => { eng.current?.setCharacter(who); }, [who]);
+  const roster = useCharacters();
+  useEffect(() => { eng.current?.setCharacter(who); }, [who, roster]);
   const catalog = usePropCatalog();
   const worn = useMemo(() => mq.props.map((id) => catalog.find((c) => c.id === id)).filter((p): p is NonNullable<typeof p> => !!p), [mq.props, catalog]);
   useEffect(() => { eng.current?.setProps(worn); }, [worn]);
@@ -90,7 +91,7 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
 
         {/* top left: portrait, bars, location */}
         <div className="mq-hud-tl">
-          <div className="mq-portrait" aria-hidden><CharacterSprite id={who} width={86} style={{ marginLeft: -17, marginTop: -2 }} /></div>
+          <div className="mq-portrait" aria-hidden><CharacterPortrait id={who} /></div>
           <div className="mq-bars">
             <div className="mq-bar"><b>HP</b><span><i style={{ width: '100%', background: '#ef4444' }} /></span></div>
             <div className="mq-bar"><b>MP</b><span><i style={{ width: '100%', background: '#3b82f6' }} /></span></div>

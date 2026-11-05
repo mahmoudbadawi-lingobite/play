@@ -1,19 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useMq } from '../context';
 import { CharacterSprite } from './CharacterSprite';
-import { DEFAULT_CHARACTER, SHEET, frameRect, sheetUrl, type Facing } from '../world/characters';
-import { measureFrame, placeProp, propUrl, usePropCatalog, type PropDef } from '../world/props';
+import { DEFAULT_CHARACTER, SHEET, characterById, headBox, useCharacters, type Facing } from '../world/characters';
+import { placeProp, propUrl, usePropCatalog, type PropDef } from '../world/props';
 
 /** An explorer with the wardrobe props they are wearing. `props` = prop ids to show instead of the worn ones. `width` in px. */
 export function CharacterAvatar({ id, facing = 'down', width = 100, props, className }: { id?: string; facing?: Facing; width?: number; props?: string[]; className?: string }) {
-  const mq = useMq(), catalog = usePropCatalog();
+  const mq = useMq(), catalog = usePropCatalog(); useCharacters();
   const who = id ?? mq.character ?? DEFAULT_CHARACTER;
   const worn = useMemo(() => (props ?? mq.props).map((p) => catalog.find((c) => c.id === p)).filter((p): p is PropDef => !!p), [props, mq.props, catalog]);
-  const [sheet, setSheet] = useState<HTMLImageElement | null>(null);
-  useEffect(() => { setSheet(null); if (!worn.length && !props) { /* still load: props may be added */ } const im = new Image(); im.onload = () => setSheet(im); im.src = sheetUrl(who); }, [who]); // eslint-disable-line react-hooks/exhaustive-deps
-  const box = sheet ? measureFrame(sheet, frameRect(facing, 0)) : null;
-  const k = width / SHEET.w;
-  const layer = (behind: boolean) => !box ? null : worn.map((p) => {
+  const box = headBox(characterById(who), facing), k = width / SHEET.w;
+  const layer = (behind: boolean) => worn.map((p) => {
     const pl = placeProp(p, box, facing);
     if (!pl || pl.behind !== behind) return null;
     return <img key={p.id} src={propUrl(p)} alt="" draggable={false} style={{ position: 'absolute', left: pl.x * k, top: pl.y * k, width: pl.w * k, height: pl.h * k, pointerEvents: 'none' }} />;

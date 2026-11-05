@@ -1,0 +1,148 @@
+{
+ "characters": [
+  {
+   "id": "adam",
+   "name": "Adam",
+   "blurb": "Star-shirt explorer",
+   "price": 150,
+   "head": {
+    "down": {
+     "top": 21,
+     "w": 130
+    },
+    "left": {
+     "top": 32,
+     "w": 125
+    },
+    "right": {
+     "top": 34,
+     "w": 123
+    },
+    "up": {
+     "top": 26,
+     "w": 114
+    }
+   }
+  },
+  {
+   "id": "lina",
+   "name": "Lina",
+   "blurb": "Flower-shirt explorer",
+   "price": 200,
+   "head": {
+    "down": {
+     "top": 27,
+     "w": 122
+    },
+    "left": {
+     "top": 27,
+     "w": 113
+    },
+    "right": {
+     "top": 29,
+     "w": 111
+    },
+    "up": {
+     "top": 25,
+     "w": 111
+    }
+   }
+  },
+  {
+   "id": "yousef",
+   "name": "Yousef",
+   "blurb": "Thobe explorer",
+   "price": 250,
+   "head": {
+    "down": {
+     "top": 29,
+     "w": 125
+    },
+    "left": {
+     "top": 28,
+     "w": 114
+    },
+    "right": {
+     "top": 29,
+     "w": 114
+    },
+    "up": {
+     "top": 30,
+     "w": 116
+    }
+   }
+  },
+  {
+   "id": "sara",
+   "name": "Sara",
+   "blurb": "Heart-shirt explorer",
+   "price": 300,
+   "head": {
+    "down": {
+     "top": 29,
+     "w": 113
+    },
+    "left": {
+     "top": 26,
+     "w": 103
+    },
+    "right": {
+     "top": 25,
+     "w": 105
+    },
+    "up": {
+     "top": 26,
+     "w": 108
+    }
+   }
+  },
+  {
+   "id": "zaid",
+   "name": "Zaid",
+   "blurb": "Game-shirt explorer",
+   "price": 350,
+   "head": {
+    "down": {
+     "top": 27,
+     "w": 115
+    },
+    "left": {
+     "top": 26,
+     "w": 112
+    },
+    "right": {
+     "top": 26,
+     "w": 108
+    },
+    "up": {
+     "top": 29,
+     "w": 107
+    }
+   }
+  },
+  {
+   "id": "maya",
+   "name": "Maya",
+   "blurb": "Butterfly explorer",
+   "price": 400,
+   "head": {
+    "down": {
+     "top": 31,
+     "w": 130
+    },
+    "left": {
+     "top": 37,
+     "w": 125
+    },
+    "right": {
+     "top": 34,
+     "w": 123
+    },
+    "up": {
+     "top": 31,
+     "w": 104
+    }
+   }
+  }
+ ]
+}

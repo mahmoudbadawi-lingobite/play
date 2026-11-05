@@ -1,8 +1,8 @@
 /** The free-roam world: input, movement, camera, rendering, interactions, encounters and location transitions. */
 import { bakeLocation, PLAYER_R, type Baked } from './paintLocation';
 import { drawMarker, glow, npcSprite, propSprite, shadowEll } from './paintProps';
-import { SHEET, characterById, frameRect, sheetUrl, type Character } from './characters';
-import { measureFrame, placeProp, propUrl, type PropDef } from './props';
+import { SHEET, characterById, frameRect, headBox, sheetUrl, type Character } from './characters';
+import { placeProp, propUrl, type PropDef } from './props';
 import { LOCATIONS } from './locations';
 import type { Facing, InteractDef, LocationDef, Pt } from './types';
 import { pointInPoly, rng } from './util';
@@ -15,7 +15,8 @@ const ENCOUNTER_RATE = 0.2;          // chance per second of motion on encounter
 const RARE_RATE = 0.4;
 const SHALLOW = 0.7;
 const CAM_LAG = 0.1;
-const PLAYER_K = 0.8;                // Treasure Hunt sheet frames are 128x160 with the feet on line 157; drawn at 80%
+const PLAYER_K = 0.5;                // sheet frames are 256x256 with the feet on line 248 and a figure about 226px tall; drawn at half size
+const WALK_STRIDE = 11;              // world pixels walked per walk frame (6 frames = one full stride)
 const KEY: Record<string, 'u' | 'd' | 'l' | 'r'> = { ArrowUp: 'u', w: 'u', W: 'u', ArrowDown: 'd', s: 'd', S: 'd', ArrowLeft: 'l', a: 'l', A: 'l', ArrowRight: 'r', d: 'r', D: 'r' };
 
 export interface Dialog { name: string; lines: string[]; icon?: 'npc' | 'sign' | 'chest' | 'lore' | 'stone' }
@@ -353,15 +354,16 @@ export class WorldEngine {
       else if (it.kind === 'stone') { const sp = propSprite({ kind: 'runeStone', x: 0, y: 0 })!; ents.push({ y: it.y, draw: () => c.drawImage(sp.cv, it.x - sp.ox, it.y - sp.oy) }); }
     }
     // player: the supplied artwork. Characters without a back view reuse their front frames when walking up.
-    const stepIdx = !p.moving ? 0 : (Math.floor(p.dist / 22) % 2 === 0 ? 1 : 2) as 1 | 2;
-    const bob = p.moving ? Math.abs(Math.sin(p.dist / 22 * Math.PI)) * 2.5 : calm ? 0 : Math.sin(t * 3) * 0.8;
+    // column 0 = standing, columns 1-6 = the six walk frames (the drawn frames already bounce, so no extra bob while walking)
+    const col = !p.moving ? 0 : 1 + (Math.floor(p.dist / WALK_STRIDE) % SHEET.walkFrames);
+    const bob = p.moving ? 0 : calm ? 0 : Math.sin(t * 3) * 0.6;
     ents.push({ y: p.y, draw: () => {
       const face: Facing = p.facing, im = this.sheet, left = face === 'side' && p.flip; shadowEllAt(c, p.x, p.y, 24);
       if (!im || !im.complete || !im.naturalWidth) return;
-      const r = frameRect(face, stepIdx, left), w = SHEET.w * PLAYER_K, h = SHEET.h * PLAYER_K;
+      const r = frameRect(face, col, left), w = SHEET.w * PLAYER_K, h = SHEET.h * PLAYER_K;
       c.save(); c.translate(p.x, p.y + 4);
-      // props are placed from the measured head of this very frame, so they follow the walk bob and fit any explorer art
-      const box = this.propDefs.length ? measureFrame(im, r) : null, ox = -w / 2, oy = -SHEET.feet * PLAYER_K - bob;
+      // props are placed from the explorer's head position (chars.json), so they fit every explorer
+      const box = this.propDefs.length ? headBox(this.who, face, left) : null, ox = -w / 2, oy = -SHEET.feet * PLAYER_K - bob;
       const layer = (behind: boolean) => {
         if (!box) return;
         for (const pd of this.propDefs) {

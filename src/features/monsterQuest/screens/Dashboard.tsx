@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { levelInfo } from '../../avatar/level';
-import { CharacterAvatar } from '../art/CharacterAvatar';
+import { CharacterPortrait } from '../art/CharacterPortrait';
 import { MonsterArt } from '../art/MonsterArt';
 import { useMq } from '../context';
 import { Bar, Panel, RarityBadge, fmt } from '../ui';
@@ -29,7 +29,7 @@ export function Dashboard() {
     <div className="space-y-4">
       <Panel className="flex flex-wrap items-center gap-4">
         <div className="mq-avatar-ring">
-          <CharacterAvatar width={64} />
+          <CharacterPortrait />
         </div>
         <div className="min-w-[180px] flex-1">
           <p className="font-display text-xl font-extrabold text-white">{name}</p>
