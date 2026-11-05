@@ -1,1 +1,68 @@
-{ "props": [] }
+{
+ "props": [
+  {
+   "id": "gold-crown",
+   "name": "Gold Crown",
+   "slot": "head",
+   "file": "gold-crown.png",
+   "price": 100,
+   "ar": 0.753
+  },
+  {
+   "id": "flower-wreath",
+   "name": "Flower Wreath",
+   "slot": "head",
+   "file": "flower-wreath.png",
+   "price": 100,
+   "ar": 0.575
+  },
+  {
+   "id": "party-hat",
+   "name": "Party Hat",
+   "slot": "head",
+   "file": "party-hat.png",
+   "price": 100,
+   "ar": 1.284
+  },
+  {
+   "id": "wizard-hat",
+   "name": "Wizard Hat",
+   "slot": "head",
+   "file": "wizard-hat.png",
+   "price": 100,
+   "ar": 0.8
+  },
+  {
+   "id": "halo",
+   "name": "Halo",
+   "slot": "head",
+   "file": "halo.png",
+   "price": 100,
+   "ar": 0.467
+  },
+  {
+   "id": "red-bow",
+   "name": "Red Bow",
+   "slot": "head",
+   "file": "red-bow.png",
+   "price": 100,
+   "ar": 0.735
+  },
+  {
+   "id": "cat-ears",
+   "name": "Cat Ears",
+   "slot": "head",
+   "file": "cat-ears.png",
+   "price": 100,
+   "ar": 0.589
+  },
+  {
+   "id": "leaf-crown",
+   "name": "Leaf Crown",
+   "slot": "head",
+   "file": "leaf-crown.png",
+   "price": 100,
+   "ar": 0.531
+  }
+ ]
+}
