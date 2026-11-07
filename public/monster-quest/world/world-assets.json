@@ -1,0 +1,593 @@
+{
+ "ground": {
+  "cobble": {
+   "file": "ground/cobble.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": false
+  },
+  "dirt": {
+   "file": "ground/dirt.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": true
+  },
+  "forest": {
+   "file": "ground/forest.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": true
+  },
+  "grass1": {
+   "file": "ground/grass1.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": true
+  },
+  "grass2": {
+   "file": "ground/grass2.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": true
+  },
+  "grass3": {
+   "file": "ground/grass3.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": true
+  },
+  "moss-stone": {
+   "file": "ground/moss-stone.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": false
+  },
+  "mud-water": {
+   "file": "ground/mud-water.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": false
+  },
+  "sand": {
+   "file": "ground/sand.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": true
+  }
+ },
+ "sprites": {
+  "arch-ivy": {
+   "file": "sprites/arch-ivy.webp",
+   "w": 185,
+   "h": 179
+  },
+  "arch-stone": {
+   "file": "sprites/arch-stone.webp",
+   "w": 162,
+   "h": 137
+  },
+  "arch-wood": {
+   "file": "sprites/arch-wood.webp",
+   "w": 193,
+   "h": 180
+  },
+  "banner-post": {
+   "file": "sprites/banner-post.webp",
+   "w": 77,
+   "h": 143
+  },
+  "barrel": {
+   "file": "sprites/barrel.webp",
+   "w": 68,
+   "h": 86
+  },
+  "barrel2": {
+   "file": "sprites/barrel2.webp",
+   "w": 64,
+   "h": 86
+  },
+  "bench": {
+   "file": "sprites/bench.webp",
+   "w": 123,
+   "h": 86
+  },
+  "bridge-stone": {
+   "file": "sprites/bridge-stone.webp",
+   "w": 208,
+   "h": 111
+  },
+  "bridge-wood": {
+   "file": "sprites/bridge-wood.webp",
+   "w": 236,
+   "h": 126
+  },
+  "bush-berry": {
+   "file": "sprites/bush-berry.webp",
+   "w": 200,
+   "h": 196
+  },
+  "bush-big": {
+   "file": "sprites/bush-big.webp",
+   "w": 348,
+   "h": 302
+  },
+  "bush-flowers": {
+   "file": "sprites/bush-flowers.webp",
+   "w": 116,
+   "h": 86
+  },
+  "bush-flowers2": {
+   "file": "sprites/bush-flowers2.webp",
+   "w": 89,
+   "h": 68
+  },
+  "bush-mid": {
+   "file": "sprites/bush-mid.webp",
+   "w": 270,
+   "h": 247
+  },
+  "cart": {
+   "file": "sprites/cart.webp",
+   "w": 117,
+   "h": 131
+  },
+  "cattail": {
+   "file": "sprites/cattail.webp",
+   "w": 214,
+   "h": 274
+  },
+  "chest": {
+   "file": "sprites/chest.webp",
+   "w": 110,
+   "h": 98
+  },
+  "coin": {
+   "file": "sprites/coin.webp",
+   "w": 68,
+   "h": 72
+  },
+  "cottage-blue": {
+   "file": "sprites/cottage-blue.webp",
+   "w": 373,
+   "h": 303
+  },
+  "crate": {
+   "file": "sprites/crate.webp",
+   "w": 67,
+   "h": 73
+  },
+  "crystal-pad": {
+   "file": "sprites/crystal-pad.webp",
+   "w": 112,
+   "h": 98
+  },
+  "crystal-pedestal": {
+   "file": "sprites/crystal-pedestal.webp",
+   "w": 93,
+   "h": 168
+  },
+  "crystal-pillar": {
+   "file": "sprites/crystal-pillar.webp",
+   "w": 60,
+   "h": 136
+  },
+  "crystal-shard": {
+   "file": "sprites/crystal-shard.webp",
+   "w": 44,
+   "h": 92
+  },
+  "cypress": {
+   "file": "sprites/cypress.webp",
+   "w": 98,
+   "h": 170
+  },
+  "fence-gate": {
+   "file": "sprites/fence-gate.webp",
+   "w": 122,
+   "h": 87
+  },
+  "fence-picket": {
+   "file": "sprites/fence-picket.webp",
+   "w": 84,
+   "h": 41
+  },
+  "fence-wood": {
+   "file": "sprites/fence-wood.webp",
+   "w": 103,
+   "h": 62
+  },
+  "fern": {
+   "file": "sprites/fern.webp",
+   "w": 247,
+   "h": 226
+  },
+  "flowers-big": {
+   "file": "sprites/flowers-big.webp",
+   "w": 322,
+   "h": 231
+  },
+  "flowers-mid": {
+   "file": "sprites/flowers-mid.webp",
+   "w": 164,
+   "h": 178
+  },
+  "flowers-purple": {
+   "file": "sprites/flowers-purple.webp",
+   "w": 73,
+   "h": 87
+  },
+  "flowers-small": {
+   "file": "sprites/flowers-small.webp",
+   "w": 107,
+   "h": 133
+  },
+  "flowers-white": {
+   "file": "sprites/flowers-white.webp",
+   "w": 81,
+   "h": 74
+  },
+  "flowers-yellow": {
+   "file": "sprites/flowers-yellow.webp",
+   "w": 57,
+   "h": 60
+  },
+  "fountain-static": {
+   "file": "sprites/fountain-static.webp",
+   "w": 166,
+   "h": 154
+  },
+  "gate-iron": {
+   "file": "sprites/gate-iron.webp",
+   "w": 233,
+   "h": 189
+  },
+  "gate-wood": {
+   "file": "sprites/gate-wood.webp",
+   "w": 254,
+   "h": 166
+  },
+  "gem-big": {
+   "file": "sprites/gem-big.webp",
+   "w": 73,
+   "h": 85
+  },
+  "gem-small": {
+   "file": "sprites/gem-small.webp",
+   "w": 55,
+   "h": 62
+  },
+  "gem": {
+   "file": "sprites/gem.webp",
+   "w": 72,
+   "h": 77
+  },
+  "grass-big": {
+   "file": "sprites/grass-big.webp",
+   "w": 298,
+   "h": 290
+  },
+  "grass-block": {
+   "file": "sprites/grass-block.webp",
+   "w": 131,
+   "h": 113
+  },
+  "grass-mid": {
+   "file": "sprites/grass-mid.webp",
+   "w": 226,
+   "h": 252
+  },
+  "grass-small": {
+   "file": "sprites/grass-small.webp",
+   "w": 172,
+   "h": 198
+  },
+  "house-blue": {
+   "file": "sprites/house-blue.webp",
+   "w": 361,
+   "h": 304
+  },
+  "house-green": {
+   "file": "sprites/house-green.webp",
+   "w": 336,
+   "h": 281
+  },
+  "house-orange": {
+   "file": "sprites/house-orange.webp",
+   "w": 338,
+   "h": 287
+  },
+  "house-pink": {
+   "file": "sprites/house-pink.webp",
+   "w": 335,
+   "h": 282
+  },
+  "house-purple": {
+   "file": "sprites/house-purple.webp",
+   "w": 354,
+   "h": 302
+  },
+  "house-red": {
+   "file": "sprites/house-red.webp",
+   "w": 367,
+   "h": 299
+  },
+  "hut-wood": {
+   "file": "sprites/hut-wood.webp",
+   "w": 416,
+   "h": 292
+  },
+  "lamp-a": {
+   "file": "sprites/lamp-a.webp",
+   "w": 53,
+   "h": 190
+  },
+  "lamp-b": {
+   "file": "sprites/lamp-b.webp",
+   "w": 62,
+   "h": 181
+  },
+  "lamp-c": {
+   "file": "sprites/lamp-c.webp",
+   "w": 43,
+   "h": 152
+  },
+  "lamp-hanging": {
+   "file": "sprites/lamp-hanging.webp",
+   "w": 81,
+   "h": 174
+  },
+  "leaf-small": {
+   "file": "sprites/leaf-small.webp",
+   "w": 61,
+   "h": 48
+  },
+  "lilypad-a": {
+   "file": "sprites/lilypad-a.webp",
+   "w": 190,
+   "h": 107
+  },
+  "lilypad-b": {
+   "file": "sprites/lilypad-b.webp",
+   "w": 126,
+   "h": 71
+  },
+  "lilypad-c": {
+   "file": "sprites/lilypad-c.webp",
+   "w": 81,
+   "h": 50
+  },
+  "log-hollow": {
+   "file": "sprites/log-hollow.webp",
+   "w": 431,
+   "h": 273
+  },
+  "log": {
+   "file": "sprites/log.webp",
+   "w": 119,
+   "h": 75
+  },
+  "mush-purple": {
+   "file": "sprites/mush-purple.webp",
+   "w": 183,
+   "h": 191
+  },
+  "mush-red": {
+   "file": "sprites/mush-red.webp",
+   "w": 237,
+   "h": 244
+  },
+  "notice-board": {
+   "file": "sprites/notice-board.webp",
+   "w": 148,
+   "h": 148
+  },
+  "palm": {
+   "file": "sprites/palm.webp",
+   "w": 156,
+   "h": 204
+  },
+  "pillar-broken": {
+   "file": "sprites/pillar-broken.webp",
+   "w": 52,
+   "h": 99
+  },
+  "pillar": {
+   "file": "sprites/pillar.webp",
+   "w": 57,
+   "h": 128
+  },
+  "pine": {
+   "file": "sprites/pine.webp",
+   "w": 148,
+   "h": 212
+  },
+  "plant-a": {
+   "file": "sprites/plant-a.webp",
+   "w": 73,
+   "h": 73
+  },
+  "plant-b": {
+   "file": "sprites/plant-b.webp",
+   "w": 90,
+   "h": 76
+  },
+  "planter": {
+   "file": "sprites/planter.webp",
+   "w": 115,
+   "h": 75
+  },
+  "pond-static": {
+   "file": "sprites/pond-static.webp",
+   "w": 238,
+   "h": 129
+  },
+  "portal-door": {
+   "file": "sprites/portal-door.webp",
+   "w": 205,
+   "h": 201
+  },
+  "rock-block": {
+   "file": "sprites/rock-block.webp",
+   "w": 119,
+   "h": 104
+  },
+  "rock-moss": {
+   "file": "sprites/rock-moss.webp",
+   "w": 138,
+   "h": 119
+  },
+  "rock-mossy": {
+   "file": "sprites/rock-mossy.webp",
+   "w": 323,
+   "h": 257
+  },
+  "rocks-small": {
+   "file": "sprites/rocks-small.webp",
+   "w": 133,
+   "h": 75
+  },
+  "shop-house": {
+   "file": "sprites/shop-house.webp",
+   "w": 415,
+   "h": 293
+  },
+  "sign-blue": {
+   "file": "sprites/sign-blue.webp",
+   "w": 110,
+   "h": 156
+  },
+  "sign-green": {
+   "file": "sprites/sign-green.webp",
+   "w": 124,
+   "h": 176
+  },
+  "stairs": {
+   "file": "sprites/stairs.webp",
+   "w": 126,
+   "h": 109
+  },
+  "stall-blue": {
+   "file": "sprites/stall-blue.webp",
+   "w": 182,
+   "h": 159
+  },
+  "stall-fruit": {
+   "file": "sprites/stall-fruit.webp",
+   "w": 178,
+   "h": 161
+  },
+  "stall-potions": {
+   "file": "sprites/stall-potions.webp",
+   "w": 217,
+   "h": 179
+  },
+  "star": {
+   "file": "sprites/star.webp",
+   "w": 81,
+   "h": 83
+  },
+  "stone-block": {
+   "file": "sprites/stone-block.webp",
+   "w": 112,
+   "h": 114
+  },
+  "stump-roots": {
+   "file": "sprites/stump-roots.webp",
+   "w": 359,
+   "h": 283
+  },
+  "stump": {
+   "file": "sprites/stump.webp",
+   "w": 108,
+   "h": 78
+  },
+  "tree-green": {
+   "file": "sprites/tree-green.webp",
+   "w": 218,
+   "h": 219
+  },
+  "tree-orange": {
+   "file": "sprites/tree-orange.webp",
+   "w": 168,
+   "h": 203
+  },
+  "tree-pink": {
+   "file": "sprites/tree-pink.webp",
+   "w": 194,
+   "h": 217
+  },
+  "tulips": {
+   "file": "sprites/tulips.webp",
+   "w": 57,
+   "h": 83
+  },
+  "well": {
+   "file": "sprites/well.webp",
+   "w": 122,
+   "h": 142
+  },
+  "wheat": {
+   "file": "sprites/wheat.webp",
+   "w": 231,
+   "h": 251
+  }
+ },
+ "anims": {
+  "portal": {
+   "file": "anim/portal.webp",
+   "n": 6,
+   "fps": 7.0,
+   "fw": 335,
+   "fh": 377
+  },
+  "campfire": {
+   "file": "anim/campfire.webp",
+   "n": 6,
+   "fps": 9.0,
+   "fw": 318,
+   "fh": 408
+  },
+  "brazier": {
+   "file": "anim/brazier.webp",
+   "n": 6,
+   "fps": 9.0,
+   "fw": 216,
+   "fh": 420
+  },
+  "lantern": {
+   "file": "anim/lantern.webp",
+   "n": 6,
+   "fps": 6.0,
+   "fw": 315,
+   "fh": 372
+  },
+  "crystal": {
+   "file": "anim/crystal.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 343,
+   "fh": 394
+  },
+  "torch": {
+   "file": "anim/torch.webp",
+   "n": 6,
+   "fps": 9.0,
+   "fw": 132,
+   "fh": 420
+  },
+  "pond": {
+   "file": "anim/pond.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 314,
+   "fh": 221
+  },
+  "fountain": {
+   "file": "anim/fountain.webp",
+   "n": 6,
+   "fps": 7.0,
+   "fw": 327,
+   "fh": 321
+  }
+ }
+}
