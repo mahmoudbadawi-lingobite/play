@@ -116,7 +116,7 @@ function scaleLoc(d: LocationDef, k: number): LocationDef {
   const P = (p: Pt): Pt => [Math.round(p[0] * k), Math.round(p[1] * k)];
   return {
     ...d, w: Math.round(d.w * k), h: Math.round(d.h * k), forestY: d.forestY ? Math.round(d.forestY * k) : undefined,
-    blockers: d.blockers.map((b) => ({ ...b, x: b.x * k, y: b.y * k, rx: b.rx * k, ry: b.ry * k })),
+    blockers: (d.blockers ?? []).map((b) => ({ ...b, x: b.x * k, y: b.y * k, rx: b.rx * k, ry: b.ry * k })),
     plazas: (d.plazas ?? []).map((q) => ({ ...q, x: q.x * k, y: q.y * k, rx: q.rx * k * 0.92, ry: q.ry * k * 0.92 })),
     paths: d.paths.map((q) => ({ ...q, pts: q.pts.map(P) })),
     liquids: d.liquids.map((q) => ({ ...q, pts: q.pts.map(P) })),
