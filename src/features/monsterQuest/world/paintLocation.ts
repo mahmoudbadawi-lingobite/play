@@ -1,6 +1,7 @@
 /** Bakes a LocationDef into: a painted ground canvas, a collision field, sorted props, encounter tufts and a mini-map. */
 import { Field, CELL } from './collision';
-import { applyGrain, footprints, propSprite, propSpec, setFringeStyle, type Sprite } from './paintProps';
+import { applyGrain, footprints, propSprite, propSpec, setFringeStyle, setStoryHook, type Sprite } from './paintProps';
+import { story, type AnimFrames, type Peek } from './storybook/story';
 import type { LocationDef, PropDef, ZoneDef, Pt, PathDef, LiquidKind, LiquidDef } from './types';
 import { darken, lighten, makeNoise, mix, outline, pointInPoly, rgba, rng, smooth, hex2rgb } from './util';
 
@@ -9,12 +10,12 @@ const TAU = Math.PI * 2;
 export const PLAYER_R = 16;
 const MARGIN = 96;
 
-export interface PlacedProp { def: PropDef; sp: Sprite; overhead: boolean; canopy: boolean; fx?: (c: C, d: PropDef, t: number) => void; fade: number }
+export interface PlacedProp { def: PropDef; sp: Sprite; overhead: boolean; canopy: boolean; fx?: (c: C, d: PropDef, t: number) => void; fade: number; /** wind sway (storybook) */ sway?: number; /** animation strip (storybook) */ frames?: AnimFrames }
 export interface Tuft { x: number; y: number; k: number; ph: number; zone: number }
 export interface Sparkle { x: number; y: number; ph: number; kind: LiquidKind; r: number }
 export interface Baked {
   def: LocationDef; bg: HTMLCanvasElement; field: Field; props: PlacedProp[]; tufts: Tuft[]; tuftSprites: Record<string, HTMLCanvasElement[]>;
-  sparkles: Sparkle[]; zonePolys: Pt[][]; mini: HTMLCanvasElement; miniScale: number; pathsSmooth: { pts: Pt[]; width: number; main?: boolean }[];
+  peeks: Peek[]; sparkles: Sparkle[]; zonePolys: Pt[][]; mini: HTMLCanvasElement; miniScale: number; pathsSmooth: { pts: Pt[]; width: number; main?: boolean }[];
 }
 
 const canvas = (w: number, h: number) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
@@ -258,6 +259,7 @@ function tuftSprites(def: LocationDef): Record<string, HTMLCanvasElement[]> {
 // --------------------------------------------------------------------------------------------------- bake
 export function bakeLocation(def: LocationDef): Baked {
   const { w, h, pal } = def, r = rng(`bake:${def.id}`), noise = makeNoise(def.id);
+  const sb = def.style === 'storybook' ? story : null; setStoryHook(sb ? story.hook : null);
   const bg = canvas(w, h), c = bg.getContext('2d')!; c.lineJoin = 'round'; c.lineCap = 'round';
   const gw = Math.ceil(w / CELL), gh = Math.ceil(h / CELL);
   const mk = canvas(gw, gh), m = mk.getContext('2d', { willReadFrequently: true })!; m.scale(1 / CELL, 1 / CELL);
@@ -265,7 +267,7 @@ export function bakeLocation(def: LocationDef): Baked {
   const black = (fn: () => void) => { m.fillStyle = m.strokeStyle = '#000'; fn(); };
   const white = (fn: () => void) => { m.fillStyle = m.strokeStyle = '#fff'; fn(); };
 
-  paintBase(c, def, noise, r);
+  if (sb) sb.ground(c, def, r); else paintBase(c, def, noise, r);
   m.fillStyle = def.mode === 'open' ? '#fff' : '#000'; m.fillRect(0, 0, w, h); sl.fillStyle = '#000'; sl.fillRect(0, 0, w, h);
 
   // ---- floors (carve mode) and raised plateaus (open mode)
@@ -288,7 +290,7 @@ export function bakeLocation(def: LocationDef): Baked {
     black(() => { strokePoly(m, poly, true); m.lineWidth = 44; m.stroke(); });
   }
   // flat detail scattered on open ground (painted under paths and liquids)
-  if (def.mode === 'open') {
+  if (def.mode === 'open' && !sb) {
     for (let i = 0; i < (w * h) / 26000; i++) {
       const x = 120 + r() * (w - 240), y = 120 + r() * (h - 240), k = r(), cols = ['#ff7aa8', '#ffd24a', '#fff2d8', '#c78bff', '#ff9a4a'];
       c.fillStyle = 'rgba(40,24,30,.2)'; c.beginPath(); c.ellipse(x + 2, y + 3, 5, 2.4, 0, 0, TAU); c.fill();
@@ -299,6 +301,7 @@ export function bakeLocation(def: LocationDef): Baked {
 
   // ---- plazas & paths (carve walkable so paths can ramp up cliffs)
   for (const pz of def.plazas ?? []) {
+    if (sb) { sb.plaza(c, pz); if (def.mode === 'open') white(() => { m.beginPath(); m.ellipse(pz.x, pz.y, pz.rx, pz.ry, 0, 0, TAU); m.fill(); }); continue; }
     c.save(); c.fillStyle = 'rgba(40,24,30,.28)'; c.beginPath(); c.ellipse(pz.x + 4, pz.y + 8, pz.rx + 14, pz.ry + 14, 0, 0, TAU); c.fill();
     c.fillStyle = pal.path[2]; c.beginPath(); c.ellipse(pz.x, pz.y, pz.rx + 10, pz.ry + 10, 0, 0, TAU); c.fill();
     c.fillStyle = pal.path[1]; c.beginPath(); c.ellipse(pz.x, pz.y, pz.rx + 4, pz.ry + 4, 0, 0, TAU); c.fill();
@@ -310,16 +313,15 @@ export function bakeLocation(def: LocationDef): Baked {
     if (def.mode === 'open') white(() => { m.beginPath(); m.ellipse(pz.x, pz.y, pz.rx, pz.ry, 0, 0, TAU); m.fill(); });
   }
   const paths = def.paths.map((p) => ({ ...p, pts: sm(p.pts) }));
-  groundClumps(c, def, r);
+  if (!sb) groundClumps(c, def, r);
   for (const p of def.paths) {
-    paintPath(c, def, p, r, def.mode === 'carve');
-    edgeFringe(c, def, sm(p.pts), p.width, r);
+    if (sb) sb.path(c, def, p, r, sm(p.pts)); else { paintPath(c, def, p, r, def.mode === 'carve'); edgeFringe(c, def, sm(p.pts), p.width, r); }
     white(() => { m.lineWidth = p.width; m.lineCap = 'round'; m.lineJoin = 'round'; strokePoly(m, sm(p.pts)); m.stroke(); });
   }
 
   // ---- liquids: glow first, bodies after
-  for (const L of def.liquids) paintLiquid(c, def, L, true);
-  for (const L of def.liquids) paintLiquid(c, def, L, false);
+  if (!sb) for (const L of def.liquids) paintLiquid(c, def, L, true);
+  for (const L of def.liquids) { if (sb) sb.liquid(c, def, L, r, sm); else paintLiquid(c, def, L, false); }
   for (const L of def.liquids) black(() => { m.lineCap = 'round'; m.lineJoin = 'round'; if (L.closed) { strokePoly(m, smooth(L.pts, 8, true), true); m.fill(); m.lineWidth = 16; m.stroke(); } else { m.lineWidth = (L.width ?? 80) + 14; strokePoly(m, sm(L.pts)); m.stroke(); } });
 
   // ---- fords & stepping stones (shallow, slow)
@@ -332,7 +334,7 @@ export function bakeLocation(def: LocationDef): Baked {
   }
 
   // ---- bridges
-  for (const b of def.bridges) { paintBridge(c, b); const [ax, ay] = b.a, [bx, by] = b.b, len = Math.hypot(bx - ax, by - ay), ang = Math.atan2(by - ay, bx - ax); white(() => { m.save(); m.translate((ax + bx) / 2, (ay + by) / 2); m.rotate(ang); m.fillRect(-len / 2 - 30, -b.width / 2 + 4, len + 60, b.width - 8); m.restore(); }); }
+  for (const b of def.bridges) { if (sb) sb.bridge(c, b); else paintBridge(c, b); const [ax, ay] = b.a, [bx, by] = b.b, len = Math.hypot(bx - ax, by - ay), ang = Math.atan2(by - ay, bx - ax); white(() => { m.save(); m.translate((ax + bx) / 2, (ay + by) / 2); m.rotate(ang); m.fillRect(-len / 2 - 30, -b.width / 2 + 4, len + 60, b.width - 8); m.restore(); }); }
 
 
   // ---- gateway art painted into the ground (caves, portals, doorways)
@@ -351,6 +353,7 @@ export function bakeLocation(def: LocationDef): Baked {
   // ---- encounter ground
   const zonePolys = def.zones.map((z) => smooth(z.poly, 8, true));
   def.zones.forEach((z, zi) => {
+    if (sb) { sb.zone(c, zonePolys[zi], z, r); return; }
     const poly = zonePolys[zi], col = z.ground === 'moss' ? pal.moss[0] : mix(pal.ashTuft[0], pal.ground[2], 0.5);
     c.save(); c.shadowColor = rgba(col, 0.95); c.shadowBlur = 36; c.shadowOffsetX = 20000; c.fillStyle = col;
     c.translate(-20000, 0); strokePoly(c, poly, true); c.globalAlpha = 0.5; c.fill(); c.fill(); c.restore();
@@ -363,19 +366,20 @@ export function bakeLocation(def: LocationDef): Baked {
   for (const l of def.lights) { const g = c.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r); g.addColorStop(0, rgba(l.c, 0.85)); g.addColorStop(1, rgba(l.c, 0)); c.fillStyle = g; c.beginPath(); c.arc(l.x, l.y, l.r, 0, TAU); c.fill(); }
   c.restore();
   if (def.mode === 'open') {
-    const edge = pal.vignette, e = 170;
+    const edge = sb ? '#0b3a1a' : pal.vignette, e = sb ? 120 : 170;
     for (const [x0, y0, x1, y1, rx, ry, rw, rh] of [[0, 0, 0, e, 0, 0, w, e], [0, h, 0, h - e, 0, h - e, w, e], [0, 0, e, 0, 0, 0, e, h], [w, 0, w - e, 0, w - e, 0, e, h]] as number[][]) {
-      const g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, rgba(edge, 0.85)); g.addColorStop(1, rgba(edge, 0)); c.fillStyle = g; c.fillRect(rx, ry, rw, rh);
+      const g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, rgba(edge, sb ? 0.45 : 0.85)); g.addColorStop(1, rgba(edge, 0)); c.fillStyle = g; c.fillRect(rx, ry, rw, rh);
     }
   } else { const g = c.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.25, w / 2, h / 2, Math.max(w, h) * 0.75); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, rgba(pal.vignette, 0.65)); c.fillStyle = g; c.fillRect(0, 0, w, h); }
 
-  applyGrain(c, w, h);
+  if (!sb) applyGrain(c, w, h);
 
   // ---- props (authored + gates + border) -> sprites and collision
   const all: PropDef[] = [...def.props, ...gateProps(def), ...borderProps(def)];
   const placed: PlacedProp[] = [];
   setFringeStyle(def.mode === 'open' ? 'grass' : 'stone');
   for (const d of all) {
+    if (sb) { const sbp = sb.place(d); if (!sbp) continue; sb.shadow(c, d, sbp); placed.push({ def: d, sp: sbp.sp, overhead: false, canopy: sbp.canopy, fx: sbp.fx, fade: 1, sway: sbp.sway, frames: sbp.frames }); continue; }
     const sp = propSprite(d), spec = propSpec(d.kind); if (!sp || !spec) continue;
     placed.push({ def: d, sp, overhead: !!spec.overhead, canopy: !!spec.canopy, fx: spec.fx, fade: 1 });
   }
@@ -408,6 +412,8 @@ export function bakeLocation(def: LocationDef): Baked {
   });
   tufts.sort((a, b) => a.y - b.y);
 
+  const peeks = sb ? sb.peeks(def, field) : [];
+
   // ---- liquid sparkles
   const sparkles: Sparkle[] = [], sr = rng(`spark:${def.id}`);
   for (const L of def.liquids) {
@@ -424,5 +430,5 @@ export function bakeLocation(def: LocationDef): Baked {
   mc.lineCap = 'round'; for (const p of paths) { strokePoly(mc, p.pts); mc.strokeStyle = 'rgba(255,236,190,.55)'; mc.lineWidth = Math.max(40, p.width * 0.7); mc.stroke(); }
   for (const g of def.gates) { const [x, y, gw_, gh_] = g.rect; mc.fillStyle = '#ffd24a'; mc.strokeStyle = '#6a3f10'; mc.lineWidth = 10; mc.beginPath(); mc.arc(x + gw_ / 2, y + gh_ / 2, 54, 0, TAU); mc.fill(); mc.stroke(); }
 
-  return { def, bg, field, props: placed, tufts, tuftSprites: tuftSprites(def), sparkles, zonePolys, mini, miniScale: ms, pathsSmooth: paths };
+  return { def, bg, field, props: placed, tufts, tuftSprites: sb ? sb.tuftSprites() : tuftSprites(def), peeks, sparkles, zonePolys, mini, miniScale: ms, pathsSmooth: paths };
 }

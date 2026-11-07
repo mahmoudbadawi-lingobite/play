@@ -3,6 +3,7 @@ import { bakeLocation, PLAYER_R, type Baked } from './paintLocation';
 import { drawMarker, glow, npcSprite, propSprite, shadowEll } from './paintProps';
 import { SHEET, characterById, frameRect, headBox, sheetUrl, type Character } from './characters';
 import { placeProp, propUrl, type PropDef } from './props';
+import { loadStory } from './storybook/story';
 import { LOCATIONS } from './locations';
 import type { Facing, InteractDef, LocationDef, Pt } from './types';
 import { pointInPoly, rng } from './util';
@@ -99,6 +100,7 @@ export class WorldEngine {
 
   async load(id: string, entrance: string) {
     this.o.cb.onLoading?.(true);
+    if (LOCATIONS[id]?.style === 'storybook') await loadStory();   // the painted sprites must be loaded before the place is drawn
     this.pending = () => this.swap(id, entrance);
     this.fadeDir = 1;
   }
@@ -179,6 +181,14 @@ export class WorldEngine {
     this.update(dt); this.render(); this.raf = requestAnimationFrame((t) => this.frame(t));
   }
   private chk = 0;
+  private peekImgs = new Map<string, HTMLImageElement>();
+  private drawPeek(c: CanvasRenderingContext2D, pk: { x: number; y: number; id: string; ph: number }, t: number) {
+    let im = this.peekImgs.get(pk.id);
+    if (!im) { im = new Image(); im.src = `${import.meta.env.BASE_URL}monster-quest/sprites/${pk.id}.png`; this.peekImgs.set(pk.id, im); }
+    if (!im.complete || !im.naturalWidth) return;
+    const cyc = (t + pk.ph) % 9, vis = cyc < 2.6 ? Math.sin((cyc / 2.6) * Math.PI) : 0; if (vis <= 0.02) return;
+    c.save(); c.globalAlpha = Math.min(1, vis * 1.6); c.translate(pk.x, pk.y + 14 - vis * 30); c.rotate(Math.sin(t * 5 + pk.ph) * 0.03); c.drawImage(im, -29, -58, 58, 58); c.restore();
+  }
   /** Phones can throw away big canvases when memory is short (ground and props then draw blank). Detect that and paint the place again. */
   private bgLost(): boolean {
     const b = this.loc; if (!b) return false;
@@ -333,8 +343,10 @@ export class WorldEngine {
       const img = tuftOf(tf), near = Math.hypot(tf.x - this.p.x, tf.y - this.p.y), push = near < 50 ? (1 - near / 50) * Math.sign(tf.x - this.p.x || 1) * 0.5 : 0;
       const rustle = p.moving && near < 120 ? Math.sin(t * 14 + tf.ph) * 0.16 * (1 - near / 120) : 0;
       const sway = calm ? 0 : Math.sin(t * 2 + tf.ph) * 0.12 + push + rustle;
-      c.save(); c.translate(tf.x, tf.y); c.transform(1, 0, sway, 1, 0, 0); c.drawImage(img, -24, -50); c.restore();
+      c.save(); c.translate(tf.x, tf.y); c.transform(1, 0, sway, 1, 0, 0); c.drawImage(img, -img.width / 2, -img.height + 4); c.restore();
     };
+    // monsters peeking out of the tall grass now and then when you are near (the grass drawn after them hides their lower half)
+    if (!calm) for (const pk of b.peeks) { const near = Math.hypot(pk.x - p.x, pk.y - p.y); if (near < 460 && pk.x > L - 60 && pk.x < R + 60 && pk.y > T - 80 && pk.y < B + 120) this.drawPeek(c, pk, t); }
     let lo = 0, hi = b.tufts.length; while (lo < hi) { const m = (lo + hi) >> 1; if (b.tufts[m].y < T - 20) lo = m + 1; else hi = m; }
     const tufStart = lo; for (let i = tufStart; i < b.tufts.length && b.tufts[i].y < B + 60; i++) { const tf = b.tufts[i]; if (tf.x > L - 30 && tf.x < R + 30) drawTuft(tf); }
 
@@ -344,7 +356,13 @@ export class WorldEngine {
       if (pp.overhead) continue; const d = pp.def, sp = pp.sp;
       if (d.x - sp.ox > R || d.x - sp.ox + sp.w < L || d.y - sp.oy > B || d.y - sp.oy + sp.h < T) continue;
       if (pp.canopy) { const behind = p.y < d.y && p.y > d.y - sp.oy && p.x > d.x - sp.ox && p.x < d.x - sp.ox + sp.w; pp.fade += ((behind ? 0.5 : 1) - pp.fade) * 0.15; }
-      ents.push({ y: d.y, draw: () => { if (pp.fade < 0.99) c.globalAlpha = pp.fade; if (d.flip) { c.save(); c.translate(d.x, 0); c.scale(-1, 1); c.drawImage(sp.cv, -sp.ox, d.y - sp.oy); c.restore(); } else c.drawImage(sp.cv, d.x - sp.ox, d.y - sp.oy); c.globalAlpha = 1; } });
+      ents.push({ y: d.y, draw: () => {
+        if (pp.fade < 0.99) c.globalAlpha = pp.fade;
+        c.save(); c.translate(d.x, d.y); if (d.flip) c.scale(-1, 1);
+        if (pp.sway && !calm) c.transform(1, 0, Math.sin(t * 1.6 + d.x * 0.011 + d.y * 0.007) * pp.sway, 1, 0, 0);   // wind: lean about the foot
+        if (pp.frames) { const f = pp.frames; c.drawImage(f.img, (Math.floor(t * f.fps) % f.n) * f.fw, 0, f.fw, f.fh, -sp.ox, -sp.oy, sp.w, sp.h); } else c.drawImage(sp.cv, -sp.ox, -sp.oy);
+        c.restore(); c.globalAlpha = 1;
+      } });
     }
     for (const it of def.interactables) {
       if (it.x < L - 120 || it.x > R + 120 || it.y < T - 120 || it.y > B + 160) continue;

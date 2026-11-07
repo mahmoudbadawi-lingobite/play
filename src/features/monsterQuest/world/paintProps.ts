@@ -524,7 +524,12 @@ export const propSpec = (k: PropKind): Spec | undefined => SPECS[k];
 export interface Sprite { cv: HTMLCanvasElement; ox: number; oy: number; w: number; h: number }
 const cache = new Map<string, Sprite>();
 const PAD = 18;
+/** Storybook locations draw their objects from painted sprites (see storybook/story.ts). Set while such a location is active. */
+export interface StoryHook { sprite(d: PropDef): Sprite | null; footprints(d: PropDef): ReturnType<typeof footprints> }
+let storyHook: StoryHook | null = null;
+export const setStoryHook = (h: StoryHook | null) => { storyHook = h; };
 export function propSprite(d: PropDef): Sprite | null {
+  if (storyHook) return storyHook.sprite(d);
   const spec = SPECS[d.kind]; if (!spec) return null;
   const s = d.s ?? 1, key = `${d.kind}|${d.v ?? 0}|${s}|${d.len ?? ''}|${d.dir ?? ''}|${fringeStyle}`;
   let sp = cache.get(key); if (sp) return sp;
@@ -539,6 +544,7 @@ export function propSprite(d: PropDef): Sprite | null {
   sp = { cv, ox, oy, w, h }; cache.set(key, sp); return sp;
 }
 export function footprints(d: PropDef): { t: 'e'; rx: number; ry: number; x: number; y: number }[] | { t: 'r'; hw: number; hh: number; x: number; y: number }[] {
+  if (storyHook) return storyHook.footprints(d);
   const spec = SPECS[d.kind]; if (!spec || !spec.fp || d.noCollide) return [];
   const s = d.s ?? 1;
   return spec.fp(d).map((f) => f.t === 'e' ? { t: 'e' as const, rx: f.rx * s, ry: f.ry * s, x: d.x, y: d.y + f.dy * s } : { t: 'r' as const, hw: f.hw * s, hh: f.hh * s, x: d.x, y: d.y + f.dy * s }) as never;

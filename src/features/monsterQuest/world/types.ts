@@ -40,7 +40,9 @@ export type PropKind =
   | 'mushroom' | 'ashTree' | 'rock' | 'boulder' | 'fireCrystal' | 'iceCrystal' | 'bush' | 'lantern' | 'fence'
   | 'house' | 'fountain' | 'stall' | 'lighthouse' | 'statue' | 'pillar' | 'brokenPillar' | 'archPost' | 'archLintel' | 'wall'
   | 'lavafall' | 'waterfall' | 'spire' | 'altar' | 'stalagmite' | 'sign' | 'chest' | 'runeStone' | 'plate' | 'torch' | 'crack'
-  | 'flower' | 'pebbles' | 'ember' | 'mushroomRing' | 'telescope';
+  | 'flower' | 'pebbles' | 'ember' | 'mushroomRing' | 'telescope'
+  // storybook style only
+  | 'flowers' | 'plant' | 'grassClump' | 'reeds' | 'portal' | 'campfire' | 'brazier' | 'well' | 'bench' | 'noticeBoard' | 'crate' | 'barrel' | 'planter' | 'log' | 'stump' | 'banner';
 export interface PropDef {
   kind: PropKind; x: number; y: number;
   v?: number;          // variant 0..n
@@ -64,6 +66,10 @@ export interface InteractDef {
 }
 
 export interface LocationDef {
+  /** 'storybook' = painted-sprite look (ground textures, dirt paths, water, sprite objects); omitted = the older drawn look */
+  style?: 'storybook';
+  /** storybook: height of the dark forest-floor band along the top of the map */
+  forestY?: number;
   id: string; world: number; name: string; kind: 'village' | 'standard' | 'large';
   w: number; h: number;
   mode: 'open' | 'carve';

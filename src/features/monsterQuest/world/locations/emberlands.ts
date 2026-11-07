@@ -44,32 +44,49 @@ const zone = (id: string, label: string, cx: number, cy: number, rx: number, ry:
 
 const base = { world: 1, pal: PAL, serverZone: 'forest', particles: 'embers' as const, fords: [], liquids: [], bridges: [], zones: [], lights: [], blockers: [], plazas: [] };
 
-// ================================================================== 1.1 Ember Village
+// ================================================================== 1.1 Ember Village (storybook look)
+// The painted-sprite style (see storybook/story.ts). Same gates, entrances, quests and signs as before; the lava streams
+// became a river, the ledge in the north became a forest, and three tall-grass patches hide monsters.
+const PAL_SB: LocPalette = { ...PAL, haze: 'rgba(255,244,190,.05)', motes: '#fff6b0', vignette: '#0b3a1a' };
+const forestRows = (() => {
+  const r = rng('v-forest'), out: PropDef[] = [];
+  for (let x = 10; x < 1620; x += 118) out.push({ kind: 'ashTree', x: x + r() * 40, y: 150 + r() * 50, v: Math.floor(r() * 6), s: 1.15 + r() * 0.35 });
+  for (let x = 60; x < 1620; x += 112) out.push({ kind: 'ashTree', x: x + r() * 36, y: 235 + r() * 55, v: Math.floor(r() * 6), s: 1.05 + r() * 0.3 });
+  for (let x = 30; x < 1620; x += 128) out.push({ kind: 'ashTree', x: x + r() * 40, y: 322 + r() * 40, v: Math.floor(r() * 6), s: 0.95 + r() * 0.3 });
+  for (let i = 0; i < 16; i++) out.push({ kind: r() < 0.5 ? 'bush' : 'mushroom', x: 60 + r() * 1480, y: 360 + r() * 30, v: Math.floor(r() * 5), s: 0.9 + r() * 0.4 });
+  return out;
+})();
 const villageCore = {
   props: [
-    { kind: 'lighthouse', x: 800, y: 292, s: 1 }, { kind: 'fountain', x: 800, y: 650 },
-    { kind: 'house', x: 500, y: 500, v: 0 }, { kind: 'house', x: 1060, y: 480, v: 1 }, { kind: 'house', x: 470, y: 900, v: 2 },
-    { kind: 'stall', x: 1000, y: 800 },
-    { kind: 'lantern', x: 800, y: 420 }, { kind: 'lantern', x: 590, y: 560 }, { kind: 'lantern', x: 1010, y: 560 }, { kind: 'lantern', x: 560, y: 780 }, { kind: 'lantern', x: 1040, y: 790 }, { kind: 'lantern', x: 690, y: 920 },
-    { kind: 'fence', x: 380, y: 560, len: 120 }, { kind: 'fence', x: 1160, y: 430, len: 80 },
-    { kind: 'mushroom', x: 330, y: 440, v: 2, s: 1.2 }, { kind: 'mushroom', x: 1180, y: 560, v: 4, s: 0.8 }, { kind: 'mushroom', x: 640, y: 1070, v: 1, s: 1.1 }, { kind: 'mushroom', x: 1020, y: 1060, v: 3, s: 1.3 },
-    { kind: 'bush', x: 700, y: 440, v: 0 }, { kind: 'bush', x: 390, y: 1075, v: 1 }, { kind: 'bush', x: 1200, y: 880, v: 0 },
-    { kind: 'fireCrystal', x: 290, y: 760, v: 0 }, { kind: 'fireCrystal', x: 1450, y: 840, v: 3 },
+    { kind: 'fountain', x: 800, y: 640 },
+    { kind: 'house', x: 500, y: 500, v: 0 }, { kind: 'house', x: 1060, y: 480, v: 1 }, { kind: 'house', x: 470, y: 900, v: 2 }, { kind: 'house', x: 1250, y: 330, v: 3 },
+    { kind: 'stall', x: 1000, y: 800, v: 0 },
+    { kind: 'noticeBoard', x: 1150, y: 560 }, { kind: 'well', x: 640, y: 560 },
+    { kind: 'lantern', x: 800, y: 420, v: 0 }, { kind: 'lantern', x: 590, y: 560, v: 1 }, { kind: 'lantern', x: 1010, y: 560, v: 0 }, { kind: 'lantern', x: 560, y: 780, v: 2 }, { kind: 'lantern', x: 1040, y: 790, v: 1 }, { kind: 'lantern', x: 690, y: 920, v: 0 },
+    { kind: 'fence', x: 380, y: 560, len: 120 }, { kind: 'fence', x: 1160, y: 430, len: 80 }, { kind: 'fence', x: 400, y: 1130, len: 140 }, { kind: 'fence', x: 1000, y: 880, len: 100 },
+    { kind: 'campfire', x: 640, y: 1010 }, { kind: 'bench', x: 570, y: 1040 }, { kind: 'bench', x: 650, y: 1085 },
+    { kind: 'barrel', x: 1090, y: 830, v: 0 }, { kind: 'crate', x: 1060, y: 860 }, { kind: 'planter', x: 940, y: 880 }, { kind: 'barrel', x: 520, y: 590, v: 1 },
+    { kind: 'mushroom', x: 330, y: 440, v: 2, s: 1.2 }, { kind: 'mushroom', x: 1210, y: 580, v: 4, s: 0.9 }, { kind: 'mushroom', x: 1020, y: 1060, v: 3, s: 1.2 },
+    { kind: 'bush', x: 700, y: 440, v: 0 }, { kind: 'bush', x: 1200, y: 880, v: 2 }, { kind: 'bush', x: 880, y: 440, v: 2 },
+    { kind: 'fireCrystal', x: 290, y: 800, v: 0 }, { kind: 'fireCrystal', x: 1450, y: 850, v: 3 },
+    ...forestRows,
   ] as PropDef[],
   interactables: [
-    { id: 'guide', kind: 'npc', npc: 'guide', x: 660, y: 740, marker: '!', name: 'Village guide', lines: ['Welcome to Ember Village! Walk with the arrow keys or WASD, or drag the joystick.', 'Tall ash-grass and glowing moss hide wild monsters. Step in and keep moving to find one.', 'Paths and the village are always safe. Head east to Mushroom Valley when you are ready.'] },
+    { id: 'guide', kind: 'npc', npc: 'guide', x: 660, y: 740, marker: '!', name: 'Village guide', lines: ['Welcome to Ember Village! Walk with the arrow keys or WASD, or drag the joystick.', 'Tall grass hides wild monsters. Step in and keep moving to find one, and watch for little faces peeking out.', 'Paths and the village are always safe. Head east to Mushroom Valley when you are ready.'] },
     { id: 'shop', kind: 'shop', x: 1000, y: 800, marker: 'arrow', name: 'Shop' },
     { id: 'stone', kind: 'stone', x: 800, y: 440, marker: 'none', name: 'Fast-travel stone' },
     { id: 'chest', kind: 'chest', x: 1200, y: 430, marker: 'shimmer', name: 'Treasure chest' },
     { id: 's-east', kind: 'sign', x: 1190, y: 552, dir: 'right', name: 'Mushroom Valley', marker: 'none' },
     { id: 's-south', kind: 'sign', x: 740, y: 1040, dir: 'down', name: 'World map', marker: 'none' },
-    { id: 's-look', kind: 'sign', x: 440, y: 650, dir: 'left', name: 'Lava lookout', marker: 'none' },
-    { id: 'lookout', kind: 'lookout', x: 140, y: 560, marker: '?', name: 'Lava lookout', lines: ['From here the lava stream glows like a ribbon of sunset. It is slow and fenced, so it never bothers the village.'] },
+    { id: 's-look', kind: 'sign', x: 440, y: 650, dir: 'left', name: 'River lookout', marker: 'none' },
+    { id: 'lookout', kind: 'lookout', x: 140, y: 560, marker: '?', name: 'River lookout', lines: ['From here the river glitters like a ribbon of silver. It is calm and fenced by rocks, so it never bothers the village.'] },
   ] as InteractDef[],
 };
 const village: LocationDef = {
-  ...base, id: 'ember-village', name: 'Ember Village', kind: 'village', w: 1600, h: 1200, mode: 'open', edge: 'foliage',
-  plateaus: [{ pts: [[-80, -80], [1680, -80], [1680, 300], [1380, 345], [1040, 305], [800, 336], [560, 305], [250, 345], [-80, 300]], face: 34 }],
+  ...base, pal: PAL_SB, particles: 'sparkles', style: 'storybook', forestY: 330,
+  id: 'ember-village', name: 'Ember Village', kind: 'village', w: 1600, h: 1200, mode: 'open', edge: 'foliage',
+  plateaus: [],
+  blockers: [{ x: 800, y: 130, rx: 900, ry: 205 }],
   plazas: [{ x: 800, y: 660, rx: 240, ry: 190 }],
   paths: [
     { pts: [[800, 1170], [800, 1040], [800, 880]], width: 170, main: true },
@@ -80,12 +97,17 @@ const village: LocationDef = {
     { pts: [[560, 900], [420, 960], [250, 965]], width: 110 },
   ],
   liquids: [
-    { kind: 'lava', pts: [[330, 345], [300, 520], [240, 700], [300, 880], [220, 1040], [160, 1200]], width: 56 },
-    { kind: 'lava', pts: [[1290, 345], [1260, 520], [1330, 680], [1270, 860], [1340, 1040], [1400, 1200]], width: 56 },
+    { kind: 'water', pts: [[330, 345], [300, 520], [240, 700], [300, 880], [220, 1040], [160, 1200]], width: 84 },
+    { kind: 'water', pts: [[1290, 345], [1260, 520], [1330, 680], [1270, 860], [1340, 1040], [1400, 1200]], width: 84 },
   ],
   bridges: [
-    { a: [215, 645], b: [325, 645], width: 140 }, { a: [205, 965], b: [315, 965], width: 140 },
-    { a: [1260, 650], b: [1380, 650], width: 140 }, { a: [1230, 960], b: [1350, 960], width: 140 },
+    { a: [160, 645], b: [350, 645], width: 140 }, { a: [150, 965], b: [340, 965], width: 140 },
+    { a: [1225, 650], b: [1425, 650], width: 140 }, { a: [1195, 960], b: [1385, 960], width: 140 },
+  ],
+  zones: [
+    zone('ev-se', 'Tall grass', 1190, 1085, 150, 95, 'moss', ['leafy', 'furron', 'wooly']),
+    zone('ev-sw', 'Tall grass', 390, 1090, 100, 70, 'moss', ['pixie', 'buzzy', 'leafy']),
+    zone('ev-ne', 'Tall grass', 1440, 440, 95, 70, 'moss', ['furron', 'zappy', 'wooly'], { density: 0.8 }),
   ],
   gates: [
     { id: 'east', rect: [1490, 540, 110, 200], dir: 'right', style: 'path', label: 'Mushroom Valley', to: { loc: 'mushroom-valley', entrance: 'west' } },
@@ -93,12 +115,15 @@ const village: LocationDef = {
   ],
   entrances: { south: { x: 800, y: 1040, facing: 'up' }, east: { x: 1400, y: 640, facing: 'side', flip: true }, spawn: { x: 800, y: 1040, facing: 'up' } },
   props: villageCore.props, interactables: villageCore.interactables,
-  landmark: { x: 800, y: 300, name: 'Mushroom lighthouse' },
-  mood: 'Warm lantern glow, amber haze, small embers drifting upward.',
-  lights: [{ x: 800, y: 650, r: 420, c: '#ffb347' }, { x: 500, y: 520, r: 220, c: '#ffd46a' }, { x: 1060, y: 500, r: 220, c: '#ffd46a' }, { x: 1000, y: 800, r: 200, c: '#ffd46a' }],
-  mini: '#b9a763',
+  landmark: { x: 800, y: 300, name: 'Ember Village' },
+  mood: 'Sunny storybook village: flowers, lanterns, a sparkling river.',
+  lights: [{ x: 800, y: 650, r: 380, c: '#fff1b8' }, { x: 1000, y: 800, r: 200, c: '#ffe08a' }],
+  mini: '#58b84a',
 };
-village.props = [...village.props, ...scatter('v-scatter', 16, 1600, 1200, avoidOf(village), [{ kind: 'ashTree', v: [0, 1, 2, 3], s: [0.9, 1.2], w: 3 }, { kind: 'mushroom', v: [0, 1, 2, 3, 4], s: [0.8, 1.4], w: 3 }, { kind: 'rock', v: [0, 1, 2], w: 1 }], 140).filter((p) => p.y > 400)];
+village.props = [...village.props, ...scatter('v-scatter', 70, 1600, 1200, avoidOf(village), [
+  { kind: 'ashTree', v: [0, 1, 2, 3, 4, 5], s: [1, 1.3], w: 2 }, { kind: 'bush', v: [0, 1, 2], s: [0.8, 1.2], w: 3 }, { kind: 'flowers', v: [0, 1, 2, 3, 4, 5, 6, 7], s: [0.8, 1.3], w: 9 },
+  { kind: 'plant', v: [0, 1, 2, 3], s: [0.8, 1.3], w: 4 }, { kind: 'mushroom', v: [0, 1, 2, 3, 4], s: [0.8, 1.3], w: 2 }, { kind: 'rock', v: [0, 1, 2], s: [0.8, 1.2], w: 2 }, { kind: 'stump', s: [0.8, 1], w: 1 }, { kind: 'log', s: [0.8, 1], w: 1 },
+], 140).filter((p) => p.y > 420)];
 
 // ================================================================== 1.2 Mushroom Valley
 const valleyPlateau: Pt[] = [[1620, 300], [1950, 230], [2300, 300], [2330, 560], [2260, 800], [1950, 850], [1650, 790], [1580, 560]];
