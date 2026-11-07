@@ -106,7 +106,7 @@ export class WorldEngine {
   }
   private swap(id: string, entrance: string) {
     const def = LOCATIONS[id]; if (!def) return;
-    this.loc = bakeLocation(def);
+    this.loc = bakeLocation(def); this.resize();
     const e = def.entrances[entrance] ?? Object.values(def.entrances)[0];
     this.p.x = e.x; this.p.y = e.y; this.p.vx = this.p.vy = 0; this.p.facing = e.facing; this.p.flip = !!e.flip; this.cam.x = e.x; this.cam.y = e.y;
     this.route = null; this.gateLock = true; this.zoneIdx = -1; this.near = null; this.ripples = [];
@@ -172,7 +172,8 @@ export class WorldEngine {
     const r = this.o.host.getBoundingClientRect(); this.dpr = Math.min(2, window.devicePixelRatio || 1);
     this.W = Math.max(200, r.width); this.H = Math.max(200, r.height);
     this.cv.width = Math.round(this.W * this.dpr); this.cv.height = Math.round(this.H * this.dpr); this.cv.style.width = `${this.W}px`; this.cv.style.height = `${this.H}px`;
-    this.scale = Math.max(0.6, Math.min(1.3, this.W / 1000));
+    // storybook places are seen from further away (more of the village at once); older places keep their close view
+    this.scale = this.loc?.def.style === 'storybook' ? Math.max(0.5, Math.min(0.9, this.W / 1600)) : Math.max(0.6, Math.min(1.3, this.W / 1000));
   }
   private frame(now: number) {
     if (this.destroyed) return;
@@ -181,6 +182,8 @@ export class WorldEngine {
     this.update(dt); this.render(); this.raf = requestAnimationFrame((t) => this.frame(t));
   }
   private chk = 0;
+  /** explorer size: a little larger in storybook places so they stay easy to see from the wider view */
+  private get pk() { return this.loc?.def.style === 'storybook' ? 0.62 : PLAYER_K; }
   private peekImgs = new Map<string, HTMLImageElement>();
   private drawPeek(c: CanvasRenderingContext2D, pk: { x: number; y: number; id: string; ph: number }, t: number) {
     let im = this.peekImgs.get(pk.id);
@@ -376,18 +379,18 @@ export class WorldEngine {
     const col = !p.moving ? 0 : 1 + (Math.floor(p.dist / WALK_STRIDE) % SHEET.walkFrames);
     const bob = p.moving ? 0 : calm ? 0 : Math.sin(t * 3) * 0.6;
     ents.push({ y: p.y, draw: () => {
-      const face: Facing = p.facing, im = this.sheet, left = face === 'side' && p.flip; shadowEllAt(c, p.x, p.y, 24);
+      const face: Facing = p.facing, im = this.sheet, left = face === 'side' && p.flip; shadowEllAt(c, p.x, p.y, 24 * this.pk / PLAYER_K);
       if (!im || !im.complete || !im.naturalWidth) return;
-      const r = frameRect(face, col, left), w = SHEET.w * PLAYER_K, h = SHEET.h * PLAYER_K;
+      const K = this.pk, r = frameRect(face, col, left), w = SHEET.w * K, h = SHEET.h * K;
       c.save(); c.translate(p.x, p.y + 4);
       // props are placed from the explorer's head position (chars.json), so they fit every explorer
-      const box = this.propDefs.length ? headBox(this.who, face, left) : null, ox = -w / 2, oy = -SHEET.feet * PLAYER_K - bob;
+      const box = this.propDefs.length ? headBox(this.who, face, left) : null, ox = -w / 2, oy = -SHEET.feet * K - bob;
       const layer = (behind: boolean) => {
         if (!box) return;
         for (const pd of this.propDefs) {
           const pl = placeProp(pd, box, face, left), pi = this.propImgs.get(pd.id);
           if (!pl || pl.behind !== behind || !pi || !pi.complete || !pi.naturalWidth) continue;
-          c.drawImage(pi, ox + pl.x * PLAYER_K, oy + pl.y * PLAYER_K, pl.w * PLAYER_K, pl.h * PLAYER_K);
+          c.drawImage(pi, ox + pl.x * K, oy + pl.y * K, pl.w * K, pl.h * K);
         }
       };
       layer(true); c.drawImage(im, r.sx, r.sy, r.sw, r.sh, ox, oy, w, h); layer(false); c.restore();

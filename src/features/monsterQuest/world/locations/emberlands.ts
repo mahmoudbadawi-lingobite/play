@@ -48,14 +48,6 @@ const base = { world: 1, pal: PAL, serverZone: 'forest', particles: 'embers' as 
 // The painted-sprite style (see storybook/story.ts). Same gates, entrances, quests and signs as before; the lava streams
 // became a river, the ledge in the north became a forest, and three tall-grass patches hide monsters.
 const PAL_SB: LocPalette = { ...PAL, haze: 'rgba(255,244,190,.05)', motes: '#fff6b0', vignette: '#0b3a1a' };
-const forestRows = (() => {
-  const r = rng('v-forest'), out: PropDef[] = [];
-  for (let x = 10; x < 1620; x += 118) out.push({ kind: 'ashTree', x: x + r() * 40, y: 150 + r() * 50, v: Math.floor(r() * 6), s: 1.15 + r() * 0.35 });
-  for (let x = 60; x < 1620; x += 112) out.push({ kind: 'ashTree', x: x + r() * 36, y: 235 + r() * 55, v: Math.floor(r() * 6), s: 1.05 + r() * 0.3 });
-  for (let x = 30; x < 1620; x += 128) out.push({ kind: 'ashTree', x: x + r() * 40, y: 322 + r() * 40, v: Math.floor(r() * 6), s: 0.95 + r() * 0.3 });
-  for (let i = 0; i < 16; i++) out.push({ kind: r() < 0.5 ? 'bush' : 'mushroom', x: 60 + r() * 1480, y: 360 + r() * 30, v: Math.floor(r() * 5), s: 0.9 + r() * 0.4 });
-  return out;
-})();
 const villageCore = {
   props: [
     { kind: 'fountain', x: 800, y: 640 },
@@ -69,7 +61,6 @@ const villageCore = {
     { kind: 'mushroom', x: 330, y: 440, v: 2, s: 1.2 }, { kind: 'mushroom', x: 1210, y: 580, v: 4, s: 0.9 }, { kind: 'mushroom', x: 1020, y: 1060, v: 3, s: 1.2 },
     { kind: 'bush', x: 700, y: 440, v: 0 }, { kind: 'bush', x: 1200, y: 880, v: 2 }, { kind: 'bush', x: 880, y: 440, v: 2 },
     { kind: 'fireCrystal', x: 290, y: 800, v: 0 }, { kind: 'fireCrystal', x: 1450, y: 850, v: 3 },
-    ...forestRows,
   ] as PropDef[],
   interactables: [
     { id: 'guide', kind: 'npc', npc: 'guide', x: 660, y: 740, marker: '!', name: 'Village guide', lines: ['Welcome to Ember Village! Walk with the arrow keys or WASD, or drag the joystick.', 'Tall grass hides wild monsters. Step in and keep moving to find one, and watch for little faces peeking out.', 'Paths and the village are always safe. Head east to Mushroom Valley when you are ready.'] },
@@ -82,7 +73,7 @@ const villageCore = {
     { id: 'lookout', kind: 'lookout', x: 140, y: 560, marker: '?', name: 'River lookout', lines: ['From here the river glitters like a ribbon of silver. It is calm and fenced by rocks, so it never bothers the village.'] },
   ] as InteractDef[],
 };
-const village: LocationDef = {
+const villageBase: LocationDef = {
   ...base, pal: PAL_SB, particles: 'sparkles', style: 'storybook', forestY: 330,
   id: 'ember-village', name: 'Ember Village', kind: 'village', w: 1600, h: 1200, mode: 'open', edge: 'foliage',
   plateaus: [],
@@ -120,10 +111,38 @@ const village: LocationDef = {
   lights: [{ x: 800, y: 650, r: 380, c: '#fff1b8' }, { x: 1000, y: 800, r: 200, c: '#ffe08a' }],
   mini: '#58b84a',
 };
-village.props = [...village.props, ...scatter('v-scatter', 70, 1600, 1200, avoidOf(village), [
-  { kind: 'ashTree', v: [0, 1, 2, 3, 4, 5], s: [1, 1.3], w: 2 }, { kind: 'bush', v: [0, 1, 2], s: [0.8, 1.2], w: 3 }, { kind: 'flowers', v: [0, 1, 2, 3, 4, 5, 6, 7], s: [0.8, 1.3], w: 9 },
+/** Grows an authored location by `k`: places move apart, plazas and gates grow, widths of paths and rivers (and object sizes) stay. */
+function scaleLoc(d: LocationDef, k: number): LocationDef {
+  const P = (p: Pt): Pt => [Math.round(p[0] * k), Math.round(p[1] * k)];
+  return {
+    ...d, w: Math.round(d.w * k), h: Math.round(d.h * k), forestY: d.forestY ? Math.round(d.forestY * k) : undefined,
+    blockers: d.blockers.map((b) => ({ ...b, x: b.x * k, y: b.y * k, rx: b.rx * k, ry: b.ry * k })),
+    plazas: (d.plazas ?? []).map((q) => ({ ...q, x: q.x * k, y: q.y * k, rx: q.rx * k * 0.92, ry: q.ry * k * 0.92 })),
+    paths: d.paths.map((q) => ({ ...q, pts: q.pts.map(P) })),
+    liquids: d.liquids.map((q) => ({ ...q, pts: q.pts.map(P) })),
+    bridges: d.bridges.map((q) => { const cx = ((q.a[0] + q.b[0]) / 2) * k, cy = ((q.a[1] + q.b[1]) / 2) * k, hx = (q.b[0] - q.a[0]) / 2, hy = (q.b[1] - q.a[1]) / 2; return { ...q, a: [cx - hx, cy - hy] as Pt, b: [cx + hx, cy + hy] as Pt }; }),
+    zones: d.zones.map((z) => ({ ...z, poly: z.poly.map(P) })),
+    gates: d.gates.map((g) => ({ ...g, rect: g.rect.map((v) => Math.round(v * k)) as [number, number, number, number] })),
+    entrances: Object.fromEntries(Object.entries(d.entrances).map(([n, e]) => [n, { ...e, x: Math.round(e.x * k), y: Math.round(e.y * k) }])),
+    props: d.props.map((q) => ({ ...q, x: q.x * k, y: q.y * k })),
+    interactables: d.interactables.map((q) => ({ ...q, x: q.x * k, y: q.y * k })),
+    lights: (d.lights ?? []).map((q) => ({ ...q, x: q.x * k, y: q.y * k, r: q.r * k })),
+    landmark: d.landmark ? { ...d.landmark, x: d.landmark.x * k, y: d.landmark.y * k } : d.landmark,
+  };
+}
+const village: LocationDef = scaleLoc(villageBase, 1.4);
+village.props = [...village.props, ...(() => {
+  const r = rng('v-forest'), out: PropDef[] = [], W = village.w, fy = village.forestY ?? 400;
+  for (let x = 10; x < W + 20; x += 125) out.push({ kind: 'ashTree', x: x + r() * 40, y: fy * 0.34 + r() * 60, v: Math.floor(r() * 6), s: 1.1 + r() * 0.35 });
+  for (let x = 60; x < W + 20; x += 118) out.push({ kind: 'ashTree', x: x + r() * 36, y: fy * 0.62 + r() * 60, v: Math.floor(r() * 6), s: 1 + r() * 0.3 });
+  for (let x = 30; x < W + 20; x += 135) out.push({ kind: 'ashTree', x: x + r() * 40, y: fy * 0.9 + r() * 45, v: Math.floor(r() * 6), s: 0.9 + r() * 0.3 });
+  for (let i = 0; i < 26; i++) out.push({ kind: r() < 0.5 ? 'bush' : 'mushroom', x: 60 + r() * (W - 120), y: fy + 12 + r() * 40, v: Math.floor(r() * 5), s: 0.9 + r() * 0.4 });
+  return out;
+})(), ...scatter('v-scatter', 190, village.w, village.h, avoidOf(village), [
+  { kind: 'ashTree', v: [0, 1, 2, 3, 4, 5], s: [0.9, 1.25], w: 2 }, { kind: 'bush', v: [0, 1, 2], s: [0.8, 1.2], w: 3 }, { kind: 'flowers', v: [0, 1, 2, 3, 4, 5, 6, 7], s: [0.8, 1.3], w: 10 },
   { kind: 'plant', v: [0, 1, 2, 3], s: [0.8, 1.3], w: 4 }, { kind: 'mushroom', v: [0, 1, 2, 3, 4], s: [0.8, 1.3], w: 2 }, { kind: 'rock', v: [0, 1, 2], s: [0.8, 1.2], w: 2 }, { kind: 'stump', s: [0.8, 1], w: 1 }, { kind: 'log', s: [0.8, 1], w: 1 },
-], 140).filter((p) => p.y > 420)];
+  { kind: 'house', v: [4, 5, 6, 7], s: [1, 1], w: 0.55 }, { kind: 'lantern', v: [0, 1, 2], w: 0.8 }, { kind: 'barrel', v: [0, 1], w: 0.5 }, { kind: 'crate', w: 0.4 },
+], 150).filter((q) => q.y > (village.forestY ?? 0) + 90)];
 
 // ================================================================== 1.2 Mushroom Valley
 const valleyPlateau: Pt[] = [[1620, 300], [1950, 230], [2300, 300], [2330, 560], [2260, 800], [1950, 850], [1650, 790], [1580, 560]];
