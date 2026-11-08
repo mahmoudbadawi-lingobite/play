@@ -105,7 +105,7 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
         <div className="mq-hud-loc" aria-live="polite"><button className="mq-back" onClick={onLeave} aria-label="Back to world map">← Worlds</button><span>{hud?.loc?.name ?? w.name}</span>{hud?.zoneLabel && <em>🌿 {hud.zoneLabel}</em>}</div>
         <div className="mq-hud-tools">
           <button className={`mq-tool ${calm ? 'on' : ''}`} onClick={() => setCalm(!calm)} aria-pressed={calm} title="Calm mode: stops ambient motion and animations">🌙</button>
-          <button className="mq-tool" onClick={() => (legacy ? setRepick(true) : setPanel('explorers'))} aria-label="Explorers" title="Explorers and wardrobe">👤</button>
+          <button className="mq-tool" onClick={() => (legacy ? setRepick(true) : setPanel('profile'))} aria-label="Explorers" title="Explorers and wardrobe">👤</button>
           <button className="mq-tool" onClick={toggleFs} aria-label="Toggle full screen">⛶</button>
         </div>
 
@@ -118,7 +118,7 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
         <div className="mq-actions">
           <button className="mq-act mq-act-battle" disabled={!hud?.canBattle || paused} onClick={() => eng.current?.search()}><span>⚔️</span>Battle</button>
           <button className={`mq-act mq-act-int ${hud?.prompt ? 'ready' : ''}`} disabled={!hud?.prompt || paused} onClick={() => { sfx.click(); eng.current?.interact(); }}><span>👆</span>{verb}</button>
-          <button className="mq-act mq-act-bag" onClick={() => setPanel('bag')}><span>🎒</span>Bag</button>
+          <button className="mq-act mq-act-bag" onClick={() => setPanel('inventory')}><span>🎒</span>Bag</button>
         </div>
         <button className="mq-minimap" onClick={() => setShowMap(true)} aria-label="Open map"><canvas ref={mini} width={132} height={132} /></button>
         {hud?.prompt && !paused && <div className="mq-prompt">{verb}: {hud.prompt.name} <kbd>E</kbd></div>}
