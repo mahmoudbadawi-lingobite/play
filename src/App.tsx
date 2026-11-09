@@ -25,6 +25,7 @@ import { CreateEscapeRoomPage } from './pages/CreateEscapeRoomPage';
 import { EditEscapeRoomPage } from './pages/EditEscapeRoomPage';
 import { EscapeRoomPlayPage } from './pages/EscapeRoomPlayPage';
 import { ConsentGate } from './components/auth/ConsentGate';
+import { InstallDock } from './components/common/InstallDock';
 import { HuntEntryPage, HuntRoomPage } from './pages/HuntRoomPage';
 
 import { loadRemoteStoreItems } from './features/avatar/remoteCatalog';
@@ -106,6 +107,7 @@ export default function App() {
               </Routes>
             </main>
           </div>
+          <InstallDock />
         </BrowserRouter>
       </GuestProgressProvider>
       </AdminNotificationsProvider>

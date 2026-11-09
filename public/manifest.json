@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "LingoBite Play",
+  "short_name": "LingoBite",
+  "description": "Learn English through play — games, quests and challenges.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0560f0",
+  "theme_color": "#0560f0",
+  "categories": ["education", "games"],
+  "icons": [
+    { "src": "logo-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "logo-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
