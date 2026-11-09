@@ -525,7 +525,7 @@ export interface Sprite { cv: HTMLCanvasElement; ox: number; oy: number; w: numb
 const cache = new Map<string, Sprite>();
 const PAD = 18;
 /** Storybook locations draw their objects from painted sprites (see storybook/story.ts). Set while such a location is active. */
-export interface StoryHook { sprite(d: PropDef): Sprite | null; footprints(d: PropDef): ReturnType<typeof footprints> }
+export interface StoryHook { sprite(d: PropDef): Sprite | null; footprints(d: PropDef): ReturnType<typeof footprints>; npc?: (kind: string) => Sprite | null }
 let storyHook: StoryHook | null = null;
 export const setStoryHook = (h: StoryHook | null) => { storyHook = h; };
 export function propSprite(d: PropDef): Sprite | null {
@@ -557,6 +557,7 @@ const NPC_COL: Record<string, { cloak: string; trim: string; skin: string }> = {
   villager: { cloak: '#d9683a', trim: '#fff2c8', skin: '#f6cfa6' },
 };
 export function npcSprite(kind: string): Sprite {
+  if (storyHook?.npc) { const sp = storyHook.npc(kind); if (sp) return sp; }
   const key = `npc|${kind}`, ex = cache.get(key); if (ex) return ex;
   const col = NPC_COL[kind] ?? NPC_COL.guide, w = 90, h = 120, cv = document.createElement('canvas'); cv.width = w; cv.height = h;
   const c = cv.getContext('2d')!; c.translate(45, 108); c.lineJoin = 'round'; c.lineCap = 'round';

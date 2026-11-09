@@ -42,7 +42,8 @@ export type PropKind =
   | 'lavafall' | 'waterfall' | 'spire' | 'altar' | 'stalagmite' | 'sign' | 'chest' | 'runeStone' | 'plate' | 'torch' | 'crack'
   | 'flower' | 'pebbles' | 'ember' | 'mushroomRing' | 'telescope'
   // storybook style only
-  | 'flowers' | 'plant' | 'grassClump' | 'reeds' | 'portal' | 'campfire' | 'brazier' | 'well' | 'bench' | 'noticeBoard' | 'crate' | 'barrel' | 'planter' | 'log' | 'stump' | 'banner';
+  | 'flowers' | 'plant' | 'grassClump' | 'reeds' | 'portal' | 'campfire' | 'brazier' | 'well' | 'bench' | 'noticeBoard' | 'crate' | 'barrel' | 'planter' | 'log' | 'stump' | 'banner'
+  | 'fireflies' | 'treehouse' | 'stumpHouse' | 'mushLamp' | 'fairyRing' | 'vineArch' | 'jar';
 export interface PropDef {
   kind: PropKind; x: number; y: number;
   v?: number;          // variant 0..n
@@ -68,6 +69,8 @@ export interface InteractDef {
 export interface LocationDef {
   /** 'storybook' = painted-sprite look (ground textures, dirt paths, water, sprite objects); omitted = the older drawn look */
   style?: 'storybook';
+  /** storybook: which set of ground pictures and objects (default 'village') */
+  theme?: 'village' | 'valley';
   /** storybook: height of the dark forest-floor band along the top of the map */
   forestY?: number;
   id: string; world: number; name: string; kind: 'village' | 'standard' | 'large';

@@ -259,7 +259,7 @@ function tuftSprites(def: LocationDef): Record<string, HTMLCanvasElement[]> {
 // --------------------------------------------------------------------------------------------------- bake
 export function bakeLocation(def: LocationDef): Baked {
   const { w, h, pal } = def, r = rng(`bake:${def.id}`), noise = makeNoise(def.id);
-  const sb = def.style === 'storybook' ? story : null; setStoryHook(sb ? story.hook : null);
+  const sb = def.style === 'storybook' ? story : null; setStoryHook(sb ? story.hook : null); sb?.enter(def);
   const bg = canvas(w, h), c = bg.getContext('2d')!; c.lineJoin = 'round'; c.lineCap = 'round';
   const gw = Math.ceil(w / CELL), gh = Math.ceil(h / CELL);
   const mk = canvas(gw, gh), m = mk.getContext('2d', { willReadFrequently: true })!; m.scale(1 / CELL, 1 / CELL);
@@ -283,7 +283,7 @@ export function bakeLocation(def: LocationDef): Baked {
   }
   for (const p of def.plateaus ?? []) {
     const face = p.face ?? 34, poly = smooth(p.pts, 8, true);
-    paintFloorShape(c, p.pts, r, face, { top: mix(pal.ground[1], pal.ground[0], 0.35), faceCol: pal.cliff[1], rim: rgba(lighten(pal.cliff[0], 0.5), 0.6) });
+    if (sb) sb.plateau(c, p.pts, face, r); else paintFloorShape(c, p.pts, r, face, { top: mix(pal.ground[1], pal.ground[0], 0.35), faceCol: pal.cliff[1], rim: rgba(lighten(pal.cliff[0], 0.5), 0.6) });
     // solid face band, walkable top, solid lip; paths drawn later carve ramps through all of it
     black(() => { m.save(); m.translate(0, face); strokePoly(m, poly, true); m.fill(); m.lineWidth = 30; m.stroke(); m.restore(); });
     white(() => { strokePoly(m, poly, true); m.fill(); });
@@ -327,8 +327,10 @@ export function bakeLocation(def: LocationDef): Baked {
   // ---- fords & stepping stones (shallow, slow)
   for (const f of def.fords) {
     const pts = sm(f.pts);
+    if (sb) sb.ford(c, pts, f.width, r); else {
     c.save(); strokePoly(c, pts); c.strokeStyle = rgba(lighten(pal.water.mid, 0.25), 0.9); c.lineWidth = f.width + 10; c.stroke(); strokePoly(c, pts); c.strokeStyle = rgba(pal.water.glow, 0.7); c.lineWidth = f.width; c.stroke(); c.restore();
     let acc = 0; for (let i = 1; i < pts.length; i++) { acc += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); if (acc < 44) continue; acc = 0; const [x, y] = pts[i], off = (r() - 0.5) * 16; c.fillStyle = 'rgba(30,20,40,.25)'; c.beginPath(); c.ellipse(x + 3, y + off + 6, 24, 15, 0, 0, TAU); c.fill(); c.fillStyle = '#a8978a'; c.strokeStyle = '#4a3a3a'; c.lineWidth = 2.4; c.beginPath(); c.ellipse(x, y + off, 24, 15, 0, 0, TAU); c.fill(); c.stroke(); c.fillStyle = 'rgba(255,248,230,.4)'; c.beginPath(); c.ellipse(x - 7, y + off - 4, 9, 4, -0.2, 0, TAU); c.fill(); }
+    }
     white(() => { m.lineWidth = f.width; m.lineCap = 'round'; m.lineJoin = 'round'; strokePoly(m, pts); m.stroke(); });
     sl.strokeStyle = '#fff'; sl.lineWidth = f.width; sl.lineCap = 'round'; sl.lineJoin = 'round'; strokePoly(sl, pts); sl.stroke();
   }

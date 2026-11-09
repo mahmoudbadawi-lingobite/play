@@ -100,7 +100,7 @@ export class WorldEngine {
 
   async load(id: string, entrance: string) {
     this.o.cb.onLoading?.(true);
-    if (LOCATIONS[id]?.style === 'storybook') await loadStory();   // the painted sprites must be loaded before the place is drawn
+    if (LOCATIONS[id]?.style === 'storybook') await loadStory(LOCATIONS[id].theme);   // the painted sprites must be loaded before the place is drawn
     this.pending = () => this.swap(id, entrance);
     this.fadeDir = 1;
   }

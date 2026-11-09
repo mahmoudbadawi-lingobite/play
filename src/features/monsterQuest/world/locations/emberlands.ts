@@ -47,6 +47,7 @@ const base = { world: 1, pal: PAL, serverZone: 'forest', particles: 'embers' as 
 // ================================================================== 1.1 Ember Village (storybook look)
 // The painted-sprite style (see storybook/story.ts). Same gates, entrances, quests and signs as before; the lava streams
 // became a river, the ledge in the north became a forest, and three tall-grass patches hide monsters.
+const PAL_VALLEY: LocPalette = { ...PAL, haze: 'rgba(110,80,200,.10)', motes: '#c8b0ff', vignette: '#1b1050' };
 const PAL_SB: LocPalette = { ...PAL, haze: 'rgba(255,244,190,.05)', motes: '#fff6b0', vignette: '#0b3a1a' };
 const villageCore = {
   props: [
@@ -147,7 +148,7 @@ village.props = [...village.props, ...(() => {
 // ================================================================== 1.2 Mushroom Valley
 const valleyPlateau: Pt[] = [[1620, 300], [1950, 230], [2300, 300], [2330, 560], [2260, 800], [1950, 850], [1650, 790], [1580, 560]];
 const valley: LocationDef = {
-  ...base, id: 'mushroom-valley', name: 'Mushroom Valley', kind: 'standard', w: 2400, h: 1800, mode: 'open', edge: 'foliage', particles: 'sparkles',
+  ...base, pal: PAL_VALLEY, style: 'storybook', theme: 'valley', id: 'mushroom-valley', name: 'Mushroom Valley', kind: 'standard', w: 2400, h: 1800, mode: 'open', edge: 'foliage', particles: 'sparkles',
   plateaus: [{ pts: valleyPlateau, face: 40 }],
   paths: [
     { pts: [[110, 1300], [430, 1350], [720, 1290], [600, 1060], [450, 830], [560, 600], [850, 520], [1100, 540], [1215, 560], [1385, 560], [1560, 590], [1700, 600], [1850, 520], [2050, 480], [2200, 560], [2230, 780], [2200, 960], [2270, 1150]], width: 150, main: true },
@@ -165,10 +166,10 @@ const valley: LocationDef = {
   fords: [{ pts: [[1140, 1012], [1260, 1000], [1390, 1000]], width: 84 }],
   bridges: [{ a: [1205, 565], b: [1395, 565], width: 160 }, { a: [1180, 1500], b: [1370, 1500], width: 150 }],
   zones: [
-    zone('mv-west', 'West glow-moss', 340, 1060, 190, 150, 'moss', ['capling', 'pebblin', 'cinderpup']),
-    zone('mv-plateau', 'Plateau glow-moss', 1960, 720, 170, 80, 'moss', ['lanternfly', 'capling', 'emberkit']),
-    zone('mv-east', 'East glow-moss', 2080, 1340, 190, 130, 'moss', ['cinderpup', 'emberkit', 'pebblin']),
-    zone('mv-rare', 'Rare spot under the giant cap', 900, 1095, 62, 44, 'moss', ['lanternfly'], { rare: true, density: 1.4 }),
+    zone('mv-west', 'West glow-moss', 340, 1060, 190, 150, 'moss', ['pixie', 'buzzy', 'leafy']),
+    zone('mv-plateau', 'Plateau glow-moss', 1960, 720, 170, 80, 'moss', ['zappy', 'puffy', 'spiksy']),
+    zone('mv-east', 'East glow-moss', 2080, 1340, 190, 130, 'moss', ['froggy', 'wooly', 'bugsy']),
+    zone('mv-rare', 'Rare spot under the giant cap', 900, 1095, 62, 44, 'moss', ['mysti'], { rare: true, density: 1.4 }),
   ],
   props: [
     { kind: 'mushroom', x: 900, y: 985, v: 0, s: 3.6 },
@@ -178,6 +179,8 @@ const valley: LocationDef = {
     { kind: 'fireCrystal', x: 1550, y: 1180, v: 0 }, { kind: 'fireCrystal', x: 600, y: 1590, v: 3 },
     { kind: 'bush', x: 760, y: 1010, v: 0 }, { kind: 'bush', x: 1460, y: 1250, v: 1 }, { kind: 'bush', x: 1100, y: 1380, v: 0 },
     { kind: 'boulder', x: 330, y: 700, v: 0 }, { kind: 'boulder', x: 1650, y: 1650, v: 1 },
+    { kind: 'stumpHouse', x: 300, y: 500 }, { kind: 'treehouse', x: 760, y: 690 }, { kind: 'fairyRing', x: 1010, y: 905 },
+    { kind: 'vineArch', x: 1330, y: 1120 }, { kind: 'jar', x: 560, y: 1340 }, { kind: 'jar', x: 1500, y: 1130 }, { kind: 'jar', x: 2050, y: 560 },
   ],
   gates: [
     { id: 'west', rect: [0, 1180, 110, 240], dir: 'left', style: 'path', label: 'Ember Village', to: { loc: 'ember-village', entrance: 'east' } },
@@ -200,8 +203,20 @@ const valley: LocationDef = {
   lights: [{ x: 1960, y: 420, r: 380, c: '#9a7bff' }, { x: 900, y: 1000, r: 420, c: '#ffd9a0' }, { x: 340, y: 1060, r: 240, c: '#5ff0d0' }, { x: 2080, y: 1340, r: 240, c: '#5ff0d0' }],
   mini: '#b9a763',
 };
-valley.props = [...valley.props, ...scatter('mv-scatter', 46, 2400, 1800, avoidOf(valley), [{ kind: 'ashTree', v: [0, 1, 2, 3], s: [0.9, 1.25], w: 4 }, { kind: 'mushroom', v: [0, 1, 2, 3, 4], s: [0.8, 1.7], w: 4 }, { kind: 'rock', v: [0, 1, 2], w: 1 }, { kind: 'bush', v: [0, 1], w: 1 }], 150)
+/** props placed beside a path, every `step` px, alternating sides, `off` px from its centre line */
+function beside(pts: Pt[], step: number, off: number, make: (x: number, y: number, i: number) => PropDef): PropDef[] {
+  const sp = smooth(pts, 8, false), out: PropDef[] = []; let acc = step * 0.4, i = 0;
+  for (let k = 1; k < sp.length; k++) {
+    const [ax, ay] = sp[k - 1], [bx, by] = sp[k], len = Math.hypot(bx - ax, by - ay); if (!len) continue; acc += len;
+    if (acc >= step) { acc = 0; const side = i % 2 ? 1 : -1; out.push(make(bx + (-(by - ay) / len) * off * side, by + ((bx - ax) / len) * off * side, i)); i++; }
+  }
+  return out;
+}
+valley.props = [...valley.props, ...beside(valley.paths[0].pts, 340, 118, (x, y, i) => ({ kind: i % 3 === 0 ? 'mushLamp' : 'lantern', x, y, v: i })),
+  ...scatter('mv-scatter', 190, 2400, 1800, avoidOf(valley), [{ kind: 'ashTree', v: [0, 1, 2, 3], s: [0.9, 1.25], w: 3 }, { kind: 'mushroom', v: [0, 1, 2, 3, 4], s: [0.8, 1.9], w: 3 }, { kind: 'rock', v: [0, 1, 2], w: 1 }, { kind: 'bush', v: [0, 1, 2, 3], w: 2 },
+    { kind: 'flowers', v: [0, 1, 2, 3, 4, 5], s: [0.8, 1.3], w: 10 }, { kind: 'plant', v: [0, 1, 2], s: [0.8, 1.3], w: 5 }, { kind: 'stump', w: 0.8 }, { kind: 'log', w: 0.8 }, { kind: 'fireflies', w: 0.9 }], 150)
   .filter((p) => !insidePoly(p.x, p.y, smooth(valleyPlateau, 4, true)) || p.y < 760 && p.y > 330)];
+
 
 // ================================================================== 1.3 Ancient Ember Ruins
 const rrPts = (x0: number, y0: number, x1: number, y1: number, r: number): Pt[] => { const o: Pt[] = []; const arc = (cx: number, cy: number, a0: number) => { for (let k = 0; k <= 3; k++) { const a = a0 + (k * Math.PI) / 6; o.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); } }; arc(x1 - r, y0 + r, -Math.PI / 2); arc(x1 - r, y1 - r, 0); arc(x0 + r, y1 - r, Math.PI / 2); arc(x0 + r, y0 + r, Math.PI); return o; };
