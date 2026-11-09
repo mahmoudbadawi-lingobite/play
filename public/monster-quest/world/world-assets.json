@@ -53,6 +53,60 @@
    "w": 506,
    "h": 335,
    "seamless": true
+  },
+  "mv-moss": {
+   "file": "ground/mv-moss.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": true
+  },
+  "mv-petal": {
+   "file": "ground/mv-petal.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": true
+  },
+  "mv-mud": {
+   "file": "ground/mv-mud.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": true
+  },
+  "mv-bank": {
+   "file": "ground/mv-bank.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": false
+  },
+  "mv-spore": {
+   "file": "ground/mv-spore.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": true
+  },
+  "mv-grass": {
+   "file": "ground/mv-grass.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": true
+  },
+  "mv-roots": {
+   "file": "ground/mv-roots.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": true
+  },
+  "mv-stone": {
+   "file": "ground/mv-stone.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": false
+  },
+  "mv-glow": {
+   "file": "ground/mv-glow.jpg",
+   "w": 506,
+   "h": 335,
+   "seamless": true
   }
  },
  "sprites": {
@@ -148,7 +202,7 @@
   },
   "cottage-blue": {
    "file": "sprites/cottage-blue.webp",
-   "w": 373,
+   "w": 374,
    "h": 303
   },
   "crate": {
@@ -208,7 +262,7 @@
   },
   "flowers-mid": {
    "file": "sprites/flowers-mid.webp",
-   "w": 164,
+   "w": 165,
    "h": 178
   },
   "flowers-purple": {
@@ -283,12 +337,12 @@
   },
   "house-blue": {
    "file": "sprites/house-blue.webp",
-   "w": 361,
+   "w": 362,
    "h": 304
   },
   "house-green": {
    "file": "sprites/house-green.webp",
-   "w": 336,
+   "w": 337,
    "h": 281
   },
   "house-orange": {
@@ -303,7 +357,7 @@
   },
   "house-purple": {
    "file": "sprites/house-purple.webp",
-   "w": 354,
+   "w": 355,
    "h": 302
   },
   "house-red": {
@@ -530,6 +584,211 @@
    "file": "sprites/wheat.webp",
    "w": 231,
    "h": 251
+  },
+  "mv-giant-blue": {
+   "file": "sprites/mv-giant-blue.webp",
+   "w": 267,
+   "h": 378
+  },
+  "mv-giant-purple": {
+   "file": "sprites/mv-giant-purple.webp",
+   "w": 280,
+   "h": 383
+  },
+  "mv-giant-teal": {
+   "file": "sprites/mv-giant-teal.webp",
+   "w": 272,
+   "h": 382
+  },
+  "mv-giant-pink": {
+   "file": "sprites/mv-giant-pink.webp",
+   "w": 279,
+   "h": 383
+  },
+  "mv-giant-orange": {
+   "file": "sprites/mv-giant-orange.webp",
+   "w": 274,
+   "h": 391
+  },
+  "mv-giant-white": {
+   "file": "sprites/mv-giant-white.webp",
+   "w": 289,
+   "h": 396
+  },
+  "mv-fairy-ring": {
+   "file": "sprites/mv-fairy-ring.webp",
+   "w": 284,
+   "h": 338
+  },
+  "mv-stump-house": {
+   "file": "sprites/mv-stump-house.webp",
+   "w": 311,
+   "h": 359
+  },
+  "mv-treehouse": {
+   "file": "sprites/mv-treehouse.webp",
+   "w": 325,
+   "h": 446
+  },
+  "mv-mush-lamp": {
+   "file": "sprites/mv-mush-lamp.webp",
+   "w": 200,
+   "h": 407
+  },
+  "mv-cliff-a": {
+   "file": "sprites/mv-cliff-a.webp",
+   "w": 388,
+   "h": 342
+  },
+  "mv-cliff-b": {
+   "file": "sprites/mv-cliff-b.webp",
+   "w": 345,
+   "h": 324
+  },
+  "mv-cliff-notch": {
+   "file": "sprites/mv-cliff-notch.webp",
+   "w": 330,
+   "h": 320
+  },
+  "mv-cliff-inner": {
+   "file": "sprites/mv-cliff-inner.webp",
+   "w": 361,
+   "h": 294
+  },
+  "mv-cliff-fall": {
+   "file": "sprites/mv-cliff-fall.webp",
+   "w": 390,
+   "h": 365
+  },
+  "mv-cliff-stairs": {
+   "file": "sprites/mv-cliff-stairs.webp",
+   "w": 339,
+   "h": 327
+  },
+  "mv-cliff-ramp": {
+   "file": "sprites/mv-cliff-ramp.webp",
+   "w": 368,
+   "h": 329
+  },
+  "mv-cliff-ledge": {
+   "file": "sprites/mv-cliff-ledge.webp",
+   "w": 358,
+   "h": 292
+  },
+  "npc-elder": {
+   "file": "sprites/npc-elder.webp",
+   "w": 302,
+   "h": 469
+  },
+  "npc-shopkeeper": {
+   "file": "sprites/npc-shopkeeper.webp",
+   "w": 256,
+   "h": 475
+  },
+  "npc-guard": {
+   "file": "sprites/npc-guard.webp",
+   "w": 293,
+   "h": 486
+  },
+  "npc-gardener": {
+   "file": "sprites/npc-gardener.webp",
+   "w": 305,
+   "h": 483
+  },
+  "npc-fisher": {
+   "file": "sprites/npc-fisher.webp",
+   "w": 354,
+   "h": 480
+  },
+  "npc-child": {
+   "file": "sprites/npc-child.webp",
+   "w": 236,
+   "h": 454
+  },
+  "mv-bluebell-big": {
+   "file": "sprites/mv-bluebell-big.webp",
+   "w": 250,
+   "h": 216
+  },
+  "mv-bluebell-small": {
+   "file": "sprites/mv-bluebell-small.webp",
+   "w": 181,
+   "h": 167
+  },
+  "mv-fern-big": {
+   "file": "sprites/mv-fern-big.webp",
+   "w": 326,
+   "h": 220
+  },
+  "mv-fern-small": {
+   "file": "sprites/mv-fern-small.webp",
+   "w": 224,
+   "h": 190
+  },
+  "mv-vines": {
+   "file": "sprites/mv-vines.webp",
+   "w": 330,
+   "h": 220
+  },
+  "mv-crystal-big": {
+   "file": "sprites/mv-crystal-big.webp",
+   "w": 223,
+   "h": 203
+  },
+  "mv-crystal-mid": {
+   "file": "sprites/mv-crystal-mid.webp",
+   "w": 252,
+   "h": 214
+  },
+  "mv-lantern-hang": {
+   "file": "sprites/mv-lantern-hang.webp",
+   "w": 187,
+   "h": 207
+  },
+  "mv-jar": {
+   "file": "sprites/mv-jar.webp",
+   "w": 180,
+   "h": 169
+  },
+  "mv-stones": {
+   "file": "sprites/mv-stones.webp",
+   "w": 282,
+   "h": 97
+  },
+  "mv-stone-c": {
+   "file": "sprites/mv-stone-c.webp",
+   "w": 109,
+   "h": 52
+  },
+  "mv-log": {
+   "file": "sprites/mv-log.webp",
+   "w": 315,
+   "h": 167
+  },
+  "mv-stump-glow": {
+   "file": "sprites/mv-stump-glow.webp",
+   "w": 295,
+   "h": 199
+  },
+  "mv-pond-rocks": {
+   "file": "sprites/mv-pond-rocks.webp",
+   "w": 344,
+   "h": 255
+  },
+  "mv-berry-bush": {
+   "file": "sprites/mv-berry-bush.webp",
+   "w": 287,
+   "h": 233
+  },
+  "mv-sign": {
+   "file": "sprites/mv-sign.webp",
+   "w": 196,
+   "h": 268
+  },
+  "mv-vine-arch": {
+   "file": "sprites/mv-vine-arch.webp",
+   "w": 297,
+   "h": 248
   }
  },
  "anims": {
@@ -538,14 +797,14 @@
    "n": 6,
    "fps": 7.0,
    "fw": 335,
-   "fh": 377
+   "fh": 386
   },
   "campfire": {
    "file": "anim/campfire.webp",
    "n": 6,
    "fps": 9.0,
    "fw": 318,
-   "fh": 408
+   "fh": 411
   },
   "brazier": {
    "file": "anim/brazier.webp",
@@ -558,21 +817,21 @@
    "file": "anim/lantern.webp",
    "n": 6,
    "fps": 6.0,
-   "fw": 315,
-   "fh": 372
+   "fw": 362,
+   "fh": 384
   },
   "crystal": {
    "file": "anim/crystal.webp",
    "n": 6,
    "fps": 5.0,
-   "fw": 343,
-   "fh": 394
+   "fw": 358,
+   "fh": 402
   },
   "torch": {
    "file": "anim/torch.webp",
    "n": 6,
    "fps": 9.0,
-   "fw": 132,
+   "fw": 135,
    "fh": 420
   },
   "pond": {
@@ -588,6 +847,41 @@
    "fps": 7.0,
    "fw": 327,
    "fh": 321
+  },
+  "mv-mushroom": {
+   "file": "anim/mv-mushroom.webp",
+   "n": 6,
+   "fps": 6.0,
+   "fw": 320,
+   "fh": 352
+  },
+  "mv-mushroom2": {
+   "file": "anim/mv-mushroom2.webp",
+   "n": 6,
+   "fps": 6.0,
+   "fw": 329,
+   "fh": 341
+  },
+  "mv-waterfall": {
+   "file": "anim/mv-waterfall.webp",
+   "n": 6,
+   "fps": 8.0,
+   "fw": 362,
+   "fh": 398
+  },
+  "mv-fireflies": {
+   "file": "anim/mv-fireflies.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 311,
+   "fh": 380
+  },
+  "mv-bluebell": {
+   "file": "anim/mv-bluebell.webp",
+   "n": 6,
+   "fps": 6.0,
+   "fw": 282,
+   "fh": 353
   }
  }
 }
