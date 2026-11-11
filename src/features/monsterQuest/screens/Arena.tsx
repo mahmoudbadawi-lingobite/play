@@ -167,12 +167,12 @@ function BattleScene({ initial, onExit, onRematch }: { initial: Battle; onExit: 
               <div className="flex items-center justify-between"><TypeBadge type={om.type} small />{dots(shown.opp)}</div>
             </div>
             <div className={`mq-mon-opp ${fx.attacker === 'opp' ? 'is-attacking-opp' : ''} ${fx.hit === 'opp' ? 'is-hit' : ''} ${om.fainted ? 'is-fainted' : ''}`}>
-              <MonsterArt spec={osp.art} spriteUrl={osp.sprite_url} size={140} anim="none" /><div className="relative">{popsFor('opp')}</div>
+              <MonsterArt spec={osp.art} spriteUrl={osp.sprite_url} size={140} anim="none" face="left" /><div className="relative">{popsFor('opp')}</div>
             </div>
           </>)}
           {pm && psp && (<>
             <div className={`mq-mon-player ${fx.attacker === 'player' ? 'is-attacking-player' : ''} ${fx.hit === 'player' ? 'is-hit' : ''} ${pm.fainted ? 'is-fainted' : ''}`}>
-              <MonsterArt spec={psp.art} spriteUrl={psp.sprite_url} size={170} anim="none" flip /><div className="relative">{popsFor('player')}</div>
+              <MonsterArt spec={psp.art} spriteUrl={psp.sprite_url} size={170} anim="none" face="right" /><div className="relative">{popsFor('player')}</div>
             </div>
             <div className="mq-plate mq-plate-player">
               <div className="flex items-center justify-between gap-2"><span className="font-display text-sm font-extrabold text-white">{pm.name}</span><span className="text-xs font-bold text-white/80">Lv {pm.level}</span></div>

@@ -1,6 +1,6 @@
 import { useId, type CSSProperties } from 'react';
 import type { ArtSpec } from '../types';
-import { ANIM_NAMES } from '../world/monsterSprites';
+import { ANIM_NAMES, spriteFacing, type Facing } from '../world/monsterSprites';
 import '../world/monsterAnimations.css';
 
 /** Sprite paths saved in the database are relative to the site root (e.g. monster-quest/sprites/flamora.png). */
@@ -17,15 +17,19 @@ const BODY = {
 
 /** Original monster artwork, drawn from a data spec (stored per species in the database). */
 export function MonsterArt({
-  spec, size = 120, spriteUrl, flip, anim = 'idle', silhouette, className, style,
+  spec, size = 120, spriteUrl, flip, face, anim = 'idle', silhouette, className, style,
 }: {
   spec: ArtSpec; size?: number; spriteUrl?: string | null; flip?: boolean;
+  /** Which way the monster should LOOK on screen. The art is mirrored only if it natively looks the other way (see spriteFacing). */
+  face?: Facing;
   anim?: 'idle' | 'none' | 'hit' | 'attack'; silhouette?: boolean; className?: string; style?: CSSProperties;
 }) {
   const uid = useId().replace(/:/g, '');
+  // drawn (no sprite) monsters keep the old assumption: they are drawn looking left
+  const mirrored = face ? (spriteUrl ? spriteFacing(spriteUrl) : 'left') !== face : !!flip;
   const wrap: CSSProperties = {
     width: size, height: size, display: 'inline-block', lineHeight: 0,
-    transform: flip ? 'scaleX(-1)' : undefined,
+    transform: mirrored ? 'scaleX(-1)' : undefined,
     filter: silhouette ? 'brightness(0) opacity(.35)' : undefined, ...style,
   };
   const cls = `${anim === 'idle' ? 'mq-idle' : anim === 'hit' ? 'mq-hit' : anim === 'attack' ? 'mq-attack' : ''} ${className ?? ''}`;

@@ -21,3 +21,15 @@ const BY_TYPE: Record<ElementType, AnimName> = { fire: 'flamora', water: 'jellio
 /** CSS class list for the animation wrapper around a monster. */
 /** New species ids are the animation names themselves (flamora, drakko, ...). Older ids fall back to the table above. */
 export const animClassFor = (id: string, type?: ElementType) => `mon a-${SPECIES_ANIM[id] ?? ((ANIM_NAMES as readonly string[]).includes(id) ? id : type ? BY_TYPE[type] : 'slimo')}`;
+
+/**
+ * Which way each supplied sprite LOOKS in its original artwork. Almost all of them look to the right; these three look to
+ * the left. Front-facing art (cactus, jelly…) is symmetrical, so either answer works for it. A new sprite that looks left
+ * just needs its file name added here.
+ */
+const LOOKS_LEFT = new Set(['zappy', 'unicorny', 'frosti']);
+export type Facing = 'left' | 'right';
+export const spriteFacing = (spriteUrl: string): Facing => {
+  const name = spriteUrl.split('/').pop()?.replace(/\.\w+$/, '') ?? '';
+  return LOOKS_LEFT.has(name) ? 'left' : 'right';
+};

@@ -12,6 +12,7 @@ import { CharacterPortrait } from '../art/CharacterPortrait';
 import { usePropCatalog } from './props';
 import { WorldPanel, type PanelTab } from './WorldPanel';
 import { Joystick } from './Joystick';
+import { enterFullscreen, fullscreenElement, leaveFullscreen } from '../fullscreen';
 import { currentQuest, loadProgress, saveProgress, type Progress } from './progress';
 import { world as worldDef } from './worlds';
 import './monsterAnimations.css';
@@ -75,17 +76,18 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
   useEffect(() => { eng.current?.setReduced(calm); progress.current.calm = calm; saveProgress(mq.userId, progress.current); }, [calm, mq.userId]);
   useEffect(() => { if (showMap) requestAnimationFrame(() => full.current && eng.current?.drawFullMap(full.current)); }, [showMap]);
   useEffect(() => { if (!hint) return; const t = window.setTimeout(() => { setHint(false); progress.current.seenTutorial = true; saveProgress(mq.userId, progress.current); }, 9000); return () => clearTimeout(t); }, [hint, mq.userId]);
-  useEffect(() => { const f = () => setFs(!!document.fullscreenElement); document.addEventListener('fullscreenchange', f); return () => document.removeEventListener('fullscreenchange', f); }, []);
+  useEffect(() => { const f = () => setFs(!!fullscreenElement()); f(); document.addEventListener('fullscreenchange', f); document.addEventListener('webkitfullscreenchange', f); return () => { document.removeEventListener('fullscreenchange', f); document.removeEventListener('webkitfullscreenchange', f); }; }, []);
 
   const flags = useMemo(() => new Set(hud?.flags ?? []), [hud?.flags]);
   const quest = currentQuest(flags);
   const orbs = Object.values(mq.state.inventory).reduce((a, b) => a + b, 0);
   const closeDialog = () => { const d = dialog; if (d && dialogLine.current < d.lines.length - 1) { dialogLine.current++; force((n) => n + 1); } else setDialog(null); };
   const verb = hud?.prompt ? ({ shop: 'Shop', sign: 'Read', npc: 'Talk', chest: 'Open', stone: 'Use', mystery: 'Look', lore: 'Read', lookout: 'Look' } as Record<string, string>)[hud.prompt.kind] ?? 'Use' : 'Interact';
-  const toggleFs = () => { const el = host.current?.parentElement; if (!document.fullscreenElement) void el?.requestFullscreen?.(); else void document.exitFullscreen?.(); };
+  // Full screen is for the whole game shell (not just the map), so the menu tabs stay on screen next to the playground.
+  const toggleFs = () => { const shell = host.current?.closest('.mq-root') as HTMLElement | null; if (fullscreenElement()) void leaveFullscreen(); else if (shell) void enterFullscreen(shell); };
 
   return (
-    <div className={`mq-world ${fs ? 'mq-world-fs' : ''}`}>
+    <div className="mq-world">
       <div ref={host} className="mq-world-host">
         <canvas ref={canvas} className="mq-world-canvas" aria-label={`${hud?.loc?.name ?? w.name} game world`} />
 
@@ -106,7 +108,7 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
         <div className="mq-hud-tools">
           <button className={`mq-tool ${calm ? 'on' : ''}`} onClick={() => setCalm(!calm)} aria-pressed={calm} title="Calm mode: stops ambient motion and animations">🌙</button>
           <button className="mq-tool" onClick={() => (legacy ? setRepick(true) : setPanel('profile'))} aria-label="Explorers" title="Explorers and wardrobe">👤</button>
-          <button className="mq-tool" onClick={toggleFs} aria-label="Toggle full screen">⛶</button>
+          <button className="mq-tool" onClick={toggleFs} aria-label="Toggle full screen" aria-pressed={fs}>⛶</button>
         </div>
 
         {hint && <div className="mq-hint" onClick={() => setHint(false)}>Arrow keys / WASD or the joystick to walk · tap the ground to walk there · <b>E</b> to interact</div>}
