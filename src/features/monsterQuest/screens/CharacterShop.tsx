@@ -32,7 +32,7 @@ export function CharacterShop() {
           const owned = mq.ownedCharacters.includes(c.id), on = mq.character === c.id, price = cos.price_coins ?? 0;
           return (
             <div key={c.id} className={`flex flex-col items-center rounded-2xl border-2 p-2 ${on ? 'border-yellow-300 bg-yellow-300/20' : 'border-white/20 bg-white/10'}`}>
-              <div className="mq-avatar-stage !p-1"><CharacterAvatar id={c.id} width={100} props={on ? undefined : []} /></div>
+              <div className="mq-avatar-stage !p-1"><CharacterAvatar id={c.id} width={100} props={on ? undefined : []} headroom /></div>
               <p className="mt-1 text-sm font-extrabold text-white">{c.name}</p>
               <p className="text-[11px] font-semibold text-white/70">{c.blurb}</p>
               {on ? <span className="mt-1 text-xs font-extrabold text-yellow-300">✔ Playing</span>

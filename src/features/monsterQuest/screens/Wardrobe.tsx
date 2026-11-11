@@ -36,7 +36,7 @@ export function Wardrobe() {
   return (
     <div className="grid gap-3 md:grid-cols-[250px_1fr]">
       <Panel className="flex flex-col items-center">
-        <div className="mq-avatar-stage"><CharacterAvatar width={170} facing={facing} props={shown} /></div>
+        <div className="mq-avatar-stage"><CharacterAvatar width={170} facing={facing} props={shown} headroom /></div>
         <div className="mt-2 flex gap-1.5">{(['down', 'side', 'up'] as const).map((f) => <button key={f} type="button" onClick={() => setFacing(f)} className={`rounded-full px-3 py-1 text-xs font-extrabold ${facing === f ? 'bg-yellow-300 text-[#10285a]' : 'bg-white/15 text-white'}`}>{f === 'down' ? 'Front' : f === 'side' ? 'Side' : 'Back'}</button>)}</div>
         <p className="mt-2 text-center text-xs font-semibold text-white/75">Tap any prop to try it on. What you wear shows in the world. Change explorer in Profile.</p>
         <p className="mt-1 text-sm font-extrabold text-white">🪙 {mq.state.coins} · 💎 {mq.state.gems}</p>
