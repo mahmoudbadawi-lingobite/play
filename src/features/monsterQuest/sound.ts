@@ -9,20 +9,38 @@ export function setMuted(m: boolean) {
   try { localStorage.setItem(KEY, m ? '1' : '0'); } catch { /* storage blocked */ }
 }
 
+function getCtx(): AudioContext | null {
+  if (ctx) return ctx;
+  try { const AC = window.AudioContext || (window as any).webkitAudioContext; ctx = new AC({ latencyHint: 'interactive' }); } catch { ctx = null; }
+  return ctx;
+}
+/** Starts the audio engine on the first touch, click or key press, so the first real sound is not late. */
+export function unlockAudio() {
+  const c = getCtx(); if (!c) return;
+  if (c.state !== 'running') void c.resume();
+  try { const s = c.createBufferSource(); s.buffer = c.createBuffer(1, 1, 22050); s.connect(c.destination); s.start(0); } catch { /* ignore */ }
+}
+if (typeof window !== 'undefined') {
+  const evs = ['pointerdown', 'touchstart', 'keydown', 'click'];
+  const un = () => { unlockAudio(); evs.forEach((e) => window.removeEventListener(e, un, true)); };
+  evs.forEach((e) => window.addEventListener(e, un, { capture: true, passive: true }));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && ctx && ctx.state !== 'running') void ctx.resume(); });
+}
+
 function tone(freq: number, start: number, dur: number, type: OscillatorType = 'sine', vol = 0.12, slideTo?: number) {
   if (muted) return;
   try {
-    ctx ??= new (window.AudioContext || (window as any).webkitAudioContext)();
-    if (ctx.state === 'suspended') void ctx.resume();
-    const t0 = ctx.currentTime + start;
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
+    const c = getCtx(); if (!c) return;
+    if (c.state !== 'running') void c.resume();
+    const t0 = c.currentTime + start;
+    const o = c.createOscillator();
+    const g = c.createGain();
     o.type = type;
     o.frequency.setValueAtTime(freq, t0);
     if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
     g.gain.setValueAtTime(vol, t0);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    o.connect(g).connect(ctx.destination);
+    o.connect(g).connect(c.destination);
     o.start(t0);
     o.stop(t0 + dur + 0.02);
   } catch { /* audio unavailable */ }

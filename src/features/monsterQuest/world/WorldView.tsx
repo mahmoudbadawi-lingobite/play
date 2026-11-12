@@ -11,8 +11,8 @@ import { DEFAULT_CHARACTER, characterKey, useCharacters } from './characters';
 import { CharacterPortrait } from '../art/CharacterPortrait';
 import { usePropCatalog } from './props';
 import { WorldPanel, type PanelTab } from './WorldPanel';
+import type { SceneKind } from '../scene/EncounterScene';
 import { Joystick } from './Joystick';
-import { enterFullscreen, fullscreenElement, leaveFullscreen } from '../fullscreen';
 import { currentQuest, loadProgress, saveProgress, type Progress } from './progress';
 import { world as worldDef } from './worlds';
 import './monsterAnimations.css';
@@ -26,6 +26,7 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
   const host = useRef<HTMLDivElement>(null), canvas = useRef<HTMLCanvasElement>(null), mini = useRef<HTMLCanvasElement>(null), full = useRef<HTMLCanvasElement>(null);
   const eng = useRef<WorldEngine | null>(null), progress = useRef<Progress>(loadProgress(mq.userId));
   const [hud, setHud] = useState<HudInfo | null>(null), [dialog, setDialog] = useState<Dialog | null>(null), [toast, setToast] = useState<string | null>(null);
+  const [scene, setScene] = useState<SceneKind | null>(null);
   const [encounter, setEncounter] = useState<Encounter | null>(null), [showMap, setShowMap] = useState(false), [calm, setCalm] = useState(progress.current.calm || reducedPref());
   const [hint, setHint] = useState(!progress.current.seenTutorial), [loading, setLoading] = useState(true), [fs, setFs] = useState(false);
   // Explorer: stored on the server (first one free, others bought in Profile). Without the SQL patch it falls back to a local choice.
@@ -50,7 +51,10 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
         onHud: setHud, onDialog: (d) => { dialogLine.current = 0; setDialog(d); }, onShop: () => setPanel('shop'), onExitWorld: onLeave, onToast: showToast,
         onProgress: (p) => saveProgress(mq.userId, p), onLoading: setLoading,
         // Same server call and same modal as before. Only the zone id is mapped (see LocationDef.serverZone).
-        onEncounter: async (serverZone) => { const enc = await api.startEncounter(serverZone); setEncounter(enc); },
+        onEncounter: async (serverZone) => {
+          const enc = await api.startEncounter(serverZone), d = eng.current?.debugBaked()?.def;   // the backdrop follows the place you are standing in
+          setScene(d?.style === 'storybook' ? (d.theme === 'valley' ? 'valley' : 'village') : null); setEncounter(enc);
+        },
       },
     });
     eng.current = e; void e.load(worldDef(worldId).locations[0], 'south');
@@ -76,18 +80,17 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
   useEffect(() => { eng.current?.setReduced(calm); progress.current.calm = calm; saveProgress(mq.userId, progress.current); }, [calm, mq.userId]);
   useEffect(() => { if (showMap) requestAnimationFrame(() => full.current && eng.current?.drawFullMap(full.current)); }, [showMap]);
   useEffect(() => { if (!hint) return; const t = window.setTimeout(() => { setHint(false); progress.current.seenTutorial = true; saveProgress(mq.userId, progress.current); }, 9000); return () => clearTimeout(t); }, [hint, mq.userId]);
-  useEffect(() => { const f = () => setFs(!!fullscreenElement()); f(); document.addEventListener('fullscreenchange', f); document.addEventListener('webkitfullscreenchange', f); return () => { document.removeEventListener('fullscreenchange', f); document.removeEventListener('webkitfullscreenchange', f); }; }, []);
+  useEffect(() => { const f = () => setFs(!!document.fullscreenElement); document.addEventListener('fullscreenchange', f); return () => document.removeEventListener('fullscreenchange', f); }, []);
 
   const flags = useMemo(() => new Set(hud?.flags ?? []), [hud?.flags]);
   const quest = currentQuest(flags);
   const orbs = Object.values(mq.state.inventory).reduce((a, b) => a + b, 0);
   const closeDialog = () => { const d = dialog; if (d && dialogLine.current < d.lines.length - 1) { dialogLine.current++; force((n) => n + 1); } else setDialog(null); };
   const verb = hud?.prompt ? ({ shop: 'Shop', sign: 'Read', npc: 'Talk', chest: 'Open', stone: 'Use', mystery: 'Look', lore: 'Read', lookout: 'Look' } as Record<string, string>)[hud.prompt.kind] ?? 'Use' : 'Interact';
-  // Full screen is for the whole game shell (not just the map), so the menu tabs stay on screen next to the playground.
-  const toggleFs = () => { const shell = host.current?.closest('.mq-root') as HTMLElement | null; if (fullscreenElement()) void leaveFullscreen(); else if (shell) void enterFullscreen(shell); };
+  const toggleFs = () => { const el = host.current?.parentElement; if (!document.fullscreenElement) void el?.requestFullscreen?.(); else void document.exitFullscreen?.(); };
 
   return (
-    <div className="mq-world">
+    <div className={`mq-world ${fs ? 'mq-world-fs' : ''}`}>
       <div ref={host} className="mq-world-host">
         <canvas ref={canvas} className="mq-world-canvas" aria-label={`${hud?.loc?.name ?? w.name} game world`} />
 
@@ -108,7 +111,7 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
         <div className="mq-hud-tools">
           <button className={`mq-tool ${calm ? 'on' : ''}`} onClick={() => setCalm(!calm)} aria-pressed={calm} title="Calm mode: stops ambient motion and animations">🌙</button>
           <button className="mq-tool" onClick={() => (legacy ? setRepick(true) : setPanel('profile'))} aria-label="Explorers" title="Explorers and wardrobe">👤</button>
-          <button className="mq-tool" onClick={toggleFs} aria-label="Toggle full screen" aria-pressed={fs}>⛶</button>
+          <button className="mq-tool" onClick={toggleFs} aria-label="Toggle full screen">⛶</button>
         </div>
 
         {hint && <div className="mq-hint" onClick={() => setHint(false)}>Arrow keys / WASD or the joystick to walk · tap the ground to walk there · <b>E</b> to interact</div>}
@@ -140,7 +143,7 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
           </div>
         )}
       </div>
-      {encounter && <EncounterModal encounter={encounter} onClose={(goTo) => { setEncounter(null); encResolve.current?.(); if (goTo === 'monsters') setPanel('monsters'); }} />}
+      {encounter && <EncounterModal encounter={encounter} scene={scene} onClose={(goTo) => { setEncounter(null); encResolve.current?.(); if (goTo === 'monsters') setPanel('monsters'); }} />}
     </div>
   );
 }

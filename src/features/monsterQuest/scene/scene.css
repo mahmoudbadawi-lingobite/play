@@ -1,0 +1,24 @@
+/* Encounter and arena backdrops. Sizes use container units, so the scene always fills the box it is placed in. */
+.mq-scene { position: absolute; inset: 0; overflow: hidden; container-type: size; --u: max(1cqw, 0.72cqh); }
+.mq-scene-sky { position: absolute; inset: 0; }
+.mq-scene-sun { position: absolute; left: 50%; top: 8%; width: 70cqw; height: 40cqh; transform: translateX(-50%); background: radial-gradient(ellipse at center, rgba(255,255,230,.5), transparent 68%); }
+.mq-scene-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 44%; background-repeat: repeat; z-index: 3; box-shadow: 0 -10px 24px rgba(255,255,220,.18); }
+.mq-scene-ground::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 30%; background: linear-gradient(rgba(255,255,255,.3), transparent); }
+.mq-scene-ground::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 35%, transparent 40%, rgba(0,20,10,.38) 100%); }
+.mq-scene-obj { position: absolute; transform: translateX(-50%); pointer-events: none; }
+.mq-scene-obj img { display: block; width: 100%; height: auto; transform-origin: 50% 96%; }
+.mq-scene-sway { animation: mq-scene-sway 4s ease-in-out infinite; }
+@keyframes mq-scene-sway { 0%, 100% { transform: rotate(-1.6deg); } 50% { transform: rotate(1.6deg); } }
+.mq-scene-strip { background-size: calc(var(--w) * var(--n)) 100%; background-repeat: no-repeat; animation: mq-scene-strip 1s steps(6) infinite; }
+@keyframes mq-scene-strip { from { background-position-x: 0; } to { background-position-x: calc(var(--w) * var(--n) * -1); } }
+.mq-scene-fx { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.mq-scene-fx i { position: absolute; border-radius: 50%; animation: mq-scene-float 6s ease-in-out infinite; }
+.mq-fx-pollen { background: radial-gradient(circle, rgba(255,250,200,.95), rgba(255,250,200,0) 70%); }
+.mq-fx-fireflies { background: radial-gradient(circle, rgba(255,235,140,.95), rgba(255,200,90,0) 70%); }
+.mq-fx-embers { background: radial-gradient(circle, rgba(255,170,80,.95), rgba(255,100,40,0) 70%); }
+@keyframes mq-scene-float { 0%, 100% { transform: translate(0, 0); opacity: .25; } 50% { transform: translate(calc(var(--u) * 2.5), -4cqh); opacity: 1; } }
+/* the wild monster gets a glow behind it and a soft shadow under it, so it stands on the scene instead of floating */
+.mq-stage-monster { position: relative; }
+.mq-stage-monster::before { content: ''; position: absolute; left: 50%; top: 60%; width: 160%; aspect-ratio: 1; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(255,255,255,.3), transparent 62%); z-index: -1; pointer-events: none; }
+.mq-stage-monster::after { content: ''; position: absolute; left: 50%; bottom: -3%; width: 76%; height: 15%; transform: translateX(-50%); background: radial-gradient(ellipse at center, rgba(12,30,12,.5), transparent 70%); z-index: -1; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .mq-scene *, .mq-scene-sway, .mq-scene-strip { animation: none !important; } }

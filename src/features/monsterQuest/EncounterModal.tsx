@@ -7,6 +7,7 @@ import { Orb } from './art/Orb';
 import { animClassFor } from './world/monsterSprites';
 import './world/monsterAnimations.css';
 import { QuestionView, formatCorrectAnswer } from './QuestionView';
+import { EncounterScene, type SceneKind } from './scene/EncounterScene';
 import { sfx } from './sound';
 import { Bar, GameButton, RarityBadge, TypeBadge } from './ui';
 import type { AnswerResult, Encounter, Question, ThrowResult } from './types';
@@ -15,7 +16,7 @@ type Phase = 'intro' | 'loading' | 'question' | 'feedback' | 'throw' | 'flying' 
 type Fly = 'fly' | 'absorb' | 'wobble' | 'pop' | null;
 interface Float { id: number; text: string; tone: string }
 
-export function EncounterModal({ encounter, onClose }: { encounter: Encounter; onClose: (goTo?: 'monsters') => void }) {
+export function EncounterModal({ encounter, onClose, scene }: { encounter: Encounter; onClose: (goTo?: 'monsters') => void; /** painted backdrop of the place the encounter started in */ scene?: SceneKind | null }) {
   const mq = useMq();
   const sp = mq.speciesById.get(encounter.species_id)!;
   const startLevel = useRef(levelInfo(mq.state.xp).level).current;
@@ -124,7 +125,7 @@ export function EncounterModal({ encounter, onClose }: { encounter: Encounter; o
 
   return (
     <div className="mq-encounter" role="dialog" aria-modal="true" aria-label={`Wild ${sp.name}`}>
-      <div className="mq-enc-sky" />
+      {scene ? <EncounterScene kind={scene} /> : <div className="mq-enc-sky" />}
       <div className="relative z-10 mx-auto flex h-full w-full max-w-2xl flex-col px-3 pb-4 pt-3 sm:px-5">
         <div className="flex items-start justify-between gap-2">
           <div className="mq-nameplate">
