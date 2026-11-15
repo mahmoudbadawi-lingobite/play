@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { levelInfo } from '../../avatar/level';
 import * as api from '../api';
@@ -6,9 +6,10 @@ import { MonsterArt } from '../art/MonsterArt';
 import { useMq } from '../context';
 import { QuestionView, formatCorrectAnswer } from '../QuestionView';
 import { sfx } from '../sound';
-import { EncounterScene } from '../scene/EncounterScene';
+import { ArenaStage } from '../scene/ArenaStage';
+import { STAND, isFlying } from '../scene/arenas';
 import { Bar, GameButton, Panel, TypeBadge } from '../ui';
-import type { BEvent, BMon, Battle } from '../types';
+import type { BEvent, BMon, Battle, Species } from '../types';
 
 const DIFFS = [
   { k: 'easy', label: 'Easy', sub: '1 opponent, a bit weaker', stars: 1 },
@@ -72,11 +73,31 @@ export function Arena() {
   );
 }
 
+/**
+ * One monster on the battlefield. Both fighters stand on the same ground line and face each other (the left one looks right,
+ * the right one looks left). Flying monsters hover above that line, with their shadow left on the ground.
+ */
+function Fighter({ side, mon, sp, attacking, hit, pops }: { side: 'player' | 'opp'; mon: BMon; sp: Species; attacking: boolean; hit: boolean; pops: ReactNode }) {
+  const flying = isFlying(sp.id, sp.sprite_url);
+  const style = { '--ms': STAND.size, '--dx': STAND.dx, '--gy': STAND.ground, '--fly': STAND.fly, '--lunge': STAND.lunge } as CSSProperties;
+  return (
+    <div className={`mq-fighter mq-fighter-${side} ${flying ? 'is-flying' : ''} ${mon.fainted ? 'is-gone' : ''}`} style={style}>
+      <span className="mq-fighter-shadow" />
+      <div className="mq-fighter-lift">
+        <div className={`mq-fighter-body ${attacking ? 'is-attacking' : ''} ${hit ? 'is-hit' : ''} ${mon.fainted ? 'is-fainted' : ''}`}>
+          <MonsterArt spec={sp.art} spriteUrl={sp.sprite_url} size={200} anim="none" face={side === 'player' ? 'right' : 'left'} />
+          <div className="mq-pops">{pops}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface Shown { player: BMon[]; opp: BMon[]; pa: number; oa: number }
 const fromBattle = (b: Battle): Shown => ({ player: b.player, opp: b.opp, pa: b.p_active, oa: b.o_active });
 type Fx = { attacker: 'player' | 'opp' | null; hit: 'player' | 'opp' | null };
 
-function BattleScene({ initial, onExit, onRematch }: { initial: Battle; onExit: () => void; onRematch: () => void }) {
+export function BattleScene({ initial, onExit, onRematch }: { initial: Battle; onExit: () => void; onRematch: () => void }) {
   const mq = useMq();
   const [battle, setBattle] = useState<Battle>(initial);
   const [shown, setShown] = useState<Shown>(fromBattle(initial));
@@ -147,73 +168,72 @@ function BattleScene({ initial, onExit, onRematch }: { initial: Battle; onExit: 
 
   const hpBar = (m: BMon) => <Bar pct={(m.hp / m.max) * 100} color={m.hp / m.max > 0.5 ? '#22c55e' : m.hp / m.max > 0.2 ? '#facc15' : '#ef4444'} label={`${m.name} HP`} height={10} />;
   const dots = (arr: BMon[]) => <span className="flex gap-1">{arr.map((m, i) => <span key={i} className={`h-2.5 w-2.5 rounded-full ${m.fainted ? 'bg-red-500' : 'bg-green-400'}`} />)}</span>;
-  const popsFor = (side: 'player' | 'opp') => pops.filter((p) => p.side === side).map((p) => <span key={p.id} className="mq-float absolute left-1/2 top-0 -translate-x-1/2" style={{ color: p.tone }}>{p.text}</span>);
+  const popsFor = (side: 'player' | 'opp') => pops.filter((p) => p.side === side).map((p) => <span key={p.id} className="mq-float" style={{ color: p.tone }}>{p.text}</span>);
   const pending = battle.status === 'active' ? battle.pending : null;
   const lvlAfter = levelInfo(mq.state.xp).level;
 
   return (
-    <div className="mq-arena" role="region" aria-label="Battle">
-      <EncounterScene kind="arena" />
-      <div className="relative z-10 flex flex-col gap-2 p-2 sm:p-3">
-        <div className="flex items-center justify-between gap-2 text-white">
-          <span className="rounded-full bg-black/30 px-3 py-1 text-sm font-extrabold">⚔️ vs {battle.opp_name} · {battle.difficulty}</span>
-          {battle.status === 'active' && <button type="button" onClick={forfeit} disabled={busy} className="rounded-full bg-white/20 px-3 py-1 text-sm font-bold hover:bg-white/30">🏳️ Give up</button>}
-        </div>
+    <div className="mq-arena mq-battle" role="region" aria-label="Battle">
+      <div className="mq-view">
+      <ArenaStage zone={battle.zone_id}>
+        {om && osp && <Fighter side="opp" mon={om} sp={osp} attacking={fx.attacker === 'opp'} hit={fx.hit === 'opp'} pops={popsFor('opp')} />}
+        {pm && psp && <Fighter side="player" mon={pm} sp={psp} attacking={fx.attacker === 'player'} hit={fx.hit === 'player'} pops={popsFor('player')} />}
+      </ArenaStage>
 
-        <div className="mq-field">
-          {om && osp && (<>
-            <div className="mq-plate mq-plate-opp">
-              <div className="flex items-center justify-between gap-2"><span className="font-display text-sm font-extrabold text-white">{om.name}</span><span className="text-xs font-bold text-white/80">Lv {om.level}</span></div>
+        <div className="mq-hud-head">
+          <div className="mq-hud-row">
+            <span className="mq-hud-pill">⚔️ vs {battle.opp_name} · {battle.difficulty}</span>
+            {battle.status === 'active' && <button type="button" onClick={forfeit} disabled={busy} className="mq-hud-pill mq-hud-give">🏳️ Give up</button>}
+          </div>
+          {om && osp && (
+            <div className="mq-bplate">
+              <div className="flex items-center justify-between gap-2"><span className="mq-bplate-name">{om.name}</span><span className="mq-bplate-lv">Lv {om.level}</span></div>
               <div className="my-1">{hpBar(om)}</div>
               <div className="flex items-center justify-between"><TypeBadge type={om.type} small />{dots(shown.opp)}</div>
             </div>
-            <div className={`mq-mon-opp ${fx.attacker === 'opp' ? 'is-attacking-opp' : ''} ${fx.hit === 'opp' ? 'is-hit' : ''} ${om.fainted ? 'is-fainted' : ''}`}>
-              <MonsterArt spec={osp.art} spriteUrl={osp.sprite_url} size={140} anim="none" /><div className="relative">{popsFor('opp')}</div>
-            </div>
-          </>)}
-          {pm && psp && (<>
-            <div className={`mq-mon-player ${fx.attacker === 'player' ? 'is-attacking-player' : ''} ${fx.hit === 'player' ? 'is-hit' : ''} ${pm.fainted ? 'is-fainted' : ''}`}>
-              <MonsterArt spec={psp.art} spriteUrl={psp.sprite_url} size={170} anim="none" flip /><div className="relative">{popsFor('player')}</div>
-            </div>
-            <div className="mq-plate mq-plate-player">
-              <div className="flex items-center justify-between gap-2"><span className="font-display text-sm font-extrabold text-white">{pm.name}</span><span className="text-xs font-bold text-white/80">Lv {pm.level}</span></div>
-              <div className="my-1">{hpBar(pm)}</div>
-              <div className="flex items-center justify-between"><span className="text-[11px] font-extrabold text-white">{Math.max(0, pm.hp)}/{pm.max} HP</span>{dots(shown.player)}</div>
-            </div>
-          </>)}
+          )}
         </div>
+        {pm && psp && (
+          <div className="mq-bplate mq-bplate-player">
+            <div className="flex items-center justify-between gap-2"><span className="mq-bplate-name">{pm.name}</span><span className="mq-bplate-lv">Lv {pm.level}</span></div>
+            <div className="my-1">{hpBar(pm)}</div>
+            <div className="flex items-center justify-between"><span className="text-[11px] font-extrabold text-white">{Math.max(0, pm.hp)}/{pm.max} HP</span>{dots(shown.player)}</div>
+          </div>
+        )}
+      </div>
 
+        <div className="mq-dock">
         <div className="mq-log" aria-live="polite">{log}</div>
         {err && <p className="rounded-xl bg-red-500/90 px-3 py-2 text-sm font-bold text-white" role="alert">{err}</p>}
 
         {quizNote && (<div className={`mq-card ${quizNote.correct ? 'mq-card-good' : 'mq-card-bad'}`}><p className="font-extrabold">{quizNote.text}</p>{!quizNote.correct && <p className="text-sm font-semibold">Answer: {formatCorrectAnswer('mcq', quizNote.answer)}</p>}{quizNote.explanation && <p className="text-sm">{quizNote.explanation}</p>}</div>)}
 
         {battle.status === 'active' && !quizNote && (pending ? (
-          <div className="rounded-2xl bg-[#0b2566]/90 p-3">
+          <div className="mq-dock-panel rounded-2xl bg-[#0b2566]/90 p-3">
             <p className="mb-2 text-center text-sm font-extrabold text-yellow-300">⭐ Answer correctly to supercharge your attack!</p>
             <QuestionView key={pending.id} q={pending} busy={busy} onSubmit={(a) => void act('answer', undefined, a)} />
             <GameButton tone="ghost" className="mt-2 w-full" disabled={busy} onClick={() => void act('cancel')}>Cancel (choose another move)</GameButton>
           </div>
         ) : menu === 'main' ? (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-            <GameButton tone="red" disabled={busy} onClick={() => void act('attack')}>⚔️ Attack</GameButton>
-            <GameButton tone="gold" disabled={busy} onClick={() => void act('special')}>⭐ Special (quiz)</GameButton>
-            <GameButton tone="blue" disabled={busy} onClick={() => void act('defend')}>🛡️ Defend</GameButton>
-            <GameButton tone="green" disabled={busy || shown.player.filter((m) => !m.fainted).length < 2} onClick={() => setMenu('switch')}>🔄 Switch</GameButton>
-            <GameButton tone="ghost" disabled={busy || potions.length === 0} onClick={() => setMenu('item')}>🎒 Item{potions.length === 0 ? ' (none)' : ''}</GameButton>
+            <GameButton tone="red" className="mq-bbtn" disabled={busy} onClick={() => void act('attack')}>⚔️ Attack</GameButton>
+            <GameButton tone="gold" className="mq-bbtn" disabled={busy} onClick={() => void act('special')}>⭐ Special (quiz)</GameButton>
+            <GameButton tone="blue" className="mq-bbtn" disabled={busy} onClick={() => void act('defend')}>🛡️ Defend</GameButton>
+            <GameButton tone="green" className="mq-bbtn" disabled={busy || shown.player.filter((m) => !m.fainted).length < 2} onClick={() => setMenu('switch')}>🔄 Switch</GameButton>
+            <GameButton tone="ghost" className="mq-bbtn" disabled={busy || potions.length === 0} onClick={() => setMenu('item')}>🎒 Item{potions.length === 0 ? ' (none)' : ''}</GameButton>
           </div>
         ) : menu === 'switch' ? (
-          <div className="rounded-2xl bg-[#0b2566]/90 p-2"><div className="grid gap-2 sm:grid-cols-2">
+          <div className="mq-dock-panel rounded-2xl bg-[#0b2566]/90 p-2"><div className="grid gap-2 sm:grid-cols-2">
             {shown.player.map((m, i) => { const sp = mq.speciesById.get(m.species_id)!; return (
               <button key={i} type="button" disabled={m.fainted || i === shown.pa || busy} onClick={() => void act('switch', String(i))} className="flex items-center gap-2 rounded-xl bg-white/10 p-2 text-left text-white disabled:opacity-40">
                 <MonsterArt spec={sp.art} spriteUrl={sp.sprite_url} size={44} anim="none" /><span className="flex-1"><span className="block text-sm font-extrabold">{m.name} Lv{m.level}</span><span className="block text-[11px] font-bold opacity-80">{m.fainted ? 'Fainted' : i === shown.pa ? 'In battle' : `${m.hp}/${m.max} HP`}</span></span></button>); })}
           </div><GameButton tone="ghost" className="mt-2 w-full" onClick={() => setMenu('main')}>Back</GameButton></div>
         ) : (
-          <div className="rounded-2xl bg-[#0b2566]/90 p-2"><div className="grid gap-2 sm:grid-cols-2">
+          <div className="mq-dock-panel rounded-2xl bg-[#0b2566]/90 p-2"><div className="grid gap-2 sm:grid-cols-2">
             {potions.map((i) => <button key={i.key} type="button" disabled={busy} onClick={() => void act('item', i.key)} className="rounded-xl bg-white/10 p-2 text-left text-white"><span className="block text-sm font-extrabold">{i.name} x{mq.state.inventory[i.key]}</span><span className="text-[11px] font-bold opacity-80">Heals {i.effect} HP</span></button>)}
           </div><GameButton tone="ghost" className="mt-2 w-full" onClick={() => setMenu('main')}>Back</GameButton></div>
         ))}
-      </div>
+        </div>
 
       {final && battle.result && (
         <div className="mq-caught">
