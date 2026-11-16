@@ -41,9 +41,16 @@ Object.assign(SCALE, {
   'mv-stones': 0.5, 'mv-stone-c': 0.5, 'mv-log': 0.4, 'mv-stump-glow': 0.4, 'mv-pond-rocks': 0.4, 'mv-berry-bush': 0.4, 'mv-sign': 0.4, 'mv-vine-arch': 0.5,
   'npc-elder': 0.33, 'npc-shopkeeper': 0.33, 'npc-guard': 0.33, 'npc-gardener': 0.33, 'npc-fisher': 0.33, 'npc-child': 0.33,
 });
-const ANIM_K: Record<string, number> = { fountain: 0.86, portal: 0.75, campfire: 0.3, brazier: 0.32, torch: 0.36, 'mv-waterfall': 0.7, 'mv-fireflies': 0.55, 'mv-mushroom': 0.7, 'mv-mushroom2': 0.7, 'mv-bluebell': 0.55 };
+Object.assign(SCALE, {
+  // Ember ruins and Molten Caverns (the 'ember' themes)
+  'em-statue': 0.9, 'em-altar': 0.85, 'em-pillar': 0.62, 'em-pillar-broken': 0.5, 'em-wall': 0.55, 'em-wall-corner': 0.5, 'em-stairs': 0.5, 'em-rune-orange': 0.5, 'em-rune-teal': 0.5,
+  'em-crystal-big': 0.42, 'em-crystal-small': 0.42, 'em-dead-tree': 0.65, 'em-boulder': 0.42, 'em-rocks': 0.35, 'em-bridge': 1, 'em-sign': 0.4,
+  'em-stal-a': 0.5, 'em-stal-b': 0.5, 'em-stal-c': 0.5, 'em-spire': 0.45, 'em-crystal-orange': 0.42, 'em-crystal-teal': 0.4, 'em-cave-boulder': 0.42, 'em-cave-rocks': 0.38,
+  'em-lantern-post': 0.55, 'em-barrel': 0.4, 'em-crate': 0.35, 'em-chest': 0.32, 'em-mushroom': 0.5, 'em-cave-arch': 0.6, 'em-minecart': 0.4, 'em-sign2': 0.4,
+});
+const ANIM_K: Record<string, number> = { 'em-lavafall': 1.7, 'em-crystal': 0.55, 'em-lava': 1, 'em-rune': 0.6, fountain: 0.86, portal: 0.75, campfire: 0.3, brazier: 0.32, torch: 0.36, 'mv-waterfall': 0.7, 'mv-fireflies': 0.55, 'mv-mushroom': 0.7, 'mv-mushroom2': 0.7, 'mv-bluebell': 0.55 };
 /** Each storybook place picks a theme: which ground pictures it uses and how its objects look. */
-interface Theme { edge: [string, number][]; bank: [string, number][]; name: string; ground: string[]; grass: string; patches: string[]; forest: string; path: string; plaza: string; tint?: string; objTint?: string; kinds?: (d: PropDef) => Km | null | undefined; sprites: (id: string) => boolean; anims: string[] }
+interface Theme { edge: [string, number][]; bank: [string, number][]; name: string; ground: string[]; grass: string; patches: string[]; forest: string; path: string; plaza: string; base?: string; basePatches?: string[]; top?: string; fill?: string; rim?: string; wash?: string; zoneRgb?: string; bridge?: string; bridgeY?: number; tuftTint?: string; lava?: string; pathRock?: string; tint?: string; objTint?: string; kinds?: (d: PropDef) => Km | null | undefined; sprites: (id: string) => boolean; anims: string[] }
 const VILLAGE_ANIMS = ['fountain', 'portal', 'campfire', 'brazier', 'torch'];
 const VALLEY_SHARED = new Set(['tree-green', 'pine', 'tree-orange', 'rocks-small', 'rock-moss', 'rock-block', 'bush-big', 'bush-mid', 'cattail', 'wheat', 'flowers-white', 'flowers-purple', 'flowers-small', 'plant-a', 'plant-b', 'leaf-small', 'lamp-a', 'lamp-b', 'lamp-c', 'sign-green', 'sign-blue', 'chest', 'bridge-wood', 'fence-wood', 'barrel', 'crate', 'banner-post', 'mush-red', 'mush-purple', 'grass-big', 'grass-mid', 'grass-small', 'house-purple', 'house-blue', 'lilypad-a', 'lilypad-b', 'bush-flowers', 'tulips']);
 const THEMES: Record<string, Theme> = {
@@ -51,6 +58,15 @@ const THEMES: Record<string, Theme> = {
   valley: { edge: [['mv-fern-small', 0.55], ['mv-bluebell-small', 0.5], ['grass-small', 0.8], ['leaf-small', 0.85], ['flowers-white', 0.85], ['mv-fern-big', 0.4]], bank: [['rocks-small', 0.6], ['rock-moss', 0.55], ['cattail', 0.85], ['mv-fern-small', 0.6], ['mv-bluebell-small', 0.55], ['rocks-small', 0.6], ['wheat', 0.85]], name: 'valley', ground: ['mv-grass', 'mv-moss', 'mv-glow', 'mv-petal', 'mv-mud', 'mv-roots', 'mv-stone'], grass: 'mv-grass', patches: ['mv-moss', 'mv-glow', 'mv-petal', 'mv-grass', 'mv-grass'], forest: 'mv-roots', path: 'mv-mud', plaza: 'mv-stone',
     tint: 'rgba(70,60,160,0.13)', objTint: 'rgba(60,70,170,0.2)', kinds: valleyKinds, sprites: (id) => id.startsWith('mv-') || VALLEY_SHARED.has(id), anims: ['mv-waterfall', 'mv-fireflies', 'mv-mushroom', 'mv-mushroom2', 'mv-bluebell', 'fountain', 'torch'] },
 };
+/** Ancient Ember Ruins and Molten Caverns: warm stone platforms over lava (ruins) or dark basalt chambers (caverns). */
+const EMBER_SHARED = new Set(['rocks-small', 'torch', 'lamp-a', 'banner-post', 'grass-big', 'grass-mid', 'grass-small']);
+const EMBER_ANIMS = ['em-lava', 'em-lavafall', 'em-crystal', 'torch', 'brazier'];
+const emberBase = { edge: [['em-rocks', 0.45], ['em-cave-rocks', 0.4], ['em-rocks', 0.35]] as [string, number][], bank: [['em-rocks', 0.5], ['em-cave-rocks', 0.45], ['em-rocks', 0.4]] as [string, number][],
+  zoneRgb: '255,120,40', bridge: 'em-bridge', bridgeY: 0.82, tuftTint: 'rgba(150,60,15,.82)', lava: 'em-lava', pathRock: 'em-rocks', kinds: emberKinds, sprites: (id: string) => id.startsWith('em-') || EMBER_SHARED.has(id), anims: EMBER_ANIMS };
+THEMES.ember = { ...emberBase, basePatches: [], name: 'ember', ground: ['em-lava', 'em-sandstone', 'em-redrock', 'em-basalt', 'em-ash', 'em-embers', 'em-cracked'], grass: 'em-sandstone', base: 'em-lava', top: 'em-sandstone', patches: ['em-sandstone', 'em-redrock', 'em-sandstone'], forest: 'em-basalt', path: 'em-ash', plaza: 'em-basalt',
+  fill: '#c4440c', rim: 'rgba(255,214,140,.75)', wash: 'rgba(255,190,110,.08)' };
+THEMES['ember-cave'] = { ...emberBase, basePatches: ['em-obsidian', 'em-basalt'], name: 'ember-cave', ground: ['em-basalt', 'em-cave', 'em-embers', 'em-obsidian', 'em-ash', 'em-lava', 'em-cracked'], grass: 'em-cave', base: 'em-basalt', top: 'em-cave', patches: ['em-embers', 'em-cave', 'em-cave'], forest: 'em-obsidian', path: 'em-ash', plaza: 'em-obsidian',
+  fill: '#2a1a24', rim: 'rgba(255,150,60,.8)', wash: 'rgba(255,120,60,.07)', tint: 'rgba(120,40,120,.10)' };
 let theme: Theme = THEMES.village;
 const pick = (a: string[], d: PropDef) => a[Math.abs(d.v ?? 0) % a.length];
 
@@ -84,6 +100,35 @@ function valleyKinds(d: PropDef): Km | null | undefined {
     case 'fairyRing': return { id: 'mv-fairy-ring', fp: 'round', foot: 0.9, shadow: [0.45, 0.1], glow: { y: 0.45, r: 80, c: '#8fd0ff', a: 0.3 } };
     case 'vineArch': return { id: 'mv-vine-arch', fp: 'post', foot: 0.95 };
     case 'jar': return { id: 'mv-jar', fp: 'none', foot: 0.95, glow: { y: 0.5, r: 50, c: '#ffe08a', a: 0.35 } };
+    default: return undefined;
+  }
+}
+/** Ember ruins and caverns: carved sandstone, glowing crystals, basalt stalagmites, lava-fall. */
+function emberKinds(d: PropDef): Km | null | undefined {
+  const ruin = theme.name === 'ember';
+  switch (d.kind) {
+    case 'statue': return { id: 'em-statue', fp: 'round', canopy: true, foot: 0.93, shadow: [0.4, 0.09], glow: { y: 0.5, r: 120, c: '#ff9a3a', a: 0.3 } };
+    case 'altar': return { id: 'em-altar', fp: 'round', foot: 0.9, shadow: [0.42, 0.09], glow: { y: 0.55, r: 100, c: '#ffb347', a: 0.35 } };
+    case 'pillar': case 'archPost': return { id: 'em-pillar', fp: 'post', foot: 0.96, shadow: [0.45, 0.1] };
+    case 'brokenPillar': return { id: 'em-pillar-broken', fp: 'small', foot: 0.92, shadow: [0.42, 0.1] };
+    case 'wall': case 'archLintel': return { id: 'em-wall', fp: 'none', foot: 0.92, len: true };
+    case 'torch': case 'brazier': return { anim: d.kind, fp: 'post', foot: 0.96, shadow: [0.4, 0.1], glow: { y: 0.8, r: 110, c: '#ff9a3a', a: 0.55 } };
+    case 'fireCrystal': case 'iceCrystal': {
+      const v = Math.abs(d.v ?? 0) % 4, g = { y: 0.55, r: 80, c: '#ff8a3a', a: 0.42 };
+      if (v % 2 === 0) return { anim: 'em-crystal', fp: 'crystal', foot: 0.93, shadow: [0.4, 0.1], glow: g };
+      return { id: !ruin && v === 1 ? 'em-crystal-teal' : pick(['em-crystal-big', 'em-crystal-small', 'em-crystal-orange'], d), fp: 'crystal', foot: 0.93, shadow: [0.4, 0.1], glow: !ruin && v === 1 ? { ...g, c: '#5fe0e0' } : g };
+    }
+    case 'boulder': case 'rock': return { id: pick(ruin ? ['em-boulder', 'em-rocks', 'em-rocks'] : ['em-cave-boulder', 'em-cave-rocks', 'em-cave-rocks'], d), fp: 'rock', foot: 0.92, shadow: [0.42, 0.1] };
+    case 'ashTree': return { id: 'em-dead-tree', fp: 'tree', canopy: true, sway: 0.006, foot: 0.93, shadow: [0.36, 0.1] };
+    case 'stalagmite': return { id: pick(['em-stal-a', 'em-stal-b', 'em-stal-c'], d), fp: 'rock', foot: 0.92, shadow: [0.42, 0.1], glow: { y: 0.6, r: 70, c: '#ff7a2a', a: 0.3 } };
+    case 'spire': return { id: 'em-spire', fp: 'rock', canopy: true, foot: 0.93, shadow: [0.42, 0.1], glow: { y: 0.6, r: 90, c: '#ff7a2a', a: 0.3 } };
+    case 'lavafall': return { anim: 'em-lavafall', fp: 'round', foot: 0.9, shadow: [0.4, 0.08], glow: { y: 0.6, r: 220, c: '#ff7a1a', a: 0.45 } };
+    case 'lantern': return { id: 'em-lantern-post', fp: 'lamp', foot: 0.96, shadow: [0.45, 0.1], glow: { y: 0.7, r: 100, c: '#ffcf6a', a: 0.5 } };
+    case 'mushroom': return { id: 'em-mushroom', fp: 'small', foot: 0.94, shadow: [0.4, 0.1], glow: { y: 0.5, r: 50, c: '#ff9a3a', a: 0.3 } };
+    case 'chest': return { id: 'em-chest', fp: 'none', foot: 0.95 };
+    case 'barrel': return { id: 'em-barrel', fp: 'small', foot: 0.92, shadow: [0.42, 0.1] };
+    case 'crate': return { id: 'em-crate', fp: 'small', foot: 0.9, shadow: [0.45, 0.1] };
+    case 'sign': return { id: ruin ? 'em-sign' : 'em-sign2', fp: 'none', foot: 0.97 };
     default: return undefined;
   }
 }
@@ -216,9 +261,9 @@ function patches(c: C, ids: string[], k: number, n: number, area: [number, numbe
 }
 function ground(c: C, def: LocationDef, r: () => number) {
   const { w, h } = def;
-  c.fillStyle = '#58b84a'; c.fillRect(0, 0, w, h);
-  const base = pattern(c, theme.grass, 0.6); if (base) { c.fillStyle = base; c.fillRect(0, 0, w, h); }
-  patches(c, theme.patches, 0.6, Math.ceil((w * h) / (190 * 190)), [0, 0, w, h], r);
+  c.fillStyle = theme.fill ?? '#58b84a'; c.fillRect(0, 0, w, h);
+  const base = pattern(c, theme.base ?? theme.grass, 0.6); if (base) { c.fillStyle = base; c.fillRect(0, 0, w, h); }
+  if ((theme.basePatches ?? theme.patches).length) patches(c, theme.basePatches ?? theme.patches, 0.6, Math.ceil((w * h) / (190 * 190)), [0, 0, w, h], r);
   if (theme.tint) { c.fillStyle = theme.tint; c.fillRect(0, 0, w, h); }
   if (def.forestY) {
     patches(c, [theme.forest], 0.6, Math.ceil((w * (def.forestY + 120)) / (170 * 170)), [0, -60, w, def.forestY + 110], r, 340);
@@ -264,10 +309,11 @@ function path(c: C, def: LocationDef, p: PathDef, r: () => number, pts: Pt[]) {
       drawSprite(c, id, x + nx * off * side + (r() - 0.5) * 8, y + ny * off * side + 6, k, r() < 0.5);
     }
   });
-  along(pts, 120, (x, y, nx, ny) => { if (r() < 0.5) drawSprite(c, 'rocks-small', x + nx * (r() - 0.5) * w * 0.5, y + ny * (r() - 0.5) * w * 0.5, 0.18, r() < 0.5, 0.95); });
+  along(pts, 120, (x, y, nx, ny) => { if (r() < 0.5) drawSprite(c, theme.pathRock ?? 'rocks-small', x + nx * (r() - 0.5) * w * 0.5, y + ny * (r() - 0.5) * w * 0.5, theme.pathRock ? 0.12 : 0.18, r() < 0.5, 0.95); });
   void def;
 }
 function liquid(c: C, def: LocationDef, L: LiquidDef, r: () => number, sm: (p: Pt[]) => Pt[]) {
+  if (L.kind === 'lava' && theme.lava && L.closed) { lavaPool(c, L, r); return; }
   const w = L.width ?? 80, pts = sm(L.pts);
   c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
   for (const [grow, col] of [[44, 'rgba(78,58,30,.25)'], [30, '#8b6a3f'], [20, '#b08a55']] as const) { strokePts(c, pts); c.strokeStyle = col; c.lineWidth = w + grow; c.stroke(); }
@@ -284,9 +330,22 @@ function liquid(c: C, def: LocationDef, L: LiquidDef, r: () => number, sm: (p: P
   });
   void def;
 }
+/** A pool of glowing lava: the lava picture clipped to the pool, with a rock rim and a bright glow. */
+function lavaPool(c: C, L: LiquidDef, r: () => number) {
+  const poly = smooth(L.pts, 8, true), t = pattern(c, theme.lava!, 0.6);
+  const trace = () => { c.beginPath(); poly.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); };
+  c.save(); c.lineJoin = 'round';
+  trace(); c.shadowColor = 'rgba(255,120,30,.9)'; c.shadowBlur = 60; c.fillStyle = '#ff7a1a'; c.fill(); c.shadowBlur = 0;
+  trace(); c.strokeStyle = '#2a1a24'; c.lineWidth = 34; c.stroke(); trace(); c.strokeStyle = '#6a4a3c'; c.lineWidth = 22; c.stroke();
+  trace(); c.fillStyle = t ?? '#ff6a1f'; c.fill();
+  c.save(); trace(); c.clip(); trace(); c.strokeStyle = 'rgba(255,230,140,.55)'; c.lineWidth = 22; c.stroke(); c.restore();
+  c.restore();
+  const xs = poly.map((p) => p[0]), ys = poly.map((p) => p[1]), x0 = Math.min(...xs), y0 = Math.min(...ys);
+  let i = 0; for (const [x, y] of poly) { if (i++ % 3) continue; const [id, f] = theme.bank[Math.floor(r() * theme.bank.length)]; drawSprite(c, id, x + (x - (x0 + (Math.max(...xs) - x0) / 2)) * 0.04, y + 14 + (y - y0) * 0.0, (SCALE[id] ?? 1) * f * (0.9 + r() * 0.3), r() < 0.5); }
+}
 function bridge(c: C, b: { a: Pt; b: Pt; width: number }) {
-  const img = sImg('bridge-wood'); if (!img) return;
-  const [ax, ay] = b.a, [bx, by] = b.b, len = Math.hypot(bx - ax, by - ay), ang = Math.atan2(by - ay, bx - ax), sx = (len + 90) / img.naturalWidth, sy = sx * 1.1;
+  const img = sImg(theme.bridge ?? 'bridge-wood'); if (!img) return;
+  const [ax, ay] = b.a, [bx, by] = b.b, len = Math.hypot(bx - ax, by - ay), ang = Math.atan2(by - ay, bx - ax), sx = (len + 90) / img.naturalWidth, sy = sx * (theme.bridgeY ?? 1.1);
   c.save(); c.translate((ax + bx) / 2, (ay + by) / 2 + 4); c.rotate(ang);
   c.fillStyle = 'rgba(20,45,20,.22)'; ellipse(c, 0, 24, len / 2 + 30, 18); c.fill();
   c.drawImage(img, (-img.naturalWidth * sx) / 2, (-img.naturalHeight * sy) / 2, img.naturalWidth * sx, img.naturalHeight * sy); c.restore();
@@ -296,13 +355,13 @@ function zone(c: C, poly: Pt[], z: ZoneDef, r: () => number) {
   const g = pattern(c, theme.patches[0], 0.6);
   for (const [sc, a] of [[1.12, 0.07], [1.06, 0.1], [1, 0.16], [0.9, 0.12]] as const) {
     c.save(); c.translate(cx, cy); c.scale(sc, sc); c.translate(-cx, -cy); c.beginPath(); poly.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath();
-    c.fillStyle = `rgba(20,120,45,${a})`; c.fill(); if (g) { c.globalAlpha = a * 2.2; c.fillStyle = g; c.fill(); } c.restore();
+    c.fillStyle = `rgba(${theme.zoneRgb ?? '20,120,45'},${a})`; c.fill(); if (g) { c.globalAlpha = a * 2.2; c.fillStyle = g; c.fill(); } c.restore();
   }
   if (z.rare) { c.save(); c.globalCompositeOperation = 'lighter'; const gr = c.createRadialGradient(cx, cy, 4, cx, cy, 70); gr.addColorStop(0, 'rgba(255,240,160,.55)'); gr.addColorStop(1, 'rgba(255,240,160,0)'); c.fillStyle = gr; c.fillRect(cx - 70, cy - 70, 140, 140); c.restore(); }
   void r;
 }
 function tuftSprites() {
-  const mk = (ids: string[]) => ids.map((id) => scaled(id, (SCALE[id] ?? 0.3) * 1.15, 0.96, theme.objTint)?.cv ?? mkcv(48, 54));
+  const mk = (ids: string[]) => ids.map((id) => scaled(id, (SCALE[id] ?? 0.3) * 1.15, 0.96, theme.tuftTint ?? theme.objTint)?.cv ?? mkcv(48, 54));
   const set = mk(['grass-big', 'grass-mid', 'grass-small']);
   return { ash: set, moss: set };
 }
@@ -314,9 +373,9 @@ function plateau(c: C, pts: Pt[], face: number, r: () => number) {
   c.translate(0, face + 6); trace(); c.fillStyle = 'rgba(20,35,20,.3)'; c.fill(); c.translate(0, -6);
   for (let dy = face; dy >= 3; dy -= 3) { c.save(); c.translate(0, dy); trace(); c.fillStyle = stone ?? '#8a8798'; c.fill(); c.restore(); }
   c.translate(0, face); trace(); c.fillStyle = 'rgba(40,30,90,.32)'; c.fill(); c.strokeStyle = '#3c2f55'; c.lineWidth = 3; c.stroke(); c.translate(0, -face);
-  trace(); c.fillStyle = pattern(c, theme.grass, 0.6) ?? '#58b84a'; c.fill();
-  c.fillStyle = 'rgba(190,255,170,.1)'; c.fill();
-  c.lineJoin = 'round'; c.strokeStyle = 'rgba(150,240,110,.7)'; c.lineWidth = 9; c.stroke(); c.strokeStyle = '#3c2f55'; c.lineWidth = 2.4; c.stroke();
+  trace(); c.fillStyle = pattern(c, theme.top ?? theme.grass, 0.6) ?? '#58b84a'; c.fill();
+  c.fillStyle = theme.wash ?? 'rgba(190,255,170,.1)'; c.fill();
+  c.lineJoin = 'round'; c.strokeStyle = theme.rim ?? 'rgba(150,240,110,.7)'; c.lineWidth = 9; c.stroke(); c.strokeStyle = '#3c2f55'; c.lineWidth = 2.4; c.stroke();
   c.restore();
   const xs = poly.map((p) => p[0]), ys = poly.map((p) => p[1]);
   patches(c, theme.patches, 0.6, Math.ceil(((Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys))) / (260 * 260)), [Math.min(...xs) + 60, Math.min(...ys) + 40, Math.max(...xs) - Math.min(...xs) - 120, Math.max(...ys) - Math.min(...ys) - 100], r, 300);

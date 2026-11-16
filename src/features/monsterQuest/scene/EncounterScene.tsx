@@ -5,7 +5,7 @@ import './scene.css';
  * Painted backdrops for wild encounters and arena battles, built from the same pictures as the world
  * (public/monster-quest/world/). Everything is sized from the box it sits in (--u = 1% of its width, or a bit more in tall boxes), so it fits a phone, a tablet or the arena panel.
  */
-export type SceneKind = 'village' | 'valley' | 'arena';
+export type SceneKind = 'village' | 'valley' | 'arena' | 'ruins' | 'caverns';
 const BASE = `${import.meta.env.BASE_URL}monster-quest/world/`;
 interface Item { id: string; x: number; b: number; w: number; z?: number; flip?: boolean; sway?: number; delay?: number }
 interface Strip { id: string; x: number; b: number; w: number; fw: number; fh: number; n: number; fps: number; z?: number }
@@ -42,7 +42,27 @@ const ARENA: Def = {
     { id: 'crystal-pillar', x: 4, b: 2, w: 9, z: 4 }, { id: 'barrel', x: 94, b: 2, w: 9, z: 4 }, { id: 'crate', x: 85, b: 0, w: 8, z: 4 },
   ],
 };
-const DEFS: Record<SceneKind, Def> = { village: VILLAGE, valley: VALLEY, arena: ARENA };
+const RUINS: Def = {
+  sky: 'linear-gradient(180deg,#3a1a4a 0%,#c4503a 42%,#ffb066 60%,#ffd9a0 66%)', ground: 'em-sandstone', groundK: 26, groundTint: 'rgba(255,140,60,.10)', fx: 'embers',
+  strips: [{ id: 'torch', x: 30, b: 33, w: 4.5, fw: 135, fh: 420, n: 6, fps: 9, z: 3 }, { id: 'torch', x: 70, b: 33, w: 4.5, fw: 135, fh: 420, n: 6, fps: 9, z: 3 }],
+  items: [
+    { id: 'em-dead-tree', x: 12, b: 41, w: 12, z: 1 }, { id: 'em-pillar', x: 24, b: 40, w: 7, z: 1 }, { id: 'em-wall', x: 36, b: 38, w: 16, z: 1 }, { id: 'em-statue', x: 50, b: 40, w: 22, z: 1 },
+    { id: 'em-wall', x: 64, b: 38, w: 16, z: 1, flip: true }, { id: 'em-pillar-broken', x: 77, b: 39, w: 9, z: 1 }, { id: 'em-pillar', x: 88, b: 40, w: 7, z: 1 }, { id: 'em-pillar', x: 98, b: 41, w: 7, z: 1 },
+    { id: 'em-crystal-big', x: 6, b: 1, w: 11, z: 4, delay: 0 }, { id: 'em-crystal-small', x: 21, b: 1, w: 8, z: 4 }, { id: 'em-rocks', x: 66, b: 2, w: 9, z: 4 },
+    { id: 'em-boulder', x: 94, b: -2, w: 14, z: 4 }, { id: 'em-rocks', x: 80, b: 0, w: 8, z: 4, flip: true },
+  ],
+};
+const CAVERNS: Def = {
+  sky: 'linear-gradient(180deg,#0e0612 0%,#2a1030 45%,#7a2a22 60%,#ff8a3a 66%)', ground: 'em-cave', groundK: 26, groundTint: 'rgba(120,40,120,.12)', fx: 'embers',
+  strips: [{ id: 'torch', x: 27, b: 32, w: 4.5, fw: 135, fh: 420, n: 6, fps: 9, z: 3 }, { id: 'torch', x: 73, b: 32, w: 4.5, fw: 135, fh: 420, n: 6, fps: 9, z: 3 }],
+  items: [
+    { id: 'em-stal-a', x: 7, b: 40, w: 16, z: 1 }, { id: 'em-spire', x: 20, b: 41, w: 10, z: 1 }, { id: 'em-stal-c', x: 36, b: 40, w: 12, z: 1 }, { id: 'em-cave-arch', x: 52, b: 41, w: 18, z: 1 },
+    { id: 'em-stal-b', x: 68, b: 40, w: 12, z: 1 }, { id: 'em-spire', x: 81, b: 41, w: 10, z: 1 }, { id: 'em-stal-a', x: 94, b: 40, w: 16, z: 1, flip: true },
+    { id: 'em-crystal-orange', x: 6, b: 1, w: 12, z: 4 }, { id: 'em-crystal-teal', x: 20, b: 1, w: 8, z: 4 }, { id: 'em-mushroom', x: 75, b: 2, w: 7, z: 4, sway: 1 },
+    { id: 'em-cave-rocks', x: 88, b: 0, w: 12, z: 4 }, { id: 'em-cave-boulder', x: 101, b: -3, w: 14, z: 4 },
+  ],
+};
+const DEFS: Record<SceneKind, Def> = { village: VILLAGE, valley: VALLEY, arena: ARENA, ruins: RUINS, caverns: CAVERNS };
 const dots = Array.from({ length: 16 }, (_, i) => ({ x: (i * 37 + 11) % 100, y: 8 + ((i * 53 + 7) % 70), d: 4 + (i % 5) * 1.3, s: 0.5 + (i % 4) * 0.25 }));
 
 export function EncounterScene({ kind }: { kind: SceneKind }) {

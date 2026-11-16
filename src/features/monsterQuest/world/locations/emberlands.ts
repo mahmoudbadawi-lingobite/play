@@ -222,7 +222,7 @@ valley.props = [...valley.props, ...beside(valley.paths[0].pts, 340, 118, (x, y,
 const rrPts = (x0: number, y0: number, x1: number, y1: number, r: number): Pt[] => { const o: Pt[] = []; const arc = (cx: number, cy: number, a0: number) => { for (let k = 0; k <= 3; k++) { const a = a0 + (k * Math.PI) / 6; o.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); } }; arc(x1 - r, y0 + r, -Math.PI / 2); arc(x1 - r, y1 - r, 0); arc(x0 + r, y1 - r, Math.PI / 2); arc(x0 + r, y0 + r, Math.PI); return o; };
 const platform = (cx: number, cy: number, rx: number, ry: number, id: string): Pt[] => blobPoly(cx, cy, rx, ry, id, 0.05, 12).filter((_, i) => i % 6 === 0);
 const ruins: LocationDef = {
-  ...base, id: 'ember-ruins', name: 'Ancient Ember Ruins', kind: 'standard', w: 2400, h: 1800, mode: 'carve', base: 'lava', edge: 'rock', particles: 'ash',
+  ...base, style: 'storybook', theme: 'ember', id: 'ember-ruins', name: 'Ancient Ember Ruins', kind: 'standard', w: 2400, h: 1800, mode: 'carve', base: 'lava', edge: 'rock', particles: 'ash',
   floors: [
     { pts: rrPts(820, 650, 1580, 1130, 90), face: 30 },
     { pts: platform(300, 900, 240, 200, 'pw'), face: 28 }, { pts: platform(520, 340, 230, 160, 'pha'), face: 28 }, { pts: platform(1200, 310, 260, 150, 'pn'), face: 28 },
@@ -285,7 +285,7 @@ ruins.props = [...ruins.props];
 // ================================================================== 1.4 Molten Caverns
 const chamber = (cx: number, cy: number, rx: number, ry: number, id: string): Pt[] => blobPoly(cx, cy, rx, ry, id, 0.08, 12).filter((_, i) => i % 6 === 0);
 const caverns: LocationDef = {
-  ...base, id: 'molten-caverns', name: 'Molten Caverns', kind: 'standard', w: 2400, h: 1800, mode: 'carve', base: 'rock', edge: 'rock', particles: 'embers',
+  ...base, style: 'storybook', theme: 'ember-cave', id: 'molten-caverns', name: 'Molten Caverns', kind: 'standard', w: 2400, h: 1800, mode: 'carve', base: 'rock', edge: 'rock', particles: 'embers',
   floors: [
     { pts: chamber(1200, 1480, 560, 250, 'c-entrance'), face: 22 }, { pts: chamber(1200, 760, 700, 310, 'c-middle'), face: 22 }, { pts: chamber(1200, 240, 520, 190, 'c-deep'), face: 22 },
   ],

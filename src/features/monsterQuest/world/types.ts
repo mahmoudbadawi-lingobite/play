@@ -70,7 +70,7 @@ export interface LocationDef {
   /** 'storybook' = painted-sprite look (ground textures, dirt paths, water, sprite objects); omitted = the older drawn look */
   style?: 'storybook';
   /** storybook: which set of ground pictures and objects (default 'village') */
-  theme?: 'village' | 'valley';
+  theme?: 'village' | 'valley' | 'ember' | 'ember-cave';
   /** storybook: height of the dark forest-floor band along the top of the map */
   forestY?: number;
   id: string; world: number; name: string; kind: 'village' | 'standard' | 'large';

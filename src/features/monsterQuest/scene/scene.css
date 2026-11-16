@@ -22,3 +22,10 @@
 .mq-stage-monster::before { content: ''; position: absolute; left: 50%; top: 60%; width: 160%; aspect-ratio: 1; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(255,255,255,.3), transparent 62%); z-index: -1; pointer-events: none; }
 .mq-stage-monster::after { content: ''; position: absolute; left: 50%; bottom: -3%; width: 76%; height: 15%; transform: translateX(-50%); background: radial-gradient(ellipse at center, rgba(12,30,12,.5), transparent 70%); z-index: -1; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .mq-scene *, .mq-scene-sway, .mq-scene-strip { animation: none !important; } }
+/* ember places: warm stone ground, no green wash */
+.mq-scene-ruins .mq-scene-ground, .mq-scene-caverns .mq-scene-ground { box-shadow: 0 -10px 26px rgba(255,150,60,.28); }
+.mq-scene-ruins .mq-scene-ground::before, .mq-scene-caverns .mq-scene-ground::before { background: linear-gradient(rgba(255,190,110,.28), transparent); }
+.mq-scene-ruins .mq-scene-ground::after { background: radial-gradient(ellipse at 50% 35%, transparent 40%, rgba(40,10,0,.4) 100%); }
+.mq-scene-caverns .mq-scene-ground::after { background: radial-gradient(ellipse at 50% 35%, transparent 35%, rgba(10,0,16,.55) 100%); }
+.mq-scene-ruins .mq-scene-sun { background: radial-gradient(ellipse at center, rgba(255,210,140,.55), transparent 68%); }
+.mq-scene-caverns .mq-scene-sun { background: radial-gradient(ellipse at center, rgba(255,120,50,.4), transparent 68%); }

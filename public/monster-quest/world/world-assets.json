@@ -107,6 +107,60 @@
    "w": 506,
    "h": 335,
    "seamless": true
+  },
+  "em-sandstone": {
+   "file": "ground/em-sandstone.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "em-ash": {
+   "file": "ground/em-ash.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "em-cracked": {
+   "file": "ground/em-cracked.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "em-basalt": {
+   "file": "ground/em-basalt.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "em-obsidian": {
+   "file": "ground/em-obsidian.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "em-embers": {
+   "file": "ground/em-embers.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "em-cave": {
+   "file": "ground/em-cave.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "em-lava": {
+   "file": "ground/em-lava.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "em-redrock": {
+   "file": "ground/em-redrock.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
   }
  },
  "sprites": {
@@ -789,6 +843,166 @@
    "file": "sprites/mv-vine-arch.webp",
    "w": 297,
    "h": 248
+  },
+  "em-statue": {
+   "file": "sprites/em-statue.webp",
+   "w": 250,
+   "h": 283
+  },
+  "em-altar": {
+   "file": "sprites/em-altar.webp",
+   "w": 263,
+   "h": 202
+  },
+  "em-pillar": {
+   "file": "sprites/em-pillar.webp",
+   "w": 145,
+   "h": 269
+  },
+  "em-pillar-broken": {
+   "file": "sprites/em-pillar-broken.webp",
+   "w": 204,
+   "h": 209
+  },
+  "em-wall": {
+   "file": "sprites/em-wall.webp",
+   "w": 294,
+   "h": 190
+  },
+  "em-wall-corner": {
+   "file": "sprites/em-wall-corner.webp",
+   "w": 237,
+   "h": 244
+  },
+  "em-stairs": {
+   "file": "sprites/em-stairs.webp",
+   "w": 270,
+   "h": 230
+  },
+  "em-rune-orange": {
+   "file": "sprites/em-rune-orange.webp",
+   "w": 259,
+   "h": 181
+  },
+  "em-rune-teal": {
+   "file": "sprites/em-rune-teal.webp",
+   "w": 264,
+   "h": 184
+  },
+  "em-crystal-big": {
+   "file": "sprites/em-crystal-big.webp",
+   "w": 233,
+   "h": 227
+  },
+  "em-crystal-small": {
+   "file": "sprites/em-crystal-small.webp",
+   "w": 165,
+   "h": 179
+  },
+  "em-dead-tree": {
+   "file": "sprites/em-dead-tree.webp",
+   "w": 241,
+   "h": 284
+  },
+  "em-boulder": {
+   "file": "sprites/em-boulder.webp",
+   "w": 276,
+   "h": 228
+  },
+  "em-rocks": {
+   "file": "sprites/em-rocks.webp",
+   "w": 214,
+   "h": 150
+  },
+  "em-bridge": {
+   "file": "sprites/em-bridge.webp",
+   "w": 300,
+   "h": 204
+  },
+  "em-sign": {
+   "file": "sprites/em-sign.webp",
+   "w": 184,
+   "h": 238
+  },
+  "em-stal-a": {
+   "file": "sprites/em-stal-a.webp",
+   "w": 258,
+   "h": 274
+  },
+  "em-stal-b": {
+   "file": "sprites/em-stal-b.webp",
+   "w": 212,
+   "h": 236
+  },
+  "em-stal-c": {
+   "file": "sprites/em-stal-c.webp",
+   "w": 205,
+   "h": 185
+  },
+  "em-spire": {
+   "file": "sprites/em-spire.webp",
+   "w": 201,
+   "h": 272
+  },
+  "em-crystal-orange": {
+   "file": "sprites/em-crystal-orange.webp",
+   "w": 221,
+   "h": 260
+  },
+  "em-crystal-teal": {
+   "file": "sprites/em-crystal-teal.webp",
+   "w": 193,
+   "h": 204
+  },
+  "em-cave-boulder": {
+   "file": "sprites/em-cave-boulder.webp",
+   "w": 235,
+   "h": 207
+  },
+  "em-cave-rocks": {
+   "file": "sprites/em-cave-rocks.webp",
+   "w": 257,
+   "h": 182
+  },
+  "em-lantern-post": {
+   "file": "sprites/em-lantern-post.webp",
+   "w": 197,
+   "h": 278
+  },
+  "em-barrel": {
+   "file": "sprites/em-barrel.webp",
+   "w": 168,
+   "h": 208
+  },
+  "em-crate": {
+   "file": "sprites/em-crate.webp",
+   "w": 203,
+   "h": 210
+  },
+  "em-chest": {
+   "file": "sprites/em-chest.webp",
+   "w": 227,
+   "h": 215
+  },
+  "em-mushroom": {
+   "file": "sprites/em-mushroom.webp",
+   "w": 195,
+   "h": 229
+  },
+  "em-cave-arch": {
+   "file": "sprites/em-cave-arch.webp",
+   "w": 304,
+   "h": 271
+  },
+  "em-minecart": {
+   "file": "sprites/em-minecart.webp",
+   "w": 279,
+   "h": 255
+  },
+  "em-sign2": {
+   "file": "sprites/em-sign2.webp",
+   "w": 192,
+   "h": 263
   }
  },
  "anims": {
@@ -882,6 +1096,34 @@
    "fps": 6.0,
    "fw": 282,
    "fh": 353
+  },
+  "em-lava": {
+   "file": "anim/em-lava.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 240,
+   "fh": 165
+  },
+  "em-lavafall": {
+   "file": "anim/em-lavafall.webp",
+   "n": 6,
+   "fps": 8.0,
+   "fw": 244,
+   "fh": 178
+  },
+  "em-crystal": {
+   "file": "anim/em-crystal.webp",
+   "n": 6,
+   "fps": 6.0,
+   "fw": 212,
+   "fh": 178
+  },
+  "em-rune": {
+   "file": "anim/em-rune.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 224,
+   "fh": 141
   }
  }
 }

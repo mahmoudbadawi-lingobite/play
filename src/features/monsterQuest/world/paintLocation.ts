@@ -277,7 +277,7 @@ export function bakeLocation(def: LocationDef): Baked {
     if (def.base === 'lava') for (const f of def.floors ?? []) { c.save(); c.shadowColor = rgba(pal.lava.glow, 0.85); c.shadowBlur = 56; c.fillStyle = pal.lava.glow; strokePoly(c, smooth(f.pts, 8, true), true); c.fill(); c.restore(); }
     if (def.base === 'rock') for (const f of def.floors ?? []) { c.save(); c.shadowColor = rgba(pal.lava.glow, 0.55); c.shadowBlur = 70; c.fillStyle = pal.lava.mid; strokePoly(c, smooth(f.pts, 8, true), true); c.fill(); c.restore(); }
     for (const f of def.floors ?? []) {
-      paintFloorShape(c, f.pts, r, f.face ?? 26, { top: floorTop, faceCol: def.base === 'lava' ? '#4e3a40' : '#2c2028', rim: def.base === 'lava' ? 'rgba(255,236,190,.55)' : rgba(pal.lava.glow, 0.5) });
+      if (sb) sb.plateau(c, f.pts, f.face ?? 26, r); else paintFloorShape(c, f.pts, r, f.face ?? 26, { top: floorTop, faceCol: def.base === 'lava' ? '#4e3a40' : '#2c2028', rim: def.base === 'lava' ? 'rgba(255,236,190,.55)' : rgba(pal.lava.glow, 0.5) });
       white(() => { strokePoly(m, smooth(f.pts, 8, true), true); m.fill(); });
     }
   }
