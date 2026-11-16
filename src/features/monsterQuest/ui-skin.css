@@ -1,0 +1,59 @@
+/* ---------- Painted interface skin: menu background, logo, nav icons, header pills, arena menu ---------- */
+
+/* the whole game sits on the painted blue background (falls back to the old gradient while it loads) */
+.mq-root { background: var(--mq-bg, none), radial-gradient(1200px 500px at 50% -10%, #3b82f6 0%, transparent 60%), linear-gradient(180deg, #123a8f 0%, #0b2566 100%); }
+
+/* logo */
+.mq-logo-img { display: block; height: 3.4rem; width: auto; user-select: none; filter: drop-shadow(0 3px 4px rgba(0,0,0,.35)); }
+.mq-root.is-fs .mq-logo-img { height: 2.1rem; }
+@media (max-height: 520px) { .mq-root.is-fs .mq-logo-img { height: 1.8rem; } }
+
+/* header pills with icon */
+.mq-pill-ico { display: inline-flex; align-items: center; gap: .35rem; background: rgba(6,24,76,.72); border: 2px solid rgba(80,140,255,.45); padding: .15rem .8rem .15rem .35rem; }
+.mq-pill-ico img { width: 1.7rem; height: 1.7rem; object-fit: contain; }
+.mq-pill-ico.mq-fs-btn { cursor: pointer; padding-left: .5rem; }
+.mq-pill-ico.mq-fs-btn img { width: 1.4rem; height: 1.4rem; }
+
+/* nav icons */
+.mq-nav-ico { width: 2rem; height: 2rem; object-fit: contain; flex: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); user-select: none; }
+.mq-nav-item.is-active .mq-nav-ico { transform: scale(1.08); }
+.mq-root.is-fs .mq-nav-ico { width: 1.7rem; height: 1.7rem; }
+@media (min-width: 768px) { .mq-root.is-fs .mq-nav-ico { width: 2.1rem; height: 2.1rem; } }
+@media (max-height: 520px) { .mq-root.is-fs .mq-nav-ico { width: 1.5rem; height: 1.5rem; } }
+
+/* ---- arena menu ---- */
+.mq-menu-info { display: flex; align-items: center; gap: .9rem; padding: .7rem 1rem; border-radius: 1.2rem; border: 2px solid rgba(110,170,255,.55);
+  background: linear-gradient(180deg, rgba(40,100,220,.55), rgba(20,60,170,.6)); box-shadow: inset 0 0 18px rgba(120,180,255,.25), 0 6px 16px rgba(0,0,0,.25); }
+.mq-menu-info-ico { width: 3rem; height: 3rem; object-fit: contain; flex: none; filter: drop-shadow(0 2px 3px rgba(0,0,0,.4)); }
+.mq-menu-panel { position: relative; padding: 1.5rem 1rem 1rem; border-radius: 1.4rem; border: 2px solid rgba(110,170,255,.5);
+  background: linear-gradient(180deg, rgba(36,86,200,.42), rgba(14,44,140,.55)); box-shadow: inset 0 0 22px rgba(100,160,255,.22), 0 8px 20px rgba(0,0,0,.25); }
+.mq-menu-tab { position: absolute; top: -1.05rem; left: 1rem; display: inline-flex; align-items: center; gap: .45rem; padding: .15rem 1rem .15rem .4rem; border-radius: 999px;
+  background: linear-gradient(180deg, #2a64d6, #1745a8); border: 2px solid #6aa8ff; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1.05rem; letter-spacing: .04em; text-transform: uppercase; color: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.3); }
+.mq-menu-tab img { width: 1.7rem; height: 1.7rem; object-fit: contain; }
+
+.mq-team { display: flex; flex-wrap: wrap; gap: .4rem .9rem; }
+.mq-team-chip { display: flex; flex-direction: column; align-items: center; }
+.mq-team-stage { position: relative; width: 7.2rem; height: 6.2rem; }
+.mq-team-plat { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: auto; }
+.mq-team-mon { position: absolute; left: 50%; bottom: .9rem; transform: translateX(-50%); line-height: 0; filter: drop-shadow(0 3px 3px rgba(0,0,0,.3)); }
+.mq-team-name { margin-top: -.55rem; position: relative; padding: .1rem .8rem; border-radius: 999px; background: rgba(6,24,76,.92); border: 2px solid #3f86f0; font-weight: 800; font-size: .82rem; color: #fff; white-space: nowrap; }
+
+.mq-zone-grid { display: grid; gap: .6rem; grid-template-columns: 1fr; }
+.mq-diff-grid { display: grid; gap: .6rem; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .mq-zone-grid { grid-template-columns: repeat(2, 1fr); } .mq-diff-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1024px) { .mq-zone-grid { grid-template-columns: repeat(3, 1fr); } }
+.mq-card-banner { position: relative; display: flex; flex-direction: column; justify-content: center; gap: .1rem; min-height: 5.6rem; padding: .5rem 1rem; text-align: left; overflow: hidden;
+  border-radius: 1.1rem; border: 2px solid rgba(200,225,255,.55); background-size: cover; background-position: center; box-shadow: 0 4px 10px rgba(0,0,0,.3); cursor: pointer; transition: transform .12s, box-shadow .12s; }
+.mq-card-banner::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(6,22,70,.62) 0%, rgba(6,22,70,.25) 55%, transparent 85%); pointer-events: none; }
+.mq-card-banner > * { position: relative; }
+.mq-card-banner:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,.35); }
+.mq-card-banner.is-sel { border-color: #ffd43b; box-shadow: 0 0 0 2px rgba(255,212,59,.55), 0 0 18px rgba(255,200,40,.6); }
+.mq-card-banner.is-locked { cursor: not-allowed; filter: saturate(.55) brightness(.8); }
+.mq-card-title { display: flex; align-items: center; gap: .4rem; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1.3rem; line-height: 1.1; color: #fff; text-shadow: 0 2px 3px rgba(0,0,0,.65); }
+.mq-card-sub { display: inline-flex; align-items: center; gap: .3rem; font-weight: 700; font-size: .85rem; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.75); }
+.mq-card-sub img { width: 1.1rem; height: 1.1rem; object-fit: contain; }
+.mq-stars { display: inline-flex; gap: 1px; }
+.mq-stars img { width: 1.35rem; height: 1.35rem; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
+
+.mq-menu-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }
+.mq-btn-ico { width: 1.6em; height: 1.6em; object-fit: contain; display: inline-block; vertical-align: -.4em; margin-right: .4em; }

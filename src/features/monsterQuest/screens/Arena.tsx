@@ -8,6 +8,7 @@ import { QuestionView, formatCorrectAnswer } from '../QuestionView';
 import { sfx } from '../sound';
 import { ArenaStage } from '../scene/ArenaStage';
 import { STAND, isFlying } from '../scene/arenas';
+import { banner, ui, zoneBanner } from '../uiAssets';
 import { Bar, GameButton, Panel, TypeBadge } from '../ui';
 import type { BEvent, BMon, Battle, Species } from '../types';
 
@@ -38,38 +39,59 @@ export function Arena() {
   if (battle) return <BattleScene key={battle.id} initial={battle} onExit={() => { setBattle(null); void mq.refresh().catch(() => undefined); }} onRematch={start} />;
 
   return (
-    <div className="space-y-3">
-      <Panel>
-        <p className="font-display text-lg font-extrabold text-white">⚔️ Battle Arena</p>
-        <p className="mt-1 text-sm font-semibold text-white/85">Turn-based battles against computer trainers. Use your battle team, mix attacks with <b>quiz-powered special moves</b>, and win coins, XP and monster experience. Online player-vs-player battles come in Phase 3.</p>
-      </Panel>
+    <div className="mq-menu space-y-4">
+      <div className="mq-menu-info">
+        <img className="mq-menu-info-ico" src={ui('swords')} alt="" draggable={false} />
+        <div>
+          <p className="font-display text-lg font-extrabold leading-tight text-white">Battle Arena</p>
+          <p className="text-sm font-semibold text-white/85">Turn-based battles against computer trainers. Use your battle team, mix attacks with <b>quiz-powered special moves</b>, and win coins, XP and monster experience. Online player-vs-player battles come in Phase 3.</p>
+        </div>
+      </div>
       {team.length === 0 ? (
         <Panel><p className="font-bold text-white">You need at least one monster on your battle team.</p><Link to="/monster-quest/monsters"><GameButton tone="gold" className="mt-2">Go to My Monsters</GameButton></Link></Panel>
       ) : (
-        <Panel>
-          <p className="font-display text-sm font-extrabold uppercase tracking-wide text-white/80">Your team</p>
-          <div className="mt-2 flex flex-wrap gap-2">{team.map((m) => { const sp = mq.speciesById.get(m.species_id)!; return <div key={m.id} className="flex flex-col items-center rounded-xl bg-white/10 px-2 py-1"><MonsterArt spec={sp.art} spriteUrl={sp.sprite_url} size={52} anim="none" /><span className="text-[11px] font-bold text-white">{sp.name} Lv{m.level}</span></div>; })}</div>
-        </Panel>
+        <MenuPanel icon="team" title="Your team">
+          <div className="mq-team">{team.map((m) => { const sp = mq.speciesById.get(m.species_id)!; return (
+            <div key={m.id} className="mq-team-chip">
+              <div className="mq-team-stage"><img className="mq-team-plat" src={ui('platform-normal')} alt="" draggable={false} /><span className="mq-team-mon"><MonsterArt spec={sp.art} spriteUrl={sp.sprite_url} size={84} anim="none" /></span></div>
+              <span className="mq-team-name">{sp.name} Lv{m.level}</span>
+            </div>); })}</div>
+        </MenuPanel>
       )}
-      <Panel>
-        <p className="font-display text-sm font-extrabold uppercase tracking-wide text-white/80">Arena</p>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <MenuPanel icon="pin" title="Arena">
+        <div className="mq-zone-grid">
           {mq.zones.map((z) => { const locked = level < z.unlock_level; return (
-            <button key={z.id} type="button" disabled={locked} onClick={() => setZone(z.id)} className={`rounded-xl border-2 px-3 py-2 text-left ${zone === z.id ? 'border-yellow-300 bg-yellow-300/20' : 'border-white/20 bg-white/10'} ${locked ? 'opacity-50' : ''}`}>
-              <span className="block font-extrabold text-white">{z.name}</span><span className="text-xs font-semibold text-white/70">{locked ? `🔒 Level ${z.unlock_level}` : 'Opponents from this world'}</span>
+            <button key={z.id} type="button" disabled={locked} onClick={() => setZone(z.id)} aria-pressed={zone === z.id} className={`mq-card-banner ${zone === z.id ? 'is-sel' : ''} ${locked ? 'is-locked' : ''}`} style={{ backgroundImage: `url(${zoneBanner(z.id)})` }}>
+              <span className="mq-card-title">{z.name}</span>
+              <span className="mq-card-sub">{locked ? <><img src={ui('lock')} alt="" draggable={false} /> Level {z.unlock_level}</> : 'Opponents from this world'}</span>
             </button>); })}
         </div>
-        <p className="mt-3 font-display text-sm font-extrabold uppercase tracking-wide text-white/80">Difficulty</p>
-        <div className="mt-2 grid gap-2 sm:grid-cols-3">
-          {DIFFS.map((d) => <button key={d.k} type="button" onClick={() => setDiff(d.k)} className={`rounded-xl border-2 px-3 py-2 text-left ${diff === d.k ? 'border-yellow-300 bg-yellow-300/20' : 'border-white/20 bg-white/10'}`}><span className="block font-extrabold text-white">{'★'.repeat(d.stars)} {d.label}</span><span className="text-xs font-semibold text-white/70">{d.sub}</span></button>)}
+      </MenuPanel>
+      <MenuPanel icon="trophy" title="Difficulty">
+        <div className="mq-diff-grid">
+          {DIFFS.map((d) => (
+            <button key={d.k} type="button" onClick={() => setDiff(d.k)} aria-pressed={diff === d.k} className={`mq-card-banner ${diff === d.k ? 'is-sel' : ''}`} style={{ backgroundImage: `url(${banner(d.k)})` }}>
+              <span className="mq-card-title"><span className="mq-stars">{Array.from({ length: d.stars }, (_, i) => <img key={i} src={ui('star')} alt="" draggable={false} />)}</span>{d.label}</span>
+              <span className="mq-card-sub">{d.sub}</span>
+            </button>))}
         </div>
         {err && <p className="mt-3 rounded-xl bg-red-500/90 px-3 py-2 text-sm font-bold text-white" role="alert">{err}</p>}
-        <div className="mt-3 flex flex-wrap gap-2">
-          <GameButton tone="gold" disabled={busy || team.length === 0} onClick={start}>⚔️ Start battle</GameButton>
-          {resumeId && <GameButton tone="blue" disabled={busy} onClick={resume}>Resume unfinished battle</GameButton>}
+        <div className="mq-menu-actions">
+          <GameButton tone="gold" disabled={busy || team.length === 0} onClick={start}><img className="mq-btn-ico" src={ui('sword')} alt="" draggable={false} />Start battle</GameButton>
+          {resumeId && <GameButton tone="blue" disabled={busy} onClick={resume}><img className="mq-btn-ico" src={ui('play')} alt="" draggable={false} />Resume unfinished battle</GameButton>}
         </div>
-      </Panel>
+      </MenuPanel>
     </div>
+  );
+}
+
+/** A glowing blue panel with a little title tab (icon + text) on its top edge. */
+function MenuPanel({ icon, title, children }: { icon: string; title: string; children: ReactNode }) {
+  return (
+    <section className="mq-menu-panel">
+      <h3 className="mq-menu-tab"><img src={ui(icon)} alt="" draggable={false} />{title}</h3>
+      {children}
+    </section>
   );
 }
 

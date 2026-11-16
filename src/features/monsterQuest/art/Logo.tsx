@@ -1,9 +1,6 @@
-/** "Monster Quest" wordmark. Pure CSS/SVG so it stays crisp and original. */
+import { ui } from '../uiAssets';
+
+/** The "Monster Quest" logo (painted picture: shield + wordmark). */
 export function MqLogo({ className = '' }: { className?: string }) {
-  return (
-    <span className={`mq-logo ${className}`} aria-label="Monster Quest">
-      <span className="mq-logo-a">MONSTER</span>
-      <span className="mq-logo-b">QUEST</span>
-    </span>
-  );
+  return <img className={`mq-logo-img ${className}`} src={ui('logo')} alt="Monster Quest" draggable={false} />;
 }

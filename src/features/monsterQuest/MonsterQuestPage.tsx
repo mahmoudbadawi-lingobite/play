@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { MqProvider, useMq } from './context';
@@ -18,6 +18,8 @@ import { fmt } from './ui';
 import { useShellFullscreen } from './fullscreen';
 import { sfx } from './sound';
 import './monsterQuest.css';
+import './ui-skin.css';
+import { menuBackground, ui } from './uiAssets';
 
 const NEVER_ASK_KEY = 'mq-fullscreen-never-ask';
 let askedThisVisit = false;
@@ -56,25 +58,25 @@ function Shell() {
   }, [fs.supported]);
   const closeAsk = (never: boolean) => { if (never) { try { localStorage.setItem(NEVER_ASK_KEY, '1'); } catch { /* storage blocked */ } } setAsk(false); };
   const nav = [
-    { to: '', icon: '🏠', label: 'Home', end: true }, { to: 'explore', icon: '🗺️', label: 'Explore' }, { to: 'monsters', icon: '🐾', label: 'Monsters' }, { to: 'arena', icon: '⚔️', label: 'Arena' }, { to: 'quests', icon: '📜', label: 'Quests' }, { to: 'style', icon: '👕', label: 'Style' },
-    { to: 'dex', icon: '📖', label: 'Dex' }, { to: 'inventory', icon: '🎒', label: 'Bag' }, { to: 'shop', icon: '🛍️', label: 'Shop' },
-    { to: 'leaderboard', icon: '🏆', label: 'Ranks' }, { to: 'profile', icon: '👤', label: 'Profile' },
-    ...(mq.isStaff ? [{ to: 'questions', icon: '📝', label: 'Questions' }] : []),
+    { to: '', icon: 'nav-home', label: 'Home', end: true }, { to: 'explore', icon: 'nav-explore', label: 'Explore' }, { to: 'monsters', icon: 'nav-monsters', label: 'Monsters' }, { to: 'arena', icon: 'nav-arena', label: 'Arena' }, { to: 'quests', icon: 'nav-quests', label: 'Quests' }, { to: 'style', icon: 'nav-style', label: 'Style' },
+    { to: 'dex', icon: 'nav-dex', label: 'Dex' }, { to: 'inventory', icon: 'nav-bag', label: 'Bag' }, { to: 'shop', icon: 'nav-shop', label: 'Shop' },
+    { to: 'leaderboard', icon: 'nav-ranks', label: 'Ranks' }, { to: 'profile', icon: 'nav-profile', label: 'Profile' },
+    ...(mq.isStaff ? [{ to: 'questions', icon: 'nav-questions', label: 'Questions' }] : []),
   ];
   return (
-    <div ref={root} className={`mq-root ${fs.isFs ? 'is-fs' : ''}`}>
+    <div ref={root} className={`mq-root ${fs.isFs ? 'is-fs' : ''}`} style={{ '--mq-bg': menuBackground() } as CSSProperties}>
       <div className="mq-shell mx-auto max-w-6xl px-3 pb-24 pt-3 sm:px-5">
         <header className="mq-shell-head mb-3 flex items-center justify-between gap-3">
           <NavLink to="/monster-quest"><MqLogo /></NavLink>
           <div className="flex items-center gap-2 text-sm font-extrabold text-white">
-            <span className="mq-pill">🪙 {fmt(mq.state.coins)}</span><span className="mq-pill">💎 {fmt(mq.state.gems)}</span><span className="mq-pill">Lv {mq.state.level}</span>
-            {fs.supported && <button type="button" className="mq-pill mq-fs-btn" onClick={() => { sfx.click(); fs.toggle(); }} aria-pressed={fs.isFs} title={fs.isFs ? 'Exit full screen' : 'Play in full screen'}>{fs.isFs ? '✕ Exit' : '⛶ Full screen'}</button>}
+            <span className="mq-pill mq-pill-ico"><img src={ui('coin')} alt="" draggable={false} />{fmt(mq.state.coins)}</span><span className="mq-pill mq-pill-ico"><img src={ui('gem')} alt="" draggable={false} />{fmt(mq.state.gems)}</span><span className="mq-pill">Lv {mq.state.level}</span>
+            {fs.supported && <button type="button" className="mq-pill mq-pill-ico mq-fs-btn" onClick={() => { sfx.click(); fs.toggle(); }} aria-pressed={fs.isFs} title={fs.isFs ? 'Exit full screen' : 'Play in full screen'}>{fs.isFs ? <><img src={ui('exit')} alt="" draggable={false} />Exit</> : '⛶ Full screen'}</button>}
           </div>
         </header>
         <div className="mq-shell-grid md:grid md:grid-cols-[150px_1fr] md:gap-4">
           <nav className="mq-nav" aria-label="Monster Quest">
-            {fs.isFs && <button type="button" className="mq-nav-item mq-nav-exit" onClick={() => { sfx.click(); fs.exit(); }} title="Exit full screen"><span className="text-xl">✕</span><span>Exit</span></button>}
-            {nav.map((n) => <NavLink key={n.label} to={n.to ? `/monster-quest/${n.to}` : '/monster-quest'} end={n.end} className={({ isActive }) => `mq-nav-item ${isActive ? 'is-active' : ''}`}><span className="text-xl">{n.icon}</span><span>{n.label}</span></NavLink>)}
+            {fs.isFs && <button type="button" className="mq-nav-item mq-nav-exit" onClick={() => { sfx.click(); fs.exit(); }} title="Exit full screen"><img className="mq-nav-ico" src={ui('exit')} alt="" draggable={false} /><span>Exit</span></button>}
+            {nav.map((n) => <NavLink key={n.label} to={n.to ? `/monster-quest/${n.to}` : '/monster-quest'} end={n.end} className={({ isActive }) => `mq-nav-item ${isActive ? 'is-active' : ''}`}><img className="mq-nav-ico" src={ui(n.icon)} alt="" draggable={false} /><span>{n.label}</span></NavLink>)}
           </nav>
           <main className="mq-shell-main min-w-0">
             <Routes>
