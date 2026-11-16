@@ -3,6 +3,7 @@ import { levelInfo } from '../../avatar/level';
 import { CharacterPortrait } from '../art/CharacterPortrait';
 import { MonsterArt } from '../art/MonsterArt';
 import { useMq } from '../context';
+import { ui } from '../uiAssets';
 import { Bar, Panel, RarityBadge, fmt } from '../ui';
 
 export function Dashboard() {
@@ -13,16 +14,16 @@ export function Dashboard() {
   const caughtSpecies = new Set(monsters.map((m) => m.species_id)).size;
   const recent = monsters.slice(0, 6);
   const tiles: { to: string; icon: string; label: string; sub: string }[] = [
-    { to: '/monster-quest/explore', icon: '🗺️', label: 'Explore World', sub: 'Find & capture monsters' },
-    { to: '/monster-quest/monsters', icon: '🐾', label: 'My Monsters', sub: `${monsters.length} captured` },
-    { to: '/monster-quest/arena', icon: '⚔️', label: 'Battle Arena', sub: `${state.battles_won} wins` },
-    { to: '/monster-quest/quests', icon: '📜', label: 'Quests', sub: 'Daily & weekly missions' },
-    { to: '/monster-quest/style', icon: '👕', label: 'Style', sub: 'Props for your explorer' },
-    { to: '/monster-quest/dex', icon: '📖', label: 'Encyclopedia', sub: `${caughtSpecies}/${species.length} species` },
-    { to: '/monster-quest/inventory', icon: '🎒', label: 'Inventory', sub: 'Your orbs' },
-    { to: '/monster-quest/shop', icon: '🛍️', label: 'Shop', sub: 'Spend coins & gems' },
-    { to: '/monster-quest/leaderboard', icon: '🏆', label: 'Leaderboard', sub: 'Top trainers' },
-    ...(isStaff ? [{ to: '/monster-quest/questions', icon: '📝', label: 'Question Bank', sub: 'Manage questions' }] : []),
+    { to: '/monster-quest/explore', icon: 'nav-explore', label: 'Explore World', sub: 'Find & capture monsters' },
+    { to: '/monster-quest/monsters', icon: 'nav-monsters', label: 'My Monsters', sub: `${monsters.length} captured` },
+    { to: '/monster-quest/arena', icon: 'nav-arena', label: 'Battle Arena', sub: `${state.battles_won} wins` },
+    { to: '/monster-quest/quests', icon: 'nav-quests', label: 'Quests', sub: 'Daily & weekly missions' },
+    { to: '/monster-quest/style', icon: 'nav-style', label: 'Style', sub: 'Props for your explorer' },
+    { to: '/monster-quest/dex', icon: 'nav-dex', label: 'Encyclopedia', sub: `${caughtSpecies}/${species.length} species` },
+    { to: '/monster-quest/inventory', icon: 'nav-bag', label: 'Inventory', sub: 'Your orbs' },
+    { to: '/monster-quest/shop', icon: 'nav-shop', label: 'Shop', sub: 'Spend coins & gems' },
+    { to: '/monster-quest/leaderboard', icon: 'nav-ranks', label: 'Leaderboard', sub: 'Top trainers' },
+    ...(isStaff ? [{ to: '/monster-quest/questions', icon: 'nav-questions', label: 'Question Bank', sub: 'Manage questions' }] : []),
   ];
 
   return (
@@ -38,9 +39,9 @@ export function Dashboard() {
           <p className="mt-1 text-xs font-semibold text-white/70">{fmt(lv.into)} / {fmt(lv.need)} XP to level {lv.level + 1} · shared with all LingoBite Play games</p>
         </div>
         <div className="flex gap-3 text-center text-white">
-          <div className="mq-stat"><p className="text-xl">🪙</p><p className="font-extrabold tabular-nums">{fmt(state.coins)}</p><p className="text-[10px] font-bold uppercase opacity-70">Coins</p></div>
-          <div className="mq-stat"><p className="text-xl">💎</p><p className="font-extrabold tabular-nums">{fmt(state.gems)}</p><p className="text-[10px] font-bold uppercase opacity-70">Gems</p></div>
-          <div className="mq-stat"><p className="text-xl">🐾</p><p className="font-extrabold tabular-nums">{monsters.length}</p><p className="text-[10px] font-bold uppercase opacity-70">Monsters</p></div>
+          <div className="mq-stat"><img className="mq-stat-ico" src={ui('coin')} alt="" draggable={false} /><p className="font-extrabold tabular-nums">{fmt(state.coins)}</p><p className="text-[10px] font-bold uppercase opacity-70">Coins</p></div>
+          <div className="mq-stat"><img className="mq-stat-ico" src={ui('gem')} alt="" draggable={false} /><p className="font-extrabold tabular-nums">{fmt(state.gems)}</p><p className="text-[10px] font-bold uppercase opacity-70">Gems</p></div>
+          <div className="mq-stat"><img className="mq-stat-ico" src={ui('nav-monsters')} alt="" draggable={false} /><p className="font-extrabold tabular-nums">{monsters.length}</p><p className="text-[10px] font-bold uppercase opacity-70">Monsters</p></div>
         </div>
       </Panel>
 
@@ -48,7 +49,7 @@ export function Dashboard() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {tiles.map((t, i) => (
             <Link key={t.to} to={t.to} className={`mq-tile ${i === 0 ? 'mq-tile-hero col-span-2 sm:col-span-3' : ''}`}>
-              <span className="text-3xl">{t.icon}</span><span className="font-display text-base font-extrabold">{t.label}</span><span className="text-xs font-semibold opacity-80">{t.sub}</span>
+              <img className="mq-tile-ico" src={ui(t.icon)} alt="" draggable={false} /><span className="font-display text-base font-extrabold">{t.label}</span><span className="text-xs font-semibold opacity-80">{t.sub}</span>
             </Link>
           ))}
         </div>

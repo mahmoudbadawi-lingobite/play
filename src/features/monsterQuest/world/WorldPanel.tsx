@@ -12,13 +12,14 @@ import { Inventory, Shop } from '../screens/Shop';
 import { Wardrobe } from '../screens/Wardrobe';
 import { fmt } from '../ui';
 import { sfx } from '../sound';
+import { ui } from '../uiAssets';
 
 /** Same pages and order as the side menu of Monster Quest (the ids are the route names). */
 export type PanelTab = 'home' | 'monsters' | 'arena' | 'quests' | 'style' | 'dex' | 'inventory' | 'shop' | 'leaderboard' | 'profile' | 'questions';
 const ITEMS: { id: PanelTab | 'explore'; icon: string; label: string }[] = [
-  { id: 'home', icon: '🏠', label: 'Home' }, { id: 'explore', icon: '🗺️', label: 'Explore' }, { id: 'monsters', icon: '🐾', label: 'Monsters' }, { id: 'arena', icon: '⚔️', label: 'Arena' },
-  { id: 'quests', icon: '📜', label: 'Quests' }, { id: 'style', icon: '👕', label: 'Style' }, { id: 'dex', icon: '📖', label: 'Dex' }, { id: 'inventory', icon: '🎒', label: 'Bag' },
-  { id: 'shop', icon: '🛍️', label: 'Shop' }, { id: 'leaderboard', icon: '🏆', label: 'Ranks' }, { id: 'profile', icon: '👤', label: 'Profile' }, { id: 'questions', icon: '📝', label: 'Questions' },
+  { id: 'home', icon: 'nav-home', label: 'Home' }, { id: 'explore', icon: 'nav-explore', label: 'Explore' }, { id: 'monsters', icon: 'nav-monsters', label: 'Monsters' }, { id: 'arena', icon: 'nav-arena', label: 'Arena' },
+  { id: 'quests', icon: 'nav-quests', label: 'Quests' }, { id: 'style', icon: 'nav-style', label: 'Style' }, { id: 'dex', icon: 'nav-dex', label: 'Dex' }, { id: 'inventory', icon: 'nav-bag', label: 'Bag' },
+  { id: 'shop', icon: 'nav-shop', label: 'Shop' }, { id: 'leaderboard', icon: 'nav-ranks', label: 'Ranks' }, { id: 'profile', icon: 'nav-profile', label: 'Profile' }, { id: 'questions', icon: 'nav-questions', label: 'Questions' },
 ];
 const TAB_IDS = new Set<string>(ITEMS.map((i) => i.id).filter((i) => i !== 'explore'));
 
@@ -40,7 +41,7 @@ export function WorldPanel({ tab, onTab, onClose }: { tab: PanelTab; onTab: (t: 
   return (
     <div className="mq-wpanel mq-root" role="dialog" aria-label="Game menu">
       <nav className="mq-wnav" aria-label="Monster Quest menu">
-        {items.map((n) => <button key={n.id} type="button" onClick={() => go(n.id)} className={`mq-nav-item ${tab === n.id ? 'is-active' : ''}`} aria-current={tab === n.id ? 'page' : undefined}><span className="text-xl">{n.icon}</span><span>{n.label}</span></button>)}
+        {items.map((n) => <button key={n.id} type="button" onClick={() => go(n.id)} className={`mq-nav-item ${tab === n.id ? 'is-active' : ''}`} aria-current={tab === n.id ? 'page' : undefined}><img className="mq-nav-ico" src={ui(n.icon)} alt="" draggable={false} /><span>{n.label}</span></button>)}
       </nav>
       <div className="mq-wpanel-top">
         <button className="mq-wpanel-back" onClick={() => go('explore')}>← Back to game</button>
