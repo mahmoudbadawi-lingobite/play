@@ -158,7 +158,7 @@ export function EncounterModal({ encounter, onClose, scene }: { encounter: Encou
             </div>
           )}
           {(fly === 'fly' || fly === 'absorb') && <div className="mq-orb-fly"><Orb size={44} color={(balls[0] && mq.itemsByKey.get(balls[0].key)?.color) || '#3b82f6'} /></div>}
-          {(fly === 'wobble' || fly === 'pop') && <div className={`mq-orb-land ${fly === 'wobble' ? 'is-wobble' : 'is-pop'}`}><Orb size={60} /></div>}
+          {(fly === 'wobble' || fly === 'pop') && <div className={`mq-orb-land ${fly === 'wobble' ? 'is-wobble' : 'is-pop'}`}><Orb size={60} color={(balls[0] && mq.itemsByKey.get(balls[0].key)?.color) || '#3b82f6'} /></div>}
           <div className="pointer-events-none absolute inset-x-0 top-2 flex flex-col items-center gap-1">
             {floats.map((f) => <span key={f.id} className="mq-float" style={{ color: f.tone }}>{f.text}</span>)}
           </div>
