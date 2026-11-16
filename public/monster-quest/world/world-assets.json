@@ -1100,30 +1100,30 @@
   "em-lava": {
    "file": "anim/em-lava.webp",
    "n": 6,
-   "fps": 5.0,
-   "fw": 240,
+   "fps": 5,
+   "fw": 215,
    "fh": 165
   },
   "em-lavafall": {
    "file": "anim/em-lavafall.webp",
    "n": 6,
-   "fps": 8.0,
-   "fw": 244,
+   "fps": 8,
+   "fw": 221,
    "fh": 178
   },
   "em-crystal": {
    "file": "anim/em-crystal.webp",
    "n": 6,
-   "fps": 6.0,
-   "fw": 212,
-   "fh": 178
+   "fps": 6,
+   "fw": 196,
+   "fh": 177
   },
   "em-rune": {
    "file": "anim/em-rune.webp",
    "n": 6,
-   "fps": 5.0,
-   "fw": 224,
-   "fh": 141
+   "fps": 5,
+   "fw": 209,
+   "fh": 143
   }
  }
 }

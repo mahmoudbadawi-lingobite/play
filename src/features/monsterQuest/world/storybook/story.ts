@@ -48,9 +48,9 @@ Object.assign(SCALE, {
   'em-stal-a': 0.5, 'em-stal-b': 0.5, 'em-stal-c': 0.5, 'em-spire': 0.45, 'em-crystal-orange': 0.42, 'em-crystal-teal': 0.4, 'em-cave-boulder': 0.42, 'em-cave-rocks': 0.38,
   'em-lantern-post': 0.55, 'em-barrel': 0.4, 'em-crate': 0.35, 'em-chest': 0.32, 'em-mushroom': 0.5, 'em-cave-arch': 0.6, 'em-minecart': 0.4, 'em-sign2': 0.4,
 });
-const ANIM_K: Record<string, number> = { 'em-lavafall': 1.7, 'em-crystal': 0.55, 'em-lava': 1, 'em-rune': 0.6, fountain: 0.86, portal: 0.75, campfire: 0.3, brazier: 0.32, torch: 0.36, 'mv-waterfall': 0.7, 'mv-fireflies': 0.55, 'mv-mushroom': 0.7, 'mv-mushroom2': 0.7, 'mv-bluebell': 0.55 };
+const ANIM_K: Record<string, number> = { 'em-lavafall': 1.88, 'em-crystal': 0.6, 'em-lava': 1, 'em-rune': 0.6, fountain: 0.86, portal: 0.75, campfire: 0.3, brazier: 0.32, torch: 0.36, 'mv-waterfall': 0.7, 'mv-fireflies': 0.55, 'mv-mushroom': 0.7, 'mv-mushroom2': 0.7, 'mv-bluebell': 0.55 };
 /** Each storybook place picks a theme: which ground pictures it uses and how its objects look. */
-interface Theme { edge: [string, number][]; bank: [string, number][]; name: string; ground: string[]; grass: string; patches: string[]; forest: string; path: string; plaza: string; base?: string; basePatches?: string[]; top?: string; fill?: string; rim?: string; wash?: string; zoneRgb?: string; bridge?: string; bridgeY?: number; tuftTint?: string; lava?: string; pathRock?: string; tint?: string; objTint?: string; kinds?: (d: PropDef) => Km | null | undefined; sprites: (id: string) => boolean; anims: string[] }
+interface Theme { edge: [string, number][]; bank: [string, number][]; name: string; ground: string[]; grass: string; patches: string[]; forest: string; path: string; plaza: string; base?: string; basePatches?: string[]; top?: string; fill?: string; rim?: string; wash?: string; zoneRgb?: string; bridge?: string; bridgeY?: number; causeway?: boolean; tuftTint?: string; lava?: string; pathRock?: string; tint?: string; objTint?: string; kinds?: (d: PropDef) => Km | null | undefined; sprites: (id: string) => boolean; anims: string[] }
 const VILLAGE_ANIMS = ['fountain', 'portal', 'campfire', 'brazier', 'torch'];
 const VALLEY_SHARED = new Set(['tree-green', 'pine', 'tree-orange', 'rocks-small', 'rock-moss', 'rock-block', 'bush-big', 'bush-mid', 'cattail', 'wheat', 'flowers-white', 'flowers-purple', 'flowers-small', 'plant-a', 'plant-b', 'leaf-small', 'lamp-a', 'lamp-b', 'lamp-c', 'sign-green', 'sign-blue', 'chest', 'bridge-wood', 'fence-wood', 'barrel', 'crate', 'banner-post', 'mush-red', 'mush-purple', 'grass-big', 'grass-mid', 'grass-small', 'house-purple', 'house-blue', 'lilypad-a', 'lilypad-b', 'bush-flowers', 'tulips']);
 const THEMES: Record<string, Theme> = {
@@ -62,7 +62,7 @@ const THEMES: Record<string, Theme> = {
 const EMBER_SHARED = new Set(['rocks-small', 'torch', 'lamp-a', 'banner-post', 'grass-big', 'grass-mid', 'grass-small']);
 const EMBER_ANIMS = ['em-lava', 'em-lavafall', 'em-crystal', 'torch', 'brazier'];
 const emberBase = { edge: [['em-rocks', 0.45], ['em-cave-rocks', 0.4], ['em-rocks', 0.35]] as [string, number][], bank: [['em-rocks', 0.5], ['em-cave-rocks', 0.45], ['em-rocks', 0.4]] as [string, number][],
-  zoneRgb: '255,120,40', bridge: 'em-bridge', bridgeY: 0.82, tuftTint: 'rgba(150,60,15,.82)', lava: 'em-lava', pathRock: 'em-rocks', kinds: emberKinds, sprites: (id: string) => id.startsWith('em-') || EMBER_SHARED.has(id), anims: EMBER_ANIMS };
+  zoneRgb: '255,120,40', causeway: true, tuftTint: 'rgba(150,60,15,.82)', lava: 'em-lava', pathRock: 'em-rocks', kinds: emberKinds, sprites: (id: string) => id.startsWith('em-') || EMBER_SHARED.has(id), anims: EMBER_ANIMS };
 THEMES.ember = { ...emberBase, basePatches: [], name: 'ember', ground: ['em-lava', 'em-sandstone', 'em-redrock', 'em-basalt', 'em-ash', 'em-embers', 'em-cracked'], grass: 'em-sandstone', base: 'em-lava', top: 'em-sandstone', patches: ['em-sandstone', 'em-redrock', 'em-sandstone'], forest: 'em-basalt', path: 'em-ash', plaza: 'em-basalt',
   fill: '#c4440c', rim: 'rgba(255,214,140,.75)', wash: 'rgba(255,190,110,.08)' };
 THEMES['ember-cave'] = { ...emberBase, basePatches: ['em-obsidian', 'em-basalt'], name: 'ember-cave', ground: ['em-basalt', 'em-cave', 'em-embers', 'em-obsidian', 'em-ash', 'em-lava', 'em-cracked'], grass: 'em-cave', base: 'em-basalt', top: 'em-cave', patches: ['em-embers', 'em-cave', 'em-cave'], forest: 'em-obsidian', path: 'em-ash', plaza: 'em-obsidian',
@@ -343,7 +343,27 @@ function lavaPool(c: C, L: LiquidDef, r: () => number) {
   const xs = poly.map((p) => p[0]), ys = poly.map((p) => p[1]), x0 = Math.min(...xs), y0 = Math.min(...ys);
   let i = 0; for (const [x, y] of poly) { if (i++ % 3) continue; const [id, f] = theme.bank[Math.floor(r() * theme.bank.length)]; drawSprite(c, id, x + (x - (x0 + (Math.max(...xs) - x0) / 2)) * 0.04, y + 14 + (y - y0) * 0.0, (SCALE[id] ?? 1) * f * (0.9 + r() * 0.3), r() < 0.5); }
 }
+/** A flat stone causeway over lava: a slab of the platform stone with a dark side face and a lit rim, plus rubble along the edges. */
+function causeway(c: C, b: { a: Pt; b: Pt; width: number }) {
+  const [ax, ay] = b.a, [bx, by] = b.b, len = Math.hypot(bx - ax, by - ay), ux = (bx - ax) / len, uy = (by - ay) / len, nx = -uy, ny = ux, hw = b.width * 0.5 - 6, ext = 46;
+  const P = (t: number, k: number): Pt => [ax + ux * t + nx * k, ay + uy * t + ny * k];
+  const quad = (dy: number) => { c.beginPath(); for (const [t, k] of [[-ext, -hw], [len + ext, -hw], [len + ext, hw], [-ext, hw]] as const) { const [x, y] = P(t, k); c.lineTo(x, y + dy); } c.closePath(); };
+  c.save(); c.lineJoin = 'round';
+  quad(10); c.shadowColor = 'rgba(255,110,30,.75)'; c.shadowBlur = 40; c.fillStyle = '#2a1a24'; c.fill(); c.shadowBlur = 0;
+  quad(14); c.fillStyle = '#4a3238'; c.fill();
+  quad(0); c.fillStyle = pattern(c, theme.top ?? theme.grass, 0.6) ?? '#c8924a'; c.fill(); c.fillStyle = theme.wash ?? 'rgba(255,190,110,.08)'; c.fill();
+  // slab joints across the road and a lit rim along both long edges
+  c.save(); quad(0); c.clip(); c.strokeStyle = 'rgba(70,35,20,.35)'; c.lineWidth = 3;
+  for (let t = -ext + 30; t < len + ext; t += 46) { const [x0, y0] = P(t, -hw), [x1, y1] = P(t, hw); c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); }
+  c.restore();
+  c.strokeStyle = theme.rim ?? 'rgba(255,214,140,.75)'; c.lineWidth = 3;
+  for (const k of [-hw, hw]) { const [x0, y0] = P(-ext, k), [x1, y1] = P(len + ext, k); c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); }
+  c.restore();
+  const rr = rng(Math.round(ax * 7 + ay * 13));
+  for (const k of [-hw, hw]) for (let t = -ext + 20; t < len + ext - 10; t += 34 + rr() * 22) { const [x, y] = P(t, k + (k < 0 ? -4 : 4) + (rr() - 0.5) * 8); drawSprite(c, 'em-rocks', x, y + 8, 0.1 + rr() * 0.05, rr() < 0.5, 0.95); }
+}
 function bridge(c: C, b: { a: Pt; b: Pt; width: number }) {
+  if (theme.causeway) { causeway(c, b); return; }
   const img = sImg(theme.bridge ?? 'bridge-wood'); if (!img) return;
   const [ax, ay] = b.a, [bx, by] = b.b, len = Math.hypot(bx - ax, by - ay), ang = Math.atan2(by - ay, bx - ax), sx = (len + 90) / img.naturalWidth, sy = sx * (theme.bridgeY ?? 1.1);
   c.save(); c.translate((ax + bx) / 2, (ay + by) / 2 + 4); c.rotate(ang);
