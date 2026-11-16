@@ -57,3 +57,39 @@
 
 .mq-menu-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }
 .mq-btn-ico { width: 1.6em; height: 1.6em; object-fit: contain; display: inline-block; vertical-align: -.4em; margin-right: .4em; }
+
+/* ---- shop ---- */
+.mq-shop-banner { position: relative; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: .6rem; min-height: 9.5rem; padding: 1rem 1.1rem; border-radius: 1.4rem; overflow: hidden;
+  border: 2px solid rgba(110,170,255,.6); background-size: cover; background-position: 75% center; box-shadow: 0 8px 20px rgba(0,0,0,.3); }
+.mq-shop-banner::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(8,28,90,.7) 0%, rgba(8,28,90,.35) 45%, transparent 75%); pointer-events: none; }
+.mq-shop-banner > * { position: relative; }
+.mq-shop-wallet { display: flex; flex-wrap: wrap; gap: .5rem; }
+.mq-wallet { display: inline-flex; align-items: center; gap: .4rem; min-width: 9.6rem; height: 2.9rem; padding: 0 1rem 0 3.6rem; color: #fff; font-weight: 800; font-size: 1.1rem; text-shadow: 0 1px 2px rgba(0,0,0,.5); filter: drop-shadow(0 3px 4px rgba(0,0,0,.35)); }
+.mq-wallet-coin { background: url('/monster-quest/ui/wallet-coin.webp') center / 100% 100% no-repeat; }
+.mq-wallet-gem { background: url('/monster-quest/ui/wallet-gem.webp') center / 100% 100% no-repeat; }
+.mq-wallet i { font-style: normal; font-weight: 700; opacity: .85; font-size: .85rem; }
+.mq-shop-style { display: inline-flex; align-items: center; gap: .4rem; height: 2.75rem; padding: 0 1.3rem; border-radius: 999px; color: #fff; font-weight: 800; font-size: 1rem; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,.4);
+  background: url('/monster-quest/ui/btn-tab.webp') center / 100% 100% no-repeat; }
+
+.mq-shop-tabs { display: flex; flex-wrap: wrap; gap: .5rem; }
+.mq-shop-tab { display: inline-flex; align-items: center; gap: .4rem; height: 2.9rem; padding: 0 1.2rem 0 .5rem; color: #fff; font-weight: 800; font-size: 1rem; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,.45);
+  background: url('/monster-quest/ui/btn-tab.webp') center / 100% 100% no-repeat; transition: transform .1s; }
+.mq-shop-tab img { width: 2rem; height: 2rem; object-fit: contain; }
+.mq-shop-tab:active { background-image: url('/monster-quest/ui/btn-tab-press.webp'); transform: translateY(1px); }
+.mq-shop-tab.is-sel { color: #4a2a00; text-shadow: none; background-image: url('/monster-quest/ui/btn-tab-sel.webp'); }
+
+.mq-shop-card { display: flex; align-items: center; gap: .8rem; min-height: 7.2rem; padding: .9rem 1.1rem .9rem 1.2rem; color: #fff; background: url('/monster-quest/ui/card.webp') center / 100% 100% no-repeat; filter: drop-shadow(0 4px 6px rgba(0,0,0,.3)); }
+.mq-shop-card.is-owned { background-image: url('/monster-quest/ui/card-sel.webp'); }
+.mq-shop-socket { flex: none; display: grid; place-items: center; width: 4.6rem; height: 4.6rem; background: url('/monster-quest/ui/socket.webp') center / 100% 100% no-repeat; }
+.mq-shop-name { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1.15rem; line-height: 1.15; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
+.mq-shop-desc { font-size: .78rem; font-weight: 600; opacity: .9; }
+.mq-shop-have { font-size: .75rem; font-weight: 800; opacity: .75; }
+.mq-shop-buy { display: flex; flex-direction: column; align-items: flex-end; gap: .3rem; }
+.mq-shop-qty { appearance: none; -webkit-appearance: none; width: 4.1rem; height: 1.9rem; padding: 0 1.5rem 0 .8rem; border: 0; color: #10285a; font-weight: 800; font-size: .95rem; cursor: pointer;
+  background: url('/monster-quest/ui/qty.webp') center / 100% 100% no-repeat; }
+.mq-shop-price { display: inline-flex; align-items: center; justify-content: center; gap: .3rem; min-width: 6.4rem; height: 2.5rem; padding: 0 .9rem; border: 0; font-weight: 800; font-size: 1.1rem; cursor: pointer;
+  background: url('/monster-quest/ui/btn-coin.webp') center / 100% 100% no-repeat; color: #5a3200; transition: transform .1s; }
+.mq-shop-price img { width: 1.3rem; height: 1.3rem; object-fit: contain; }
+.mq-shop-price.is-gem { background-image: url('/monster-quest/ui/btn-gem.webp'); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
+.mq-shop-price.is-off { background-image: url('/monster-quest/ui/btn-off.webp'); color: #e8eefc; cursor: not-allowed; }
+.mq-shop-price:active:not(:disabled) { transform: translateY(1px); }
