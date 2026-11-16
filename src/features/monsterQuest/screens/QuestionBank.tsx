@@ -5,7 +5,7 @@ import { listMyContentSets, listPublicContentSets } from '../../../lib/services'
 import type { ContentSet } from '../../../types';
 import * as api from '../api';
 import { QUESTION_TYPES } from '../config';
-import { GameButton, Modal, Panel } from '../ui';
+import { ConfirmDialog, GameButton, Modal, Panel } from '../ui';
 import type { BankQuestion, QuestionType } from '../types';
 
 const blank = (): Partial<BankQuestion> => ({ type: 'mcq', subject: 'English', difficulty: 1, xp_reward: 5, active: true, prompt: '', answer: '' });
@@ -55,6 +55,7 @@ export function QuestionBank() {
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [edit, setEdit] = useState<Partial<BankQuestion> | null>(null);
+  const [askDel, setAskDel] = useState<BankQuestion | null>(null);
   const [q, setQ] = useState(''); const [ft, setFt] = useState<QuestionType | 'all'>('all'); const [fd, setFd] = useState(0);
   const [sets, setSets] = useState<ContentSet[] | null>(null);
 
@@ -108,7 +109,7 @@ export function QuestionBank() {
       setInfo(`Created ${n} questions from "${s.title}".`); await load();
     } catch (e) { setErr((e as Error).message); }
   };
-  const remove = async (r: BankQuestion) => { if (!confirm('Delete this question?')) return; try { await api.deleteBankQuestion(r.id); await load(); } catch (e) { setErr((e as Error).message); } };
+  const remove = async (r: BankQuestion) => { setAskDel(null); try { await api.deleteBankQuestion(r.id); await load(); } catch (e) { setErr((e as Error).message); } };
   const toggle = async (r: BankQuestion) => { try { await api.saveBankQuestion({ id: r.id, active: !r.active }, profile.uid); await load(); } catch (e) { setErr((e as Error).message); } };
   const inp = 'rounded-xl border-2 border-[#1b4fb3] bg-white px-2.5 py-1.5 text-sm font-semibold text-[#10285a]';
 
@@ -142,7 +143,7 @@ export function QuestionBank() {
                   <td className="max-w-[320px] p-2 font-semibold"><span className="line-clamp-2">{r.prompt}</span></td>
                   <td className="p-2 text-xs">{QUESTION_TYPES.find((t) => t.value === r.type)?.label}</td><td className="p-2 text-xs">{r.topic ?? '–'}</td>
                   <td className="p-2 text-center">{r.difficulty}</td><td className="p-2 text-center">{s?.asked ?? 0}</td><td className="p-2 text-center">{s?.asked ? `${Math.round((s.correct / s.asked) * 100)}%` : '–'}</td>
-                  <td className="whitespace-nowrap p-2 text-right">{mine && (<><button className="mr-2 font-bold text-yellow-300 hover:underline" onClick={() => setEdit(r)}>Edit</button><button className="mr-2 font-bold text-sky-300 hover:underline" onClick={() => toggle(r)}>{r.active ? 'Hide' : 'Show'}</button><button className="font-bold text-red-300 hover:underline" onClick={() => remove(r)}>Delete</button></>)}</td>
+                  <td className="whitespace-nowrap p-2 text-right">{mine && (<><button className="mr-2 font-bold text-yellow-300 hover:underline" onClick={() => setEdit(r)}>Edit</button><button className="mr-2 font-bold text-sky-300 hover:underline" onClick={() => toggle(r)}>{r.active ? 'Hide' : 'Show'}</button><button className="font-bold text-red-300 hover:underline" onClick={() => setAskDel(r)}>Delete</button></>)}</td>
                 </tr>); })}
               {shown.length === 0 && <tr><td colSpan={7} className="p-4 text-center font-bold text-white/80">No questions found.</td></tr>}
             </tbody>
@@ -150,6 +151,7 @@ export function QuestionBank() {
       </Panel>
       <p className="text-xs font-semibold text-white/60">Showing {shown.length} of {rows.length}. Students never see answers in their browser; answers are checked on the server.</p>
 
+      {askDel && <ConfirmDialog title="Delete this question?" message="This cannot be undone." confirmLabel="Delete" tone="red" onConfirm={() => remove(askDel)} onCancel={() => setAskDel(null)} />}
       {edit && <QuestionForm initial={edit} onClose={() => setEdit(null)} onSaved={async () => { setEdit(null); await load(); }} userId={profile.uid} />}
       {sets && (
         <Modal onClose={() => setSets(null)}>

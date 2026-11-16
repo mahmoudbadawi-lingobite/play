@@ -9,7 +9,7 @@ import { sfx } from '../sound';
 import { ArenaStage } from '../scene/ArenaStage';
 import { STAND, isFlying } from '../scene/arenas';
 import { banner, ui, zoneBanner } from '../uiAssets';
-import { Bar, GameButton, Panel, TypeBadge } from '../ui';
+import { Bar, ConfirmDialog, GameButton, Panel, TypeBadge } from '../ui';
 import type { BEvent, BMon, Battle, Species } from '../types';
 
 const DIFFS = [
@@ -186,7 +186,8 @@ export function BattleScene({ initial, onExit, onRematch }: { initial: Battle; o
     } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   };
 
-  const forfeit = async () => { if (!confirm('Give up this battle? You will not earn rewards.')) return; setBusy(true); try { await api.battleForfeit(battle.id); onExit(); } catch (e) { setErr((e as Error).message); setBusy(false); } };
+  const [askGiveUp, setAskGiveUp] = useState(false);
+  const forfeit = async () => { setAskGiveUp(false); setBusy(true); try { await api.battleForfeit(battle.id); onExit(); } catch (e) { setErr((e as Error).message); setBusy(false); } };
 
   const hpBar = (m: BMon) => <Bar pct={(m.hp / m.max) * 100} color={m.hp / m.max > 0.5 ? '#22c55e' : m.hp / m.max > 0.2 ? '#facc15' : '#ef4444'} label={`${m.name} HP`} height={10} />;
   const dots = (arr: BMon[]) => <span className="flex gap-1">{arr.map((m, i) => <span key={i} className={`h-2.5 w-2.5 rounded-full ${m.fainted ? 'bg-red-500' : 'bg-green-400'}`} />)}</span>;
@@ -205,7 +206,7 @@ export function BattleScene({ initial, onExit, onRematch }: { initial: Battle; o
         <div className="mq-hud-head">
           <div className="mq-hud-row">
             <span className="mq-hud-pill">⚔️ vs {battle.opp_name} · {battle.difficulty}</span>
-            {battle.status === 'active' && <button type="button" onClick={forfeit} disabled={busy} className="mq-hud-pill mq-hud-give">🏳️ Give up</button>}
+            {battle.status === 'active' && <button type="button" onClick={() => setAskGiveUp(true)} disabled={busy} className="mq-hud-pill mq-hud-give">🏳️ Give up</button>}
           </div>
           {om && osp && (
             <div className="mq-bplate">
@@ -257,6 +258,7 @@ export function BattleScene({ initial, onExit, onRematch }: { initial: Battle; o
         ))}
         </div>
 
+      {askGiveUp && <ConfirmDialog title="Give up this battle?" message="You will not earn any rewards." confirmLabel="Give up" cancelLabel="Keep fighting" tone="red" onConfirm={forfeit} onCancel={() => setAskGiveUp(false)} />}
       {final && battle.result && (
         <div className="mq-caught">
           <div className="relative z-10 w-full max-w-md px-4 text-center">

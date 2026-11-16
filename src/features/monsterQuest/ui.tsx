@@ -40,6 +40,26 @@ export function Modal({ children, onClose, wide }: { children: ReactNode; onClos
   );
 }
 
+/** In-game replacement for window.confirm: stays inside the game (and full screen) and matches the look. */
+export function ConfirmDialog({ title, message, confirmLabel = 'OK', cancelLabel = 'Cancel', tone = 'gold', onConfirm, onCancel }: { title: string; message: string; confirmLabel?: string; cancelLabel?: string; tone?: 'gold' | 'red' | 'green'; onConfirm: () => void; onCancel: () => void }) {
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); };
+    window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h);
+  }, [onCancel]);
+  return (
+    <div className="mq-modal-bg" onClick={onCancel} role="alertdialog" aria-modal="true" aria-labelledby="mq-confirm-title">
+      <div className="mq-confirm" onClick={(e) => e.stopPropagation()}>
+        <h3 id="mq-confirm-title" className="mq-confirm-title">{title}</h3>
+        <p className="mq-confirm-msg">{message}</p>
+        <div className="mq-confirm-actions">
+          <GameButton tone="ghost" onClick={onCancel}>{cancelLabel}</GameButton>
+          <GameButton tone={tone} onClick={onConfirm} autoFocus>{confirmLabel}</GameButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function StatRow({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
   return (
     <div className="flex items-center gap-2 text-xs font-bold text-white/90">

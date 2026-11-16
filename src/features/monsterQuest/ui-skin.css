@@ -93,3 +93,11 @@
 .mq-shop-price.is-gem { background-image: url('/monster-quest/ui/btn-gem.webp'); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
 .mq-shop-price.is-off { background-image: url('/monster-quest/ui/btn-off.webp'); color: #e8eefc; cursor: not-allowed; }
 .mq-shop-price:active:not(:disabled) { transform: translateY(1px); }
+
+/* ---- in-game confirm dialog (replaces the browser's own pop-up) ---- */
+.mq-modal-bg { backdrop-filter: blur(3px); }
+.mq-confirm { width: 100%; max-width: 24rem; padding: 1.6rem 1.3rem 1.2rem; text-align: center; color: #fff; border-radius: 1.5rem; border: 3px solid #6aa8ff; animation: mq-pop .2s ease-out;
+  background: linear-gradient(180deg, #2a64d6 0%, #163f9f 55%, #0f2f7d 100%); box-shadow: inset 0 0 22px rgba(130,185,255,.35), 0 18px 44px rgba(0,0,0,.5); }
+.mq-confirm-title { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1.5rem; line-height: 1.15; text-shadow: 0 2px 3px rgba(0,0,0,.4); }
+.mq-confirm-msg { margin-top: .4rem; font-weight: 700; font-size: 1rem; opacity: .92; }
+.mq-confirm-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: .6rem; margin-top: 1.1rem; }
