@@ -249,7 +249,7 @@ const ruins: LocationDef = {
     zone('er-altar', 'Altar rare spot', 2100, 1000, 70, 50, 'ash', ['runeling'], { rare: true, density: 1.4 }),
   ],
   props: [
-    { kind: 'statue', x: 1200, y: 748, s: 1.15 },
+    { kind: 'altar', x: 1200, y: 748, s: 1 },
     { kind: 'fireCrystal', x: 930, y: 1085, v: 0, s: 1.2 }, { kind: 'fireCrystal', x: 1470, y: 1085, v: 3, s: 1.2 },
     { kind: 'altar', x: 2100, y: 880 },
     { kind: 'pillar', x: 380, y: 280 }, { kind: 'brokenPillar', x: 450, y: 250 }, { kind: 'wall', x: 520, y: 220, len: 160 }, { kind: 'pillar', x: 680, y: 260 },

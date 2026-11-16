@@ -3,6 +3,7 @@ import { bakeLocation, PLAYER_R, type Baked } from './paintLocation';
 import { drawMarker, glow, npcSprite, propSprite, shadowEll } from './paintProps';
 import { SHEET, characterById, frameRect, headBox, sheetUrl, type Character } from './characters';
 import { placeProp, propUrl, type PropDef } from './props';
+import { sImg } from './storybook/assets';
 import { loadStory } from './storybook/story';
 import { LOCATIONS } from './locations';
 import type { Facing, InteractDef, LocationDef, Pt } from './types';
@@ -335,7 +336,7 @@ export class WorldEngine {
     for (const it of def.interactables) if (it.kind === 'plate') { const on = this.plates.has(it.id); glow(c, it.x, it.y, on ? 60 : 34 + (calm ? 0 : Math.sin(t * 3) * 5), on ? '#7fe9ff' : '#ffb347', on ? 0.8 : 0.45); }
     for (const g of def.gates) if (g.style === 'portal' || g.style === 'door') glow(c, g.rect[0] + g.rect[2] / 2, g.rect[1] + g.rect[3] / 2, 120 + (calm ? 0 : Math.sin(t * 2) * 14), '#ffe9a0', 0.4);
     c.restore();
-    for (const it of def.interactables) if (it.kind === 'plate') { c.fillStyle = 'rgba(40,24,30,.5)'; c.beginPath(); c.ellipse(it.x, it.y, 30, 18, 0, 0, 6.3); c.fill(); c.fillStyle = this.plates.has(it.id) ? '#7fe9ff' : '#ffb347'; c.strokeStyle = '#4a3a3a'; c.lineWidth = 3; c.beginPath(); c.ellipse(it.x, it.y - 2, 26, 15, 0, 0, 6.3); c.fill(); c.stroke(); }
+    for (const it of def.interactables) if (it.kind === 'plate') { const rune = sImg(this.plates.has(it.id) ? 'em-rune-teal' : 'em-rune-orange'); if (rune) { const w = 112, h = (rune.naturalHeight * w) / rune.naturalWidth; c.drawImage(rune, it.x - w / 2, it.y - h * 0.62, w, h); continue; } c.fillStyle = 'rgba(40,24,30,.5)'; c.beginPath(); c.ellipse(it.x, it.y, 30, 18, 0, 0, 6.3); c.fill(); c.fillStyle = this.plates.has(it.id) ? '#7fe9ff' : '#ffb347'; c.strokeStyle = '#4a3a3a'; c.lineWidth = 3; c.beginPath(); c.ellipse(it.x, it.y - 2, 26, 15, 0, 0, 6.3); c.fill(); c.stroke(); }
     for (const rp of this.ripples) { c.strokeStyle = `rgba(255,255,255,${0.7 * (1 - rp.t / 0.9)})`; c.lineWidth = 2; c.beginPath(); c.ellipse(rp.x, rp.y, 10 + rp.t * 34, 5 + rp.t * 15, 0, 0, 6.3); c.stroke(); }
     if (this.tapMark) { const a = 0.5 + 0.4 * Math.sin(this.tapMark.t * 7); c.strokeStyle = `rgba(255,255,255,${a})`; c.lineWidth = 3; c.beginPath(); c.ellipse(this.tapMark.x, this.tapMark.y, 24, 13, 0, 0, 6.3); c.stroke(); }
 
