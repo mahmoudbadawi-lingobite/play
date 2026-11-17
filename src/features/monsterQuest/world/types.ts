@@ -71,7 +71,7 @@ export interface LocationDef {
   /** 'storybook' = painted-sprite look (ground textures, dirt paths, water, sprite objects); omitted = the older drawn look */
   style?: 'storybook';
   /** storybook: which set of ground pictures and objects (default 'village') */
-  theme?: 'village' | 'valley' | 'ember' | 'ember-cave' | 'grove' | 'grove-roots' | 'sand' | 'sand-tomb';
+  theme?: 'village' | 'valley' | 'ember' | 'ember-cave' | 'grove' | 'grove-roots' | 'sand' | 'sand-tomb' | 'frost' | 'frost-cave';
   /** storybook: height of the dark forest-floor band along the top of the map */
   forestY?: number;
   id: string; world: number; name: string; kind: 'village' | 'standard' | 'large';

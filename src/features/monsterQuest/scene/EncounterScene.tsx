@@ -5,7 +5,7 @@ import './scene.css';
  * Painted backdrops for wild encounters and arena battles, built from the same pictures as the world
  * (public/monster-quest/world/). Everything is sized from the box it sits in (--u = 1% of its width, or a bit more in tall boxes), so it fits a phone, a tablet or the arena panel.
  */
-export type SceneKind = 'village' | 'valley' | 'arena' | 'ruins' | 'caverns' | 'grove' | 'roots' | 'sand' | 'tomb';
+export type SceneKind = 'village' | 'valley' | 'arena' | 'ruins' | 'caverns' | 'grove' | 'roots' | 'sand' | 'tomb' | 'frost' | 'frostcave';
 const BASE = `${import.meta.env.BASE_URL}monster-quest/world/`;
 interface Item { id: string; x: number; b: number; w: number; z?: number; flip?: boolean; sway?: number; delay?: number }
 interface Strip { id: string; x: number; b: number; w: number; fw: number; fh: number; n: number; fps: number; z?: number }
@@ -107,7 +107,29 @@ const TOMB: Def = {
     { id: 'sr-boulder', x: 88, b: 0, w: 12, z: 4 }, { id: 'sr-crystal', x: 101, b: -2, w: 12, z: 4 },
   ],
 };
-const DEFS: Record<SceneKind, Def> = { village: VILLAGE, valley: VALLEY, arena: ARENA, ruins: RUINS, caverns: CAVERNS, grove: GROVE, roots: ROOTS, sand: SAND, tomb: TOMB };
+const FROST: Def = {
+  sky: 'linear-gradient(180deg,#a9d8ff 0%,#e4f3ff 42%,#ffffff 62%)', ground: 'fg-snow', groundK: 24, groundTint: 'rgba(200,230,255,.08)', fx: 'pollen',
+  strips: [{ id: 'fg-snow-fall', x: 24, b: 24, w: 10, fw: 182, fh: 175, n: 6, fps: 5, z: 5 }, { id: 'fg-snow-fall', x: 76, b: 30, w: 9, fw: 182, fh: 175, n: 6, fps: 4, z: 5 }],
+  items: [
+    { id: 'fg-pine', x: 5, b: 40, w: 14, z: 1 }, { id: 'fg-pine2', x: 20, b: 41, w: 14, z: 1 }, { id: 'fg-birch', x: 34, b: 40, w: 12, z: 1 }, { id: 'fg-arch', x: 50, b: 41, w: 15, z: 1 },
+    { id: 'fg-pine', x: 65, b: 40, w: 15, z: 1, flip: true }, { id: 'fg-pine2', x: 79, b: 41, w: 14, z: 1 }, { id: 'fg-pine', x: 93, b: 40, w: 15, z: 1 },
+    { id: 'fg-cabin', x: 13, b: 35, w: 16, z: 2 }, { id: 'fg-tent', x: 86, b: 35, w: 16, z: 2 }, { id: 'fg-lantern', x: 28, b: 31, w: 4.5, z: 2 },
+    { id: 'fg-bush', x: 2, b: -1, w: 14, z: 4 }, { id: 'fg-flowers', x: 18, b: 1, w: 9, z: 4, sway: 3 }, { id: 'fg-frostgrass', x: 33, b: -3, w: 13, z: 4, sway: 2 },
+    { id: 'fg-snowman', x: 64, b: 2, w: 9, z: 4 }, { id: 'fg-skis', x: 76, b: 2, w: 7, z: 4 }, { id: 'fg-boulder', x: 90, b: 1, w: 11, z: 4 }, { id: 'fg-bush', x: 104, b: -3, w: 14, z: 4, flip: true },
+  ],
+};
+const FROSTCAVE: Def = {
+  sky: 'linear-gradient(180deg,#030a1a 0%,#0c2a5a 44%,#2a78c8 60%,#9fe8ff 67%)', ground: 'fg-cave', groundK: 26, groundTint: 'rgba(0,30,90,.16)', fx: 'fireflies',
+  strips: [{ id: 'fg-crystal-glow', x: 26, b: 30, w: 8, fw: 171, fh: 160, n: 6, fps: 5, z: 3 }, { id: 'fg-crystal-glow', x: 72, b: 30, w: 8, fw: 171, fh: 160, n: 6, fps: 5, z: 3 },
+    { id: 'fg-snow-fall', x: 45, b: 22, w: 10, fw: 182, fh: 175, n: 6, fps: 4, z: 5 }],
+  items: [
+    { id: 'fg-spire', x: 6, b: 40, w: 12, z: 1 }, { id: 'fg-pillar', x: 20, b: 41, w: 8, z: 1 }, { id: 'fg-spire', x: 36, b: 40, w: 11, z: 1, flip: true }, { id: 'fg-cave-door', x: 52, b: 41, w: 19, z: 1 },
+    { id: 'fg-spire', x: 68, b: 40, w: 12, z: 1, flip: true }, { id: 'fg-pillar', x: 82, b: 41, w: 8, z: 1 }, { id: 'fg-spire', x: 95, b: 40, w: 12, z: 1 },
+    { id: 'fg-crystal', x: 6, b: 1, w: 10, z: 4 }, { id: 'fg-rocks', x: 21, b: 1, w: 9, z: 4 }, { id: 'fg-crystal', x: 76, b: 2, w: 9, z: 4, flip: true },
+    { id: 'fg-boulder', x: 88, b: 0, w: 12, z: 4 }, { id: 'fg-crystal', x: 101, b: -2, w: 12, z: 4 },
+  ],
+};
+const DEFS: Record<SceneKind, Def> = { village: VILLAGE, valley: VALLEY, arena: ARENA, ruins: RUINS, caverns: CAVERNS, grove: GROVE, roots: ROOTS, sand: SAND, tomb: TOMB, frost: FROST, frostcave: FROSTCAVE };
 const dots = Array.from({ length: 16 }, (_, i) => ({ x: (i * 37 + 11) % 100, y: 8 + ((i * 53 + 7) % 70), d: 4 + (i % 5) * 1.3, s: 0.5 + (i % 4) * 0.25 }));
 
 export function EncounterScene({ kind }: { kind: SceneKind }) {

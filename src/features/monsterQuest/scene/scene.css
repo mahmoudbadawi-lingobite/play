@@ -45,3 +45,11 @@
 .mq-scene-tomb .mq-scene-ground::before { background: linear-gradient(rgba(255,200,120,.22), transparent); }
 .mq-scene-tomb .mq-scene-ground::after { background: radial-gradient(ellipse at 50% 35%, transparent 35%, rgba(20,8,0,.6) 100%); }
 .mq-scene-tomb .mq-scene-sun { background: radial-gradient(ellipse at center, rgba(255,190,90,.38), transparent 68%); }
+
+/* Frostglass Peaks backdrops */
+.mq-scene-frost .mq-scene-ground { box-shadow: 0 -10px 24px rgba(210,235,255,.3); }
+.mq-scene-frost .mq-scene-ground::after { background: radial-gradient(ellipse at 50% 35%, transparent 40%, rgba(20,50,100,.3) 100%); }
+.mq-scene-frostcave .mq-scene-ground { box-shadow: 0 -10px 26px rgba(110,200,255,.35); }
+.mq-scene-frostcave .mq-scene-ground::before { background: linear-gradient(rgba(150,225,255,.25), transparent); }
+.mq-scene-frostcave .mq-scene-ground::after { background: radial-gradient(ellipse at 50% 35%, transparent 35%, rgba(0,10,40,.6) 100%); }
+.mq-scene-frostcave .mq-scene-sun { background: radial-gradient(ellipse at center, rgba(120,210,255,.38), transparent 68%); }

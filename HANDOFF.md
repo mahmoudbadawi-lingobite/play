@@ -59,3 +59,9 @@ rich saturated colours, light from top left. Scale: a house door about 1.3 units
 - Locations (`world/locations/sand.ts`, derived from the Grove layouts and re-dressed): dune-haven, whispering-dunes, sunstone-canyon (plateau + oasis + bridge), scarab-tomb (carve, quicksand pool + bridge, sealed portal to Frostglass Peaks).
 - Themes `sand` / `sand-tomb` in `storybook/story.ts` (`sandKinds`, `SAND_SHARED`, `SCALE` entries for every `sr-*` id incl. `sr-bridge-*`, per-prefix bridge params `BRP`). Theme fields `br`, `line`, `shade`, `cliff`, `bankTex`, `pads` make plateaus/lakes/bridges re-skinnable.
 - Encounter backdrops `sand` and `tomb`; art in `public/monster-quest/world/*/sr-*`; plan and prompts in `docs/WORLD3_SANDSTONE_REACH.md`.
+
+
+## World 4: Frostglass Peaks (built)
+- Locations (`world/locations/frost.ts`, derived from the Grove layouts like sand.ts): snowdrift-village, pinefrost-pass, glasslake-basin (plateau + frozen lakes), crystal-cavern (carve, freezing pool + bridge, sealed portal to Tidewhisper Coast).
+- Themes `frost` / `frost-cave` in story.ts (`frostKinds`, `FROST_SHARED`, `fg-*` SCALE incl. `fg-bridge-*`, `BRP.fg` bridge params, ANIM_K). Encounter backdrops `frost`, `frostcave`. Art `fg-*`; plan/prompts `docs/WORLD4_FROSTGLASS_PEAKS.md`.
+- Anim glow and sprite fringes were recoloured pink to icy blue after cutting.
