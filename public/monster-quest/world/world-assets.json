@@ -323,6 +323,60 @@
    "w": 412,
    "h": 412,
    "seamless": false
+  },
+  "tc-sand": {
+   "file": "ground/tc-sand.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "tc-shells": {
+   "file": "ground/tc-shells.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "tc-ripple": {
+   "file": "ground/tc-ripple.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "tc-trail": {
+   "file": "ground/tc-trail.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "tc-boardwalk": {
+   "file": "ground/tc-boardwalk.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "tc-bank": {
+   "file": "ground/tc-bank.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "tc-shallows": {
+   "file": "ground/tc-shallows.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "tc-rock": {
+   "file": "ground/tc-rock.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "tc-cave": {
+   "file": "ground/tc-cave.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
   }
  },
  "sprites": {
@@ -1720,6 +1774,191 @@
    "file": "sprites/fg-bridge-post.webp",
    "w": 261,
    "h": 433
+  },
+  "tc-palm": {
+   "file": "sprites/tc-palm.webp",
+   "w": 231,
+   "h": 314
+  },
+  "tc-palm2": {
+   "file": "sprites/tc-palm2.webp",
+   "w": 240,
+   "h": 267
+  },
+  "tc-palm3": {
+   "file": "sprites/tc-palm3.webp",
+   "w": 236,
+   "h": 288
+  },
+  "tc-bush": {
+   "file": "sprites/tc-bush.webp",
+   "w": 247,
+   "h": 206
+  },
+  "tc-seagrass": {
+   "file": "sprites/tc-seagrass.webp",
+   "w": 240,
+   "h": 253
+  },
+  "tc-flowers": {
+   "file": "sprites/tc-flowers.webp",
+   "w": 240,
+   "h": 160
+  },
+  "tc-boulder": {
+   "file": "sprites/tc-boulder.webp",
+   "w": 256,
+   "h": 186
+  },
+  "tc-rocks": {
+   "file": "sprites/tc-rocks.webp",
+   "w": 237,
+   "h": 205
+  },
+  "tc-log": {
+   "file": "sprites/tc-log.webp",
+   "w": 287,
+   "h": 200
+  },
+  "tc-sandcastle": {
+   "file": "sprites/tc-sandcastle.webp",
+   "w": 260,
+   "h": 258
+  },
+  "tc-pond": {
+   "file": "sprites/tc-pond.webp",
+   "w": 278,
+   "h": 209
+  },
+  "tc-spire": {
+   "file": "sprites/tc-spire.webp",
+   "w": 214,
+   "h": 254
+  },
+  "tc-crystal": {
+   "file": "sprites/tc-crystal.webp",
+   "w": 227,
+   "h": 240
+  },
+  "tc-crates": {
+   "file": "sprites/tc-crates.webp",
+   "w": 277,
+   "h": 235
+  },
+  "tc-stump": {
+   "file": "sprites/tc-stump.webp",
+   "w": 205,
+   "h": 246
+  },
+  "tc-boards": {
+   "file": "sprites/tc-boards.webp",
+   "w": 219,
+   "h": 276
+  },
+  "tc-cottage": {
+   "file": "sprites/tc-cottage.webp",
+   "w": 260,
+   "h": 280
+  },
+  "tc-cottage2": {
+   "file": "sprites/tc-cottage2.webp",
+   "w": 259,
+   "h": 262
+  },
+  "tc-hut": {
+   "file": "sprites/tc-hut.webp",
+   "w": 258,
+   "h": 241
+  },
+  "tc-tent": {
+   "file": "sprites/tc-tent.webp",
+   "w": 244,
+   "h": 284
+  },
+  "tc-stall": {
+   "file": "sprites/tc-stall.webp",
+   "w": 276,
+   "h": 250
+  },
+  "tc-arch": {
+   "file": "sprites/tc-arch.webp",
+   "w": 278,
+   "h": 257
+  },
+  "tc-pillar": {
+   "file": "sprites/tc-pillar.webp",
+   "w": 210,
+   "h": 261
+  },
+  "tc-wall": {
+   "file": "sprites/tc-wall.webp",
+   "w": 286,
+   "h": 118
+  },
+  "tc-gull": {
+   "file": "sprites/tc-gull.webp",
+   "w": 209,
+   "h": 269
+  },
+  "tc-altar": {
+   "file": "sprites/tc-altar.webp",
+   "w": 292,
+   "h": 210
+  },
+  "tc-totem": {
+   "file": "sprites/tc-totem.webp",
+   "w": 169,
+   "h": 284
+  },
+  "tc-stairs": {
+   "file": "sprites/tc-stairs.webp",
+   "w": 282,
+   "h": 230
+  },
+  "tc-cave-door": {
+   "file": "sprites/tc-cave-door.webp",
+   "w": 280,
+   "h": 275
+  },
+  "tc-lantern": {
+   "file": "sprites/tc-lantern.webp",
+   "w": 170,
+   "h": 272
+  },
+  "tc-well": {
+   "file": "sprites/tc-well.webp",
+   "w": 242,
+   "h": 271
+  },
+  "tc-chest": {
+   "file": "sprites/tc-chest.webp",
+   "w": 279,
+   "h": 188
+  },
+  "tc-bridge-deck-h": {
+   "file": "sprites/tc-bridge-deck-h.webp",
+   "w": 505,
+   "h": 297
+  },
+  "tc-bridge-deck-v": {
+   "file": "sprites/tc-bridge-deck-v.webp",
+   "w": 327,
+   "h": 476
+  },
+  "tc-bridge-rail-h": {
+   "file": "sprites/tc-bridge-rail-h.webp",
+   "w": 497,
+   "h": 183
+  },
+  "tc-bridge-rail-v": {
+   "file": "sprites/tc-bridge-rail-v.webp",
+   "w": 91,
+   "h": 477
+  },
+  "tc-bridge-post": {
+   "file": "sprites/tc-bridge-post.webp",
+   "w": 224,
+   "h": 386
   }
  },
  "anims": {
@@ -1946,6 +2185,41 @@
    "fps": 5.0,
    "fw": 182,
    "fh": 175
+  },
+  "tc-waterfall": {
+   "file": "anim/tc-waterfall.webp",
+   "n": 6,
+   "fps": 6.0,
+   "fw": 212,
+   "fh": 183
+  },
+  "tc-pond-anim": {
+   "file": "anim/tc-pond-anim.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 227,
+   "fh": 140
+  },
+  "tc-crystal-glow": {
+   "file": "anim/tc-crystal-glow.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 184,
+   "fh": 168
+  },
+  "tc-rune": {
+   "file": "anim/tc-rune.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 212,
+   "fh": 134
+  },
+  "tc-bubbles": {
+   "file": "anim/tc-bubbles.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 183,
+   "fh": 164
   }
  }
 }
