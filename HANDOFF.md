@@ -65,3 +65,8 @@ rich saturated colours, light from top left. Scale: a house door about 1.3 units
 - Locations (`world/locations/frost.ts`, derived from the Grove layouts like sand.ts): snowdrift-village, pinefrost-pass, glasslake-basin (plateau + frozen lakes), crystal-cavern (carve, freezing pool + bridge, sealed portal to Tidewhisper Coast).
 - Themes `frost` / `frost-cave` in story.ts (`frostKinds`, `FROST_SHARED`, `fg-*` SCALE incl. `fg-bridge-*`, `BRP.fg` bridge params, ANIM_K). Encounter backdrops `frost`, `frostcave`. Art `fg-*`; plan/prompts `docs/WORLD4_FROSTGLASS_PEAKS.md`.
 - Anim glow and sprite fringes were recoloured pink to icy blue after cutting.
+
+## World 5: Tidewhisper Coast (built)
+- Locations (`world/locations/coast.ts`, derived from the Frost/Grove layouts): pearl-harbor, driftwood-beach, coral-lagoon (plateau + lagoons), sunken-grotto (carve, pool + bridge, sealed portal to Skyspire Crown).
+- Themes `coast` / `coast-cave` (`coastKinds`, `COAST_SHARED`, `tc-*` SCALE incl. `tc-bridge-*`, `BRP.tc`, ANIM_K); encounter backdrops `coast`, `grotto`; art `tc-*`; plan `docs/WORLD5_TIDEWHISPER_COAST.md`.
+- Bridge deck sheets had corner posts, so tile windows sit between them (deck-h sx117/sw268, deck-v sy112/sh230).

@@ -53,3 +53,11 @@
 .mq-scene-frostcave .mq-scene-ground::before { background: linear-gradient(rgba(150,225,255,.25), transparent); }
 .mq-scene-frostcave .mq-scene-ground::after { background: radial-gradient(ellipse at 50% 35%, transparent 35%, rgba(0,10,40,.6) 100%); }
 .mq-scene-frostcave .mq-scene-sun { background: radial-gradient(ellipse at center, rgba(120,210,255,.38), transparent 68%); }
+
+/* Tidewhisper Coast backdrops */
+.mq-scene-coast .mq-scene-ground { box-shadow: 0 -10px 24px rgba(255,240,180,.3); }
+.mq-scene-coast .mq-scene-ground::after { background: radial-gradient(ellipse at 50% 35%, transparent 40%, rgba(20,70,90,.3) 100%); }
+.mq-scene-grotto .mq-scene-ground { box-shadow: 0 -10px 26px rgba(90,220,240,.35); }
+.mq-scene-grotto .mq-scene-ground::before { background: linear-gradient(rgba(130,235,250,.22), transparent); }
+.mq-scene-grotto .mq-scene-ground::after { background: radial-gradient(ellipse at 50% 35%, transparent 35%, rgba(0,10,20,.6) 100%); }
+.mq-scene-grotto .mq-scene-sun { background: radial-gradient(ellipse at center, rgba(110,230,250,.38), transparent 68%); }

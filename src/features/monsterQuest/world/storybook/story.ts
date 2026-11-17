@@ -71,9 +71,17 @@ Object.assign(SCALE, {
   'fg-totem': 0.8, 'fg-stairs': 0.8, 'fg-cave-door': 0.95, 'fg-lantern': 0.66, 'fg-well': 0.75, 'fg-chest': 0.3,
   'fg-bridge-deck-h': 1, 'fg-bridge-deck-v': 1, 'fg-bridge-rail-h': 1, 'fg-bridge-rail-v': 1, 'fg-bridge-post': 1,
 });
-const ANIM_K: Record<string, number> = { 'fg-waterfall': 1.35, 'fg-pond-anim': 1.2, 'fg-crystal-glow': 1.0, 'fg-rune': 0.9, 'fg-snow-fall': 1.4, 'sr-waterfall': 1.3, 'sr-pond-anim': 1.15, 'sr-crystal-glow': 0.95, 'sr-rune': 0.95, 'sr-dust': 1.35, 'gr-waterfall': 1.25, 'gr-pond': 1.1, 'gr-crystal-glow': 0.9, 'gr-rune': 0.9, 'gr-fireflies': 1.3, 'em-lavafall': 1.88, 'em-crystal': 0.6, 'em-lava': 1, 'em-rune': 0.6, fountain: 0.86, portal: 0.75, campfire: 0.3, brazier: 0.32, torch: 0.36, 'mv-waterfall': 0.7, 'mv-fireflies': 0.55, 'mv-mushroom': 0.7, 'mv-mushroom2': 0.7, 'mv-bluebell': 0.55 };
+Object.assign(SCALE, {
+  // Tidewhisper Coast ('coast' themes)
+  'tc-palm': 0.92, 'tc-palm2': 0.9, 'tc-palm3': 0.9, 'tc-bush': 0.6, 'tc-seagrass': 0.55, 'tc-flowers': 0.5, 'tc-boulder': 0.72, 'tc-rocks': 0.7, 'tc-log': 0.65,
+  'tc-sandcastle': 0.5, 'tc-pond': 0.8, 'tc-spire': 0.85, 'tc-crystal': 0.6, 'tc-crates': 0.55, 'tc-stump': 0.5, 'tc-boards': 0.55,
+  'tc-cottage': 1.0, 'tc-cottage2': 1.0, 'tc-hut': 1.0, 'tc-tent': 1.0, 'tc-stall': 0.95, 'tc-arch': 0.9, 'tc-pillar': 0.75, 'tc-wall': 0.8, 'tc-gull': 0.8, 'tc-altar': 0.85,
+  'tc-totem': 0.8, 'tc-stairs': 0.8, 'tc-cave-door': 0.95, 'tc-lantern': 0.68, 'tc-well': 0.78, 'tc-chest': 0.3,
+  'tc-bridge-deck-h': 1, 'tc-bridge-deck-v': 1, 'tc-bridge-rail-h': 1, 'tc-bridge-rail-v': 1, 'tc-bridge-post': 1,
+});
+const ANIM_K: Record<string, number> = { 'tc-waterfall': 1.3, 'tc-pond-anim': 1.2, 'tc-crystal-glow': 1.0, 'tc-rune': 0.9, 'tc-bubbles': 1.4, 'fg-waterfall': 1.35, 'fg-pond-anim': 1.2, 'fg-crystal-glow': 1.0, 'fg-rune': 0.9, 'fg-snow-fall': 1.4, 'sr-waterfall': 1.3, 'sr-pond-anim': 1.15, 'sr-crystal-glow': 0.95, 'sr-rune': 0.95, 'sr-dust': 1.35, 'gr-waterfall': 1.25, 'gr-pond': 1.1, 'gr-crystal-glow': 0.9, 'gr-rune': 0.9, 'gr-fireflies': 1.3, 'em-lavafall': 1.88, 'em-crystal': 0.6, 'em-lava': 1, 'em-rune': 0.6, fountain: 0.86, portal: 0.75, campfire: 0.3, brazier: 0.32, torch: 0.36, 'mv-waterfall': 0.7, 'mv-fireflies': 0.55, 'mv-mushroom': 0.7, 'mv-mushroom2': 0.7, 'mv-bluebell': 0.55 };
 /** Each storybook place picks a theme: which ground pictures it uses and how its objects look. */
-interface Theme { edge: [string, number][]; bank: [string, number][]; name: string; ground: string[]; grass: string; patches: string[]; forest: string; path: string; plaza: string; base?: string; basePatches?: string[]; top?: string; fill?: string; rim?: string; wash?: string; zoneRgb?: string; bridge?: string; bridgeY?: number; causeway?: boolean; tuftTint?: string; lava?: string; pathRock?: string; tint?: string; objTint?: string; water?: [string, string, string]; br?: 'gr' | 'sr' | 'fg'; line?: string; shade?: string; cliff?: string; bankTex?: string; pads?: boolean; kinds?: (d: PropDef) => Km | null | undefined; sprites: (id: string) => boolean; anims: string[] }
+interface Theme { edge: [string, number][]; bank: [string, number][]; name: string; ground: string[]; grass: string; patches: string[]; forest: string; path: string; plaza: string; base?: string; basePatches?: string[]; top?: string; fill?: string; rim?: string; wash?: string; zoneRgb?: string; bridge?: string; bridgeY?: number; causeway?: boolean; tuftTint?: string; lava?: string; pathRock?: string; tint?: string; objTint?: string; water?: [string, string, string]; br?: 'gr' | 'sr' | 'fg' | 'tc'; line?: string; shade?: string; cliff?: string; bankTex?: string; pads?: boolean; kinds?: (d: PropDef) => Km | null | undefined; sprites: (id: string) => boolean; anims: string[] }
 const VILLAGE_ANIMS = ['fountain', 'portal', 'campfire', 'brazier', 'torch'];
 const VALLEY_SHARED = new Set(['tree-green', 'pine', 'tree-orange', 'rocks-small', 'rock-moss', 'rock-block', 'bush-big', 'bush-mid', 'cattail', 'wheat', 'flowers-white', 'flowers-purple', 'flowers-small', 'plant-a', 'plant-b', 'leaf-small', 'lamp-a', 'lamp-b', 'lamp-c', 'sign-green', 'sign-blue', 'chest', 'bridge-wood', 'fence-wood', 'barrel', 'crate', 'banner-post', 'mush-red', 'mush-purple', 'grass-big', 'grass-mid', 'grass-small', 'house-purple', 'house-blue', 'lilypad-a', 'lilypad-b', 'bush-flowers', 'tulips']);
 const THEMES: Record<string, Theme> = {
@@ -123,6 +131,17 @@ THEMES['frost-cave'] = { edge: [['rocks-small', 0.5], ['fg-crystal', 0.3], ['fg-
   name: 'frost-cave', ground: ['fg-rock', 'fg-cave', 'fg-flagstone', 'fg-trail', 'fg-bank', 'fg-ice'], grass: 'fg-cave', base: 'fg-rock', basePatches: ['fg-rock', 'fg-ice'], top: 'fg-cave', patches: ['fg-cave', 'fg-cave', 'fg-flagstone'], forest: 'fg-rock', path: 'fg-trail', plaza: 'fg-cave', pathRock: 'rocks-small', cliff: 'fg-cave',
   bridge: 'fg-bridge', bridgeY: 1.05, br: 'fg', zoneRgb: '110,200,255', tuftTint: 'rgba(60,110,170,.6)', kinds: frostKinds, sprites: (id) => id.startsWith('fg-') || FROST_SHARED.has(id), anims: ['fg-waterfall', 'fg-crystal-glow', 'fg-rune', 'fg-snow-fall', 'torch'],
   fill: '#0a1a33', rim: 'rgba(150,225,255,.85)', wash: 'rgba(90,170,255,.08)', tint: 'rgba(0,20,60,.2)', line: '#0e2146', shade: 'rgba(0,10,40,.45)', water: ['#08336e', '#1a6fc4', '#8fe4ff'], pads: false, bankTex: 'fg-bank' };
+
+/** Tidewhisper Coast: harbour and beaches ('coast') and the pearl-lit Sunken Grotto ('coast-cave'). */
+const COAST_SHARED = new Set(['rocks-small', 'cattail', 'bench', 'notice-board', 'crate', 'barrel', 'barrel2', 'planter', 'fence-wood', 'fence-picket', 'sign-green', 'sign-blue', 'lamp-a', 'banner-post', 'well']);
+THEMES.coast = { edge: [['tc-seagrass', 0.45], ['tc-flowers', 0.45], ['tc-bush', 0.4], ['rocks-small', 0.6]], bank: [['rocks-small', 0.6], ['tc-seagrass', 0.5], ['cattail', 0.8], ['tc-flowers', 0.4]],
+  name: 'coast', ground: ['tc-sand', 'tc-shells', 'tc-ripple', 'tc-trail', 'tc-boardwalk', 'tc-bank', 'tc-shallows', 'tc-rock'], grass: 'tc-sand', patches: ['tc-shells', 'tc-ripple', 'tc-sand'], forest: 'tc-ripple', path: 'tc-trail', plaza: 'tc-boardwalk', cliff: 'tc-rock', bankTex: 'tc-bank',
+  bridge: 'tc-bridge', bridgeY: 1.05, br: 'tc', zoneRgb: '40,200,210', tuftTint: 'rgba(120,190,90,.75)', kinds: coastKinds, sprites: (id) => id.startsWith('tc-') || COAST_SHARED.has(id), anims: ['tc-waterfall', 'tc-pond-anim', 'tc-crystal-glow', 'tc-bubbles', 'campfire', 'torch'],
+  wash: 'rgba(255,235,170,.07)', rim: 'rgba(255,248,215,.85)', line: '#3d4a52', shade: 'rgba(30,60,80,.28)', water: ['#0fa3c4', '#2fd0d6', '#b8f7ee'], pads: false };
+THEMES['coast-cave'] = { edge: [['rocks-small', 0.5], ['tc-crystal', 0.3], ['tc-seagrass', 0.3]], bank: [['rocks-small', 0.5], ['tc-crystal', 0.3]],
+  name: 'coast-cave', ground: ['tc-cave', 'tc-rock', 'tc-boardwalk', 'tc-trail', 'tc-bank', 'tc-shallows'], grass: 'tc-cave', base: 'tc-cave', basePatches: ['tc-cave', 'tc-rock'], top: 'tc-rock', patches: ['tc-rock', 'tc-rock', 'tc-cave'], forest: 'tc-cave', path: 'tc-boardwalk', plaza: 'tc-rock', pathRock: 'rocks-small', cliff: 'tc-cave',
+  bridge: 'tc-bridge', bridgeY: 1.05, br: 'tc', zoneRgb: '60,220,230', tuftTint: 'rgba(40,110,110,.6)', kinds: coastKinds, sprites: (id) => id.startsWith('tc-') || COAST_SHARED.has(id), anims: ['tc-waterfall', 'tc-crystal-glow', 'tc-rune', 'tc-bubbles', 'torch'],
+  fill: '#071a24', rim: 'rgba(130,240,255,.85)', wash: 'rgba(60,200,230,.08)', tint: 'rgba(0,25,45,.22)', line: '#0a2230', shade: 'rgba(0,12,24,.45)', water: ['#05466e', '#0f8fc0', '#8ff0ff'], pads: false, bankTex: 'tc-bank' };
 let theme: Theme = THEMES.village;
 const pick = (a: string[], d: PropDef) => a[Math.abs(d.v ?? 0) % a.length];
 
@@ -185,6 +204,50 @@ function emberKinds(d: PropDef): Km | null | undefined {
     case 'barrel': return { id: 'em-barrel', fp: 'small', foot: 0.92, shadow: [0.42, 0.1] };
     case 'crate': return { id: 'em-crate', fp: 'small', foot: 0.9, shadow: [0.45, 0.1] };
     case 'sign': return { id: ruin ? 'em-sign' : 'em-sign2', fp: 'none', foot: 0.97 };
+    default: return undefined;
+  }
+}
+/** Tidewhisper Coast: palms, coral and stilt cottages; in the grotto the trees become coral spires. */
+function coastKinds(d: PropDef): Km | null | undefined {
+  const cave = theme.name === 'coast-cave';
+  const glow = (a: number) => ({ y: 0.6, r: 90, c: '#7fe8ff', a });
+  switch (d.kind) {
+    case 'ashTree': return cave ? { id: 'tc-spire', fp: 'rock', canopy: true, foot: 0.93, shadow: [0.4, 0.1], glow: glow(0.2) }
+      : { id: pick(['tc-palm', 'tc-palm2', 'tc-palm', 'tc-palm3', 'tc-palm', 'tc-palm2', 'tc-palm', 'tc-palm3'], d), fp: 'tree', canopy: true, sway: 0.01, foot: 0.92, shadow: [0.36, 0.1] };
+    case 'cactus': return { id: 'tc-sandcastle', fp: 'small', foot: 0.9, shadow: [0.4, 0.09] };
+    case 'mushroom': return { id: cave ? 'tc-crystal' : pick(['tc-crates', 'tc-stump', 'tc-crates'], d), fp: 'small', foot: 0.94, shadow: [0.4, 0.1] };
+    case 'rock': case 'boulder': return { id: pick(['tc-boulder', 'tc-rocks', 'tc-boulder'], d), fp: 'rock', foot: 0.92, shadow: [0.42, 0.1] };
+    case 'bush': return { id: pick(['tc-bush', 'tc-seagrass', 'tc-bush'], d), fp: 'bush', sway: 0.01, foot: 0.93, shadow: [0.42, 0.09] };
+    case 'fireCrystal': case 'iceCrystal': return (d.v ?? 0) % 2 === 0
+      ? { anim: 'tc-crystal-glow', fp: 'crystal', foot: 0.93, shadow: [0.4, 0.1], glow: glow(0.4) }
+      : { id: 'tc-crystal', fp: 'crystal', foot: 0.93, shadow: [0.4, 0.1], glow: glow(0.35) };
+    case 'house': return { id: pick(['tc-cottage', 'tc-cottage2', 'tc-hut'], d), fp: 'house', canopy: true, foot: 0.93, shadow: [0.5, 0.07] };
+    case 'tent': return { id: 'tc-tent', fp: 'house', canopy: true, foot: 0.93, shadow: [0.5, 0.07] };
+    case 'stumpHouse': case 'hollowTree': return { id: 'tc-hut', fp: 'house', canopy: true, foot: 0.93, shadow: [0.45, 0.08] };
+    case 'treehouse': return { id: 'tc-cottage', fp: 'house', canopy: true, foot: 0.93, shadow: [0.5, 0.07] };
+    case 'stall': return { id: 'tc-stall', fp: 'stall', canopy: true, foot: 0.95, shadow: [0.46, 0.08] };
+    case 'lantern': case 'mushLamp': case 'torch': case 'brazier': return { id: 'tc-lantern', fp: 'lamp', foot: 0.97, shadow: [0.5, 0.1], glow: { y: 0.62, r: 95, c: cave ? '#9fe8ff' : '#ffcf6a', a: 0.5 } };
+    case 'chest': return { id: 'tc-chest', fp: 'none', foot: 0.95 };
+    case 'flowers': return { id: pick(['tc-flowers', 'tc-seagrass', 'tc-flowers'], d), fp: 'none', sway: 0.03, foot: 0.95 };
+    case 'plant': return { id: pick(['tc-seagrass', 'tc-flowers'], d), fp: 'none', sway: 0.03, foot: 0.95 };
+    case 'statue': return { id: 'tc-gull', fp: 'round', canopy: true, foot: 0.93, shadow: [0.4, 0.09], glow: glow(0.15) };
+    case 'altar': return { id: 'tc-altar', fp: 'round', foot: 0.9, shadow: [0.42, 0.09], glow: glow(0.45) };
+    case 'runeStone': return { id: 'tc-altar', sOverride: 0.62, fp: 'none', foot: 0.9, glow: glow(0.45) };
+    case 'pillar': case 'archPost': return { id: 'tc-pillar', fp: 'post', foot: 0.96, shadow: [0.45, 0.1] };
+    case 'brokenPillar': return { id: 'tc-pillar', sOverride: 0.78, fp: 'post', foot: 0.96, shadow: [0.45, 0.1] };
+    case 'archLintel': return null;
+    case 'wall': return { id: 'tc-wall', fp: 'none', foot: 0.92, len: true };
+    case 'vineArch': return { id: 'tc-arch', fp: 'none', foot: 0.95, shadow: [0.45, 0.1] };
+    case 'totem': return { id: 'tc-totem', fp: 'post', foot: 0.96, shadow: [0.45, 0.1] };
+    case 'stairs': return { id: 'tc-stairs', fp: 'none', foot: 0.94 };
+    case 'rootArch': return { id: 'tc-cave-door', fp: 'none', foot: 0.93, canopy: true };
+    case 'log': case 'bones': return { id: 'tc-log', fp: 'small', foot: 0.85, shadow: [0.42, 0.1] };
+    case 'stump': case 'jar': return { id: 'tc-stump', fp: 'small', foot: 0.9, shadow: [0.42, 0.1] };
+    case 'well': return { id: 'tc-well', fp: 'round', canopy: true, foot: 0.94, shadow: [0.42, 0.09] };
+    case 'stalagmite': case 'spire': return { id: 'tc-spire', fp: 'rock', foot: 0.93, shadow: [0.42, 0.1], glow: glow(0.15) };
+    case 'waterfall': return { anim: 'tc-waterfall', fp: 'round', foot: 0.9, shadow: [0.4, 0.08] };
+    case 'pond': case 'fountain': return { anim: 'tc-pond-anim', fp: 'round', foot: 0.8, shadow: [0.4, 0.08] };
+    case 'fireflies': return { anim: 'tc-bubbles', fp: 'none', foot: 0.5, glow: glow(0.2) };
     default: return undefined;
   }
 }
@@ -587,7 +650,7 @@ const deckGeom = (b: { a: Pt; b: Pt; width: number }) => {
     : { vertical, hw, x0: Math.min(b.a[0], b.b[0]) - ext, x1: Math.max(b.a[0], b.b[0]) + ext, y0: cy - hw, y1: cy + hw, cx, cy };
 };
 /** Painted bridge pieces (gr-bridge-*): source rects (in sprite px) that repeat seamlessly, from the generated sheet. */
-const BRP: Record<string, typeof BRG0> = { fg: { dh: { sx: 80.7, sw: 274.8 }, dv: { sy: 81, sh: 244 }, rh: { sx: 139, sw: 217 }, rv: { sy: 119, sh: 161 }, k: 0.58, kv: 0.37, kr: 0.3, kp: 0.135 }, sr: { dh: { sx: 40, sw: 401 }, dv: { sy: 60, sh: 395 }, rh: { sx: 142, sw: 228.5 }, rv: { sy: 107, sh: 164 }, k: 0.6, kv: 0.4, kr: 0.285, kp: 0.15 } };
+const BRP: Record<string, typeof BRG0> = { tc: { dh: { sx: 117, sw: 268.4 }, dv: { sy: 112, sh: 230 }, rh: { sx: 142.5, sw: 211.5 }, rv: { sy: 132, sh: 160 }, k: 0.44, kv: 0.335, kr: 0.307, kp: 0.165 }, fg: { dh: { sx: 80.7, sw: 274.8 }, dv: { sy: 81, sh: 244 }, rh: { sx: 139, sw: 217 }, rv: { sy: 119, sh: 161 }, k: 0.58, kv: 0.37, kr: 0.3, kp: 0.135 }, sr: { dh: { sx: 40, sw: 401 }, dv: { sy: 60, sh: 395 }, rh: { sx: 142, sw: 228.5 }, rv: { sy: 107, sh: 164 }, k: 0.6, kv: 0.4, kr: 0.285, kp: 0.15 } };
 const BRG0 = { dh: { sx: 0, sw: 1 }, dv: { sy: 0, sh: 1 }, rh: { sx: 0, sw: 1 }, rv: { sy: 0, sh: 1 }, k: 0, kv: 0, kr: 0, kp: 0 };
 let BR = { dh: { sx: 27, sw: 445 }, dv: { sy: 40, sh: 425 }, rh: { sx: 138, sw: 230.5 }, rv: { sy: 96, sh: 157.5 }, k: 0.6, kv: 0.43, kr: 0.3, kp: 0.2 };
 const BRG = BR;
@@ -640,7 +703,7 @@ function ropeBridge(c: C, b: { a: Pt; b: Pt; width: number }) {
 }
 /** The near rail of a left-right bridge is drawn after the explorer (the world sorts it by its y), so the explorer stands inside the railings. */
 function bridgeRails(bridges: { a: Pt; b: Pt; width: number }[]): { y: number; draw: (c: C) => void }[] {
-  if (!theme.name.startsWith('grove') && !theme.name.startsWith('sand') && !theme.name.startsWith('frost')) return [];
+  if (!theme.name.startsWith('grove') && !theme.name.startsWith('sand') && !theme.name.startsWith('frost') && !theme.name.startsWith('coast')) return [];
   const out: { y: number; draw: (c: C) => void }[] = [];
   for (const br of bridges) {
     const g = deckGeom(br); if (g.vertical) continue;
@@ -656,7 +719,7 @@ function bridgeRails(bridges: { a: Pt; b: Pt; width: number }[]): { y: number; d
 }
 function bridge(c: C, b: { a: Pt; b: Pt; width: number }) {
   if (theme.causeway) { causeway(c, b); return; }
-  if (theme.name.startsWith('grove') || theme.name.startsWith('sand') || theme.name.startsWith('frost')) { ropeBridge(c, b); return; }
+  if (theme.name.startsWith('grove') || theme.name.startsWith('sand') || theme.name.startsWith('frost') || theme.name.startsWith('coast')) { ropeBridge(c, b); return; }
   const img = sImg(theme.bridge ?? 'bridge-wood'); if (!img) return;
   const [ax, ay] = b.a, [bx, by] = b.b, len = Math.hypot(bx - ax, by - ay), ang = Math.atan2(by - ay, bx - ax), sx = (len + 90) / img.naturalWidth, sy = sx * (theme.bridgeY ?? 1.1);
   c.save(); c.translate((ax + bx) / 2, (ay + by) / 2 + 4); c.rotate(ang);

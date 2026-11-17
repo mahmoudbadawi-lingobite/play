@@ -5,7 +5,7 @@ import './scene.css';
  * Painted backdrops for wild encounters and arena battles, built from the same pictures as the world
  * (public/monster-quest/world/). Everything is sized from the box it sits in (--u = 1% of its width, or a bit more in tall boxes), so it fits a phone, a tablet or the arena panel.
  */
-export type SceneKind = 'village' | 'valley' | 'arena' | 'ruins' | 'caverns' | 'grove' | 'roots' | 'sand' | 'tomb' | 'frost' | 'frostcave';
+export type SceneKind = 'village' | 'valley' | 'arena' | 'ruins' | 'caverns' | 'grove' | 'roots' | 'sand' | 'tomb' | 'frost' | 'frostcave' | 'coast' | 'grotto';
 const BASE = `${import.meta.env.BASE_URL}monster-quest/world/`;
 interface Item { id: string; x: number; b: number; w: number; z?: number; flip?: boolean; sway?: number; delay?: number }
 interface Strip { id: string; x: number; b: number; w: number; fw: number; fh: number; n: number; fps: number; z?: number }
@@ -129,7 +129,29 @@ const FROSTCAVE: Def = {
     { id: 'fg-boulder', x: 88, b: 0, w: 12, z: 4 }, { id: 'fg-crystal', x: 101, b: -2, w: 12, z: 4 },
   ],
 };
-const DEFS: Record<SceneKind, Def> = { village: VILLAGE, valley: VALLEY, arena: ARENA, ruins: RUINS, caverns: CAVERNS, grove: GROVE, roots: ROOTS, sand: SAND, tomb: TOMB, frost: FROST, frostcave: FROSTCAVE };
+const COAST: Def = {
+  sky: 'linear-gradient(180deg,#7fd8f5 0%,#d8f4ff 40%,#8fe0e0 58%)', ground: 'tc-sand', groundK: 24, groundTint: 'rgba(255,225,150,.08)', fx: 'pollen',
+  strips: [{ id: 'tc-bubbles', x: 24, b: 24, w: 10, fw: 183, fh: 164, n: 6, fps: 5, z: 5 }, { id: 'tc-bubbles', x: 76, b: 30, w: 9, fw: 183, fh: 164, n: 6, fps: 4, z: 5 }],
+  items: [
+    { id: 'tc-palm', x: 5, b: 40, w: 15, z: 1 }, { id: 'tc-palm2', x: 20, b: 41, w: 14, z: 1 }, { id: 'tc-palm3', x: 34, b: 40, w: 14, z: 1 }, { id: 'tc-arch', x: 50, b: 41, w: 15, z: 1 },
+    { id: 'tc-palm', x: 65, b: 40, w: 15, z: 1, flip: true }, { id: 'tc-palm2', x: 79, b: 41, w: 14, z: 1 }, { id: 'tc-palm3', x: 93, b: 40, w: 15, z: 1, flip: true },
+    { id: 'tc-cottage', x: 13, b: 35, w: 16, z: 2 }, { id: 'tc-tent', x: 86, b: 35, w: 15, z: 2 }, { id: 'tc-lantern', x: 28, b: 31, w: 4.5, z: 2 },
+    { id: 'tc-bush', x: 2, b: -1, w: 14, z: 4 }, { id: 'tc-flowers', x: 18, b: 1, w: 9, z: 4, sway: 3 }, { id: 'tc-seagrass', x: 33, b: -3, w: 13, z: 4, sway: 2 },
+    { id: 'tc-sandcastle', x: 64, b: 2, w: 10, z: 4 }, { id: 'tc-boards', x: 76, b: 2, w: 8, z: 4 }, { id: 'tc-boulder', x: 90, b: 1, w: 11, z: 4 }, { id: 'tc-bush', x: 104, b: -3, w: 14, z: 4, flip: true },
+  ],
+};
+const GROTTO: Def = {
+  sky: 'linear-gradient(180deg,#02080f 0%,#07303f 44%,#14788c 60%,#9ff0ff 67%)', ground: 'tc-cave', groundK: 26, groundTint: 'rgba(0,30,50,.16)', fx: 'fireflies',
+  strips: [{ id: 'tc-crystal-glow', x: 26, b: 30, w: 8, fw: 184, fh: 168, n: 6, fps: 5, z: 3 }, { id: 'tc-crystal-glow', x: 72, b: 30, w: 8, fw: 184, fh: 168, n: 6, fps: 5, z: 3 },
+    { id: 'tc-bubbles', x: 45, b: 22, w: 10, fw: 183, fh: 164, n: 6, fps: 4, z: 5 }],
+  items: [
+    { id: 'tc-spire', x: 6, b: 40, w: 11, z: 1 }, { id: 'tc-pillar', x: 20, b: 41, w: 9, z: 1 }, { id: 'tc-spire', x: 36, b: 40, w: 11, z: 1, flip: true }, { id: 'tc-cave-door', x: 52, b: 41, w: 19, z: 1 },
+    { id: 'tc-spire', x: 68, b: 40, w: 11, z: 1, flip: true }, { id: 'tc-pillar', x: 82, b: 41, w: 9, z: 1 }, { id: 'tc-spire', x: 95, b: 40, w: 11, z: 1 },
+    { id: 'tc-crystal', x: 6, b: 1, w: 10, z: 4 }, { id: 'tc-rocks', x: 21, b: 1, w: 9, z: 4 }, { id: 'tc-crystal', x: 76, b: 2, w: 9, z: 4, flip: true },
+    { id: 'tc-boulder', x: 88, b: 0, w: 12, z: 4 }, { id: 'tc-crystal', x: 101, b: -2, w: 12, z: 4 },
+  ],
+};
+const DEFS: Record<SceneKind, Def> = { village: VILLAGE, valley: VALLEY, arena: ARENA, ruins: RUINS, caverns: CAVERNS, grove: GROVE, roots: ROOTS, sand: SAND, tomb: TOMB, frost: FROST, frostcave: FROSTCAVE, coast: COAST, grotto: GROTTO };
 const dots = Array.from({ length: 16 }, (_, i) => ({ x: (i * 37 + 11) % 100, y: 8 + ((i * 53 + 7) % 70), d: 4 + (i % 5) * 1.3, s: 0.5 + (i % 4) * 0.25 }));
 
 export function EncounterScene({ kind }: { kind: SceneKind }) {
