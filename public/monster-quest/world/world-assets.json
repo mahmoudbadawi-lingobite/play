@@ -161,6 +161,60 @@
    "w": 412,
    "h": 412,
    "seamless": true
+  },
+  "gr-grass": {
+   "file": "ground/gr-grass.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "gr-clover": {
+   "file": "ground/gr-clover.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "gr-moss": {
+   "file": "ground/gr-moss.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "gr-leaves": {
+   "file": "ground/gr-leaves.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "gr-dirt": {
+   "file": "ground/gr-dirt.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "gr-flagstone": {
+   "file": "ground/gr-flagstone.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "gr-bank": {
+   "file": "ground/gr-bank.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "gr-roots": {
+   "file": "ground/gr-roots.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "gr-cave": {
+   "file": "ground/gr-cave.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
   }
  },
  "sprites": {
@@ -1003,6 +1057,166 @@
    "file": "sprites/em-sign2.webp",
    "w": 192,
    "h": 263
+  },
+  "gr-oak": {
+   "file": "sprites/gr-oak.webp",
+   "w": 303,
+   "h": 301
+  },
+  "gr-birch": {
+   "file": "sprites/gr-birch.webp",
+   "w": 246,
+   "h": 298
+  },
+  "gr-willow": {
+   "file": "sprites/gr-willow.webp",
+   "w": 279,
+   "h": 299
+  },
+  "gr-hollow-tree": {
+   "file": "sprites/gr-hollow-tree.webp",
+   "w": 234,
+   "h": 285
+  },
+  "gr-fern-big": {
+   "file": "sprites/gr-fern-big.webp",
+   "w": 303,
+   "h": 255
+  },
+  "gr-bigleaf": {
+   "file": "sprites/gr-bigleaf.webp",
+   "w": 263,
+   "h": 258
+  },
+  "gr-foxglove": {
+   "file": "sprites/gr-foxglove.webp",
+   "w": 217,
+   "h": 280
+  },
+  "gr-daisies": {
+   "file": "sprites/gr-daisies.webp",
+   "w": 276,
+   "h": 205
+  },
+  "gr-log": {
+   "file": "sprites/gr-log.webp",
+   "w": 291,
+   "h": 194
+  },
+  "gr-boulder": {
+   "file": "sprites/gr-boulder.webp",
+   "w": 258,
+   "h": 227
+  },
+  "gr-ivy": {
+   "file": "sprites/gr-ivy.webp",
+   "w": 289,
+   "h": 266
+  },
+  "gr-glowcaps": {
+   "file": "sprites/gr-glowcaps.webp",
+   "w": 227,
+   "h": 222
+  },
+  "gr-stump": {
+   "file": "sprites/gr-stump.webp",
+   "w": 274,
+   "h": 306
+  },
+  "gr-root-a": {
+   "file": "sprites/gr-root-a.webp",
+   "w": 252,
+   "h": 303
+  },
+  "gr-root-b": {
+   "file": "sprites/gr-root-b.webp",
+   "w": 270,
+   "h": 294
+  },
+  "gr-crystal": {
+   "file": "sprites/gr-crystal.webp",
+   "w": 230,
+   "h": 277
+  },
+  "gr-treehouse": {
+   "file": "sprites/gr-treehouse.webp",
+   "w": 296,
+   "h": 306
+  },
+  "gr-burrow": {
+   "file": "sprites/gr-burrow.webp",
+   "w": 271,
+   "h": 235
+  },
+  "gr-burrow2": {
+   "file": "sprites/gr-burrow2.webp",
+   "w": 274,
+   "h": 232
+  },
+  "gr-cottage": {
+   "file": "sprites/gr-cottage.webp",
+   "w": 278,
+   "h": 281
+  },
+  "gr-bridge": {
+   "file": "sprites/gr-bridge.webp",
+   "w": 311,
+   "h": 154
+  },
+  "gr-arch": {
+   "file": "sprites/gr-arch.webp",
+   "w": 269,
+   "h": 245
+  },
+  "gr-pillar": {
+   "file": "sprites/gr-pillar.webp",
+   "w": 154,
+   "h": 263
+  },
+  "gr-wall": {
+   "file": "sprites/gr-wall.webp",
+   "w": 292,
+   "h": 203
+  },
+  "gr-owl": {
+   "file": "sprites/gr-owl.webp",
+   "w": 189,
+   "h": 276
+  },
+  "gr-altar": {
+   "file": "sprites/gr-altar.webp",
+   "w": 286,
+   "h": 249
+  },
+  "gr-totem": {
+   "file": "sprites/gr-totem.webp",
+   "w": 184,
+   "h": 288
+  },
+  "gr-stairs": {
+   "file": "sprites/gr-stairs.webp",
+   "w": 293,
+   "h": 238
+  },
+  "gr-root-arch": {
+   "file": "sprites/gr-root-arch.webp",
+   "w": 307,
+   "h": 290
+  },
+  "gr-lantern": {
+   "file": "sprites/gr-lantern.webp",
+   "w": 154,
+   "h": 295
+  },
+  "gr-stall": {
+   "file": "sprites/gr-stall.webp",
+   "w": 278,
+   "h": 269
+  },
+  "gr-chest": {
+   "file": "sprites/gr-chest.webp",
+   "w": 265,
+   "h": 221
   }
  },
  "anims": {
@@ -1124,6 +1338,41 @@
    "fps": 5,
    "fw": 209,
    "fh": 143
+  },
+  "gr-waterfall": {
+   "file": "anim/gr-waterfall.webp",
+   "n": 6,
+   "fps": 6.0,
+   "fw": 210,
+   "fh": 185
+  },
+  "gr-pond": {
+   "file": "anim/gr-pond.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 229,
+   "fh": 139
+  },
+  "gr-crystal-glow": {
+   "file": "anim/gr-crystal-glow.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 199,
+   "fh": 181
+  },
+  "gr-rune": {
+   "file": "anim/gr-rune.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 221,
+   "fh": 134
+  },
+  "gr-fireflies": {
+   "file": "anim/gr-fireflies.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 204,
+   "fh": 145
   }
  }
 }

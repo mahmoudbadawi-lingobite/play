@@ -29,3 +29,11 @@
 .mq-scene-caverns .mq-scene-ground::after { background: radial-gradient(ellipse at 50% 35%, transparent 35%, rgba(10,0,16,.55) 100%); }
 .mq-scene-ruins .mq-scene-sun { background: radial-gradient(ellipse at center, rgba(255,210,140,.55), transparent 68%); }
 .mq-scene-caverns .mq-scene-sun { background: radial-gradient(ellipse at center, rgba(255,120,50,.4), transparent 68%); }
+
+/* Emerald Grove backdrops */
+.mq-scene-grove .mq-scene-ground { box-shadow: 0 -10px 24px rgba(220,255,160,.2); }
+.mq-scene-grove .mq-scene-ground::after { background: radial-gradient(ellipse at 50% 35%, transparent 40%, rgba(0,40,10,.36) 100%); }
+.mq-scene-roots .mq-scene-ground { box-shadow: 0 -10px 26px rgba(90,255,170,.28); }
+.mq-scene-roots .mq-scene-ground::before { background: linear-gradient(rgba(150,255,200,.25), transparent); }
+.mq-scene-roots .mq-scene-ground::after { background: radial-gradient(ellipse at 50% 35%, transparent 35%, rgba(0,16,12,.58) 100%); }
+.mq-scene-roots .mq-scene-sun { background: radial-gradient(ellipse at center, rgba(120,255,190,.38), transparent 68%); }
