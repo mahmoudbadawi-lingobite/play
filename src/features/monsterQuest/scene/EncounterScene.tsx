@@ -5,7 +5,7 @@ import './scene.css';
  * Painted backdrops for wild encounters and arena battles, built from the same pictures as the world
  * (public/monster-quest/world/). Everything is sized from the box it sits in (--u = 1% of its width, or a bit more in tall boxes), so it fits a phone, a tablet or the arena panel.
  */
-export type SceneKind = 'village' | 'valley' | 'arena' | 'ruins' | 'caverns' | 'grove' | 'roots';
+export type SceneKind = 'village' | 'valley' | 'arena' | 'ruins' | 'caverns' | 'grove' | 'roots' | 'sand' | 'tomb';
 const BASE = `${import.meta.env.BASE_URL}monster-quest/world/`;
 interface Item { id: string; x: number; b: number; w: number; z?: number; flip?: boolean; sway?: number; delay?: number }
 interface Strip { id: string; x: number; b: number; w: number; fw: number; fh: number; n: number; fps: number; z?: number }
@@ -84,7 +84,30 @@ const ROOTS: Def = {
     { id: 'gr-boulder', x: 88, b: 0, w: 12, z: 4 }, { id: 'gr-crystal', x: 101, b: -2, w: 13, z: 4 },
   ],
 };
-const DEFS: Record<SceneKind, Def> = { village: VILLAGE, valley: VALLEY, arena: ARENA, ruins: RUINS, caverns: CAVERNS, grove: GROVE, roots: ROOTS };
+const SAND: Def = {
+  sky: 'linear-gradient(180deg,#7fd6f2 0%,#ffe9b0 40%,#ffcf7a 60%)', ground: 'sr-sand', groundK: 24, groundTint: 'rgba(255,200,90,.08)', fx: 'pollen',
+  strips: [{ id: 'sr-dust', x: 24, b: 24, w: 10, fw: 179, fh: 166, n: 6, fps: 5, z: 5 }, { id: 'sr-dust', x: 76, b: 30, w: 9, fw: 179, fh: 166, n: 6, fps: 4, z: 5 }],
+  items: [
+    { id: 'sr-palm', x: 5, b: 40, w: 15, z: 1 }, { id: 'sr-hoodoo', x: 20, b: 41, w: 12, z: 1 }, { id: 'sr-palm2', x: 34, b: 40, w: 14, z: 1 }, { id: 'sr-arch', x: 50, b: 41, w: 15, z: 1 },
+    { id: 'sr-palm', x: 65, b: 40, w: 15, z: 1, flip: true }, { id: 'sr-hoodoo', x: 79, b: 41, w: 12, z: 1, flip: true }, { id: 'sr-palm2', x: 93, b: 40, w: 15, z: 1 },
+    { id: 'sr-house', x: 13, b: 35, w: 16, z: 2 }, { id: 'sr-tent', x: 86, b: 35, w: 16, z: 2 }, { id: 'sr-lantern', x: 28, b: 31, w: 4.5, z: 2 },
+    { id: 'sr-saguaro', x: 2, b: -1, w: 12, z: 4, sway: 1 }, { id: 'sr-flowers', x: 18, b: 1, w: 9, z: 4, sway: 3 }, { id: 'sr-drygrass', x: 33, b: -3, w: 13, z: 4, sway: 2 },
+    { id: 'sr-bones', x: 64, b: 2, w: 10, z: 4 }, { id: 'sr-barrel-cactus', x: 76, b: 2, w: 8, z: 4 }, { id: 'sr-prickly', x: 90, b: 1, w: 11, z: 4, sway: 2 }, { id: 'sr-saguaro', x: 104, b: -3, w: 12, z: 4, flip: true },
+  ],
+};
+const TOMB: Def = {
+  sky: 'linear-gradient(180deg,#120804 0%,#3a1e0c 44%,#a8601e 60%,#ffcf70 67%)', ground: 'sr-tomb', groundK: 26, groundTint: 'rgba(60,24,0,.16)', fx: 'embers',
+  strips: [{ id: 'sr-crystal-glow', x: 26, b: 30, w: 8, fw: 180, fh: 194, n: 6, fps: 5, z: 3 }, { id: 'sr-crystal-glow', x: 72, b: 30, w: 8, fw: 180, fh: 194, n: 6, fps: 5, z: 3 },
+    { id: 'sr-dust', x: 45, b: 22, w: 10, fw: 179, fh: 166, n: 6, fps: 4, z: 5 }],
+  items: [
+    { id: 'sr-pillar', x: 6, b: 40, w: 8, z: 1 }, { id: 'sr-obelisk', x: 20, b: 41, w: 10, z: 1 }, { id: 'sr-pillar', x: 36, b: 40, w: 7, z: 1, flip: true }, { id: 'sr-tomb-door', x: 52, b: 41, w: 19, z: 1 },
+    { id: 'sr-pillar', x: 68, b: 40, w: 8, z: 1 }, { id: 'sr-obelisk', x: 82, b: 41, w: 10, z: 1, flip: true }, { id: 'sr-pillar', x: 95, b: 40, w: 8, z: 1 },
+    { id: 'sr-lantern', x: 12, b: 33, w: 5, z: 2 }, { id: 'sr-lantern', x: 90, b: 33, w: 5, z: 2 },
+    { id: 'sr-crystal', x: 6, b: 1, w: 10, z: 4 }, { id: 'sr-pots', x: 21, b: 1, w: 8, z: 4 }, { id: 'sr-bones', x: 76, b: 2, w: 10, z: 4, flip: true },
+    { id: 'sr-boulder', x: 88, b: 0, w: 12, z: 4 }, { id: 'sr-crystal', x: 101, b: -2, w: 12, z: 4 },
+  ],
+};
+const DEFS: Record<SceneKind, Def> = { village: VILLAGE, valley: VALLEY, arena: ARENA, ruins: RUINS, caverns: CAVERNS, grove: GROVE, roots: ROOTS, sand: SAND, tomb: TOMB };
 const dots = Array.from({ length: 16 }, (_, i) => ({ x: (i * 37 + 11) % 100, y: 8 + ((i * 53 + 7) % 70), d: 4 + (i % 5) * 1.3, s: 0.5 + (i % 4) * 0.25 }));
 
 export function EncounterScene({ kind }: { kind: SceneKind }) {

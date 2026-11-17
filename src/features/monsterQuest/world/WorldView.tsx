@@ -53,7 +53,7 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
         // Same server call and same modal as before. Only the zone id is mapped (see LocationDef.serverZone).
         onEncounter: async (serverZone) => {
           const enc = await api.startEncounter(serverZone), d = eng.current?.debugBaked()?.def;   // the backdrop follows the place you are standing in
-          setScene(d?.style === 'storybook' ? (d.theme === 'valley' ? 'valley' : d.theme === 'ember' ? 'ruins' : d.theme === 'ember-cave' ? 'caverns' : d.theme === 'grove' ? 'grove' : d.theme === 'grove-roots' ? 'roots' : 'village') : null); setEncounter(enc);
+          setScene(d?.style === 'storybook' ? (d.theme === 'valley' ? 'valley' : d.theme === 'ember' ? 'ruins' : d.theme === 'ember-cave' ? 'caverns' : d.theme === 'grove' ? 'grove' : d.theme === 'grove-roots' ? 'roots' : d.theme === 'sand' ? 'sand' : d.theme === 'sand-tomb' ? 'tomb' : 'village') : null); setEncounter(enc);
         },
       },
     });

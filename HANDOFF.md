@@ -53,3 +53,9 @@ rich saturated colours, light from top left. Scale: a house door about 1.3 units
 - Sheet 1: 3x3 seamless ground tiles (9 named textures).
 - Sheet 2 and 3: 4x4 object sheets (16 named objects each) on flat magenta #FF00FF.
 - Sheet 4: animation strips, 5 rows x 6 frames, identical frame size and object position in each frame (water/lava, waterfall, glowing crystal, glowing plate, particles).
+
+
+## World 3: Sandstone Reach (built)
+- Locations (`world/locations/sand.ts`, derived from the Grove layouts and re-dressed): dune-haven, whispering-dunes, sunstone-canyon (plateau + oasis + bridge), scarab-tomb (carve, quicksand pool + bridge, sealed portal to Frostglass Peaks).
+- Themes `sand` / `sand-tomb` in `storybook/story.ts` (`sandKinds`, `SAND_SHARED`, `SCALE` entries for every `sr-*` id incl. `sr-bridge-*`, per-prefix bridge params `BRP`). Theme fields `br`, `line`, `shade`, `cliff`, `bankTex`, `pads` make plateaus/lakes/bridges re-skinnable.
+- Encounter backdrops `sand` and `tomb`; art in `public/monster-quest/world/*/sr-*`; plan and prompts in `docs/WORLD3_SANDSTONE_REACH.md`.

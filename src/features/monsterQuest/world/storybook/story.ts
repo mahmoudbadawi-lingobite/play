@@ -55,9 +55,17 @@ Object.assign(SCALE, {
   'gr-treehouse': 0.95, 'gr-burrow': 1.0, 'gr-burrow2': 1.0, 'gr-cottage': 0.95, 'gr-bridge': 1, 'gr-arch': 0.9, 'gr-pillar': 0.7, 'gr-wall': 0.75,
   'gr-owl': 0.8, 'gr-altar': 0.85, 'gr-totem': 0.7, 'gr-stairs': 0.8, 'gr-root-arch': 0.95, 'gr-lantern': 0.66, 'gr-stall': 0.95, 'gr-chest': 0.3, 'gr-bridge-deck-h': 1, 'gr-bridge-deck-v': 1, 'gr-bridge-rail-h': 1, 'gr-bridge-rail-v': 1, 'gr-bridge-post': 1,
 });
-const ANIM_K: Record<string, number> = { 'gr-waterfall': 1.25, 'gr-pond': 1.1, 'gr-crystal-glow': 0.9, 'gr-rune': 0.9, 'gr-fireflies': 1.3, 'em-lavafall': 1.88, 'em-crystal': 0.6, 'em-lava': 1, 'em-rune': 0.6, fountain: 0.86, portal: 0.75, campfire: 0.3, brazier: 0.32, torch: 0.36, 'mv-waterfall': 0.7, 'mv-fireflies': 0.55, 'mv-mushroom': 0.7, 'mv-mushroom2': 0.7, 'mv-bluebell': 0.55 };
+Object.assign(SCALE, {
+  // Sandstone Reach ('sand' themes)
+  'sr-palm': 0.95, 'sr-palm2': 0.85, 'sr-barrel-cactus': 0.5, 'sr-saguaro': 0.6, 'sr-prickly': 0.55, 'sr-thorn': 0.55, 'sr-drygrass': 0.55, 'sr-flowers': 0.5,
+  'sr-boulder': 0.7, 'sr-rocks': 0.7, 'sr-deadtree': 0.8, 'sr-bones': 0.65, 'sr-pond': 0.8, 'sr-hoodoo': 0.8, 'sr-crystal': 0.55, 'sr-pots': 0.45,
+  'sr-house': 0.98, 'sr-house2': 1.0, 'sr-hut': 0.95, 'sr-tent': 1.0, 'sr-stall': 0.95, 'sr-arch': 0.9, 'sr-pillar': 0.7, 'sr-wall': 0.75, 'sr-cat': 0.8, 'sr-altar': 0.85,
+  'sr-obelisk': 0.75, 'sr-stairs': 0.8, 'sr-tomb-door': 0.95, 'sr-lantern': 0.66, 'sr-well': 0.75, 'sr-chest': 0.3,
+  'sr-bridge-deck-h': 1, 'sr-bridge-deck-v': 1, 'sr-bridge-rail-h': 1, 'sr-bridge-rail-v': 1, 'sr-bridge-post': 1,
+});
+const ANIM_K: Record<string, number> = { 'sr-waterfall': 1.3, 'sr-pond-anim': 1.15, 'sr-crystal-glow': 0.95, 'sr-rune': 0.95, 'sr-dust': 1.35, 'gr-waterfall': 1.25, 'gr-pond': 1.1, 'gr-crystal-glow': 0.9, 'gr-rune': 0.9, 'gr-fireflies': 1.3, 'em-lavafall': 1.88, 'em-crystal': 0.6, 'em-lava': 1, 'em-rune': 0.6, fountain: 0.86, portal: 0.75, campfire: 0.3, brazier: 0.32, torch: 0.36, 'mv-waterfall': 0.7, 'mv-fireflies': 0.55, 'mv-mushroom': 0.7, 'mv-mushroom2': 0.7, 'mv-bluebell': 0.55 };
 /** Each storybook place picks a theme: which ground pictures it uses and how its objects look. */
-interface Theme { edge: [string, number][]; bank: [string, number][]; name: string; ground: string[]; grass: string; patches: string[]; forest: string; path: string; plaza: string; base?: string; basePatches?: string[]; top?: string; fill?: string; rim?: string; wash?: string; zoneRgb?: string; bridge?: string; bridgeY?: number; causeway?: boolean; tuftTint?: string; lava?: string; pathRock?: string; tint?: string; objTint?: string; water?: [string, string, string]; kinds?: (d: PropDef) => Km | null | undefined; sprites: (id: string) => boolean; anims: string[] }
+interface Theme { edge: [string, number][]; bank: [string, number][]; name: string; ground: string[]; grass: string; patches: string[]; forest: string; path: string; plaza: string; base?: string; basePatches?: string[]; top?: string; fill?: string; rim?: string; wash?: string; zoneRgb?: string; bridge?: string; bridgeY?: number; causeway?: boolean; tuftTint?: string; lava?: string; pathRock?: string; tint?: string; objTint?: string; water?: [string, string, string]; br?: 'gr' | 'sr'; line?: string; shade?: string; cliff?: string; bankTex?: string; pads?: boolean; kinds?: (d: PropDef) => Km | null | undefined; sprites: (id: string) => boolean; anims: string[] }
 const VILLAGE_ANIMS = ['fountain', 'portal', 'campfire', 'brazier', 'torch'];
 const VALLEY_SHARED = new Set(['tree-green', 'pine', 'tree-orange', 'rocks-small', 'rock-moss', 'rock-block', 'bush-big', 'bush-mid', 'cattail', 'wheat', 'flowers-white', 'flowers-purple', 'flowers-small', 'plant-a', 'plant-b', 'leaf-small', 'lamp-a', 'lamp-b', 'lamp-c', 'sign-green', 'sign-blue', 'chest', 'bridge-wood', 'fence-wood', 'barrel', 'crate', 'banner-post', 'mush-red', 'mush-purple', 'grass-big', 'grass-mid', 'grass-small', 'house-purple', 'house-blue', 'lilypad-a', 'lilypad-b', 'bush-flowers', 'tulips']);
 const THEMES: Record<string, Theme> = {
@@ -85,6 +93,17 @@ THEMES['grove-roots'] = { edge: [['rocks-small', 0.5], ['gr-glowcaps', 0.3], ['g
   name: 'grove-roots', ground: ['gr-roots', 'gr-cave', 'gr-moss', 'gr-leaves', 'gr-dirt', 'gr-flagstone'], grass: 'gr-cave', base: 'gr-roots', basePatches: ['gr-roots', 'gr-leaves'], top: 'gr-cave', patches: ['gr-moss', 'gr-cave', 'gr-cave'], forest: 'gr-roots', path: 'gr-dirt', plaza: 'gr-cave', pathRock: 'rocks-small',
   bridge: 'gr-bridge', bridgeY: 1.05, zoneRgb: '70,230,120', tuftTint: 'rgba(20,90,60,.55)', kinds: groveKinds, sprites: (id) => id.startsWith('gr-') || GROVE_SHARED.has(id), anims: ['gr-waterfall', 'gr-crystal-glow', 'gr-rune', 'gr-fireflies', 'torch'],
   fill: '#17261c', rim: 'rgba(130,255,150,.75)', wash: 'rgba(90,255,150,.07)', tint: 'rgba(10,50,50,.22)', water: ['#0d6f80', '#1fa8a0', '#8ff5d0'] };
+
+/** Sandstone Reach: oasis villages and dunes ('sand'), and the torch-lit chambers of the Scarab Tomb ('sand-tomb'). */
+const SAND_SHARED = new Set(['rocks-small', 'rock-moss', 'rock-block', 'cattail', 'wheat', 'well', 'bench', 'notice-board', 'crate', 'barrel', 'barrel2', 'planter', 'fence-wood', 'fence-picket', 'sign-green', 'sign-blue', 'chest', 'lilypad-a', 'lilypad-b', 'lamp-a', 'banner-post', 'grass-small']);
+THEMES.sand = { edge: [['sr-drygrass', 0.4], ['sr-flowers', 0.4], ['sr-thorn', 0.4], ['rocks-small', 0.6]], bank: [['rocks-small', 0.6], ['sr-drygrass', 0.4], ['cattail', 0.85], ['sr-flowers', 0.4]],
+  name: 'sand', ground: ['sr-sand', 'sr-scrub', 'sr-dune', 'sr-clay', 'sr-flagstone', 'sr-bank', 'sr-wadi', 'sr-canyon'], grass: 'sr-sand', patches: ['sr-scrub', 'sr-dune', 'sr-sand'], forest: 'sr-dune', path: 'sr-clay', plaza: 'sr-flagstone', cliff: 'sr-canyon', bankTex: 'sr-bank',
+  bridge: 'sr-bridge', bridgeY: 1.05, br: 'sr', zoneRgb: '255,170,40', tuftTint: 'rgba(205,150,50,.8)', kinds: sandKinds, sprites: (id) => id.startsWith('sr-') || SAND_SHARED.has(id), anims: ['sr-waterfall', 'sr-pond-anim', 'sr-crystal-glow', 'sr-dust', 'fountain', 'campfire', 'torch'],
+  wash: 'rgba(255,214,120,.08)', rim: 'rgba(255,232,160,.75)', line: '#6a3d18', shade: 'rgba(110,50,10,.28)', water: ['#12a0b8', '#2fc9d0', '#a6f5ea'] };
+THEMES['sand-tomb'] = { edge: [['rocks-small', 0.5], ['sr-pots', 0.3], ['sr-drygrass', 0.3]], bank: [['rocks-small', 0.5], ['sr-pots', 0.3], ['sr-bones', 0.3]],
+  name: 'sand-tomb', ground: ['sr-canyon', 'sr-tomb', 'sr-flagstone', 'sr-clay', 'sr-bank', 'sr-sand'], grass: 'sr-tomb', base: 'sr-canyon', basePatches: ['sr-canyon', 'sr-wadi'], top: 'sr-tomb', patches: ['sr-tomb', 'sr-tomb', 'sr-flagstone'], forest: 'sr-canyon', path: 'sr-clay', plaza: 'sr-tomb', pathRock: 'rocks-small', cliff: 'sr-tomb',
+  bridge: 'sr-bridge', bridgeY: 1.05, br: 'sr', zoneRgb: '255,190,60', tuftTint: 'rgba(60,30,10,.6)', kinds: sandKinds, sprites: (id) => id.startsWith('sr-') || SAND_SHARED.has(id), anims: ['sr-waterfall', 'sr-crystal-glow', 'sr-rune', 'sr-dust', 'torch'],
+  fill: '#24150b', rim: 'rgba(255,200,90,.8)', wash: 'rgba(255,170,60,.07)', tint: 'rgba(40,18,0,.22)', line: '#2a160a', shade: 'rgba(20,8,0,.45)', water: ['#6e4311', '#b98228', '#f1cf7a'], pads: false, bankTex: 'sr-bank' };
 let theme: Theme = THEMES.village;
 const pick = (a: string[], d: PropDef) => a[Math.abs(d.v ?? 0) % a.length];
 
@@ -147,6 +166,51 @@ function emberKinds(d: PropDef): Km | null | undefined {
     case 'barrel': return { id: 'em-barrel', fp: 'small', foot: 0.92, shadow: [0.42, 0.1] };
     case 'crate': return { id: 'em-crate', fp: 'small', foot: 0.9, shadow: [0.45, 0.1] };
     case 'sign': return { id: ruin ? 'em-sign' : 'em-sign2', fp: 'none', foot: 0.97 };
+    default: return undefined;
+  }
+}
+/** Sandstone Reach: palms and cacti, clay houses and tents; in the tomb the trees become rock spires and the lanterns braziers. */
+function sandKinds(d: PropDef): Km | null | undefined {
+  const tomb = theme.name === 'sand-tomb';
+  switch (d.kind) {
+    case 'ashTree': return tomb ? { id: 'sr-hoodoo', fp: 'rock', canopy: true, foot: 0.93, shadow: [0.4, 0.1] }
+      : { id: pick(['sr-palm', 'sr-palm2', 'sr-palm', 'sr-palm2', 'sr-deadtree', 'sr-palm', 'sr-palm2', 'sr-palm'], d), fp: 'tree', canopy: true, sway: 0.01, foot: 0.92, shadow: [0.36, 0.1] };
+    case 'cactus': return { id: 'sr-saguaro', fp: 'post', foot: 0.94, shadow: [0.4, 0.09] };
+    case 'mushroom': return { id: 'sr-barrel-cactus', fp: 'small', foot: 0.94, shadow: [0.4, 0.1] };
+    case 'rock': case 'boulder': return { id: pick(['sr-boulder', 'sr-rocks', 'sr-boulder'], d), fp: 'rock', foot: 0.92, shadow: [0.42, 0.1] };
+    case 'bush': return { id: pick(['sr-thorn', 'sr-prickly', 'sr-barrel-cactus', 'sr-thorn'], d), fp: 'bush', sway: 0.01, foot: 0.93, shadow: [0.42, 0.09] };
+    case 'fireCrystal': case 'iceCrystal': return (d.v ?? 0) % 2 === 0
+      ? { anim: 'sr-crystal-glow', fp: 'crystal', foot: 0.93, shadow: [0.4, 0.1], glow: { y: 0.55, r: 90, c: '#ffc24a', a: 0.4 } }
+      : { id: 'sr-crystal', fp: 'crystal', foot: 0.93, shadow: [0.4, 0.1], glow: { y: 0.55, r: 80, c: '#ffc24a', a: 0.35 } };
+    case 'house': return { id: pick(['sr-house', 'sr-house2', 'sr-hut'], d), fp: 'house', canopy: true, foot: 0.93, shadow: [0.5, 0.07] };
+    case 'tent': return { id: 'sr-tent', fp: 'house', canopy: true, foot: 0.93, shadow: [0.5, 0.07] };
+    case 'stumpHouse': case 'hollowTree': return { id: 'sr-hut', fp: 'house', canopy: true, foot: 0.93, shadow: [0.45, 0.08] };
+    case 'treehouse': return { id: 'sr-house2', fp: 'house', canopy: true, foot: 0.93, shadow: [0.5, 0.07] };
+    case 'stall': return { id: 'sr-stall', fp: 'stall', canopy: true, foot: 0.95, shadow: [0.46, 0.08] };
+    case 'lantern': case 'mushLamp': return tomb ? { id: 'sr-lantern', fp: 'lamp', foot: 0.97, shadow: [0.5, 0.1], glow: { y: 0.62, r: 100, c: '#ffb347', a: 0.55 } }
+      : { id: 'sr-lantern', fp: 'lamp', foot: 0.97, shadow: [0.5, 0.1], glow: { y: 0.62, r: 90, c: '#ffcf6a', a: 0.5 } };
+    case 'chest': return { id: 'sr-chest', fp: 'none', foot: 0.95 };
+    case 'flowers': return { id: pick(['sr-flowers', 'sr-drygrass', 'sr-flowers', 'sr-drygrass'], d), fp: 'none', sway: 0.04, foot: 0.95 };
+    case 'plant': return { id: pick(['sr-drygrass', 'sr-thorn', 'sr-drygrass'], d), fp: 'none', sway: 0.04, foot: 0.95 };
+    case 'statue': return { id: 'sr-cat', fp: 'round', canopy: true, foot: 0.93, shadow: [0.4, 0.09], glow: { y: 0.5, r: 90, c: '#ffc24a', a: 0.2 } };
+    case 'altar': return { id: 'sr-altar', fp: 'round', foot: 0.9, shadow: [0.42, 0.09], glow: { y: 0.62, r: 100, c: '#ffc24a', a: 0.45 } };
+    case 'runeStone': return { id: 'sr-altar', sOverride: 0.62, fp: 'none', foot: 0.9, glow: { y: 0.62, r: 80, c: '#ffc24a', a: 0.45 } };
+    case 'pillar': case 'archPost': return { id: 'sr-pillar', fp: 'post', foot: 0.96, shadow: [0.45, 0.1] };
+    case 'brokenPillar': return { id: 'sr-pillar', sOverride: 0.78, fp: 'post', foot: 0.96, shadow: [0.45, 0.1] };
+    case 'archLintel': return null;
+    case 'wall': return { id: 'sr-wall', fp: 'none', foot: 0.92, len: true };
+    case 'vineArch': return { id: 'sr-arch', fp: 'none', foot: 0.95, shadow: [0.45, 0.1] };
+    case 'totem': return { id: 'sr-obelisk', fp: 'post', foot: 0.96, shadow: [0.45, 0.1] };
+    case 'stairs': return { id: 'sr-stairs', fp: 'none', foot: 0.94 };
+    case 'rootArch': return { id: 'sr-tomb-door', fp: 'none', foot: 0.93, canopy: true };
+    case 'log': case 'bones': return { id: 'sr-bones', fp: 'small', foot: 0.85, shadow: [0.42, 0.1] };
+    case 'stump': case 'jar': return { id: 'sr-pots', fp: 'small', foot: 0.9, shadow: [0.42, 0.1] };
+    case 'well': return { id: 'sr-well', fp: 'round', canopy: true, foot: 0.94, shadow: [0.42, 0.09] };
+    case 'stalagmite': case 'spire': return { id: 'sr-hoodoo', fp: 'rock', foot: 0.93, shadow: [0.42, 0.1] };
+    case 'waterfall': return { anim: 'sr-waterfall', fp: 'round', foot: 0.9, shadow: [0.4, 0.08] };
+    case 'pond': return { anim: 'sr-pond-anim', fp: 'round', foot: 0.8, shadow: [0.4, 0.08] };
+    case 'fireflies': return { anim: 'sr-dust', fp: 'none', foot: 0.5, glow: { y: 0.5, r: 90, c: '#ffd070', a: 0.25 } };
+    case 'torch': case 'brazier': return { id: 'sr-lantern', fp: 'lamp', foot: 0.97, shadow: [0.5, 0.1], glow: { y: 0.62, r: 100, c: '#ffb347', a: 0.55 } };
     default: return undefined;
   }
 }
@@ -398,7 +462,7 @@ function lake(c: C, L: LiquidDef, r: () => number) {
   const xs = poly.map((p) => p[0]), ys = poly.map((p) => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
   c.save(); c.lineJoin = 'round';
   trace(); c.strokeStyle = 'rgba(20,40,20,.3)'; c.lineWidth = 56; c.stroke();
-  trace(); c.strokeStyle = '#4a3a22'; c.lineWidth = 36; c.stroke(); trace(); c.strokeStyle = '#8b6a3f'; c.lineWidth = 26; c.stroke(); trace(); c.strokeStyle = pattern(c, 'gr-bank', 0.5) ?? '#a98a58'; c.lineWidth = 20; c.stroke();
+  trace(); c.strokeStyle = '#4a3a22'; c.lineWidth = 36; c.stroke(); trace(); c.strokeStyle = '#8b6a3f'; c.lineWidth = 26; c.stroke(); trace(); c.strokeStyle = pattern(c, theme.bankTex ?? 'gr-bank', 0.5) ?? '#a98a58'; c.lineWidth = 20; c.stroke();
   const g = c.createRadialGradient((x0 + x1) / 2, (y0 + y1) / 2, 10, (x0 + x1) / 2, (y0 + y1) / 2, Math.max(x1 - x0, y1 - y0) * 0.6); g.addColorStop(0, mid); g.addColorStop(1, deep);
   trace(); c.fillStyle = g; c.fill();
   c.save(); trace(); c.clip(); trace(); c.strokeStyle = 'rgba(255,255,255,.28)'; c.lineWidth = 26; c.stroke(); trace(); c.strokeStyle = lite; c.globalAlpha = 0.5; c.lineWidth = 10; c.stroke(); c.globalAlpha = 1;
@@ -406,7 +470,7 @@ function lake(c: C, L: LiquidDef, r: () => number) {
   for (let i = 0; i < ((x1 - x0) * (y1 - y0)) / 9000; i++) { const x = x0 + r() * (x1 - x0), y = y0 + r() * (y1 - y0); if (!pointInPoly(x, y, poly)) continue; c.beginPath(); c.ellipse(x, y, 12 + r() * 14, 3.5 + r() * 2, 0, 0, Math.PI); c.stroke(); }
   c.restore(); c.restore();
   const cx = (x0 + x1) / 2;
-  for (let i = 0, n = Math.round(((x1 - x0) * (y1 - y0)) / 60000) + 3; i < n; i++) { const x = x0 + (x1 - x0) * (0.15 + r() * 0.7), y = y0 + (y1 - y0) * (0.15 + r() * 0.7); if (!pointInPoly(x, y, poly)) continue; const id = ['lilypad-a', 'lilypad-b', 'lilypad-c'][Math.floor(r() * 3)]; drawSprite(c, id, x, y + 10, (SCALE[id] ?? 0.4) * (0.9 + r() * 0.5), r() < 0.5); }
+  if (theme.pads !== false) for (let i = 0, n = Math.round(((x1 - x0) * (y1 - y0)) / 60000) + 3; i < n; i++) { const x = x0 + (x1 - x0) * (0.15 + r() * 0.7), y = y0 + (y1 - y0) * (0.15 + r() * 0.7); if (!pointInPoly(x, y, poly)) continue; const id = ['lilypad-a', 'lilypad-b', 'lilypad-c'][Math.floor(r() * 3)]; drawSprite(c, id, x, y + 10, (SCALE[id] ?? 0.4) * (0.9 + r() * 0.5), r() < 0.5); }
   let k = 0; for (const [x, y] of poly) { if (k++ % 2) continue; const [id, f] = theme.bank[Math.floor(r() * theme.bank.length)]; drawSprite(c, id, x + (x - cx) * 0.03, y + 16, (SCALE[id] ?? 1) * f * (0.9 + r() * 0.4), r() < 0.5); }
 }
 /** A pool of glowing lava: the lava picture clipped to the pool, with a rock rim and a bright glow. */
@@ -460,8 +524,10 @@ const deckGeom = (b: { a: Pt; b: Pt; width: number }) => {
     : { vertical, hw, x0: Math.min(b.a[0], b.b[0]) - ext, x1: Math.max(b.a[0], b.b[0]) + ext, y0: cy - hw, y1: cy + hw, cx, cy };
 };
 /** Painted bridge pieces (gr-bridge-*): source rects (in sprite px) that repeat seamlessly, from the generated sheet. */
-const BR = { dh: { sx: 27, sw: 445 }, dv: { sy: 40, sh: 425 }, rh: { sx: 138, sw: 230.5 }, rv: { sy: 96, sh: 157.5 }, k: 0.6, kv: 0.43, kr: 0.3, kp: 0.2 };
-const brImgs = () => { const o = { dh: sImg('gr-bridge-deck-h'), dv: sImg('gr-bridge-deck-v'), rh: sImg('gr-bridge-rail-h'), rv: sImg('gr-bridge-rail-v'), po: sImg('gr-bridge-post') }; return Object.values(o).every((i) => i && i.naturalWidth) ? o as Record<'dh' | 'dv' | 'rh' | 'rv' | 'po', HTMLImageElement> : null; };
+const BRP = { sr: { dh: { sx: 40, sw: 401 }, dv: { sy: 60, sh: 395 }, rh: { sx: 142, sw: 228.5 }, rv: { sy: 107, sh: 164 }, k: 0.6, kv: 0.4, kr: 0.285, kp: 0.15 } };
+let BR = { dh: { sx: 27, sw: 445 }, dv: { sy: 40, sh: 425 }, rh: { sx: 138, sw: 230.5 }, rv: { sy: 96, sh: 157.5 }, k: 0.6, kv: 0.43, kr: 0.3, kp: 0.2 };
+const BRG = BR;
+const brImgs = () => { const p = theme.br ?? 'gr'; BR = p === 'sr' ? BRP.sr : BRG; const o = { dh: sImg(`${p}-bridge-deck-h`), dv: sImg(`${p}-bridge-deck-v`), rh: sImg(`${p}-bridge-rail-h`), rv: sImg(`${p}-bridge-rail-v`), po: sImg(`${p}-bridge-post`) }; return Object.values(o).every((i) => i && i.naturalWidth) ? o as Record<'dh' | 'dv' | 'rh' | 'rv' | 'po', HTMLImageElement> : null; };
 /** repeat a source strip along x (or y) between two limits */
 function stripX(c: C, img: HTMLImageElement, sx: number, sw: number, k: number, x0: number, x1: number, dy: number) {
   const tw = sw * k, h = img.naturalHeight * k; for (let x = x0; x < x1 - 0.5; x += tw) { const len = Math.min(tw, x1 - x); c.drawImage(img, sx, 0, len / k, img.naturalHeight, x, dy, len, h); }
@@ -510,7 +576,7 @@ function ropeBridge(c: C, b: { a: Pt; b: Pt; width: number }) {
 }
 /** The near rail of a left-right bridge is drawn after the explorer (the world sorts it by its y), so the explorer stands inside the railings. */
 function bridgeRails(bridges: { a: Pt; b: Pt; width: number }[]): { y: number; draw: (c: C) => void }[] {
-  if (!theme.name.startsWith('grove')) return [];
+  if (!theme.name.startsWith('grove') && !theme.name.startsWith('sand')) return [];
   const out: { y: number; draw: (c: C) => void }[] = [];
   for (const br of bridges) {
     const g = deckGeom(br); if (g.vertical) continue;
@@ -526,7 +592,7 @@ function bridgeRails(bridges: { a: Pt; b: Pt; width: number }[]): { y: number; d
 }
 function bridge(c: C, b: { a: Pt; b: Pt; width: number }) {
   if (theme.causeway) { causeway(c, b); return; }
-  if (theme.name.startsWith('grove')) { ropeBridge(c, b); return; }
+  if (theme.name.startsWith('grove') || theme.name.startsWith('sand')) { ropeBridge(c, b); return; }
   const img = sImg(theme.bridge ?? 'bridge-wood'); if (!img) return;
   const [ax, ay] = b.a, [bx, by] = b.b, len = Math.hypot(bx - ax, by - ay), ang = Math.atan2(by - ay, bx - ax), sx = (len + 90) / img.naturalWidth, sy = sx * (theme.bridgeY ?? 1.1);
   c.save(); c.translate((ax + bx) / 2, (ay + by) / 2 + 4); c.rotate(ang);
@@ -550,15 +616,15 @@ function tuftSprites() {
 }
 /** A raised area: stone cliff face below, lush grass on top. */
 function plateau(c: C, pts: Pt[], face: number, r: () => number) {
-  const poly = smooth(pts, 8, true), stone = pattern(c, theme.plaza, 0.42);
+  const poly = smooth(pts, 8, true), stone = pattern(c, theme.cliff ?? theme.plaza, 0.42);
   const trace = () => { c.beginPath(); poly.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); };
   c.save();
   c.translate(0, face + 6); trace(); c.fillStyle = 'rgba(20,35,20,.3)'; c.fill(); c.translate(0, -6);
   for (let dy = face; dy >= 3; dy -= 3) { c.save(); c.translate(0, dy); trace(); c.fillStyle = stone ?? '#8a8798'; c.fill(); c.restore(); }
-  c.translate(0, face); trace(); c.fillStyle = 'rgba(40,30,90,.32)'; c.fill(); c.strokeStyle = '#3c2f55'; c.lineWidth = 3; c.stroke(); c.translate(0, -face);
+  c.translate(0, face); trace(); c.fillStyle = theme.shade ?? 'rgba(40,30,90,.32)'; c.fill(); c.strokeStyle = theme.line ?? '#3c2f55'; c.lineWidth = 3; c.stroke(); c.translate(0, -face);
   trace(); c.fillStyle = pattern(c, theme.top ?? theme.grass, 0.6) ?? '#58b84a'; c.fill();
   c.fillStyle = theme.wash ?? 'rgba(190,255,170,.1)'; c.fill();
-  c.lineJoin = 'round'; c.strokeStyle = theme.rim ?? 'rgba(150,240,110,.7)'; c.lineWidth = 9; c.stroke(); c.strokeStyle = '#3c2f55'; c.lineWidth = 2.4; c.stroke();
+  c.lineJoin = 'round'; c.strokeStyle = theme.rim ?? 'rgba(150,240,110,.7)'; c.lineWidth = 9; c.stroke(); c.strokeStyle = theme.line ?? '#3c2f55'; c.lineWidth = 2.4; c.stroke();
   c.restore();
   const xs = poly.map((p) => p[0]), ys = poly.map((p) => p[1]);
   patches(c, theme.patches, 0.6, Math.ceil(((Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys))) / (260 * 260)), [Math.min(...xs) + 60, Math.min(...ys) + 40, Math.max(...xs) - Math.min(...xs) - 120, Math.max(...ys) - Math.min(...ys) - 100], r, 300);

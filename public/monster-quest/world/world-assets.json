@@ -215,6 +215,60 @@
    "w": 412,
    "h": 412,
    "seamless": false
+  },
+  "sr-sand": {
+   "file": "ground/sr-sand.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "sr-scrub": {
+   "file": "ground/sr-scrub.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "sr-dune": {
+   "file": "ground/sr-dune.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "sr-clay": {
+   "file": "ground/sr-clay.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "sr-flagstone": {
+   "file": "ground/sr-flagstone.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "sr-bank": {
+   "file": "ground/sr-bank.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "sr-wadi": {
+   "file": "ground/sr-wadi.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "sr-canyon": {
+   "file": "ground/sr-canyon.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "sr-tomb": {
+   "file": "ground/sr-tomb.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
   }
  },
  "sprites": {
@@ -1242,6 +1296,191 @@
    "file": "sprites/gr-bridge-post.webp",
    "w": 195,
    "h": 294
+  },
+  "sr-palm": {
+   "file": "sprites/sr-palm.webp",
+   "w": 273,
+   "h": 290
+  },
+  "sr-palm2": {
+   "file": "sprites/sr-palm2.webp",
+   "w": 283,
+   "h": 235
+  },
+  "sr-barrel-cactus": {
+   "file": "sprites/sr-barrel-cactus.webp",
+   "w": 235,
+   "h": 249
+  },
+  "sr-saguaro": {
+   "file": "sprites/sr-saguaro.webp",
+   "w": 205,
+   "h": 287
+  },
+  "sr-prickly": {
+   "file": "sprites/sr-prickly.webp",
+   "w": 242,
+   "h": 267
+  },
+  "sr-thorn": {
+   "file": "sprites/sr-thorn.webp",
+   "w": 256,
+   "h": 238
+  },
+  "sr-drygrass": {
+   "file": "sprites/sr-drygrass.webp",
+   "w": 254,
+   "h": 244
+  },
+  "sr-flowers": {
+   "file": "sprites/sr-flowers.webp",
+   "w": 255,
+   "h": 195
+  },
+  "sr-boulder": {
+   "file": "sprites/sr-boulder.webp",
+   "w": 271,
+   "h": 219
+  },
+  "sr-rocks": {
+   "file": "sprites/sr-rocks.webp",
+   "w": 273,
+   "h": 252
+  },
+  "sr-deadtree": {
+   "file": "sprites/sr-deadtree.webp",
+   "w": 265,
+   "h": 274
+  },
+  "sr-bones": {
+   "file": "sprites/sr-bones.webp",
+   "w": 279,
+   "h": 190
+  },
+  "sr-pond": {
+   "file": "sprites/sr-pond.webp",
+   "w": 293,
+   "h": 261
+  },
+  "sr-hoodoo": {
+   "file": "sprites/sr-hoodoo.webp",
+   "w": 243,
+   "h": 268
+  },
+  "sr-crystal": {
+   "file": "sprites/sr-crystal.webp",
+   "w": 239,
+   "h": 256
+  },
+  "sr-pots": {
+   "file": "sprites/sr-pots.webp",
+   "w": 252,
+   "h": 229
+  },
+  "sr-house": {
+   "file": "sprites/sr-house.webp",
+   "w": 284,
+   "h": 262
+  },
+  "sr-house2": {
+   "file": "sprites/sr-house2.webp",
+   "w": 270,
+   "h": 271
+  },
+  "sr-hut": {
+   "file": "sprites/sr-hut.webp",
+   "w": 250,
+   "h": 270
+  },
+  "sr-tent": {
+   "file": "sprites/sr-tent.webp",
+   "w": 296,
+   "h": 274
+  },
+  "sr-stall": {
+   "file": "sprites/sr-stall.webp",
+   "w": 287,
+   "h": 261
+  },
+  "sr-arch": {
+   "file": "sprites/sr-arch.webp",
+   "w": 278,
+   "h": 262
+  },
+  "sr-pillar": {
+   "file": "sprites/sr-pillar.webp",
+   "w": 156,
+   "h": 267
+  },
+  "sr-wall": {
+   "file": "sprites/sr-wall.webp",
+   "w": 292,
+   "h": 189
+  },
+  "sr-cat": {
+   "file": "sprites/sr-cat.webp",
+   "w": 218,
+   "h": 286
+  },
+  "sr-altar": {
+   "file": "sprites/sr-altar.webp",
+   "w": 286,
+   "h": 254
+  },
+  "sr-obelisk": {
+   "file": "sprites/sr-obelisk.webp",
+   "w": 202,
+   "h": 284
+  },
+  "sr-stairs": {
+   "file": "sprites/sr-stairs.webp",
+   "w": 291,
+   "h": 214
+  },
+  "sr-tomb-door": {
+   "file": "sprites/sr-tomb-door.webp",
+   "w": 297,
+   "h": 271
+  },
+  "sr-lantern": {
+   "file": "sprites/sr-lantern.webp",
+   "w": 149,
+   "h": 282
+  },
+  "sr-well": {
+   "file": "sprites/sr-well.webp",
+   "w": 258,
+   "h": 253
+  },
+  "sr-chest": {
+   "file": "sprites/sr-chest.webp",
+   "w": 285,
+   "h": 219
+  },
+  "sr-bridge-deck-h": {
+   "file": "sprites/sr-bridge-deck-h.webp",
+   "w": 512,
+   "h": 209
+  },
+  "sr-bridge-deck-v": {
+   "file": "sprites/sr-bridge-deck-v.webp",
+   "w": 271,
+   "h": 466
+  },
+  "sr-bridge-rail-h": {
+   "file": "sprites/sr-bridge-rail-h.webp",
+   "w": 512,
+   "h": 199
+  },
+  "sr-bridge-rail-v": {
+   "file": "sprites/sr-bridge-rail-v.webp",
+   "w": 86,
+   "h": 513
+  },
+  "sr-bridge-post": {
+   "file": "sprites/sr-bridge-post.webp",
+   "w": 268,
+   "h": 390
   }
  },
  "anims": {
@@ -1398,6 +1637,41 @@
    "fps": 5.0,
    "fw": 204,
    "fh": 145
+  },
+  "sr-waterfall": {
+   "file": "anim/sr-waterfall.webp",
+   "n": 6,
+   "fps": 6.0,
+   "fw": 236,
+   "fh": 183
+  },
+  "sr-pond-anim": {
+   "file": "anim/sr-pond-anim.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 227,
+   "fh": 195
+  },
+  "sr-crystal-glow": {
+   "file": "anim/sr-crystal-glow.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 180,
+   "fh": 194
+  },
+  "sr-rune": {
+   "file": "anim/sr-rune.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 215,
+   "fh": 155
+  },
+  "sr-dust": {
+   "file": "anim/sr-dust.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 179,
+   "fh": 166
   }
  }
 }
