@@ -1217,6 +1217,31 @@
    "file": "sprites/gr-chest.webp",
    "w": 265,
    "h": 221
+  },
+  "gr-bridge-deck-h": {
+   "file": "sprites/gr-bridge-deck-h.webp",
+   "w": 512,
+   "h": 186
+  },
+  "gr-bridge-deck-v": {
+   "file": "sprites/gr-bridge-deck-v.webp",
+   "w": 247,
+   "h": 492
+  },
+  "gr-bridge-rail-h": {
+   "file": "sprites/gr-bridge-rail-h.webp",
+   "w": 512,
+   "h": 189
+  },
+  "gr-bridge-rail-v": {
+   "file": "sprites/gr-bridge-rail-v.webp",
+   "w": 108,
+   "h": 495
+  },
+  "gr-bridge-post": {
+   "file": "sprites/gr-bridge-post.webp",
+   "w": 195,
+   "h": 294
   }
  },
  "anims": {

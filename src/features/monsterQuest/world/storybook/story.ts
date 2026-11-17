@@ -53,7 +53,7 @@ Object.assign(SCALE, {
   'gr-oak': 0.92, 'gr-birch': 0.8, 'gr-willow': 0.95, 'gr-hollow-tree': 0.9, 'gr-fern-big': 0.6, 'gr-bigleaf': 0.55, 'gr-foxglove': 0.5, 'gr-daisies': 0.55,
   'gr-log': 0.8, 'gr-boulder': 0.7, 'gr-ivy': 0.7, 'gr-glowcaps': 0.5, 'gr-stump': 0.7, 'gr-root-a': 0.85, 'gr-root-b': 0.8, 'gr-crystal': 0.55,
   'gr-treehouse': 0.95, 'gr-burrow': 1.0, 'gr-burrow2': 1.0, 'gr-cottage': 0.95, 'gr-bridge': 1, 'gr-arch': 0.9, 'gr-pillar': 0.7, 'gr-wall': 0.75,
-  'gr-owl': 0.8, 'gr-altar': 0.85, 'gr-totem': 0.7, 'gr-stairs': 0.8, 'gr-root-arch': 0.95, 'gr-lantern': 0.66, 'gr-stall': 0.95, 'gr-chest': 0.3,
+  'gr-owl': 0.8, 'gr-altar': 0.85, 'gr-totem': 0.7, 'gr-stairs': 0.8, 'gr-root-arch': 0.95, 'gr-lantern': 0.66, 'gr-stall': 0.95, 'gr-chest': 0.3, 'gr-bridge-deck-h': 1, 'gr-bridge-deck-v': 1, 'gr-bridge-rail-h': 1, 'gr-bridge-rail-v': 1, 'gr-bridge-post': 1,
 });
 const ANIM_K: Record<string, number> = { 'gr-waterfall': 1.25, 'gr-pond': 1.1, 'gr-crystal-glow': 0.9, 'gr-rune': 0.9, 'gr-fireflies': 1.3, 'em-lavafall': 1.88, 'em-crystal': 0.6, 'em-lava': 1, 'em-rune': 0.6, fountain: 0.86, portal: 0.75, campfire: 0.3, brazier: 0.32, torch: 0.36, 'mv-waterfall': 0.7, 'mv-fireflies': 0.55, 'mv-mushroom': 0.7, 'mv-mushroom2': 0.7, 'mv-bluebell': 0.55 };
 /** Each storybook place picks a theme: which ground pictures it uses and how its objects look. */
@@ -459,7 +459,36 @@ const deckGeom = (b: { a: Pt; b: Pt; width: number }) => {
   return vertical ? { vertical, hw, x0: cx - hw, x1: cx + hw, y0: Math.min(b.a[1], b.b[1]) - ext, y1: Math.max(b.a[1], b.b[1]) + ext, cx, cy }
     : { vertical, hw, x0: Math.min(b.a[0], b.b[0]) - ext, x1: Math.max(b.a[0], b.b[0]) + ext, y0: cy - hw, y1: cy + hw, cx, cy };
 };
+/** Painted bridge pieces (gr-bridge-*): source rects (in sprite px) that repeat seamlessly, from the generated sheet. */
+const BR = { dh: { sx: 27, sw: 445 }, dv: { sy: 40, sh: 425 }, rh: { sx: 138, sw: 230.5 }, rv: { sy: 96, sh: 157.5 }, k: 0.6, kv: 0.43, kr: 0.3, kp: 0.2 };
+const brImgs = () => { const o = { dh: sImg('gr-bridge-deck-h'), dv: sImg('gr-bridge-deck-v'), rh: sImg('gr-bridge-rail-h'), rv: sImg('gr-bridge-rail-v'), po: sImg('gr-bridge-post') }; return Object.values(o).every((i) => i && i.naturalWidth) ? o as Record<'dh' | 'dv' | 'rh' | 'rv' | 'po', HTMLImageElement> : null; };
+/** repeat a source strip along x (or y) between two limits */
+function stripX(c: C, img: HTMLImageElement, sx: number, sw: number, k: number, x0: number, x1: number, dy: number) {
+  const tw = sw * k, h = img.naturalHeight * k; for (let x = x0; x < x1 - 0.5; x += tw) { const len = Math.min(tw, x1 - x); c.drawImage(img, sx, 0, len / k, img.naturalHeight, x, dy, len, h); }
+}
+function stripY(c: C, img: HTMLImageElement, sy: number, sh: number, k: number, y0: number, y1: number, dx: number) {
+  const th = sh * k, w = img.naturalWidth * k; for (let y = y0; y < y1 - 0.5; y += th) { const len = Math.min(th, y1 - y); c.drawImage(img, 0, sy, img.naturalWidth, len / k, dx, y, w, len); }
+}
+function paintedPost(c: C, im: HTMLImageElement, x: number, y: number) { const k = BR.kp, w = im.naturalWidth * k, h = im.naturalHeight * k; c.drawImage(im, x - w / 2, y - h * 0.94, w, h); }
+function paintedBridge(c: C, b: { a: Pt; b: Pt; width: number }, im: NonNullable<ReturnType<typeof brImgs>>) {
+  const g = deckGeom(b); c.save();
+  if (g.vertical) {
+    const kv = (g.x1 - g.x0) / im.dv.naturalWidth, rw = im.rv.naturalWidth * BR.kv;
+    c.fillStyle = 'rgba(10,30,20,.3)'; c.fillRect(g.x0 - 4, g.y0 + 10, g.x1 - g.x0 + 8, g.y1 - g.y0 + 6);
+    stripY(c, im.dv, BR.dv.sy, BR.dv.sh, kv, g.y0, g.y1, g.x0);
+    for (const px of [g.x0 + 2, g.x1 - 2]) stripY(c, im.rv, BR.rv.sy, BR.rv.sh, BR.kv, g.y0 - 8, g.y1, px - rw / 2);
+    for (const px of [g.x0 + 2, g.x1 - 2]) { paintedPost(c, im.po, px, g.y0 + 4); paintedPost(c, im.po, px, g.y1 + 6); }
+  } else {
+    const kh = (g.y1 - g.y0) / im.dh.naturalHeight, rh = im.rh.naturalHeight * BR.kr;
+    c.fillStyle = 'rgba(10,30,20,.3)'; c.fillRect(g.x0 - 4, g.y0 + 10, g.x1 - g.x0 + 8, g.y1 - g.y0 + 6);
+    stripX(c, im.dh, BR.dh.sx, BR.dh.sw, kh, g.x0, g.x1, g.y0);
+    stripX(c, im.rh, BR.rh.sx, BR.rh.sw, BR.kr, g.x0, g.x1, g.y0 + 8 - rh);      // far rail, behind the explorer
+    paintedPost(c, im.po, g.x0 + 4, g.y0 + 8); paintedPost(c, im.po, g.x1 - 4, g.y0 + 8);
+  }
+  c.restore();
+}
 function ropeBridge(c: C, b: { a: Pt; b: Pt; width: number }) {
+  const im = brImgs(); if (im) { paintedBridge(c, b, im); return; }
   const g = deckGeom(b); c.save();
   c.fillStyle = 'rgba(10,30,20,.3)'; c.fillRect(g.x0 - 6, g.y0 + 10, g.x1 - g.x0 + 12, g.y1 - g.y0 + 6);
   c.fillStyle = '#5a3a1e'; c.fillRect(g.x0 - 6, g.y0 - 2, g.x1 - g.x0 + 12, g.y1 - g.y0 + 10);
@@ -486,6 +515,8 @@ function bridgeRails(bridges: { a: Pt; b: Pt; width: number }[]): { y: number; d
   for (const br of bridges) {
     const g = deckGeom(br); if (g.vertical) continue;
     const n = Math.max(1, Math.round((g.x1 - g.x0) / 80)), step = (g.x1 - g.x0) / n, py = g.y1 + 4;
+    const im = brImgs();
+    if (im) { const rh = im.rh.naturalHeight * BR.kr; out.push({ y: g.y1 + 2, draw: (c) => { c.save(); stripX(c, im.rh, BR.rh.sx, BR.rh.sw, BR.kr, g.x0, g.x1, g.y1 + 2 - rh); paintedPost(c, im.po, g.x0 + 4, g.y1 + 2); paintedPost(c, im.po, g.x1 - 4, g.y1 + 2); c.restore(); } }); continue; }
     out.push({ y: py, draw: (c) => {
       c.save(); rope(c, g.x0, py - POST_H, g.x1, py - POST_H, 5, 3.4); rope(c, g.x0, py - POST_H * 0.5, g.x1, py - POST_H * 0.5, 4, 2.6);
       for (let i = 0; i <= n; i++) postAt(c, g.x0 + i * step, py, POST_H); c.restore();
