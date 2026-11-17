@@ -258,7 +258,10 @@ export class WorldEngine {
       this.setFlag(`touch:${def.id}:${g.id}`);
       if ('loc' in g.to) { this.gateLock = true; void this.load(g.to.loc, g.to.entrance); }
       else if (g.to.exit === 'world') { this.gateLock = true; this.fadeDir = 1; this.pending = () => { this.o.cb.onExitWorld(); }; }
-      else { this.gateLock = true; this.o.cb.onToast(g.to.message ?? 'This way is closed for now.'); const back = { left: [140, 0], right: [-140, 0], up: [0, 160], down: [0, -160] }[g.dir]; p.x += back[0]; p.y += back[1]; p.vx = p.vy = 0; }
+      else { this.gateLock = true; this.o.cb.onToast(g.to.message ?? 'This way is closed for now.'); const dv = { left: [1, 0], right: [-1, 0], up: [0, 1], down: [0, -1] }[g.dir]; let nx = p.x + dv[0] * 140, ny = p.y + dv[1] * 140;
+        // step the explorer back to open ground (never into a statue, altar or wall, which would trap them)
+        for (let d = 120; d <= 700; d += 20) { const x = p.x + dv[0] * d, y = p.y + dv[1] * d; if (b.field.sdf(x, y) > 26) { nx = x; ny = y; break; } }
+        p.x = nx; p.y = ny; p.vx = p.vy = 0; this.route = null; }
     }
     if (!inGate) this.gateLock = false;
 
@@ -368,6 +371,7 @@ export class WorldEngine {
         c.restore(); c.globalAlpha = 1;
       } });
     }
+    for (const rl of b.rails) ents.push({ y: rl.y, draw: () => rl.draw(c) });
     for (const it of def.interactables) {
       if (it.x < L - 120 || it.x > R + 120 || it.y < T - 120 || it.y > B + 160) continue;
       if (it.kind === 'npc') { const sp = npcSprite(it.npc ?? 'guide'); ents.push({ y: it.y, draw: () => { const bob = calm ? 0 : Math.sin(t * 2 + it.x) * 1.5; c.drawImage(sp.cv, it.x - sp.ox, it.y - sp.oy - bob); } }); }
@@ -412,10 +416,10 @@ export class WorldEngine {
       if (it.x < L - 80 || it.x > R + 80 || it.y < T - 40 || it.y > B + 200) continue;
       const m = it.marker ?? 'none'; if (m === 'none') continue;
       if (it.kind === 'chest' && this.opened.has(it.id)) continue; if (it.kind === 'mystery' && this.flags.has(`mystery:${it.id}`)) continue; if (it.kind === 'npc' && this.flags.has(`talk:${it.id}`) && m === '!') { /* keep: guides can be re-read */ }
-      const h = it.kind === 'npc' ? 98 : it.kind === 'chest' ? 56 : it.kind === 'shop' ? 150 : 28;
+      const h = it.kind === 'npc' ? npcSprite(it.npc ?? 'guide').oy + 10 : it.kind === 'chest' ? 82 : it.kind === 'shop' ? 150 : 28;   // the bubble sits above the head, never over the body
       drawMarker(c, m as '!' | '?' | 'shimmer' | 'arrow', it.x, it.y - h, calm ? 0 : t);
     }
-    if (this.bang > 0) drawMarker(c, '!', p.x, p.y - 100, 0);
+    if (this.bang > 0) drawMarker(c, '!', p.x, p.y - 160, 0);
 
     // ---- screen space: particles, haze, vignette, fade
     c.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);

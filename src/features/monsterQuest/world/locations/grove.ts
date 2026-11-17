@@ -34,8 +34,8 @@ const villageBase: LocationDef = {
     { kind: 'water', pts: [[1290, 345], [1260, 520], [1330, 680], [1270, 860], [1340, 1040], [1400, 1200]], width: 84 },
   ],
   bridges: [
-    { a: [160, 645], b: [350, 645], width: 140 }, { a: [150, 965], b: [340, 965], width: 140 },
-    { a: [1225, 650], b: [1425, 650], width: 140 }, { a: [1195, 960], b: [1385, 960], width: 140 },
+    { a: [160, 645], b: [350, 645], width: 100 }, { a: [150, 965], b: [340, 965], width: 100 },
+    { a: [1225, 650], b: [1425, 650], width: 100 }, { a: [1195, 960], b: [1385, 960], width: 100 },
   ],
   zones: [
     zone('mg-se', 'Clover patch', 1190, 1085, 150, 95, 'moss', ['sproutle', 'capling', 'lanternfly']),
@@ -104,7 +104,7 @@ const woods: LocationDef = {
   ],
   liquids: [{ kind: 'water', pts: [[1330, -20], [1280, 200], [1360, 420], [1280, 640], [1360, 820], [1260, 1000], [1330, 1200], [1250, 1400], [1300, 1650], [1290, 1850]], width: 120 }],
   fords: [{ pts: [[1140, 1012], [1260, 1000], [1390, 1000]], width: 84 }],
-  bridges: [{ a: [1205, 565], b: [1395, 565], width: 160 }, { a: [1180, 1500], b: [1370, 1500], width: 150 }],
+  bridges: [{ a: [1205, 565], b: [1395, 565], width: 100 }, { a: [1180, 1500], b: [1370, 1500], width: 100 }],
   zones: [
     zone('ww-west', 'West clover patch', 340, 1060, 190, 150, 'moss', ['sproutle', 'zapling', 'capling']),
     zone('ww-north', 'North clover patch', 1960, 520, 170, 100, 'moss', ['dewmoth', 'zapling', 'lanternfly']),
@@ -162,7 +162,7 @@ const hollow: LocationDef = {
     { kind: 'water', pts: blob(1860, 1180, 330, 230, 'lakeB', 0.1), closed: true },
     { kind: 'water', pts: [[1700, 340], [1650, 520], [1740, 740], [1780, 930]], width: 100 },
   ],
-  bridges: [{ a: [1600, 645], b: [1800, 645], width: 150 }],
+  bridges: [{ a: [1600, 645], b: [1800, 645], width: 100 }],
   fords: [],
   zones: [
     zone('lh-shore', 'Shore clover', 330, 1230, 150, 100, 'moss', ['lilyhop', 'sproutle', 'dewmoth']),
@@ -215,7 +215,7 @@ const heartwood: LocationDef = {
     { pts: [[1200, 1700], [1200, 1450]], width: 170, main: true }, { pts: [[1150, 600], [1380, 560], [1560, 540]], width: 120 },
   ],
   liquids: [{ kind: 'water', pts: blob(1200, 760, 360, 160, 'hpool', 0.08), closed: true }],
-  bridges: [{ a: [1200, 960], b: [1200, 570], width: 150 }],
+  bridges: [{ a: [1200, 960], b: [1200, 570], width: 100 }],
   fords: [],
   zones: [
     zone('hh-entrance', 'Entrance glow-moss', 820, 1520, 190, 120, 'moss', ['capling', 'lanternfly', 'zapling']),
@@ -225,7 +225,7 @@ const heartwood: LocationDef = {
   ],
   props: [
     { kind: 'waterfall', x: 800, y: 540, s: 1 },
-    { kind: 'statue', x: 1040, y: 200 }, { kind: 'statue', x: 1360, y: 200 }, { kind: 'altar', x: 1200, y: 330 },
+    { kind: 'statue', x: 980, y: 180 }, { kind: 'statue', x: 1420, y: 180 }, { kind: 'altar', x: 1200, y: 400 },
     { kind: 'ashTree', x: 760, y: 190, v: 0, s: 1.3 }, { kind: 'ashTree', x: 1650, y: 170, v: 1, s: 1.2 }, { kind: 'ashTree', x: 640, y: 330, v: 1 },
     { kind: 'fireCrystal', x: 1000, y: 160, v: 1, s: 1.2 }, { kind: 'fireCrystal', x: 1420, y: 150, v: 0 }, { kind: 'fireCrystal', x: 800, y: 200, v: 2 },
     { kind: 'fireCrystal', x: 1000, y: 1290, v: 1 }, { kind: 'fireCrystal', x: 1380, y: 1330, v: 0 }, { kind: 'fireCrystal', x: 1650, y: 600, v: 1 }, { kind: 'fireCrystal', x: 640, y: 1000, v: 0 },
@@ -242,7 +242,7 @@ const heartwood: LocationDef = {
   entrances: { south: { x: 1200, y: 1600, facing: 'up' } },
   interactables: [
     { id: 'chest', kind: 'chest', x: 1885, y: 1130, marker: 'shimmer', name: 'Root chest' },
-    { id: 'lore1', kind: 'lore', x: 1200, y: 400, marker: '?', name: 'Leaf altar', lines: ['The altar glows softly. Carved in the stone: "Every forest begins with one patient root."'] },
+    { id: 'lore1', kind: 'lore', x: 1200, y: 470, marker: '?', name: 'Leaf altar', lines: ['The altar glows softly. Carved in the stone: "Every forest begins with one patient root."'] },
     { id: 'crack', kind: 'mystery', x: 525, y: 980, marker: '?', name: 'Glowing gap', lines: ['Green light seeps between the roots. The underground waterfall nearby is said to hide a shy, glowing wisp.'] },
     { id: 's1', kind: 'sign', x: 1100, y: 1650, dir: 'down', name: 'Back to Lilypad Hollow', marker: 'none' },
     { id: 's2', kind: 'sign', x: 1300, y: 1000, dir: 'up', name: 'Bridge across the root pool', marker: 'none' },
@@ -255,4 +255,9 @@ const heartwood: LocationDef = {
 };
 void insidePoly; void rrPts; void smooth;
 
+// Tall trees never stand in front of a person or a chest (they would hide them): clear the ground south of every interactable.
+for (const l of [village, woods, hollow, heartwood]) {
+  const who = l.interactables.filter((i) => ['npc', 'lookout', 'chest', 'mystery', 'lore', 'shop'].includes(i.kind));
+  l.props = l.props.filter((q) => !['ashTree', 'hollowTree', 'treehouse', 'house', 'stall'].includes(q.kind) || !who.some((i) => Math.abs(q.x - i.x) < 260 && q.y - i.y > -60 && q.y - i.y < 360 && !(i.kind === 'shop' && Math.hypot(q.x - i.x, q.y - i.y) < 40)));
+}
 export const GROVE: LocationDef[] = [village, woods, hollow, heartwood];

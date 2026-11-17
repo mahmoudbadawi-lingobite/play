@@ -441,26 +441,61 @@ function causeway(c: C, b: { a: Pt; b: Pt; width: number }) {
   const rr = rng(Math.round(ax * 7 + ay * 13));
   for (const k of [-hw, hw]) for (let t = -ext + 20; t < len + ext - 10; t += 34 + rr() * 22) { const [x, y] = P(t, k + (k < 0 ? -4 : 4) + (rr() - 0.5) * 8); drawSprite(c, 'em-rocks', x, y + 8, 0.1 + rr() * 0.05, rr() < 0.5, 0.95); }
 }
-/** A plank bridge that runs up or down the screen: the painted bridge is a side view, so here the deck is drawn from above with rope rails. */
-function bridgeUpDown(c: C, b: { a: Pt; b: Pt; width: number }) {
-  const [ax, ay] = b.a, [bx, by] = b.b, y0 = Math.min(ay, by) - 36, y1 = Math.max(ay, by) + 36, x = (ax + bx) / 2, hw = Math.min(b.width, 150) * 0.34, post = 30;
-  c.save(); c.lineCap = 'round';
-  c.fillStyle = 'rgba(10,30,20,.3)'; c.fillRect(x - hw - 8, y0 + 10, hw * 2 + 16, y1 - y0 + 8);
-  c.fillStyle = '#5a3a1e'; c.fillRect(x - hw - 7, y0, hw * 2 + 14, y1 - y0 + 8);
-  for (let y = y0 + 2, i = 0; y < y1; y += 18, i++) { c.fillStyle = i % 2 ? '#c08a4a' : '#d29a58'; c.fillRect(x - hw, y, hw * 2, 15); c.fillStyle = 'rgba(255,230,170,.25)'; c.fillRect(x - hw, y, hw * 2, 3); c.fillStyle = 'rgba(70,40,15,.5)'; c.fillRect(x - hw, y + 15, hw * 2, 2); }
-  for (const sx of [-1, 1]) {
-    const px = x + sx * (hw + 3); c.strokeStyle = '#e6d2a0'; c.lineWidth = 4; c.beginPath(); c.moveTo(px, y0 - post + 4); c.lineTo(px, y1 - post + 4); c.stroke();
-    c.strokeStyle = 'rgba(60,40,15,.5)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(px + 2, y0 - post + 6); c.lineTo(px + 2, y1 - post + 6); c.stroke();
-    for (let y = y0 + 8; y <= y1 + 4; y += Math.max(70, (y1 - y0) / Math.round((y1 - y0) / 80))) {
-      c.fillStyle = '#6a4220'; c.fillRect(px - 5, y - post, 10, post + 6); c.fillStyle = '#9a6a38'; c.fillRect(px - 5, y - post, 4, post + 6);
-      c.fillStyle = '#b4824a'; c.beginPath(); c.arc(px, y - post, 6, 0, TAU); c.fill(); c.strokeStyle = '#4a2c14'; c.lineWidth = 1.6; c.stroke();
+/** Rope bridge pieces (deck, posts, ropes). The walkable lane is `b.width - 8` wide and the rails stand just outside it, so the explorer walks inside the railings. */
+const rope = (c: C, x0: number, y0: number, x1: number, y1: number, sag: number, w = 3.6) => {
+  c.lineCap = 'round'; const mx = (x0 + x1) / 2, my = (y0 + y1) / 2 + sag;
+  c.strokeStyle = 'rgba(50,30,10,.55)'; c.lineWidth = w + 1.6; c.beginPath(); c.moveTo(x0, y0 + 1.5); c.quadraticCurveTo(mx, my + 1.5, x1, y1 + 1.5); c.stroke();
+  c.strokeStyle = '#ecd9a6'; c.lineWidth = w; c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo(mx, my, x1, y1); c.stroke();
+};
+const postAt = (c: C, x: number, y: number, h: number) => {
+  c.fillStyle = 'rgba(20,35,20,.28)'; c.beginPath(); c.ellipse(x + 3, y + 3, 8, 3.4, 0, 0, TAU); c.fill();
+  c.fillStyle = '#6a4220'; c.fillRect(x - 5, y - h, 10, h + 4); c.fillStyle = '#a06f3a'; c.fillRect(x - 5, y - h, 4, h + 4);
+  c.fillStyle = '#c08a4a'; c.beginPath(); c.arc(x, y - h, 6.4, 0, TAU); c.fill(); c.strokeStyle = '#4a2c14'; c.lineWidth = 1.6; c.stroke();
+};
+const POST_H = 34;
+const deckGeom = (b: { a: Pt; b: Pt; width: number }) => {
+  const hw = (b.width - 8) / 2 + 7, vertical = Math.abs(b.b[1] - b.a[1]) > Math.abs(b.b[0] - b.a[0]) * 1.5;
+  const cx = (b.a[0] + b.b[0]) / 2, cy = (b.a[1] + b.b[1]) / 2, ext = 34;
+  return vertical ? { vertical, hw, x0: cx - hw, x1: cx + hw, y0: Math.min(b.a[1], b.b[1]) - ext, y1: Math.max(b.a[1], b.b[1]) + ext, cx, cy }
+    : { vertical, hw, x0: Math.min(b.a[0], b.b[0]) - ext, x1: Math.max(b.a[0], b.b[0]) + ext, y0: cy - hw, y1: cy + hw, cx, cy };
+};
+function ropeBridge(c: C, b: { a: Pt; b: Pt; width: number }) {
+  const g = deckGeom(b); c.save();
+  c.fillStyle = 'rgba(10,30,20,.3)'; c.fillRect(g.x0 - 6, g.y0 + 10, g.x1 - g.x0 + 12, g.y1 - g.y0 + 6);
+  c.fillStyle = '#5a3a1e'; c.fillRect(g.x0 - 6, g.y0 - 2, g.x1 - g.x0 + 12, g.y1 - g.y0 + 10);
+  if (g.vertical) {
+    for (let y = g.y0, i = 0; y < g.y1; y += 18, i++) { c.fillStyle = i % 2 ? '#c08a4a' : '#d29a58'; c.fillRect(g.x0, y, g.x1 - g.x0, 15); c.fillStyle = 'rgba(255,230,170,.25)'; c.fillRect(g.x0, y, g.x1 - g.x0, 3); c.fillStyle = 'rgba(70,40,15,.5)'; c.fillRect(g.x0, y + 15, g.x1 - g.x0, 2); }
+    const n = Math.max(1, Math.round((g.y1 - g.y0) / 80)), step = (g.y1 - g.y0) / n;
+    for (const px of [g.x0 - 4, g.x1 + 4]) {
+      rope(c, px, g.y0 - POST_H, px, g.y1 - POST_H, 0, 3.4); rope(c, px, g.y0 - POST_H * 0.5, px, g.y1 - POST_H * 0.5, 0, 2.6);
+      for (let i = 0; i <= n; i++) postAt(c, px, g.y0 + i * step, POST_H);
     }
+  } else {
+    for (let x = g.x0, i = 0; x < g.x1; x += 18, i++) { c.fillStyle = i % 2 ? '#c08a4a' : '#d29a58'; c.fillRect(x, g.y0, 15, g.y1 - g.y0); c.fillStyle = 'rgba(255,230,170,.25)'; c.fillRect(x, g.y0, 3, g.y1 - g.y0); c.fillStyle = 'rgba(70,40,15,.5)'; c.fillRect(x + 15, g.y0, 2, g.y1 - g.y0); }
+    c.fillStyle = '#7a5028'; c.fillRect(g.x0, g.y1 - 3, g.x1 - g.x0, 5);
+    const n = Math.max(1, Math.round((g.x1 - g.x0) / 80)), step = (g.x1 - g.x0) / n, py = g.y0 - 3;      // the back rail stands behind the explorer
+    rope(c, g.x0, py - POST_H, g.x1, py - POST_H, 5, 3.4); rope(c, g.x0, py - POST_H * 0.5, g.x1, py - POST_H * 0.5, 4, 2.6);
+    for (let i = 0; i <= n; i++) postAt(c, g.x0 + i * step, py, POST_H);
   }
   c.restore();
 }
+/** The near rail of a left-right bridge is drawn after the explorer (the world sorts it by its y), so the explorer stands inside the railings. */
+function bridgeRails(bridges: { a: Pt; b: Pt; width: number }[]): { y: number; draw: (c: C) => void }[] {
+  if (!theme.name.startsWith('grove')) return [];
+  const out: { y: number; draw: (c: C) => void }[] = [];
+  for (const br of bridges) {
+    const g = deckGeom(br); if (g.vertical) continue;
+    const n = Math.max(1, Math.round((g.x1 - g.x0) / 80)), step = (g.x1 - g.x0) / n, py = g.y1 + 4;
+    out.push({ y: py, draw: (c) => {
+      c.save(); rope(c, g.x0, py - POST_H, g.x1, py - POST_H, 5, 3.4); rope(c, g.x0, py - POST_H * 0.5, g.x1, py - POST_H * 0.5, 4, 2.6);
+      for (let i = 0; i <= n; i++) postAt(c, g.x0 + i * step, py, POST_H); c.restore();
+    } });
+  }
+  return out;
+}
 function bridge(c: C, b: { a: Pt; b: Pt; width: number }) {
   if (theme.causeway) { causeway(c, b); return; }
-  if (theme.name.startsWith('grove') && Math.abs(b.b[1] - b.a[1]) > Math.abs(b.b[0] - b.a[0]) * 1.5) { bridgeUpDown(c, b); return; }
+  if (theme.name.startsWith('grove')) { ropeBridge(c, b); return; }
   const img = sImg(theme.bridge ?? 'bridge-wood'); if (!img) return;
   const [ax, ay] = b.a, [bx, by] = b.b, len = Math.hypot(bx - ax, by - ay), ang = Math.atan2(by - ay, bx - ax), sx = (len + 90) / img.naturalWidth, sy = sx * (theme.bridgeY ?? 1.1);
   c.save(); c.translate((ax + bx) / 2, (ay + by) / 2 + 4); c.rotate(ang);
@@ -527,4 +562,4 @@ export async function loadStory(name = 'village'): Promise<void> {
 const npcIds: Record<string, string> = { guide: 'npc-elder', scholar: 'npc-shopkeeper', villager: 'npc-gardener' };
 hook.npc = (kind) => scaled(npcIds[kind] ?? 'npc-fisher', SCALE[npcIds[kind] ?? 'npc-fisher'] ?? 0.33, 0.97);
 const enter = (def: LocationDef) => { theme = THEMES[def.theme ?? 'village'] ?? THEMES.village; };
-export const story = { hook, place, shadow, ground, plaza, path, liquid, bridge, zone, tuftSprites, peeks, plateau, ford, enter };
+export const story = { bridgeRails, hook, place, shadow, ground, plaza, path, liquid, bridge, zone, tuftSprites, peeks, plateau, ford, enter };

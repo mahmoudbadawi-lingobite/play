@@ -16,6 +16,7 @@ export interface Sparkle { x: number; y: number; ph: number; kind: LiquidKind; r
 export interface Baked {
   def: LocationDef; bg: HTMLCanvasElement; field: Field; props: PlacedProp[]; tufts: Tuft[]; tuftSprites: Record<string, HTMLCanvasElement[]>;
   peeks: Peek[]; sparkles: Sparkle[]; zonePolys: Pt[][]; mini: HTMLCanvasElement; miniScale: number; pathsSmooth: { pts: Pt[]; width: number; main?: boolean }[];
+  /** near bridge rails, drawn after the explorer */ rails: { y: number; draw: (c: CanvasRenderingContext2D) => void }[];
 }
 
 const canvas = (w: number, h: number) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
@@ -432,5 +433,5 @@ export function bakeLocation(def: LocationDef): Baked {
   mc.lineCap = 'round'; for (const p of paths) { strokePoly(mc, p.pts); mc.strokeStyle = 'rgba(255,236,190,.55)'; mc.lineWidth = Math.max(40, p.width * 0.7); mc.stroke(); }
   for (const g of def.gates) { const [x, y, gw_, gh_] = g.rect; mc.fillStyle = '#ffd24a'; mc.strokeStyle = '#6a3f10'; mc.lineWidth = 10; mc.beginPath(); mc.arc(x + gw_ / 2, y + gh_ / 2, 54, 0, TAU); mc.fill(); mc.stroke(); }
 
-  return { def, bg, field, props: placed, tufts, tuftSprites: sb ? sb.tuftSprites() : tuftSprites(def), peeks, sparkles, zonePolys, mini, miniScale: ms, pathsSmooth: paths };
+  return { def, bg, field, props: placed, tufts, tuftSprites: sb ? sb.tuftSprites() : tuftSprites(def), peeks, sparkles, zonePolys, mini, miniScale: ms, pathsSmooth: paths, rails: sb ? sb.bridgeRails(def.bridges) : [] };
 }
