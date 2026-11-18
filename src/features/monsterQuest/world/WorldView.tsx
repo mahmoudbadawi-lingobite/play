@@ -14,15 +14,16 @@ import { WorldPanel, type PanelTab } from './WorldPanel';
 import type { SceneKind } from '../scene/EncounterScene';
 import { Joystick } from './Joystick';
 import { currentQuest, loadProgress, saveProgress, type Progress } from './progress';
-import { world as worldDef } from './worlds';
+import { world as worldDef, WORLDS } from './worlds';
+import { levelInfo } from '../../avatar/level';
 import './monsterAnimations.css';
 import './world.css';
 import './world-panels.css';
 
 const reducedPref = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () => void }) {
-  const mq = useMq(), w = worldDef(worldId);
+export function WorldView({ worldId, onLeave, onSwitch }: { worldId: number; onLeave: () => void; onSwitch?: (id: number) => void }) {
+  const mq = useMq(), w = worldDef(worldId), level = levelInfo(mq.state.xp).level, levelRef = useRef(level); levelRef.current = level;
   const host = useRef<HTMLDivElement>(null), canvas = useRef<HTMLCanvasElement>(null), mini = useRef<HTMLCanvasElement>(null), full = useRef<HTMLCanvasElement>(null);
   const eng = useRef<WorldEngine | null>(null), progress = useRef<Progress>(loadProgress(mq.userId));
   const [hud, setHud] = useState<HudInfo | null>(null), [dialog, setDialog] = useState<Dialog | null>(null), [toast, setToast] = useState<string | null>(null);
@@ -49,6 +50,8 @@ export function WorldView({ worldId, onLeave }: { worldId: number; onLeave: () =
       canvas: canvas.current, host: host.current, mini: mini.current, character: who, props: worn, progress: progress.current, reduced: calm,
       cb: {
         onHud: setHud, onDialog: (d) => { dialogLine.current = 0; setDialog(d); }, onShop: () => setPanel('shop'), onExitWorld: onLeave, onToast: showToast,
+        canPortal: (id) => { const t = WORLDS.find((x) => x.id === id); return !t || !t.built ? 'More adventures are coming soon!' : levelRef.current < t.unlockLevel ? `The portal hums but stays shut. Reach trainer level ${t.unlockLevel} to pass through.` : null; },
+        onSwitchWorld: (id) => (onSwitch ? onSwitch(id) : onLeave()),
         onProgress: (p) => saveProgress(mq.userId, p), onLoading: setLoading,
         // Same server call and same modal as before. Only the zone id is mapped (see LocationDef.serverZone).
         onEncounter: async (serverZone) => {

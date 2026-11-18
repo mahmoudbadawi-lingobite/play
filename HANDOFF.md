@@ -75,3 +75,8 @@ rich saturated colours, light from top left. Scale: a house door about 1.3 units
 - Locations (`world/locations/sky.ts`): cloudgate-plaza, windswept-meadows, sunspire-terraces (plateau), crown-sanctum (carve, pool + bridge, sealed final gate "more adventures soon").
 - Themes `sky` / `sky-cave` (`skyKinds`, `sk-*` SCALE, `BRP.sk`), backdrops `sky`, `sanctum`; plan `docs/WORLD6_SKYSPIRE_CROWN.md`.
 - All new worlds use `serverZone: 'forest'` (the only server zone known to exist; see README stopgaps) and zone pools use REAL species ids from `monsterSprites.ts` (unknown ids fall back to the slime sprite).
+
+## World portals (open)
+- Gate target `{ exit: 'portal', world: N }`: engine asks `cb.canPortal(N)` (WorldView: world must be `built` and trainer level >= `unlockLevel`, otherwise it shows a message and steps the explorer back); when allowed it fades and calls `cb.onSwitchWorld(N)` (Explore swaps `worldId`, the new world loads its first location at 'south').
+- Wired: Emberlands -> 2, Grove -> 3, Sandstone -> 4, Frostglass -> 5, Tidewhisper -> 6. Skyspire's final gate stays `locked`.
+- There is no return portal; the village south gate leads to the world map.

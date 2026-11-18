@@ -316,7 +316,7 @@ const caverns: LocationDef = {
   ],
   gates: [
     { id: 'south', rect: [1100, 1690, 200, 110], dir: 'down', style: 'cave', label: 'Ancient Ember Ruins', to: { loc: 'ember-ruins', entrance: 'north' } },
-    { id: 'exit', rect: [1120, 20, 160, 110], dir: 'up', style: 'portal', label: 'Emerald Grove', to: { exit: 'locked', message: 'The glowing doorway to Emerald Grove is sealed for now. It will open on a later unlock.' } },
+    { id: 'exit', rect: [1120, 20, 160, 110], dir: 'up', style: 'portal', label: 'Emerald Grove', to: { exit: 'portal', world: 2, message: 'The glowing doorway to Emerald Grove shimmers.' } },
   ],
   entrances: { south: { x: 1200, y: 1600, facing: 'up' } },
   interactables: [

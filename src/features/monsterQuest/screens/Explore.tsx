@@ -6,5 +6,5 @@ import { WorldView } from '../world/WorldView';
 export function Explore() {
   const [worldId, setWorldId] = useState<number | null>(null);
   if (worldId == null) return <WorldSelect onEnter={setWorldId} />;
-  return <WorldView worldId={worldId} onLeave={() => setWorldId(null)} />;
+  return <WorldView worldId={worldId} onLeave={() => setWorldId(null)} onSwitch={setWorldId} />;
 }

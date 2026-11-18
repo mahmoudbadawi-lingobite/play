@@ -237,7 +237,7 @@ const heartwood: LocationDef = {
   ],
   gates: [
     { id: 'south', rect: [1100, 1690, 200, 110], dir: 'down', style: 'cave', label: 'Lilypad Hollow', to: { loc: 'lilypad-hollow', entrance: 'north' } },
-    { id: 'exit', rect: [1120, 20, 160, 110], dir: 'up', style: 'portal', label: 'Sandstone Reach', to: { exit: 'locked', message: 'The glowing doorway to Sandstone Reach is sealed for now. It will open on a later unlock.' } },
+    { id: 'exit', rect: [1120, 20, 160, 110], dir: 'up', style: 'portal', label: 'Sandstone Reach', to: { exit: 'portal', world: 3, message: 'The glowing doorway to Sandstone Reach shimmers.' } },
   ],
   entrances: { south: { x: 1200, y: 1600, facing: 'up' } },
   interactables: [

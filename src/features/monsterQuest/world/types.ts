@@ -29,7 +29,7 @@ export interface PlateauDef { pts: Pt[]; face?: number; /** carve mode floors ha
 export interface ZoneDef { id: string; poly: Pt[]; ground: ZoneGround; pool: string[]; rare?: boolean; label: string; density?: number }
 export interface GateDef {
   id: string; rect: [number, number, number, number]; // x, y, w, h
-  to: { loc: string; entrance: string } | { exit: 'world' | 'locked'; message?: string };
+  to: { loc: string; entrance: string } | { exit: 'world' | 'locked'; message?: string } | { exit: 'portal'; world: number; message?: string };
   label: string; style: 'path' | 'cave' | 'arch' | 'gate' | 'portal' | 'door';
   /** direction the player walks to leave */
   dir: 'up' | 'down' | 'left' | 'right';

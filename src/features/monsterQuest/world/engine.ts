@@ -28,6 +28,9 @@ export interface EngineCallbacks {
   onDialog: (d: Dialog | null) => void;
   onShop: () => void;
   onExitWorld: () => void;
+  /** Portal to another world: returns null when the explorer may pass, otherwise the message to show. */
+  canPortal?: (world: number) => string | null;
+  onSwitchWorld?: (world: number) => void;
   onToast: (msg: string) => void;
   /** returns when the encounter UI is done starting; throw to show an error toast */
   onEncounter: (serverZone: string, zoneId: string, rare: boolean) => Promise<void>;
@@ -257,8 +260,9 @@ export class WorldEngine {
       inGate = true; if (this.gateLock || locked) continue;
       this.setFlag(`touch:${def.id}:${g.id}`);
       if ('loc' in g.to) { this.gateLock = true; void this.load(g.to.loc, g.to.entrance); }
+      else if (g.to.exit === 'portal' && !this.o.cb.canPortal?.(g.to.world)) { const w = g.to.world; this.gateLock = true; this.fadeDir = 1; this.pending = () => { this.o.cb.onSwitchWorld?.(w); }; }
       else if (g.to.exit === 'world') { this.gateLock = true; this.fadeDir = 1; this.pending = () => { this.o.cb.onExitWorld(); }; }
-      else { this.gateLock = true; this.o.cb.onToast(g.to.message ?? 'This way is closed for now.'); const dv = { left: [1, 0], right: [-1, 0], up: [0, 1], down: [0, -1] }[g.dir]; let nx = p.x + dv[0] * 140, ny = p.y + dv[1] * 140;
+      else { this.gateLock = true; this.o.cb.onToast((g.to.exit === 'portal' ? this.o.cb.canPortal?.(g.to.world) : null) ?? g.to.message ?? 'This way is closed for now.'); const dv = { left: [1, 0], right: [-1, 0], up: [0, 1], down: [0, -1] }[g.dir]; let nx = p.x + dv[0] * 140, ny = p.y + dv[1] * 140;
         // step the explorer back to open ground (never into a statue, altar or wall, which would trap them)
         for (let d = 120; d <= 700; d += 20) { const x = p.x + dv[0] * d, y = p.y + dv[1] * d; if (b.field.sdf(x, y) > 26) { nx = x; ny = y; break; } }
         p.x = nx; p.y = ny; p.vx = p.vy = 0; this.route = null; }
