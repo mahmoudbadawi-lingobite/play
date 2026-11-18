@@ -216,8 +216,7 @@ export function TeacherProgress() {
   const activityTotal = data?.activity.reduce((a, d) => a + d.answers, 0) ?? 0;
 
   return (
-    // Solid dark-blue surface so the white text stays readable on the light menu background; in full screen the page is already dark, so it is switched off there.
-    <div className="space-y-3 rounded-3xl border-2 border-[#6aa8ff]/50 bg-gradient-to-b from-[#1b4fb3] to-[#0d2b73] p-3 text-white shadow-lg [.is-fs_&]:border-transparent [.is-fs_&]:bg-none [.is-fs_&]:p-0 [.is-fs_&]:shadow-none">
+    <div className="space-y-3 text-white">
       <Panel>
         <div className="flex flex-wrap items-center gap-2">
           <select value={classId} onChange={(e) => setClassId(e.target.value)} className={inp} aria-label="Class" disabled={!classes?.length}>

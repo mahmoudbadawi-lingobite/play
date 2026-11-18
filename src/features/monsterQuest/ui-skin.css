@@ -2,6 +2,9 @@
 
 /* the whole game sits on the painted blue background (falls back to the old gradient while it loads) */
 .mq-root { background: var(--mq-bg, none), radial-gradient(1200px 500px at 50% -10%, #3b82f6 0%, transparent 60%), linear-gradient(180deg, #123a8f 0%, #0b2566 100%); }
+/* Normal (not full screen) mode: the page scrolls, so a picture stretched over the whole page height showed only its pale top on long pages
+   (Questions, Progress...). Pinning it to the window gives every tab the same dark starry look as full screen. */
+.mq-root:not(.is-fs):not(.mq-wpanel) { background-attachment: fixed; }
 
 /* logo */
 .mq-logo-img { display: block; height: 3.4rem; width: auto; user-select: none; filter: drop-shadow(0 3px 4px rgba(0,0,0,.35)); }

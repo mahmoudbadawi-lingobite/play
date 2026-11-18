@@ -15,6 +15,7 @@ import { Leaderboard } from './screens/Leaderboard';
 import { Profile } from './screens/Profile';
 import { QuestionBank } from './screens/QuestionBank';
 import { TeacherProgress } from './screens/TeacherProgress';
+import { usePanelBridge } from './world/panelBridge';
 import { fmt, NavIcon } from './ui';
 import { useShellFullscreen } from './fullscreen';
 import { sfx } from './sound';
@@ -47,6 +48,7 @@ function Shell() {
   const mq = useMq();
   const root = useRef<HTMLDivElement>(null);
   const fs = useShellFullscreen(root);
+  const panel = usePanelBridge();   // set while a page (shop, bag...) is open over the world
   const [ask, setAsk] = useState(false);
   // Offer full screen once per visit, a moment after the game opens (not on iPhone Safari, which cannot do it, and not when installed as an app).
   useEffect(() => {
@@ -77,7 +79,16 @@ function Shell() {
         <div className="mq-shell-grid md:grid md:grid-cols-[150px_1fr] md:gap-4">
           <nav className="mq-nav" aria-label="Monster Quest">
             {fs.isFs && <button type="button" className="mq-nav-item mq-nav-exit" onClick={() => { sfx.click(); fs.exit(); }} title="Exit full screen"><img className="mq-nav-ico" src={ui('exit')} alt="" draggable={false} /><span>Exit</span></button>}
-            {nav.map((n) => <NavLink key={n.label} to={n.to ? `/monster-quest/${n.to}` : '/monster-quest'} end={n.end} className={({ isActive }) => `mq-nav-item ${isActive ? 'is-active' : ''}`}><NavIcon icon={n.icon} /><span>{n.label}</span></NavLink>)}
+            {nav.map((n) => {
+              const id = n.to || 'home';
+              return (
+                <NavLink key={n.label} to={n.to ? `/monster-quest/${n.to}` : '/monster-quest'} end={n.end}
+                  className={({ isActive }) => `mq-nav-item ${(panel ? id === panel.tab : isActive) ? 'is-active' : ''}`}
+                  onClick={(e) => { if (panel) { e.preventDefault(); sfx.click(); panel.go(id); } }}>
+                  <NavIcon icon={n.icon} /><span>{n.label}</span>
+                </NavLink>
+              );
+            })}
           </nav>
           <main className="mq-shell-main min-w-0">
             <Routes>
