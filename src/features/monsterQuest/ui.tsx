@@ -2,6 +2,7 @@ import { useEffect, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { RARITY_META, TYPE_META } from './config';
 import type { ElementType, Rarity } from './types';
 import { sfx } from './sound';
+import { ui } from './uiAssets';
 
 export function TypeBadge({ type, small }: { type: ElementType; small?: boolean }) {
   const m = TYPE_META[type];
@@ -10,6 +11,12 @@ export function TypeBadge({ type, small }: { type: ElementType; small?: boolean 
 export function RarityBadge({ rarity }: { rarity: Rarity }) {
   const m = RARITY_META[rarity];
   return <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white" style={{ background: m.color }}>{m.label}</span>;
+}
+
+/** Painted menu icon; an id like 'emoji:📊' draws that emoji instead (for pages that have no painted icon yet). */
+export function NavIcon({ icon }: { icon: string }) {
+  if (icon.startsWith('emoji:')) return <span className="mq-nav-ico grid place-items-center text-[1.5rem] leading-none" aria-hidden="true">{icon.slice(6)}</span>;
+  return <img className="mq-nav-ico" src={ui(icon)} alt="" draggable={false} />;
 }
 
 export function Bar({ pct, color = '#22c55e', label, height = 10 }: { pct: number; color?: string; label?: string; height?: number }) {

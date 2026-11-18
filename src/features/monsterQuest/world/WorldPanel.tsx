@@ -7,19 +7,19 @@ import { Encyclopedia } from '../screens/Encyclopedia';
 import { Leaderboard } from '../screens/Leaderboard';
 import { Profile } from '../screens/Profile';
 import { QuestionBank } from '../screens/QuestionBank';
+import { TeacherProgress } from '../screens/TeacherProgress';
 import { Quests } from '../screens/Quests';
 import { Inventory, Shop } from '../screens/Shop';
 import { Wardrobe } from '../screens/Wardrobe';
-import { fmt } from '../ui';
+import { fmt, NavIcon } from '../ui';
 import { sfx } from '../sound';
-import { ui } from '../uiAssets';
 
 /** Same pages and order as the side menu of Monster Quest (the ids are the route names). */
-export type PanelTab = 'home' | 'monsters' | 'arena' | 'quests' | 'style' | 'dex' | 'inventory' | 'shop' | 'leaderboard' | 'profile' | 'questions';
+export type PanelTab = 'home' | 'monsters' | 'arena' | 'quests' | 'style' | 'dex' | 'inventory' | 'shop' | 'leaderboard' | 'profile' | 'progress' | 'questions';
 const ITEMS: { id: PanelTab | 'explore'; icon: string; label: string }[] = [
   { id: 'home', icon: 'nav-home', label: 'Home' }, { id: 'explore', icon: 'nav-explore', label: 'Explore' }, { id: 'monsters', icon: 'nav-monsters', label: 'Monsters' }, { id: 'arena', icon: 'nav-arena', label: 'Arena' },
   { id: 'quests', icon: 'nav-quests', label: 'Quests' }, { id: 'style', icon: 'nav-style', label: 'Style' }, { id: 'dex', icon: 'nav-dex', label: 'Dex' }, { id: 'inventory', icon: 'nav-bag', label: 'Bag' },
-  { id: 'shop', icon: 'nav-shop', label: 'Shop' }, { id: 'leaderboard', icon: 'nav-ranks', label: 'Ranks' }, { id: 'profile', icon: 'nav-profile', label: 'Profile' }, { id: 'questions', icon: 'nav-questions', label: 'Questions' },
+  { id: 'shop', icon: 'nav-shop', label: 'Shop' }, { id: 'leaderboard', icon: 'nav-ranks', label: 'Ranks' }, { id: 'profile', icon: 'nav-profile', label: 'Profile' }, { id: 'progress', icon: 'emoji:📊', label: 'Progress' }, { id: 'questions', icon: 'nav-questions', label: 'Questions' },
 ];
 const TAB_IDS = new Set<string>(ITEMS.map((i) => i.id).filter((i) => i !== 'explore'));
 
@@ -31,7 +31,7 @@ export function WorldPanel({ tab, onTab, onClose }: { tab: PanelTab; onTab: (t: 
   const mq = useMq();
   useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, [onClose]);
   const go = (id: string) => { sfx.click(); if (id === 'explore') onClose(); else if (TAB_IDS.has(id)) onTab(id as PanelTab); };
-  const items = ITEMS.filter((i) => i.id !== 'questions' || mq.isStaff);
+  const items = ITEMS.filter((i) => (i.id !== 'questions' && i.id !== 'progress') || mq.isStaff);
   // a Link in a page would navigate away from the game: turn it into a tab change
   const onLink = (e: React.MouseEvent) => {
     const a = (e.target as HTMLElement).closest('a[href]') as HTMLAnchorElement | null; if (!a) return;
@@ -41,7 +41,7 @@ export function WorldPanel({ tab, onTab, onClose }: { tab: PanelTab; onTab: (t: 
   return (
     <div className="mq-wpanel mq-root" role="dialog" aria-label="Game menu">
       <nav className="mq-wnav" aria-label="Monster Quest menu">
-        {items.map((n) => <button key={n.id} type="button" onClick={() => go(n.id)} className={`mq-nav-item ${tab === n.id ? 'is-active' : ''}`} aria-current={tab === n.id ? 'page' : undefined}><img className="mq-nav-ico" src={ui(n.icon)} alt="" draggable={false} /><span>{n.label}</span></button>)}
+        {items.map((n) => <button key={n.id} type="button" onClick={() => go(n.id)} className={`mq-nav-item ${tab === n.id ? 'is-active' : ''}`} aria-current={tab === n.id ? 'page' : undefined}><NavIcon icon={n.icon} /><span>{n.label}</span></button>)}
       </nav>
       <div className="mq-wpanel-top">
         <button className="mq-wpanel-back" onClick={() => go('explore')}>← Back to game</button>
@@ -59,6 +59,7 @@ export function WorldPanel({ tab, onTab, onClose }: { tab: PanelTab; onTab: (t: 
           {tab === 'shop' && <Shop onStyle={() => onTab('style')} />}
           {tab === 'leaderboard' && <Leaderboard />}
           {tab === 'profile' && <Profile />}
+          {tab === 'progress' && mq.isStaff && <TeacherProgress />}
           {tab === 'questions' && mq.isStaff && <QuestionBank />}
         </div>
       </div>

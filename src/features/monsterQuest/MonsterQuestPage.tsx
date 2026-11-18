@@ -14,7 +14,8 @@ import { Encyclopedia } from './screens/Encyclopedia';
 import { Leaderboard } from './screens/Leaderboard';
 import { Profile } from './screens/Profile';
 import { QuestionBank } from './screens/QuestionBank';
-import { fmt } from './ui';
+import { TeacherProgress } from './screens/TeacherProgress';
+import { fmt, NavIcon } from './ui';
 import { useShellFullscreen } from './fullscreen';
 import { sfx } from './sound';
 import './monsterQuest.css';
@@ -61,7 +62,7 @@ function Shell() {
     { to: '', icon: 'nav-home', label: 'Home', end: true }, { to: 'explore', icon: 'nav-explore', label: 'Explore' }, { to: 'monsters', icon: 'nav-monsters', label: 'Monsters' }, { to: 'arena', icon: 'nav-arena', label: 'Arena' }, { to: 'quests', icon: 'nav-quests', label: 'Quests' }, { to: 'style', icon: 'nav-style', label: 'Style' },
     { to: 'dex', icon: 'nav-dex', label: 'Dex' }, { to: 'inventory', icon: 'nav-bag', label: 'Bag' }, { to: 'shop', icon: 'nav-shop', label: 'Shop' },
     { to: 'leaderboard', icon: 'nav-ranks', label: 'Ranks' }, { to: 'profile', icon: 'nav-profile', label: 'Profile' },
-    ...(mq.isStaff ? [{ to: 'questions', icon: 'nav-questions', label: 'Questions' }] : []),
+    ...(mq.isStaff ? [{ to: 'progress', icon: 'emoji:📊', label: 'Progress' }, { to: 'questions', icon: 'nav-questions', label: 'Questions' }] : []),
   ];
   return (
     <div ref={root} className={`mq-root ${fs.isFs ? 'is-fs' : ''}`} style={{ '--mq-bg': menuBackground() } as CSSProperties}>
@@ -76,7 +77,7 @@ function Shell() {
         <div className="mq-shell-grid md:grid md:grid-cols-[150px_1fr] md:gap-4">
           <nav className="mq-nav" aria-label="Monster Quest">
             {fs.isFs && <button type="button" className="mq-nav-item mq-nav-exit" onClick={() => { sfx.click(); fs.exit(); }} title="Exit full screen"><img className="mq-nav-ico" src={ui('exit')} alt="" draggable={false} /><span>Exit</span></button>}
-            {nav.map((n) => <NavLink key={n.label} to={n.to ? `/monster-quest/${n.to}` : '/monster-quest'} end={n.end} className={({ isActive }) => `mq-nav-item ${isActive ? 'is-active' : ''}`}><img className="mq-nav-ico" src={ui(n.icon)} alt="" draggable={false} /><span>{n.label}</span></NavLink>)}
+            {nav.map((n) => <NavLink key={n.label} to={n.to ? `/monster-quest/${n.to}` : '/monster-quest'} end={n.end} className={({ isActive }) => `mq-nav-item ${isActive ? 'is-active' : ''}`}><NavIcon icon={n.icon} /><span>{n.label}</span></NavLink>)}
           </nav>
           <main className="mq-shell-main min-w-0">
             <Routes>
@@ -91,6 +92,7 @@ function Shell() {
               <Route path="shop" element={<Shop />} />
               <Route path="leaderboard" element={<Leaderboard />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="progress" element={mq.isStaff ? <TeacherProgress /> : <Navigate to="/monster-quest" replace />} />
               <Route path="questions" element={mq.isStaff ? <QuestionBank /> : <Navigate to="/monster-quest" replace />} />
               <Route path="*" element={<Navigate to="/monster-quest" replace />} />
             </Routes>

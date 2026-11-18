@@ -90,3 +90,20 @@ export interface Battle {
   id: string; status: 'active' | 'won' | 'lost' | 'forfeit'; opp_name: string; difficulty: 'easy' | 'normal' | 'hard'; zone_id: string;
   player: BMon[]; opp: BMon[]; p_active: number; o_active: number; turn: number; pending: Question | null; result: BattleResult | null; events: BEvent[];
 }
+
+// ---- teacher progress dashboard (mq_class_progress / mq_student_progress)
+export interface ProgressStudent {
+  id: string; name: string; xp: number; level: number; started: boolean; coins: number;
+  monsters: number; species: number; answers: number; correct: number; last_active: string | null;
+}
+export interface TopicStat { topic: string; answers: number; correct: number; accuracy: number }
+export interface HardQuestion { id: string; prompt: string; type: string; topic: string | null; answers: number; correct: number; accuracy: number }
+export interface DayCount { day: string; answers: number; players?: number }
+export interface ClassProgress {
+  class: { id: string; name: string }; days: number | null;
+  students: ProgressStudent[]; topics: TopicStat[]; hard: HardQuestion[]; activity: DayCount[];
+}
+export interface StudentProgress {
+  topics: TopicStat[]; activity: DayCount[]; monsters: { name: string; level: number; in_team: boolean }[];
+  recent: { prompt: string; type: string; topic: string | null; correct: boolean; response_ms: number | null; at: string }[];
+}
