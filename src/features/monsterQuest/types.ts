@@ -61,6 +61,8 @@ export interface BankQuestion {
   prompt: string; passage: string | null; image_url: string | null; audio_url: string | null; tts_text: string | null;
   options: any; answer: any; explanation: string | null; xp_reward: number; time_limit_s: number | null; active: boolean;
   created_by: string | null; created_at: string;
+  /** classes that receive this question; empty = every student. Undefined until monster_quest_teacher_stage1.sql has been run. */
+  class_ids?: string[];
 }
 
 // ---- trainer look / wardrobe

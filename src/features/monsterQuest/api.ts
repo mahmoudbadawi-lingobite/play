@@ -108,6 +108,8 @@ export async function deleteBankQuestion(id: string): Promise<void> {
   const { error } = await supabase.from('mq_questions').delete().eq('id', id);
   if (error) fail(error);
 }
+/** Change who receives the given questions (empty class list = everyone). Returns how many were updated. */
+export const setQuestionAudience = (ids: string[], classIds: string[]) => rpc<number>('mq_set_question_audience', { p_ids: ids, p_class_ids: classIds });
 export async function questionStats(): Promise<Record<string, { asked: number; correct: number }>> {
   const { data, error } = await supabase.rpc('mq_question_stats');
   if (error) fail(error);

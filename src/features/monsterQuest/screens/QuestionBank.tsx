@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { useAuth } from '../../../contexts/AuthContext';
-import { listMyContentSets, listPublicContentSets } from '../../../lib/services';
-import type { ContentSet } from '../../../types';
+import { listMyClasses, listMyContentSets, listPublicContentSets } from '../../../lib/services';
+import type { ContentSet, SchoolClass } from '../../../types';
 import * as api from '../api';
 import { QUESTION_TYPES } from '../config';
 import { ConfirmDialog, GameButton, Modal, Panel } from '../ui';
 import type { BankQuestion, QuestionType } from '../types';
 
-const blank = (): Partial<BankQuestion> => ({ type: 'mcq', subject: 'English', difficulty: 1, xp_reward: 5, active: true, prompt: '', answer: '' });
+const blank = (audience: string[] = []): Partial<BankQuestion> => ({ type: 'mcq', subject: 'English', difficulty: 1, xp_reward: 5, active: true, prompt: '', answer: '', ...(audience.length ? { class_ids: audience } : {}) });
 const lines = (s: string) => s.split('\n').map((x) => x.trim()).filter(Boolean);
 const TEMPLATE_COLS = ['type', 'prompt', 'options', 'answer', 'explanation', 'topic', 'subject', 'grade', 'difficulty', 'xp_reward', 'time_limit_s', 'passage', 'tts_text', 'audio_url', 'image_url'];
 
@@ -47,6 +47,21 @@ function rowToQuestion(r: Record<string, any>): Partial<BankQuestion> | string {
   };
 }
 
+/** Choose who gets a question: everyone, or one or more of the teacher's classes. */
+function AudiencePicker({ classes, value, onChange, light }: { classes: SchoolClass[]; value: string[]; onChange: (v: string[]) => void; light?: boolean }) {
+  const on = light ? 'border-[#1b4fb3] bg-[#1b4fb3] text-white' : 'border-yellow-300 bg-yellow-300 text-[#10285a]';
+  const off = light ? 'border-[#1b4fb3] bg-white text-[#10285a]' : 'border-white/40 bg-white/10 text-white';
+  const chip = (active: boolean) => `rounded-full border-2 px-3 py-1 text-xs font-extrabold ${active ? on : off}`;
+  const toggle = (id: string) => onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
+  return (
+    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Who gets these questions">
+      <button type="button" className={chip(value.length === 0)} aria-pressed={value.length === 0} onClick={() => onChange([])}>🌍 Everyone</button>
+      {classes.map((c) => <button key={c.id} type="button" className={chip(value.includes(c.id))} aria-pressed={value.includes(c.id)} onClick={() => toggle(c.id)}>{c.name} · {c.studentIds.length}</button>)}
+      {classes.length === 0 && <span className="text-xs font-semibold opacity-70">Create a class under My Classes to aim questions at it.</span>}
+    </div>
+  );
+}
+
 export function QuestionBank() {
   const { profile } = useAuth();
   const [rows, setRows] = useState<BankQuestion[]>([]);
@@ -58,6 +73,12 @@ export function QuestionBank() {
   const [askDel, setAskDel] = useState<BankQuestion | null>(null);
   const [q, setQ] = useState(''); const [ft, setFt] = useState<QuestionType | 'all'>('all'); const [fd, setFd] = useState(0);
   const [sets, setSets] = useState<ContentSet[] | null>(null);
+  const [classes, setClasses] = useState<SchoolClass[]>([]);
+  const [newAudience, setNewAudience] = useState<string[]>([]);   // audience for new / imported / generated questions
+  const [fa, setFa] = useState<string>('all');                    // audience filter: all | everyone | <class id>
+  const [sel, setSel] = useState<Set<string>>(new Set());
+  const [bulk, setBulk] = useState(false);
+  const [bulkAud, setBulkAud] = useState<string[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -65,10 +86,26 @@ export function QuestionBank() {
     catch (e) { setErr((e as Error).message); } finally { setLoading(false); }
   };
   useEffect(() => { void load(); }, []);
+  useEffect(() => { if (profile?.uid) void listMyClasses(profile.uid).then(setClasses); }, [profile?.uid]);
+  // false until monster_quest_teacher_stage1.sql has been run (the column does not exist yet)
+  const targeting = rows.length === 0 || Array.isArray(rows[0].class_ids);
+  const classById = useMemo(() => new Map(classes.map((c) => [c.id, c.name])), [classes]);
+  const audienceOf = (r: BankQuestion) => (r.class_ids?.length ? r.class_ids.map((id) => classById.get(id) ?? 'Another class').join(', ') : 'Everyone');
 
-  const shown = useMemo(() => rows.filter((r) => (ft === 'all' || r.type === ft) && (!fd || r.difficulty === fd) && (!q || r.prompt.toLowerCase().includes(q.toLowerCase()) || (r.topic ?? '').toLowerCase().includes(q.toLowerCase()))), [rows, q, ft, fd]);
+  const shown = useMemo(() => rows.filter((r) => (ft === 'all' || r.type === ft) && (!fd || r.difficulty === fd) && (fa === 'all' || (fa === 'everyone' ? !r.class_ids?.length : (r.class_ids ?? []).includes(fa))) && (!q || r.prompt.toLowerCase().includes(q.toLowerCase()) || (r.topic ?? '').toLowerCase().includes(q.toLowerCase()))), [rows, q, ft, fd, fa]);
   if (!profile) return null;
 
+  /** Adds the chosen audience (only when one is chosen, so everything keeps working before the SQL update is run). */
+  const withAudience = (list: Partial<BankQuestion>[]) => (targeting && newAudience.length ? list.map((x) => ({ ...x, class_ids: newAudience })) : list);
+  const isMine = (r: BankQuestion) => r.created_by === profile.uid || profile.role === 'admin';
+  const mineShown = shown.filter(isMine);
+  const allSelected = mineShown.length > 0 && mineShown.every((r) => sel.has(r.id));
+  const toggleSel = (id: string) => setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const applyBulk = async () => {
+    setBulk(false); setErr(null);
+    try { const n = await api.setQuestionAudience([...sel], bulkAud); setInfo(`Updated the audience of ${n} question${n === 1 ? '' : 's'}.`); setSel(new Set()); await load(); }
+    catch (e) { setErr((e as Error).message); }
+  };
   const onFile = async (f: File | undefined) => {
     if (!f) return; setErr(null); setInfo(null);
     try {
@@ -77,7 +114,7 @@ export function QuestionBank() {
       else { const wb = XLSX.read(await f.arrayBuffer()); data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' }); }
       const ok: Partial<BankQuestion>[] = [], bad: string[] = [];
       data.forEach((r, i) => { const x = rowToQuestion(r); if (typeof x === 'string') bad.push(`Row ${i + 2}: ${x}`); else ok.push(x); });
-      if (ok.length) await api.insertBankQuestions(ok, profile.uid);
+      if (ok.length) await api.insertBankQuestions(withAudience(ok), profile.uid);
       setInfo(`Imported ${ok.length} question${ok.length === 1 ? '' : 's'}.${bad.length ? ` Skipped ${bad.length}: ${bad.slice(0, 5).join('; ')}${bad.length > 5 ? '…' : ''}` : ''}`);
       await load();
     } catch (e) { setErr(`Import failed: ${(e as Error).message}`); }
@@ -105,7 +142,7 @@ export function QuestionBank() {
           ? { type: 'mcq' as const, prompt: it.clue, options: [it.term.trim(), ...wrong], answer: it.term.trim(), explanation: `${it.term}: ${it.clue}`, topic: s.title, subject: 'English', difficulty: 2, xp_reward: 5, active: true }
           : { type: 'type_answer' as const, prompt: it.clue, answer: [it.term.trim()], topic: s.title, subject: 'English', difficulty: 3, xp_reward: 6, time_limit_s: 40, active: true };
       });
-      const n = await api.insertBankQuestions(out, profile.uid);
+      const n = await api.insertBankQuestions(withAudience(out), profile.uid);
       setInfo(`Created ${n} questions from "${s.title}".`); await load();
     } catch (e) { setErr((e as Error).message); }
   };
@@ -117,13 +154,19 @@ export function QuestionBank() {
     <div className="space-y-3">
       <Panel>
         <div className="flex flex-wrap items-center gap-2">
-          <GameButton tone="green" onClick={() => setEdit(blank())}>＋ New question</GameButton>
+          <GameButton tone="green" onClick={() => setEdit(blank(targeting ? newAudience : []))}>＋ New question</GameButton>
           <label className="mq-btn mq-btn-blue cursor-pointer">⬆ Import (.xlsx / .csv / .json)<input type="file" accept=".xlsx,.xls,.csv,.json" className="hidden" onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ''; }} /></label>
           <GameButton tone="ghost" onClick={template}>⬇ Template</GameButton>
           <GameButton tone="ghost" onClick={openSets}>📚 From a Game Library set</GameButton>
         </div>
-        <p className="mt-2 text-xs font-semibold text-white/75">Questions you add are used in every student's capture challenges, matched to the monster and zone difficulty. You can edit or delete only your own; admins manage all.</p>
+        {targeting && (
+          <div className="mt-3">
+            <p className="mb-1 text-xs font-extrabold uppercase text-white/80">New, imported and generated questions go to</p>
+            <AudiencePicker classes={classes} value={newAudience} onChange={setNewAudience} />
+          </div>)}
+        <p className="mt-2 text-xs font-semibold text-white/75">Students get questions in capture challenges, training and special attacks, matched to the monster and zone difficulty. A question aimed at classes is only asked to students in those classes; "Everyone" questions go to all students. You can edit or delete only your own; admins manage all.</p>
       </Panel>
+      {!targeting && <p className="rounded-xl bg-yellow-500/90 px-3 py-2 text-sm font-bold text-[#10285a]" role="status">Class targeting is not switched on yet: run supabase/monster_quest_teacher_stage1.sql in the Supabase SQL editor, then reload.</p>}
       {info && <p className="rounded-xl bg-green-600/90 px-3 py-2 text-sm font-bold text-white" role="status">{info}</p>}
       {err && <p className="rounded-xl bg-red-500/90 px-3 py-2 text-sm font-bold text-white" role="alert">{err}</p>}
 
@@ -131,28 +174,46 @@ export function QuestionBank() {
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search prompt or topic…" aria-label="Search questions" className={`${inp} min-w-[160px] flex-1`} />
         <select value={ft} onChange={(e) => setFt(e.target.value as any)} className={inp} aria-label="Filter by type"><option value="all">All types</option>{QUESTION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</select>
         <select value={fd} onChange={(e) => setFd(+e.target.value)} className={inp} aria-label="Filter by difficulty"><option value={0}>Any difficulty</option>{[1, 2, 3, 4, 5].map((d) => <option key={d} value={d}>Difficulty {d}</option>)}</select>
+        {targeting && <select value={fa} onChange={(e) => setFa(e.target.value)} className={inp} aria-label="Filter by audience"><option value="all">Any audience</option><option value="everyone">Everyone</option>{classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>}
       </div>
+      {sel.size > 0 && (
+        <Panel>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-bold text-white">{sel.size} selected</span>
+            <GameButton tone="blue" onClick={() => { setBulkAud([]); setBulk(true); }}>🎯 Set audience…</GameButton>
+            <GameButton tone="ghost" onClick={() => setSel(new Set())}>Clear</GameButton>
+          </div>
+        </Panel>)}
 
       <Panel className="!p-0 overflow-x-auto">
         {loading ? <p className="p-4 font-bold text-white">Loading…</p> : (
           <table className="w-full min-w-[640px] text-left text-sm text-white">
-            <thead className="bg-black/25 text-xs uppercase"><tr><th className="p-2">Question</th><th className="p-2">Type</th><th className="p-2">Topic</th><th className="p-2 text-center">Diff.</th><th className="p-2 text-center">Asked</th><th className="p-2 text-center">Correct</th><th className="p-2" /></tr></thead>
+            <thead className="bg-black/25 text-xs uppercase"><tr>{targeting && <th className="w-8 p-2"><input type="checkbox" aria-label="Select all my questions shown" checked={allSelected} onChange={() => setSel(allSelected ? new Set() : new Set(mineShown.map((r) => r.id)))} /></th>}<th className="p-2">Question</th><th className="p-2">Type</th><th className="p-2">Topic</th>{targeting && <th className="p-2">Audience</th>}<th className="p-2 text-center">Diff.</th><th className="p-2 text-center">Asked</th><th className="p-2 text-center">Correct</th><th className="p-2" /></tr></thead>
             <tbody>
-              {shown.map((r) => { const s = stats[r.id]; const mine = r.created_by === profile.uid || profile.role === 'admin'; return (
+              {shown.map((r) => { const s = stats[r.id]; const mine = isMine(r); return (
                 <tr key={r.id} className={`border-t border-white/10 ${r.active ? '' : 'opacity-50'}`}>
+                  {targeting && <td className="p-2">{mine && <input type="checkbox" aria-label="Select question" checked={sel.has(r.id)} onChange={() => toggleSel(r.id)} />}</td>}
                   <td className="max-w-[320px] p-2 font-semibold"><span className="line-clamp-2">{r.prompt}</span></td>
                   <td className="p-2 text-xs">{QUESTION_TYPES.find((t) => t.value === r.type)?.label}</td><td className="p-2 text-xs">{r.topic ?? '–'}</td>
+                  {targeting && <td className="max-w-[160px] p-2 text-xs"><span className={`line-clamp-2 ${r.class_ids?.length ? 'font-bold text-yellow-200' : 'text-white/70'}`}>{audienceOf(r)}</span></td>}
                   <td className="p-2 text-center">{r.difficulty}</td><td className="p-2 text-center">{s?.asked ?? 0}</td><td className="p-2 text-center">{s?.asked ? `${Math.round((s.correct / s.asked) * 100)}%` : '–'}</td>
                   <td className="whitespace-nowrap p-2 text-right">{mine && (<><button className="mr-2 font-bold text-yellow-300 hover:underline" onClick={() => setEdit(r)}>Edit</button><button className="mr-2 font-bold text-sky-300 hover:underline" onClick={() => toggle(r)}>{r.active ? 'Hide' : 'Show'}</button><button className="font-bold text-red-300 hover:underline" onClick={() => setAskDel(r)}>Delete</button></>)}</td>
                 </tr>); })}
-              {shown.length === 0 && <tr><td colSpan={7} className="p-4 text-center font-bold text-white/80">No questions found.</td></tr>}
+              {shown.length === 0 && <tr><td colSpan={9} className="p-4 text-center font-bold text-white/80">No questions found.</td></tr>}
             </tbody>
           </table>)}
       </Panel>
       <p className="text-xs font-semibold text-white/60">Showing {shown.length} of {rows.length}. Students never see answers in their browser; answers are checked on the server.</p>
 
       {askDel && <ConfirmDialog title="Delete this question?" message="This cannot be undone." confirmLabel="Delete" tone="red" onConfirm={() => remove(askDel)} onCancel={() => setAskDel(null)} />}
-      {edit && <QuestionForm initial={edit} onClose={() => setEdit(null)} onSaved={async () => { setEdit(null); await load(); }} userId={profile.uid} />}
+      {edit && <QuestionForm initial={edit} onClose={() => setEdit(null)} onSaved={async () => { setEdit(null); await load(); }} userId={profile.uid} classes={classes} targeting={targeting} />}
+      {bulk && (
+        <Modal onClose={() => setBulk(false)}>
+          <p className="font-display text-lg font-extrabold text-[#10285a]">Who should get these {sel.size} question{sel.size === 1 ? '' : 's'}?</p>
+          <p className="mt-1 text-xs text-[#3d5a94]">Pick one or more of your classes, or Everyone. This replaces their current audience.</p>
+          <div className="mt-3"><AudiencePicker light classes={classes} value={bulkAud} onChange={setBulkAud} /></div>
+          <div className="mt-4 grid grid-cols-2 gap-2"><GameButton tone="ghost" className="!text-[#10285a]" onClick={() => setBulk(false)}>Cancel</GameButton><GameButton tone="green" onClick={applyBulk}>Apply</GameButton></div>
+        </Modal>)}
       {sets && (
         <Modal onClose={() => setSets(null)}>
           <p className="font-display text-lg font-extrabold text-[#10285a]">Create questions from a Game Library set</p>
@@ -167,8 +228,12 @@ export function QuestionBank() {
   );
 }
 
-function QuestionForm({ initial, onClose, onSaved, userId }: { initial: Partial<BankQuestion>; onClose: () => void; onSaved: () => void; userId: string }) {
+function QuestionForm({ initial, onClose, onSaved, userId, classes, targeting }: { initial: Partial<BankQuestion>; onClose: () => void; onSaved: () => void; userId: string; classes: SchoolClass[]; targeting: boolean }) {
   const [f, setF] = useState<Partial<BankQuestion>>(initial);
+  // class ids this teacher can see are editable; ids of classes they do not own (an admin editing someone else's question) are kept as they are
+  const known = new Set(classes.map((c) => c.id));
+  const [aud, setAud] = useState<string[]>((initial.class_ids ?? []).filter((id) => known.has(id)));
+  const kept = (initial.class_ids ?? []).filter((id) => !known.has(id));
   const [optText, setOptText] = useState(Array.isArray(initial.options) ? initial.options.join('\n') : initial.options?.left && initial.answer ? '' : '');
   const [ansText, setAnsText] = useState(() => {
     const a: any = initial.answer;
@@ -201,7 +266,7 @@ function QuestionForm({ initial, onClose, onSaved, userId }: { initial: Partial<
     try {
       await api.saveBankQuestion({ ...f, options, answer, prompt: f.prompt!.trim(), difficulty: f.difficulty ?? 1, xp_reward: f.xp_reward ?? 5, subject: f.subject || 'English',
         passage: f.passage || null, topic: f.topic || null, explanation: f.explanation || null, image_url: f.image_url || null, audio_url: f.audio_url || null, tts_text: f.tts_text || null,
-        grade: f.grade ?? null, time_limit_s: f.time_limit_s ?? null }, userId);
+        grade: f.grade ?? null, time_limit_s: f.time_limit_s ?? null, ...(targeting ? { class_ids: [...aud, ...kept] } : { class_ids: undefined }) }, userId);
       onSaved();
     } catch (e) { setErr((e as Error).message); setSaving(false); }
   };
@@ -235,6 +300,7 @@ function QuestionForm({ initial, onClose, onSaved, userId }: { initial: Partial<
           <div><label className={lab}>XP reward</label><input type="number" min={0} max={50} value={f.xp_reward ?? 5} onChange={(e) => set({ xp_reward: +e.target.value })} className={inp} /></div>
           <div><label className={lab}>Timer (seconds)</label><input type="number" min={5} value={f.time_limit_s ?? ''} onChange={(e) => set({ time_limit_s: e.target.value ? +e.target.value : null })} placeholder="none" className={inp} /></div>
         </div>
+        {targeting && (<><label className={lab}>Who gets this question?</label><AudiencePicker light classes={classes} value={aud} onChange={setAud} />{kept.length > 0 && <p className="mt-1 text-xs font-semibold text-[#3d5a94]">Also aimed at {kept.length} class{kept.length === 1 ? '' : 'es'} of another teacher (kept as is).</p>}</>)}
       </div>
       {err && <p className="mt-2 rounded-xl bg-red-500/90 px-3 py-2 text-sm font-bold text-white" role="alert">{err}</p>}
       <div className="mt-3 grid grid-cols-2 gap-2"><GameButton tone="ghost" className="!text-[#10285a]" onClick={onClose}>Cancel</GameButton><GameButton tone="green" disabled={saving} onClick={save}>{saving ? 'Saving…' : 'Save question'}</GameButton></div>
