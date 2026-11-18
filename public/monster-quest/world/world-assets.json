@@ -377,6 +377,60 @@
    "w": 412,
    "h": 412,
    "seamless": false
+  },
+  "sk-grass": {
+   "file": "ground/sk-grass.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "sk-wind": {
+   "file": "ground/sk-wind.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "sk-cloud": {
+   "file": "ground/sk-cloud.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "sk-trail": {
+   "file": "ground/sk-trail.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": true
+  },
+  "sk-marble": {
+   "file": "ground/sk-marble.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "sk-bank": {
+   "file": "ground/sk-bank.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "sk-water": {
+   "file": "ground/sk-water.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "sk-rock": {
+   "file": "ground/sk-rock.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
+  },
+  "sk-temple": {
+   "file": "ground/sk-temple.jpg",
+   "w": 412,
+   "h": 412,
+   "seamless": false
   }
  },
  "sprites": {
@@ -1959,6 +2013,191 @@
    "file": "sprites/tc-bridge-post.webp",
    "w": 224,
    "h": 386
+  },
+  "sk-tree": {
+   "file": "sprites/sk-tree.webp",
+   "w": 210,
+   "h": 282
+  },
+  "sk-tree2": {
+   "file": "sprites/sk-tree2.webp",
+   "w": 250,
+   "h": 226
+  },
+  "sk-tree3": {
+   "file": "sprites/sk-tree3.webp",
+   "w": 229,
+   "h": 282
+  },
+  "sk-bush": {
+   "file": "sprites/sk-bush.webp",
+   "w": 217,
+   "h": 187
+  },
+  "sk-silvergrass": {
+   "file": "sprites/sk-silvergrass.webp",
+   "w": 271,
+   "h": 249
+  },
+  "sk-flowers": {
+   "file": "sprites/sk-flowers.webp",
+   "w": 237,
+   "h": 182
+  },
+  "sk-boulder": {
+   "file": "sprites/sk-boulder.webp",
+   "w": 242,
+   "h": 192
+  },
+  "sk-rocks": {
+   "file": "sprites/sk-rocks.webp",
+   "w": 244,
+   "h": 267
+  },
+  "sk-log": {
+   "file": "sprites/sk-log.webp",
+   "w": 273,
+   "h": 199
+  },
+  "sk-islet": {
+   "file": "sprites/sk-islet.webp",
+   "w": 219,
+   "h": 251
+  },
+  "sk-pond": {
+   "file": "sprites/sk-pond.webp",
+   "w": 264,
+   "h": 202
+  },
+  "sk-spire": {
+   "file": "sprites/sk-spire.webp",
+   "w": 210,
+   "h": 289
+  },
+  "sk-crystal": {
+   "file": "sprites/sk-crystal.webp",
+   "w": 226,
+   "h": 239
+  },
+  "sk-crates": {
+   "file": "sprites/sk-crates.webp",
+   "w": 249,
+   "h": 214
+  },
+  "sk-stump": {
+   "file": "sprites/sk-stump.webp",
+   "w": 232,
+   "h": 276
+  },
+  "sk-kites": {
+   "file": "sprites/sk-kites.webp",
+   "w": 228,
+   "h": 281
+  },
+  "sk-house": {
+   "file": "sprites/sk-house.webp",
+   "w": 263,
+   "h": 291
+  },
+  "sk-house2": {
+   "file": "sprites/sk-house2.webp",
+   "w": 199,
+   "h": 291
+  },
+  "sk-hut": {
+   "file": "sprites/sk-hut.webp",
+   "w": 251,
+   "h": 244
+  },
+  "sk-tent": {
+   "file": "sprites/sk-tent.webp",
+   "w": 265,
+   "h": 271
+  },
+  "sk-stall": {
+   "file": "sprites/sk-stall.webp",
+   "w": 268,
+   "h": 235
+  },
+  "sk-arch": {
+   "file": "sprites/sk-arch.webp",
+   "w": 241,
+   "h": 239
+  },
+  "sk-pillar": {
+   "file": "sprites/sk-pillar.webp",
+   "w": 139,
+   "h": 267
+  },
+  "sk-wall": {
+   "file": "sprites/sk-wall.webp",
+   "w": 279,
+   "h": 171
+  },
+  "sk-eagle": {
+   "file": "sprites/sk-eagle.webp",
+   "w": 226,
+   "h": 281
+  },
+  "sk-altar": {
+   "file": "sprites/sk-altar.webp",
+   "w": 247,
+   "h": 271
+  },
+  "sk-totem": {
+   "file": "sprites/sk-totem.webp",
+   "w": 205,
+   "h": 279
+  },
+  "sk-stairs": {
+   "file": "sprites/sk-stairs.webp",
+   "w": 281,
+   "h": 185
+  },
+  "sk-temple-door": {
+   "file": "sprites/sk-temple-door.webp",
+   "w": 274,
+   "h": 269
+  },
+  "sk-lantern": {
+   "file": "sprites/sk-lantern.webp",
+   "w": 136,
+   "h": 280
+  },
+  "sk-well": {
+   "file": "sprites/sk-well.webp",
+   "w": 232,
+   "h": 293
+  },
+  "sk-chest": {
+   "file": "sprites/sk-chest.webp",
+   "w": 273,
+   "h": 198
+  },
+  "sk-bridge-deck-h": {
+   "file": "sprites/sk-bridge-deck-h.webp",
+   "w": 488,
+   "h": 204
+  },
+  "sk-bridge-deck-v": {
+   "file": "sprites/sk-bridge-deck-v.webp",
+   "w": 291,
+   "h": 430
+  },
+  "sk-bridge-rail-h": {
+   "file": "sprites/sk-bridge-rail-h.webp",
+   "w": 487,
+   "h": 173
+  },
+  "sk-bridge-rail-v": {
+   "file": "sprites/sk-bridge-rail-v.webp",
+   "w": 74,
+   "h": 445
+  },
+  "sk-bridge-post": {
+   "file": "sprites/sk-bridge-post.webp",
+   "w": 241,
+   "h": 380
   }
  },
  "anims": {
@@ -2220,6 +2459,41 @@
    "fps": 5.0,
    "fw": 183,
    "fh": 164
+  },
+  "sk-waterfall": {
+   "file": "anim/sk-waterfall.webp",
+   "n": 6,
+   "fps": 6.0,
+   "fw": 174,
+   "fh": 197
+  },
+  "sk-pond-anim": {
+   "file": "anim/sk-pond-anim.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 186,
+   "fh": 197
+  },
+  "sk-crystal-glow": {
+   "file": "anim/sk-crystal-glow.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 161,
+   "fh": 250
+  },
+  "sk-rune": {
+   "file": "anim/sk-rune.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 202,
+   "fh": 250
+  },
+  "sk-feathers": {
+   "file": "anim/sk-feathers.webp",
+   "n": 6,
+   "fps": 5.0,
+   "fw": 182,
+   "fh": 147
   }
  }
 }
