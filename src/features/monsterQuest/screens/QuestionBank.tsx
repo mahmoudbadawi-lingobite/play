@@ -151,7 +151,8 @@ export function QuestionBank() {
   const inp = 'rounded-xl border-2 border-[#1b4fb3] bg-white px-2.5 py-1.5 text-sm font-semibold text-[#10285a]';
 
   return (
-    <div className="space-y-3">
+    // Solid dark-blue surface so the white text stays readable on the light menu background; in full screen the page is already dark, so it is switched off there.
+    <div className="space-y-3 rounded-3xl border-2 border-[#6aa8ff]/50 bg-gradient-to-b from-[#1b4fb3] to-[#0d2b73] p-3 shadow-lg [.is-fs_&]:border-transparent [.is-fs_&]:bg-none [.is-fs_&]:p-0 [.is-fs_&]:shadow-none">
       <Panel>
         <div className="flex flex-wrap items-center gap-2">
           <GameButton tone="green" onClick={() => setEdit(blank(targeting ? newAudience : []))}>＋ New question</GameButton>
