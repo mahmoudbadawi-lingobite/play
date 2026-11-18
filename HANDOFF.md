@@ -70,3 +70,8 @@ rich saturated colours, light from top left. Scale: a house door about 1.3 units
 - Locations (`world/locations/coast.ts`, derived from the Frost/Grove layouts): pearl-harbor, driftwood-beach, coral-lagoon (plateau + lagoons), sunken-grotto (carve, pool + bridge, sealed portal to Skyspire Crown).
 - Themes `coast` / `coast-cave` (`coastKinds`, `COAST_SHARED`, `tc-*` SCALE incl. `tc-bridge-*`, `BRP.tc`, ANIM_K); encounter backdrops `coast`, `grotto`; art `tc-*`; plan `docs/WORLD5_TIDEWHISPER_COAST.md`.
 - Bridge deck sheets had corner posts, so tile windows sit between them (deck-h sx117/sw268, deck-v sy112/sh230).
+
+## World 6: Skyspire Crown (built)
+- Locations (`world/locations/sky.ts`): cloudgate-plaza, windswept-meadows, sunspire-terraces (plateau), crown-sanctum (carve, pool + bridge, sealed final gate "more adventures soon").
+- Themes `sky` / `sky-cave` (`skyKinds`, `sk-*` SCALE, `BRP.sk`), backdrops `sky`, `sanctum`; plan `docs/WORLD6_SKYSPIRE_CROWN.md`.
+- All new worlds use `serverZone: 'forest'` (the only server zone known to exist; see README stopgaps) and zone pools use REAL species ids from `monsterSprites.ts` (unknown ids fall back to the slime sprite).

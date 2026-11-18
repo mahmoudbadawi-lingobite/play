@@ -46,7 +46,7 @@ const gate = (g: LocationDef['gates'][number]) => ({ ...g, label: g.label.replac
   to: 'loc' in g.to ? { ...g.to, loc: g.to.loc.replace('mossgate-village', 'dune-haven').replace('whispering-woods', 'whispering-dunes').replace('lilypad-hollow', 'sunstone-canyon').replace('heartwood-hollow', 'scarab-tomb') } : g.id === 'exit' ? { exit: 'locked' as const, message: 'The glowing doorway to Frostglass Peaks is sealed for now. It will open on a later unlock.' } : g.to });
 
 const common = (l: LocationDef, id: string, name: string, mood: string, mini: string): LocationDef => ({
-  ...l, id, name, world: 3, theme: 'sand', pal: PAL, serverZone: 'desert', particles: 'pollen', mood, mini,
+  ...l, id, name, world: 3, theme: 'sand', pal: PAL, serverZone: 'forest', particles: 'pollen', mood, mini,
   props: l.props.map(dress), zones: zones(l.zones), interactables: l.interactables.map(sign(id)), gates: l.gates.map(gate),
   landmark: l.landmark ? { ...l.landmark, name: l.landmark.name.replace('Mossgate Village', 'Dune Haven').replace('Hollow tree', 'Twisted palm').replace('Waterfall', 'Red cliffs').replace('Underground waterfall', 'Sandfall') } : l.landmark,
   lights: (l.lights ?? []).map((q) => ({ ...q, c: q.c === '#8fe3ff' || q.c === '#b9ffee' ? '#7fe9e0' : q.c === '#b9ff7a' ? '#ffd27a' : q.c })),
@@ -67,7 +67,7 @@ canyon.mood = 'Red-gold cliffs, a turquoise oasis and a bridge over the gorge.';
 
 const tomb: LocationDef = {
   ...common(g4, 'scarab-tomb', 'Scarab Tomb', 'Torch-lit sandstone, amber glow and a pit of quicksand.', '#6a4a22'),
-  theme: 'sand-tomb', pal: PAL_TOMB, serverZone: 'desert', particles: 'sparkles',
+  theme: 'sand-tomb', pal: PAL_TOMB, serverZone: 'forest', particles: 'sparkles',
 };
 tomb.props = tomb.props.map((p) => p.kind === 'fireCrystal' ? { ...p } : p);
 

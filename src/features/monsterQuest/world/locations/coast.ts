@@ -16,10 +16,10 @@ const [g1, g2, g3, g4] = GROVE;
 const swapKind: Record<string, PropDef['kind']> = { mushroom: 'mushroom', hollowTree: 'tent', treehouse: 'house', log: 'bones', stump: 'stump' };
 const dress = (p: PropDef): PropDef => ({ ...p, kind: swapKind[p.kind] ?? p.kind });
 const pools: Record<string, string[]> = {
-  'mg-se': ['crabbit', 'shellpup', 'bubblefin'], 'mg-sw': ['shellpup', 'crabbit', 'tidepuff'], 'mg-ne': ['bubblefin', 'crabbit', 'shellpup'],
-  'ww-west': ['crabbit', 'shellpup', 'bubblefin'], 'ww-north': ['tidepuff', 'gullet', 'crabbit'], 'ww-east': ['gullet', 'bubblefin', 'shellpup'], 'ww-rare': ['pearlisk'],
-  'lh-shore': ['bubblefin', 'shellpup', 'tidepuff'], 'lh-reeds': ['crabbit', 'gullet', 'bubblefin'], 'lh-east': ['gullet', 'tidepuff', 'coralix'], 'lh-rare': ['pearlisk'],
-  'hh-entrance': ['tidepuff', 'coralix', 'crabbit'], 'hh-middle': ['coralix', 'bubblefin', 'gullet'], 'hh-deep': ['coralix', 'tidepuff', 'gullet'], 'hh-rare': ['pearlisk'],
+  'mg-se': ['pinchy', 'shellby', 'blupp'], 'mg-sw': ['shellby', 'pinchy', 'splashet'], 'mg-ne': ['blupp', 'pinchy', 'shellby'],
+  'ww-west': ['pinchy', 'shellby', 'blupp'], 'ww-north': ['splashet', 'jellibloom', 'pinchy'], 'ww-east': ['jellibloom', 'blupp', 'shellby'], 'ww-rare': ['aquarion'],
+  'lh-shore': ['blupp', 'shellby', 'splashet'], 'lh-reeds': ['pinchy', 'jellibloom', 'blupp'], 'lh-east': ['jellibloom', 'splashet', 'coralynx'], 'lh-rare': ['aquarion'],
+  'hh-entrance': ['splashet', 'coralynx', 'pinchy'], 'hh-middle': ['coralynx', 'blupp', 'jellibloom'], 'hh-deep': ['coralynx', 'splashet', 'jellibloom'], 'hh-rare': ['aquarion'],
 };
 const ids: Record<string, string> = { 'mg-': 'ph-', 'ww-': 'db-', 'lh-': 'cl-', 'hh-': 'sg-' };
 const zones = (z: ZoneDef[]): ZoneDef[] => z.map((q) => {
@@ -46,7 +46,7 @@ const gate = (g: LocationDef['gates'][number]) => ({ ...g, label: g.label.replac
   to: 'loc' in g.to ? { ...g.to, loc: g.to.loc.replace('mossgate-village', 'pearl-harbor').replace('whispering-woods', 'driftwood-beach').replace('lilypad-hollow', 'coral-lagoon').replace('heartwood-hollow', 'sunken-grotto') } : g.id === 'exit' ? { exit: 'locked' as const, message: 'The glowing doorway to Skyspire Crown is sealed for now. It will open on a later unlock.' } : g.to });
 
 const common = (l: LocationDef, id: string, name: string, mood: string, mini: string): LocationDef => ({
-  ...l, id, name, world: 5, theme: 'coast', pal: PAL, serverZone: 'beach', particles: 'sparkles', mood, mini,
+  ...l, id, name, world: 5, theme: 'coast', pal: PAL, serverZone: 'forest', particles: 'sparkles', mood, mini,
   props: l.props.map(dress), zones: zones(l.zones), interactables: l.interactables.map(sign(id)), gates: l.gates.map(gate),
   landmark: l.landmark ? { ...l.landmark, name: l.landmark.name.replace('Mossgate Village', 'Pearl Harbor').replace('Hollow tree', 'Leaning palm').replace('Waterfall', 'Sea-cave falls').replace('Underground waterfall', 'Sea-cave falls') } : l.landmark,
   lights: (l.lights ?? []).map((q) => ({ ...q, c: q.c === '#8fe3ff' || q.c === '#b9ffee' ? '#7fe9e0' : q.c === '#b9ff7a' ? '#ffd27a' : q.c })),
@@ -67,7 +67,7 @@ canyon.mood = 'Two turquoise lagoons, a rocky ledge and a sea-cave waterfall.';
 
 const tomb: LocationDef = {
   ...common(g4, 'sunken-grotto', 'Sunken Grotto', 'Glowing pearls, blue coral and a deep tide pool.', '#1b5a78'),
-  theme: 'coast-cave', pal: PAL_TOMB, serverZone: 'beach', particles: 'sparkles',
+  theme: 'coast-cave', pal: PAL_TOMB, serverZone: 'forest', particles: 'sparkles',
 };
 tomb.props = tomb.props.map((p) => p.kind === 'fireCrystal' ? { ...p } : p);
 

@@ -5,7 +5,7 @@ import './scene.css';
  * Painted backdrops for wild encounters and arena battles, built from the same pictures as the world
  * (public/monster-quest/world/). Everything is sized from the box it sits in (--u = 1% of its width, or a bit more in tall boxes), so it fits a phone, a tablet or the arena panel.
  */
-export type SceneKind = 'village' | 'valley' | 'arena' | 'ruins' | 'caverns' | 'grove' | 'roots' | 'sand' | 'tomb' | 'frost' | 'frostcave' | 'coast' | 'grotto';
+export type SceneKind = 'village' | 'valley' | 'arena' | 'ruins' | 'caverns' | 'grove' | 'roots' | 'sand' | 'tomb' | 'frost' | 'frostcave' | 'coast' | 'grotto' | 'sky' | 'sanctum';
 const BASE = `${import.meta.env.BASE_URL}monster-quest/world/`;
 interface Item { id: string; x: number; b: number; w: number; z?: number; flip?: boolean; sway?: number; delay?: number }
 interface Strip { id: string; x: number; b: number; w: number; fw: number; fh: number; n: number; fps: number; z?: number }
@@ -151,7 +151,29 @@ const GROTTO: Def = {
     { id: 'tc-boulder', x: 88, b: 0, w: 12, z: 4 }, { id: 'tc-crystal', x: 101, b: -2, w: 12, z: 4 },
   ],
 };
-const DEFS: Record<SceneKind, Def> = { village: VILLAGE, valley: VALLEY, arena: ARENA, ruins: RUINS, caverns: CAVERNS, grove: GROVE, roots: ROOTS, sand: SAND, tomb: TOMB, frost: FROST, frostcave: FROSTCAVE, coast: COAST, grotto: GROTTO };
+const SKY: Def = {
+  sky: 'linear-gradient(180deg,#6cc0ff 0%,#cfeaff 42%,#fff4d6 60%)', ground: 'sk-grass', groundK: 24, groundTint: 'rgba(255,250,200,.06)', fx: 'pollen',
+  strips: [{ id: 'sk-feathers', x: 24, b: 24, w: 10, fw: 182, fh: 147, n: 6, fps: 5, z: 5 }, { id: 'sk-feathers', x: 76, b: 30, w: 9, fw: 182, fh: 147, n: 6, fps: 4, z: 5 }],
+  items: [
+    { id: 'sk-tree', x: 5, b: 40, w: 14, z: 1 }, { id: 'sk-tree3', x: 20, b: 41, w: 13, z: 1 }, { id: 'sk-tree2', x: 34, b: 40, w: 14, z: 1 }, { id: 'sk-arch', x: 50, b: 41, w: 14, z: 1 },
+    { id: 'sk-tree', x: 65, b: 40, w: 14, z: 1, flip: true }, { id: 'sk-tree3', x: 79, b: 41, w: 13, z: 1 }, { id: 'sk-tree2', x: 93, b: 40, w: 14, z: 1, flip: true },
+    { id: 'sk-house', x: 13, b: 35, w: 15, z: 2 }, { id: 'sk-tent', x: 86, b: 35, w: 15, z: 2 }, { id: 'sk-lantern', x: 28, b: 31, w: 4.5, z: 2 },
+    { id: 'sk-bush', x: 2, b: -1, w: 14, z: 4 }, { id: 'sk-flowers', x: 18, b: 1, w: 9, z: 4, sway: 3 }, { id: 'sk-silvergrass', x: 33, b: -3, w: 13, z: 4, sway: 2 },
+    { id: 'sk-kites', x: 64, b: 2, w: 9, z: 4 }, { id: 'sk-islet', x: 76, b: 2, w: 9, z: 4 }, { id: 'sk-boulder', x: 90, b: 1, w: 11, z: 4 }, { id: 'sk-bush', x: 104, b: -3, w: 14, z: 4, flip: true },
+  ],
+};
+const SANCTUM: Def = {
+  sky: 'linear-gradient(180deg,#07041a 0%,#1d1458 44%,#5a4ab8 60%,#ffe9a0 67%)', ground: 'sk-temple', groundK: 26, groundTint: 'rgba(10,0,50,.16)', fx: 'fireflies',
+  strips: [{ id: 'sk-crystal-glow', x: 26, b: 30, w: 8, fw: 161, fh: 250, n: 6, fps: 5, z: 3 }, { id: 'sk-crystal-glow', x: 72, b: 30, w: 8, fw: 161, fh: 250, n: 6, fps: 5, z: 3 },
+    { id: 'sk-feathers', x: 45, b: 22, w: 10, fw: 182, fh: 147, n: 6, fps: 4, z: 5 }],
+  items: [
+    { id: 'sk-spire', x: 6, b: 40, w: 11, z: 1 }, { id: 'sk-pillar', x: 20, b: 41, w: 8, z: 1 }, { id: 'sk-spire', x: 36, b: 40, w: 11, z: 1, flip: true }, { id: 'sk-temple-door', x: 52, b: 41, w: 18, z: 1 },
+    { id: 'sk-spire', x: 68, b: 40, w: 11, z: 1, flip: true }, { id: 'sk-pillar', x: 82, b: 41, w: 8, z: 1 }, { id: 'sk-spire', x: 95, b: 40, w: 11, z: 1 },
+    { id: 'sk-crystal', x: 6, b: 1, w: 10, z: 4 }, { id: 'sk-rocks', x: 21, b: 1, w: 9, z: 4 }, { id: 'sk-crystal', x: 76, b: 2, w: 9, z: 4, flip: true },
+    { id: 'sk-boulder', x: 88, b: 0, w: 12, z: 4 }, { id: 'sk-crystal', x: 101, b: -2, w: 12, z: 4 },
+  ],
+};
+const DEFS: Record<SceneKind, Def> = { village: VILLAGE, valley: VALLEY, arena: ARENA, ruins: RUINS, caverns: CAVERNS, grove: GROVE, roots: ROOTS, sand: SAND, tomb: TOMB, frost: FROST, frostcave: FROSTCAVE, coast: COAST, grotto: GROTTO, sky: SKY, sanctum: SANCTUM };
 const dots = Array.from({ length: 16 }, (_, i) => ({ x: (i * 37 + 11) % 100, y: 8 + ((i * 53 + 7) % 70), d: 4 + (i % 5) * 1.3, s: 0.5 + (i % 4) * 0.25 }));
 
 export function EncounterScene({ kind }: { kind: SceneKind }) {

@@ -61,3 +61,11 @@
 .mq-scene-grotto .mq-scene-ground::before { background: linear-gradient(rgba(130,235,250,.22), transparent); }
 .mq-scene-grotto .mq-scene-ground::after { background: radial-gradient(ellipse at 50% 35%, transparent 35%, rgba(0,10,20,.6) 100%); }
 .mq-scene-grotto .mq-scene-sun { background: radial-gradient(ellipse at center, rgba(110,230,250,.38), transparent 68%); }
+
+/* Skyspire Crown backdrops */
+.mq-scene-sky .mq-scene-ground { box-shadow: 0 -10px 24px rgba(255,250,210,.3); }
+.mq-scene-sky .mq-scene-ground::after { background: radial-gradient(ellipse at 50% 35%, transparent 40%, rgba(70,50,140,.26) 100%); }
+.mq-scene-sanctum .mq-scene-ground { box-shadow: 0 -10px 26px rgba(255,220,120,.35); }
+.mq-scene-sanctum .mq-scene-ground::before { background: linear-gradient(rgba(255,230,150,.22), transparent); }
+.mq-scene-sanctum .mq-scene-ground::after { background: radial-gradient(ellipse at 50% 35%, transparent 35%, rgba(6,2,30,.6) 100%); }
+.mq-scene-sanctum .mq-scene-sun { background: radial-gradient(ellipse at center, rgba(255,215,110,.38), transparent 68%); }
