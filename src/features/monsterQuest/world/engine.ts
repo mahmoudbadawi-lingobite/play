@@ -3,7 +3,7 @@ import { bakeLocation, PLAYER_R, type Baked } from './paintLocation';
 import { drawMarker, glow, npcSprite, propSprite, shadowEll } from './paintProps';
 import { SHEET, characterById, frameRect, headBox, sheetUrl, type Character } from './characters';
 import { placeProp, propUrl, type PropDef } from './props';
-import { sImg } from './storybook/assets';
+import { aAsset, aImg, sImg } from './storybook/assets';
 import { loadStory } from './storybook/story';
 import { LOCATIONS } from './locations';
 import type { Facing, InteractDef, LocationDef, Pt } from './types';
@@ -17,6 +17,8 @@ const ENCOUNTER_RATE = 0.2;          // chance per second of motion on encounter
 const RARE_RATE = 0.4;
 const SHALLOW = 0.7;
 const CAM_LAG = 0.1;
+/** Each cave theme draws its pressure plates with that world's animated rune. */
+const RUNE_ANIM: Record<string, string> = { 'grove-roots': 'gr-rune', 'sand-tomb': 'sr-rune', 'frost-cave': 'fg-rune', 'coast-cave': 'tc-rune', 'sky-cave': 'sk-rune' };
 const PLAYER_K = 0.5;                // sheet frames are 256x256 with the feet on line 248 and a figure about 226px tall; drawn at half size
 const WALK_STRIDE = 11;              // world pixels walked per walk frame (6 frames = one full stride)
 const KEY: Record<string, 'u' | 'd' | 'l' | 'r'> = { ArrowUp: 'u', w: 'u', W: 'u', ArrowDown: 'd', s: 'd', S: 'd', ArrowLeft: 'l', a: 'l', A: 'l', ArrowRight: 'r', d: 'r', D: 'r' };
@@ -98,6 +100,9 @@ export class WorldEngine {
   get position(): Pt { return [this.p.x, this.p.y]; }
   get field() { return this.loc?.field ?? null; }
   /** test hook: teleport (used by the automated checks) */
+  /** Progress key of an interactable: ids repeat across worlds, so everything after World 1 is namespaced by location (World 1 keeps its old keys so saved progress stays valid). */
+  private ik(it: InteractDef) { const d = this.loc?.def; return d && d.world > 1 ? `${d.id}:${it.id}` : it.id; }
+  private plateOn(it: InteractDef) { return this.plates.has(this.ik(it)); }
   debugTeleport(x: number, y: number) { this.p.x = x; this.p.y = y; this.p.vx = this.p.vy = 0; this.cam.x = x; this.cam.y = y; }
   debugState() { return { x: this.p.x, y: this.p.y, loc: this.loc?.def.id, fade: this.fade, zone: this.zoneIdx, busy: this.busy }; }
   debugBaked() { return this.loc; }
@@ -130,10 +135,11 @@ export class WorldEngine {
       case 'shop': cb.onShop(); break;
       case 'sign': cb.onDialog({ name: it.name ?? 'Signpost', lines: [`This way: ${it.name}`], icon: 'sign' }); break;
       case 'npc': cb.onDialog({ name: it.name ?? 'Villager', lines: it.lines ?? ['Hello!'], icon: 'npc' }); this.setFlag(`talk:${it.id}`); break;
-      case 'mystery': case 'lore': case 'lookout': cb.onDialog({ name: it.name ?? 'Mystery', lines: it.lines ?? ['…'], icon: 'lore' }); this.setFlag(`mystery:${it.id}`); break;
+      case 'mystery': case 'lore': case 'lookout': cb.onDialog({ name: it.name ?? 'Mystery', lines: it.lines ?? ['…'], icon: 'lore' }); this.setFlag(`mystery:${this.ik(it)}`); break;
       case 'chest': {
-        if (it.link === 'plates' && !(this.plates.has('plateA') && this.plates.has('plateB'))) { cb.onDialog({ name: 'Sealed chest', lines: ['The lid will not budge. Two glowing tiles in the ruined halls look like they belong to it.'], icon: 'chest' }); break; }
-        const first = !this.opened.has(it.id); this.opened.add(it.id); this.o.progress.chests = [...this.opened]; cb.onProgress(this.o.progress); this.setFlag(`chest:${it.id}`);
+        const cdef = this.loc!.def;
+        if (it.link === 'plates' && !(cdef.interactables.filter((q) => q.kind === 'plate').every((q) => this.plateOn(q)))) { cb.onDialog({ name: 'Sealed chest', lines: [cdef.world === 1 ? 'The lid will not budge. Two glowing tiles in the ruined halls look like they belong to it.' : 'The lid will not budge. Glowing rune plates in this chamber look like they belong to it.'], icon: 'chest' }); break; }
+        const first = !this.opened.has(this.ik(it)); this.opened.add(this.ik(it)); this.o.progress.chests = [...this.opened]; cb.onProgress(this.o.progress); this.setFlag(`chest:${it.id}`);
         cb.onDialog({ name: 'Treasure chest', lines: first ? ['The chest creaks open and glitters. Its rewards will arrive when chest rewards are switched on for this world.'] : ['Already opened. Chests refill daily once rewards are switched on.'], icon: 'chest' });
         break;
       }
@@ -270,7 +276,7 @@ export class WorldEngine {
     if (!inGate) this.gateLock = false;
 
     // pressure plates
-    for (const it of def.interactables) if (it.kind === 'plate' && !this.plates.has(it.id) && Math.hypot(it.x - p.x, it.y - p.y) < 40) { this.plates.add(it.id); this.setFlag(`plate:${it.id}`); this.o.cb.onToast(this.plates.size >= 2 ? 'Both tiles glow. A sealed chest clicks open nearby!' : 'The tile lights up. Find its twin!'); }
+    for (const it of def.interactables) if (it.kind === 'plate' && !this.plateOn(it) && Math.hypot(it.x - p.x, it.y - p.y) < 40) { this.plates.add(this.ik(it)); this.setFlag(`plate:${this.ik(it)}`); const all = def.interactables.filter((q) => q.kind === 'plate'); this.o.cb.onToast(all.every((q) => this.plateOn(q)) ? (def.world === 1 ? 'Both tiles glow. A sealed chest clicks open nearby!' : 'Every rune glows. A sealed chest clicks open nearby!') : (def.world === 1 ? 'The tile lights up. Find its twin!' : 'The rune lights up. Find the others!')); }
 
     // nearest interactable in front of the player
     const fx = p.facing === 'up' ? [0, -22] : p.facing === 'down' ? [0, 22] : [p.flip ? -22 : 22, 0];
@@ -340,10 +346,15 @@ export class WorldEngine {
     // rare spots + plates + gateways pulse
     c.save(); c.globalCompositeOperation = 'lighter';
     for (const z of def.zones) if (z.rare) { const [zx, zy] = z.poly.reduce((a, q) => [a[0] + q[0] / z.poly.length, a[1] + q[1] / z.poly.length], [0, 0]); glow(c, zx, zy, 70 + (calm ? 0 : Math.sin(t * 2.4) * 10), '#fff0a0', 0.5); }
-    for (const it of def.interactables) if (it.kind === 'plate') { const on = this.plates.has(it.id); glow(c, it.x, it.y, on ? 60 : 34 + (calm ? 0 : Math.sin(t * 3) * 5), on ? '#7fe9ff' : '#ffb347', on ? 0.8 : 0.45); }
+    for (const it of def.interactables) if (it.kind === 'plate') { const on = this.plateOn(it); glow(c, it.x, it.y, on ? 60 : 34 + (calm ? 0 : Math.sin(t * 3) * 5), on ? '#7fe9ff' : '#ffb347', on ? 0.8 : 0.45); }
     for (const g of def.gates) if (g.style === 'portal' || g.style === 'door') glow(c, g.rect[0] + g.rect[2] / 2, g.rect[1] + g.rect[3] / 2, 120 + (calm ? 0 : Math.sin(t * 2) * 14), '#ffe9a0', 0.4);
     c.restore();
-    for (const it of def.interactables) if (it.kind === 'plate') { const rune = sImg(this.plates.has(it.id) ? 'em-rune-teal' : 'em-rune-orange'); if (rune) { const w = 112, h = (rune.naturalHeight * w) / rune.naturalWidth; c.drawImage(rune, it.x - w / 2, it.y - h * 0.62, w, h); continue; } c.fillStyle = 'rgba(40,24,30,.5)'; c.beginPath(); c.ellipse(it.x, it.y, 30, 18, 0, 0, 6.3); c.fill(); c.fillStyle = this.plates.has(it.id) ? '#7fe9ff' : '#ffb347'; c.strokeStyle = '#4a3a3a'; c.lineWidth = 3; c.beginPath(); c.ellipse(it.x, it.y - 2, 26, 15, 0, 0, 6.3); c.fill(); c.stroke(); }
+    for (const it of def.interactables) if (it.kind === 'plate') {
+      const on = this.plateOn(it), an = RUNE_ANIM[def.theme ?? ''], fr = an ? aImg(an) : null, fa = an ? aAsset(an) : null;
+      if (fr && fa) { const w = 118, h = (fa.fh * w) / fa.fw, f = on ? Math.floor(t * fa.fps) % fa.n : 0; c.save(); if (!on) c.filter = 'grayscale(.75) brightness(.7)'; c.drawImage(fr, f * fa.fw, 0, fa.fw, fa.fh, it.x - w / 2, it.y - h * 0.62, w, h); c.restore(); continue; }
+      const rune = sImg(on ? 'em-rune-teal' : 'em-rune-orange'); if (rune) { const w = 112, h = (rune.naturalHeight * w) / rune.naturalWidth; c.drawImage(rune, it.x - w / 2, it.y - h * 0.62, w, h); continue; }
+      c.fillStyle = 'rgba(40,24,30,.5)'; c.beginPath(); c.ellipse(it.x, it.y, 30, 18, 0, 0, 6.3); c.fill(); c.fillStyle = on ? '#7fe9ff' : '#ffb347'; c.beginPath(); c.ellipse(it.x, it.y, 22, 12, 0, 0, 6.3); c.fill();
+    }
     for (const rp of this.ripples) { c.strokeStyle = `rgba(255,255,255,${0.7 * (1 - rp.t / 0.9)})`; c.lineWidth = 2; c.beginPath(); c.ellipse(rp.x, rp.y, 10 + rp.t * 34, 5 + rp.t * 15, 0, 0, 6.3); c.stroke(); }
     if (this.tapMark) { const a = 0.5 + 0.4 * Math.sin(this.tapMark.t * 7); c.strokeStyle = `rgba(255,255,255,${a})`; c.lineWidth = 3; c.beginPath(); c.ellipse(this.tapMark.x, this.tapMark.y, 24, 13, 0, 0, 6.3); c.stroke(); }
 
@@ -379,7 +390,7 @@ export class WorldEngine {
     for (const it of def.interactables) {
       if (it.x < L - 120 || it.x > R + 120 || it.y < T - 120 || it.y > B + 160) continue;
       if (it.kind === 'npc') { const sp = npcSprite(it.npc ?? 'guide'); ents.push({ y: it.y, draw: () => { const bob = calm ? 0 : Math.sin(t * 2 + it.x) * 1.5; c.drawImage(sp.cv, it.x - sp.ox, it.y - sp.oy - bob); } }); }
-      else if (it.kind === 'chest') { const sp = propSprite({ kind: 'chest', x: 0, y: 0, v: this.opened.has(it.id) ? 1 : 0 })!; ents.push({ y: it.y, draw: () => c.drawImage(sp.cv, it.x - sp.ox, it.y - sp.oy) }); }
+      else if (it.kind === 'chest') { const sp = propSprite({ kind: 'chest', x: 0, y: 0, v: this.opened.has(this.ik(it)) ? 1 : 0 })!; ents.push({ y: it.y, draw: () => c.drawImage(sp.cv, it.x - sp.ox, it.y - sp.oy) }); }
       else if (it.kind === 'sign') { const sp = propSprite({ kind: 'sign', x: 0, y: 0, dir: it.dir })!; ents.push({ y: it.y, draw: () => c.drawImage(sp.cv, it.x - sp.ox, it.y - sp.oy) }); }
       else if (it.kind === 'stone') { const sp = propSprite({ kind: 'runeStone', x: 0, y: 0 })!; ents.push({ y: it.y, draw: () => c.drawImage(sp.cv, it.x - sp.ox, it.y - sp.oy) }); }
     }
@@ -419,7 +430,7 @@ export class WorldEngine {
     for (const it of def.interactables) {
       if (it.x < L - 80 || it.x > R + 80 || it.y < T - 40 || it.y > B + 200) continue;
       const m = it.marker ?? 'none'; if (m === 'none') continue;
-      if (it.kind === 'chest' && this.opened.has(it.id)) continue; if (it.kind === 'mystery' && this.flags.has(`mystery:${it.id}`)) continue; if (it.kind === 'npc' && this.flags.has(`talk:${it.id}`) && m === '!') { /* keep: guides can be re-read */ }
+      if (it.kind === 'chest' && this.opened.has(this.ik(it))) continue; if (it.kind === 'mystery' && this.flags.has(`mystery:${this.ik(it)}`)) continue; if (it.kind === 'npc' && this.flags.has(`talk:${it.id}`) && m === '!') { /* keep: guides can be re-read */ }
       const h = it.kind === 'npc' ? npcSprite(it.npc ?? 'guide').oy + 10 : it.kind === 'chest' ? 82 : it.kind === 'shop' ? 150 : 28;   // the bubble sits above the head, never over the body
       drawMarker(c, m as '!' | '?' | 'shimmer' | 'arrow', it.x, it.y - h, calm ? 0 : t);
     }

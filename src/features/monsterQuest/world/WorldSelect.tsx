@@ -13,7 +13,11 @@ export function WorldSelect({ onEnter }: { onEnter: (id: number) => void }) {
           const locked = level < w.unlockLevel, soon = !w.built, off = locked || soon;
           return (
             <div key={w.id} className={`mq-worldcard ${off ? 'is-off' : ''}`}>
-              <div className="mq-worldcard-art" style={{ background: `linear-gradient(135deg, ${w.colors[0]}, ${w.colors[1]} 60%, ${w.colors[2]})` }}><span>{w.id}</span></div>
+              <div className="mq-worldcard-art" style={{ background: `linear-gradient(135deg, ${w.colors[0]}, ${w.colors[1]} 60%, ${w.colors[2]})` }}>
+                {/* cover painting: public/monster-quest/world/covers/world-N.jpg (falls back to the gradient while the file is missing) */}
+                <img className="mq-worldcard-cover" src={`${import.meta.env.BASE_URL}monster-quest/world/covers/world-${w.id}.jpg`} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                <span>{w.id}</span>
+              </div>
               <div className="p-3">
                 <p className="text-[11px] font-extrabold uppercase tracking-wide text-white/70">Tier {w.tier} · {w.tierName}</p>
                 <p className="font-display text-lg font-extrabold text-white">{w.name}</p>

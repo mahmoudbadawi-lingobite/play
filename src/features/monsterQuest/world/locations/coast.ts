@@ -72,7 +72,8 @@ const tomb: LocationDef = {
 tomb.props = tomb.props.map((p) => p.kind === 'fireCrystal' ? { ...p } : p);
 
 for (const l of [haven, dunes, canyon, tomb]) {
-  const who = l.interactables.filter((i) => ['npc', 'lookout', 'chest', 'mystery', 'lore', 'shop'].includes(i.kind));
+  const who = l.interactables.filter((i) => ['npc', 'lookout', 'chest', 'mystery', 'lore', 'shop', 'plate'].includes(i.kind));
   l.props = l.props.filter((q) => !['ashTree', 'tent', 'house', 'stall'].includes(q.kind) || !who.some((i) => Math.abs(q.x - i.x) < 260 && q.y - i.y > -60 && q.y - i.y < 360 && !(i.kind === 'shop' && Math.hypot(q.x - i.x, q.y - i.y) < 40)));
 }
+haven.gates = haven.gates.map((g) => g.id === 'back' ? { ...g, label: 'Back to Frostglass Peaks', to: { exit: 'portal' as const, world: 4, message: 'The glowing doorway back to Frostglass Peaks shimmers.' } } : g);
 export const COAST: LocationDef[] = [haven, dunes, canyon, tomb];

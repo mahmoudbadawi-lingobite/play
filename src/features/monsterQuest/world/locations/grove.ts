@@ -77,6 +77,8 @@ const villageBase: LocationDef = {
   mini: '#4f9a3a',
 };
 const village: LocationDef = scaleLoc(villageBase, 1.4);
+village.paths = [...village.paths, { pts: [[40, 880], [520, 890], [1000, 930]], width: 150 }];
+village.gates = [...village.gates, { id: 'back', rect: [0, 756, 150, 280], dir: 'left', style: 'portal', label: 'Back to Emberlands', to: { exit: 'portal', world: 1, message: 'The glowing doorway back to Emberlands shimmers.' } }];
 village.props = [...village.props, ...(() => {
   const r = rng('mg-forest'), out: PropDef[] = [], W = village.w, fy = village.forestY ?? 400;
   for (let x = 10; x < W + 20; x += 125) out.push({ kind: 'ashTree', x: x + r() * 40, y: fy * 0.34 + r() * 60, v: Math.floor(r() * 8), s: 1.1 + r() * 0.35 });
@@ -242,6 +244,8 @@ const heartwood: LocationDef = {
   entrances: { south: { x: 1200, y: 1600, facing: 'up' } },
   interactables: [
     { id: 'chest', kind: 'chest', x: 1885, y: 1130, marker: 'shimmer', name: 'Root chest' },
+    { id: 'plateA', kind: 'plate', x: 572, y: 1180, name: 'Rune plate' }, { id: 'plateB', kind: 'plate', x: 1790, y: 1250, name: 'Rune plate' },
+    { id: 'puzzle-chest', kind: 'chest', x: 1560, y: 300, marker: 'shimmer', name: 'Sealed chest', link: 'plates' },
     { id: 'lore1', kind: 'lore', x: 1200, y: 470, marker: '?', name: 'Leaf altar', lines: ['The altar glows softly. Carved in the stone: "Every forest begins with one patient root."'] },
     { id: 'crack', kind: 'mystery', x: 525, y: 980, marker: '?', name: 'Glowing gap', lines: ['Green light seeps between the roots. The underground waterfall nearby is said to hide a shy, glowing wisp.'] },
     { id: 's1', kind: 'sign', x: 1100, y: 1650, dir: 'down', name: 'Back to Lilypad Hollow', marker: 'none' },
@@ -257,7 +261,7 @@ void insidePoly; void rrPts; void smooth;
 
 // Tall trees never stand in front of a person or a chest (they would hide them): clear the ground south of every interactable.
 for (const l of [village, woods, hollow, heartwood]) {
-  const who = l.interactables.filter((i) => ['npc', 'lookout', 'chest', 'mystery', 'lore', 'shop'].includes(i.kind));
+  const who = l.interactables.filter((i) => ['npc', 'lookout', 'chest', 'mystery', 'lore', 'shop', 'plate'].includes(i.kind));
   l.props = l.props.filter((q) => !['ashTree', 'hollowTree', 'treehouse', 'house', 'stall'].includes(q.kind) || !who.some((i) => Math.abs(q.x - i.x) < 260 && q.y - i.y > -60 && q.y - i.y < 360 && !(i.kind === 'shop' && Math.hypot(q.x - i.x, q.y - i.y) < 40)));
 }
 export const GROVE: LocationDef[] = [village, woods, hollow, heartwood];

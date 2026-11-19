@@ -80,3 +80,9 @@ rich saturated colours, light from top left. Scale: a house door about 1.3 units
 - Gate target `{ exit: 'portal', world: N }`: engine asks `cb.canPortal(N)` (WorldView: world must be `built` and trainer level >= `unlockLevel`, otherwise it shows a message and steps the explorer back); when allowed it fades and calls `cb.onSwitchWorld(N)` (Explore swaps `worldId`, the new world loads its first location at 'south').
 - Wired: Emberlands -> 2, Grove -> 3, Sandstone -> 4, Frostglass -> 5, Tidewhisper -> 6. Skyspire's final gate stays `locked`.
 - There is no return portal; the village south gate leads to the world map.
+
+## Rune-plate puzzles, return portals, world covers
+- Plates (`kind:'plate'`) + a sealed chest (`link:'plates'`): the chest opens when EVERY plate in its location is lit. Each cave room of worlds 2-6 has `plateA`, `plateB` (west and east side paths) and `puzzle-chest` (deep chamber). Plates are drawn with that world's animated rune (`RUNE_ANIM` in engine.ts), dim until lit.
+- Progress keys of chests/plates/mystery markers are now namespaced `<locationId>:<id>` for worlds > 1 (ids repeat across derived worlds); World 1 keeps its old keys. Chests opened in worlds 2-6 before this change show as closed again.
+- Each village (worlds 2-6) has a west `back` portal to the previous world (`{ exit: 'portal' }`, same trainer-level check).
+- World-select covers: put `public/monster-quest/world/covers/world-N.jpg` (N = 1..6); the card falls back to the gradient while a file is missing. Prompts: `docs/WORLD_COVER_PROMPTS.md`.

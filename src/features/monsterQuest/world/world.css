@@ -60,7 +60,7 @@
 
 .mq-worldcard { overflow: hidden; border-radius: 1rem; background: rgba(10,31,86,.55); border: 3px solid rgba(255,255,255,.35); }
 .mq-worldcard.is-off { opacity: .72; }
-.mq-worldcard-art { height: 84px; display: grid; place-items: center; } .mq-worldcard-art span { font-family: inherit; font-weight: 900; font-size: 40px; color: rgba(255,255,255,.9); text-shadow: 0 2px 0 rgba(0,0,0,.3); }
+.mq-worldcard-art { position: relative; height: 150px; overflow: hidden; display: grid; place-items: center; } .mq-worldcard-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; } .mq-worldcard.is-off .mq-worldcard-cover { filter: grayscale(.6) brightness(.8); } .mq-worldcard-art span { position: absolute; left: 10px; top: 8px; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 999px; background: rgba(10,20,60,.55); border: 2px solid rgba(255,255,255,.7); z-index: 1; font-family: inherit; font-weight: 900; font-size: 18px; color: rgba(255,255,255,.95); text-shadow: 0 2px 0 rgba(0,0,0,.3); }
 
 .mq-world-host button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 @media (max-width: 560px) {
