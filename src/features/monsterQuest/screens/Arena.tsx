@@ -209,7 +209,7 @@ export function BattleScene({ initial, onExit, onRematch }: { initial: Battle; o
             {battle.status === 'active' && <button type="button" onClick={() => setAskGiveUp(true)} disabled={busy} className="mq-hud-pill mq-hud-give">🏳️ Give up</button>}
           </div>
           {om && osp && (
-            <div className="mq-bplate">
+            <div className="mq-bplate mq-bplate-opp">
               <div className="flex items-center justify-between gap-2"><span className="mq-bplate-name">{om.name}</span><span className="mq-bplate-lv">Lv {om.level}</span></div>
               <div className="my-1">{hpBar(om)}</div>
               <div className="flex items-center justify-between"><TypeBadge type={om.type} small />{dots(shown.opp)}</div>

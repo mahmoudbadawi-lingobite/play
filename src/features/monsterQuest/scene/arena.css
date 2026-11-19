@@ -64,7 +64,9 @@
 .mq-bplate { width: clamp(190px, 19.5cqw, 340px); border-radius: 1rem; background: rgba(8,28,84,.92); border: 3px solid #1b4fb3; padding: .4rem .75rem; box-shadow: 0 4px 12px rgba(0,0,0,.3); color: #fff; }
 .mq-bplate-name { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: clamp(14px, .9cqw + 7px, 22px); }
 .mq-bplate-lv { font-weight: 700; font-size: clamp(12px, .7cqw + 6px, 18px); opacity: .85; }
-.mq-bplate-player { position: absolute; z-index: 5; right: clamp(8px, 1.6cqw, 28px); bottom: 24cqh; }
+/* each plate sits on the side of its own monster: yours bottom-left (your monster is on the left), the opponent's top-right under "Give up" */
+.mq-bplate-opp { align-self: flex-end; }
+.mq-bplate-player { position: absolute; z-index: 5; left: clamp(8px, 1.6cqw, 28px); bottom: 24cqh; }
 .mq-dock { position: absolute; z-index: 6; left: clamp(8px, 1.6cqw, 28px); right: clamp(8px, 1.6cqw, 28px); bottom: clamp(10px, 5.5cqh, 56px);
   display: flex; flex-direction: column; gap: clamp(6px, 1.2cqh, 14px); max-height: 100%; }
 .mq-dock-panel { max-height: 60cqh; overflow-y: auto; }

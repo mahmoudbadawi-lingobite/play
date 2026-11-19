@@ -23,11 +23,11 @@ const BY_TYPE: Record<ElementType, AnimName> = { fire: 'flamora', water: 'jellio
 export const animClassFor = (id: string, type?: ElementType) => `mon a-${SPECIES_ANIM[id] ?? ((ANIM_NAMES as readonly string[]).includes(id) ? id : type ? BY_TYPE[type] : 'slimo')}`;
 
 /**
- * Which way each supplied sprite LOOKS in its original artwork. Almost all of them look to the right; these three look to
- * the left. Front-facing art (cactus, jelly…) is symmetrical, so either answer works for it. A new sprite that looks left
- * just needs its file name added here.
+ * Which way each supplied sprite LOOKS in its original artwork. Almost all of them look to the right; these look to
+ * the left (Starry and Puffy are almost front-on but lean left, so they turned away from the fight). Fully front-facing,
+ * symmetrical art (cactus, jelly…) works either way. A new sprite that looks left just needs its file name added here.
  */
-const LOOKS_LEFT = new Set(['zappy', 'unicorny', 'frosti']);
+const LOOKS_LEFT = new Set(['zappy', 'unicorny', 'frosti', 'starry', 'puffy']);
 export type Facing = 'left' | 'right';
 export const spriteFacing = (spriteUrl: string): Facing => {
   const name = spriteUrl.split('/').pop()?.replace(/\.\w+$/, '') ?? '';
