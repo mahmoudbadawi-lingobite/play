@@ -1,0 +1,91 @@
+/* ---------- Battle arena: painted picture + braziers + fighters + HUD laid over it ---------- */
+
+/* The battle box. Its size is a container, so everything inside can be measured against it (cqw / cqh). */
+.mq-arena.mq-battle {
+  container-type: size; position: relative; overflow: hidden; width: 100%;
+  aspect-ratio: 1733 / 907; max-height: calc(100dvh - 110px); min-height: min(500px, calc(100dvh - 110px));
+  border-radius: 1.2rem; border: 3px solid #1b4fb3; background: #0b2566; box-shadow: 0 8px 24px rgba(0,0,0,.3);
+}
+/* full screen: the arena takes the whole play area, no frame (like the reference picture) */
+.mq-root.is-fs .mq-shell-main:has(> .mq-battle) { padding: 0; overflow: hidden; }
+.mq-root.is-fs .mq-shell-main > .mq-battle { height: 100%; max-height: none; min-height: 0; aspect-ratio: auto; border: 0; border-radius: 0; box-shadow: none; }
+
+/* the picture area. --sw = width of the picture (it always covers this area), --u = 1% of that width, --v = 1% of its height */
+.mq-view { --sw: max(100cqw, calc(100cqh * 1.9107)); --u: calc(var(--sw) / 100); --v: calc(var(--sw) / 100 / 1.9107);
+  container-type: size; position: absolute; inset: 0; overflow: hidden; }
+.mq-stage { position: absolute; left: 50%; top: 50%; width: var(--sw); aspect-ratio: 1733 / 907; transform: translate(-50%, -50%); pointer-events: none; }
+.mq-stage-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; user-select: none; }
+
+/* animated brazier on top of each column: one strip of 6 frames */
+.mq-brazier { position: absolute; transform: translateX(-50%); background-size: 600% 100%; background-repeat: no-repeat; background-position-x: 0; animation: mq-brazier .75s steps(1, end) infinite; filter: drop-shadow(0 3px 3px rgba(0,0,0,.35)); }
+@keyframes mq-brazier { 0% { background-position-x: 0%; } 16.667% { background-position-x: 20%; } 33.333% { background-position-x: 40%; } 50% { background-position-x: 60%; } 66.667% { background-position-x: 80%; } 83.333%, 100% { background-position-x: 100%; } }
+.mq-brazier-glow { position: absolute; left: -45%; right: -45%; top: -2%; height: 58%; border-radius: 50%; mix-blend-mode: screen; opacity: .55; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 55%, rgba(255,176,70,.65), rgba(255,120,30,.2) 45%, transparent 70%); animation: mq-glow 1.5s ease-in-out infinite alternate; }
+@keyframes mq-glow { from { opacity: .35; transform: scale(.94); } to { opacity: .7; transform: scale(1.06); } }
+
+/* ---- fighters: both on the same ground line, facing each other; flying monsters hover higher ---- */
+.mq-fighter {
+  --ms: 16; --dx: 18; --gy: 73; --fly: 15; --lunge: 13; --lift: 0; --amp: .5; --dive: 0;
+  position: absolute; top: calc(var(--gy) * 1%); aspect-ratio: 1;
+  width: min(calc(var(--ms) * var(--u)), 34cqw); transform: translate(-50%, -96%); /* the sprite has ~4% empty space under its feet */
+}
+.mq-fighter-player { left: calc(50% - min(calc(var(--dx) * var(--u)), 28cqw)); }
+.mq-fighter-opp { left: calc(50% + min(calc(var(--dx) * var(--u)), 28cqw)); }
+.mq-fighter.is-flying { --lift: var(--fly); --amp: 1.6; --dive: 5; }
+.mq-fighter-shadow { position: absolute; left: 50%; top: 96%; width: 74%; height: 13%; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(ellipse at center, rgba(0,0,0,.42), rgba(0,0,0,0) 70%); transition: opacity .5s, width .3s; }
+.mq-fighter.is-flying .mq-fighter-shadow { width: 52%; opacity: .6; }
+.mq-fighter.is-gone .mq-fighter-shadow { opacity: 0; }
+.mq-fighter-lift { position: absolute; inset: 0; animation: mq-hover 2.8s ease-in-out infinite; }
+.mq-fighter-opp .mq-fighter-lift { animation-delay: -1.1s; }
+@keyframes mq-hover {
+  0%, 100% { transform: translateY(calc(var(--lift) * var(--v) * -1)); }
+  50% { transform: translateY(calc((var(--lift) + var(--amp)) * var(--v) * -1)); }
+}
+.mq-fighter-body { position: absolute; inset: 0; transition: transform .25s, opacity .5s; }
+.mq-fighter-body > span:first-child { width: 100% !important; height: 100% !important; display: block !important; }
+.mq-fighter-body img, .mq-fighter-body svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 4px 4px rgba(0,0,0,.28)); }
+.mq-fighter-player .mq-fighter-body.is-attacking { transform: translate(min(calc(var(--lunge) * var(--u)), 22cqw), calc(var(--dive) * var(--v))) scale(1.1); }
+.mq-fighter-opp .mq-fighter-body.is-attacking { transform: translate(max(calc(var(--lunge) * var(--u) * -1), -22cqw), calc(var(--dive) * var(--v))) scale(1.1); }
+.mq-fighter-body.is-hit { animation: mq-hit .5s linear; }
+.mq-fighter-body.is-fainted { opacity: 0; transform: translateY(calc(4 * var(--v))) scale(.6); }
+.mq-pops { position: absolute; left: 0; right: 0; top: 6%; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
+.mq-pops .mq-float { font-size: clamp(22px, 2.5cqw, 40px); line-height: 1.1; }
+
+/* ---- HUD over the picture (header pill, name plates, battle log, buttons) ---- */
+.mq-hud-head { position: absolute; z-index: 5; top: clamp(8px, 1.6cqw, 28px); left: clamp(8px, 1.6cqw, 28px); right: clamp(8px, 1.6cqw, 28px);
+  display: flex; flex-direction: column; align-items: flex-start; gap: clamp(8px, 2cqh, 22px); pointer-events: none; }
+.mq-hud-head > * { pointer-events: auto; }
+.mq-hud-row { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: .5rem; pointer-events: none; }
+.mq-hud-row > * { pointer-events: auto; }
+.mq-hud-pill { display: inline-flex; align-items: center; gap: .4rem; border-radius: 999px; background: rgba(8,28,84,.88); border: 2px solid #1b4fb3; color: #fff; font-weight: 800;
+  padding: .3rem .9rem; font-size: clamp(13px, 1.1cqw + 5px, 22px); box-shadow: 0 3px 10px rgba(0,0,0,.28); }
+.mq-hud-give { background: rgba(26,44,96,.78); border-color: rgba(255,255,255,.18); cursor: pointer; }
+.mq-hud-give:hover:not(:disabled) { background: rgba(40,64,128,.9); }
+.mq-bplate { width: clamp(190px, 19.5cqw, 340px); border-radius: 1rem; background: rgba(8,28,84,.92); border: 3px solid #1b4fb3; padding: .4rem .75rem; box-shadow: 0 4px 12px rgba(0,0,0,.3); color: #fff; }
+.mq-bplate-name { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: clamp(14px, .9cqw + 7px, 22px); }
+.mq-bplate-lv { font-weight: 700; font-size: clamp(12px, .7cqw + 6px, 18px); opacity: .85; }
+/* each plate sits on the side of its own monster: yours bottom-left (your monster is on the left), the opponent's top-right under "Give up" */
+.mq-bplate-opp { align-self: flex-end; }
+.mq-bplate-player { position: absolute; z-index: 5; left: clamp(8px, 1.6cqw, 28px); bottom: 24cqh; }
+.mq-dock { position: absolute; z-index: 6; left: clamp(8px, 1.6cqw, 28px); right: clamp(8px, 1.6cqw, 28px); bottom: clamp(10px, 5.5cqh, 56px);
+  display: flex; flex-direction: column; gap: clamp(6px, 1.2cqh, 14px); max-height: 100%; }
+.mq-dock-panel { max-height: 60cqh; overflow-y: auto; }
+.mq-battle .mq-log { display: flex; align-items: center; min-height: clamp(2.4rem, 6.5cqh, 4rem); padding: .4rem 1.1rem; border-radius: 1.1rem; font-size: clamp(14px, 1.1cqw + 6px, 24px); box-shadow: 0 3px 10px rgba(0,0,0,.28); }
+.mq-battle .mq-bbtn { min-height: clamp(44px, 8.4cqh, 80px); font-size: clamp(14px, 1.1cqw + 6px, 25px); border-radius: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,.28); }
+.mq-battle .mq-btn-ghost { background: rgba(255,255,255,.16); backdrop-filter: blur(2px); }
+.mq-battle .mq-caught { z-index: 30; }
+
+/* phone held upright: the picture on top, the controls on their own panel underneath (so nothing hides the monsters) */
+@media (max-aspect-ratio: 5/4) {
+  .mq-arena.mq-battle { display: flex; flex-direction: column; aspect-ratio: auto; height: min(calc(100dvh - 110px), 860px); min-height: 520px; }
+  .mq-root.is-fs .mq-shell-main > .mq-battle { height: 100%; min-height: 0; }
+  .mq-view { position: relative; inset: auto; flex: 1 1 0; min-height: 230px; }
+  .mq-dock { position: relative; left: auto; right: auto; bottom: auto; flex: 0 1 auto; padding: 8px; max-height: 62%; overflow-y: auto; background: linear-gradient(#0a1f56, #071741); border-top: 3px solid #1b4fb3; }
+  .mq-hud-head { gap: 8px; }
+  .mq-hud-row { min-height: 40px; }
+  .mq-bplate, .mq-bplate-player { width: calc(50% - clamp(8px, 1.6cqw, 28px) * 1.5); padding: .3rem .55rem; }
+  .mq-bplate-player { bottom: auto; top: calc(clamp(8px, 1.6cqw, 28px) + 48px); }
+  .mq-fighter { --gy: 84; --fly: 17; --ms: 17; }
+}
+
+@media (prefers-reduced-motion: reduce) { .mq-brazier, .mq-brazier-glow, .mq-fighter-lift { animation: none; } }
