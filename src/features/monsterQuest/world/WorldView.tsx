@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Orb } from '../art/Orb';
 import { useMq } from '../context';
 import { sfx } from '../sound';
-import { openChest } from '../chestApi';
 import * as api from '../api';
 import { EncounterModal } from '../EncounterModal';
 import type { Encounter } from '../types';
@@ -68,7 +67,7 @@ export function WorldView({ worldId, onLeave, onSwitch }: { worldId: number; onL
         canPortal: (id) => { const t = WORLDS.find((x) => x.id === id); return !t || !t.built ? 'More adventures are coming soon!' : levelRef.current < t.unlockLevel ? `The portal hums but stays shut. Reach trainer level ${t.unlockLevel} to pass through.` : null; },
         onSwitchWorld: (id) => (onSwitch ? onSwitch(id) : onLeave()),
         onChest: async (key, world, puzzle) => {
-          const r = await openChest(key, world, puzzle);
+          const r = await api.openChest(key, world, puzzle);
           if (r.already) return { already: true, lines: ['Already opened today. Chests refill every day, so come back tomorrow!'] };
           void mq.refresh().catch(() => undefined);
           const names = (k: string, n: number) => { const it = mq.items.find((x) => x.key === k); return `${n} ${it?.name ?? k}${n > 1 ? 's' : ''}`; };
