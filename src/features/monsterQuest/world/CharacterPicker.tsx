@@ -10,7 +10,7 @@ export function CharacterPicker({ current, onPick, busy, error }: { current: str
         <p className="mq-picker-title">Choose your explorer</p>
         <p className="mq-picker-sub">This one is free. You can buy the others with coins later in Profile and keep every explorer you buy.</p>
         <div className="mq-picker-grid">
-          {chars.map((c) => (
+          {chars.filter((c) => (c as { starter?: boolean }).starter !== false).map((c) => (
             <button key={c.id} className={`mq-pick ${c.id === current ? 'on' : ''}`} disabled={busy} onClick={() => onPick(c.id)} aria-pressed={c.id === current}>
               <CharacterSprite id={c.id} width={84} />
               <b>{c.name}</b><small>{c.blurb}</small>

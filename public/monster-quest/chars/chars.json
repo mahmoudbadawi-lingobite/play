@@ -143,6 +143,32 @@
      "w": 104
     }
    }
+  },
+  {
+   "id": "badawi",
+   "name": "Mr. Badawi",
+   "blurb": "Suit-and-tie explorer",
+   "price": 1000,
+   "head": {
+    "down": {
+     "top": 29,
+     "w": 107
+    },
+    "left": {
+     "top": 22,
+     "w": 99
+    },
+    "right": {
+     "top": 25,
+     "w": 99
+    },
+    "up": {
+     "top": 28,
+     "w": 100
+    }
+   },
+   "unlock": 10,
+   "starter": false
   }
  ]
 }

@@ -29,13 +29,14 @@ export function CharacterShop() {
         {chars.map((c) => {
           const cos = mq.cosmetics.find((x) => x.key === characterKey(c.id));
           if (!cos) return null;
-          const owned = mq.ownedCharacters.includes(c.id), on = mq.character === c.id, price = cos.price_coins ?? 0;
+          const owned = mq.ownedCharacters.includes(c.id), on = mq.character === c.id, price = cos.price_coins ?? 0, lvlLocked = !owned && mq.state.level < cos.unlock_level;
           return (
             <div key={c.id} className={`flex flex-col items-center rounded-2xl border-2 p-2 ${on ? 'border-yellow-300 bg-yellow-300/20' : 'border-white/20 bg-white/10'}`}>
               <div className="mq-avatar-stage !p-1"><CharacterAvatar id={c.id} width={100} props={on ? undefined : []} headroom /></div>
               <p className="mt-1 text-sm font-extrabold text-white">{c.name}</p>
               <p className="text-[11px] font-semibold text-white/70">{c.blurb}</p>
               {on ? <span className="mt-1 text-xs font-extrabold text-yellow-300">✔ Playing</span>
+                : lvlLocked ? <span className="mt-1 text-xs font-extrabold text-white/80">🔒 Level {cos.unlock_level} · {price} 🪙</span>
                 : owned ? <GameButton tone="green" className="mt-1 !px-3 !py-1 !text-xs" disabled={busy === c.id} onClick={() => play(c.id)}>Play as {c.name}</GameButton>
                 : <GameButton tone="gold" className="mt-1 !px-3 !py-1 !text-xs" disabled={busy === c.id || mq.state.coins < price} onClick={() => buy(c.id, c.name)}>{price} 🪙</GameButton>}
             </div>);
