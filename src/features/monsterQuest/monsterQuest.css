@@ -120,3 +120,18 @@
   .mq-root.is-fs .mq-nav-item { padding: .2rem 0; font-size: .55rem; }
   .mq-root.is-fs .mq-nav-item .text-xl { font-size: .95rem; }
 }
+
+/* painted Run away button (encounter screen) */
+.mq-runbtn { position: relative; width: 64px; height: 64px; padding: 0; border: 0; background: none; border-radius: 50%; cursor: pointer; transition: transform .14s cubic-bezier(.3,1.6,.5,1), filter .2s; }
+.mq-runbtn-art { width: 100%; height: 100%; object-fit: contain; pointer-events: none; filter: drop-shadow(0 4px 5px rgba(0,0,0,.45)); animation: mqrunbob 2.6s ease-in-out infinite; }
+.mq-runbtn-label { position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%); font-style: normal; font-weight: 900; font-size: 11px; color: #fff; padding: 2px 9px; border-radius: 999px; white-space: nowrap; background: rgba(12,20,60,.88); border: 1.5px solid rgba(255,255,255,.55); }
+.mq-runbtn .mq-act-key { position: absolute; top: -5px; right: -5px; min-width: 20px; height: 20px; display: grid; place-items: center; padding: 0 4px; border-radius: 6px; font-weight: 900; font-size: 11px; line-height: 1; color: #1a2150; background: linear-gradient(#fff,#d9e3ff); border: 1.5px solid #6b7cc9; box-shadow: 0 2px 0 #6b7cc9, 0 3px 5px rgba(0,0,0,.4); pointer-events: none; }
+@media (hover: hover) { .mq-runbtn:not(:disabled):hover { transform: translateY(-3px) scale(1.07); filter: brightness(1.1); } }
+.mq-runbtn:not(:disabled):active { transform: translateY(2px) scale(.92); transition-duration: .06s; }
+.mq-runbtn:disabled { filter: grayscale(.85) brightness(.7); }
+.mq-runbtn.armed { animation: mqrunarm .5s ease-in-out infinite; } .mq-runbtn.armed .mq-runbtn-label { background: #d93a2a; }
+.mq-run-key-plain { margin-left: 4px; padding: 0 5px; border-radius: 5px; background: #fff; color: #1a2150; font-size: 11px; }
+@keyframes mqrunbob { 50% { transform: translateY(-2px); } }
+@keyframes mqrunarm { 50% { transform: scale(1.1) rotate(-4deg); } }
+@media (prefers-reduced-motion: reduce) { .mq-runbtn, .mq-runbtn * { animation: none !important; transition: none !important; } }
+@media (pointer: coarse) { .mq-runbtn .mq-act-key, .mq-run-key-plain { display: none; } }

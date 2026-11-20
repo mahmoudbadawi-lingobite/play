@@ -34,3 +34,13 @@ and send me the three files, or drop them into the folder. Optional: a second Ta
 ## Keyboard shortcuts (already working)
 
 E, Enter or Space = Talk / interact (same as the shop prompt) · F = Battle (search for a monster) · B = open the Bag.
+
+## Run away button (encounter screen)
+
+File: `public/monster-quest/world/ui/btn-run.png` (transparent PNG, ~256x256, shown at 64px). Until it exists the old pill button is used.
+Use the same style prompt as above, with this line:
+
+4. **Run away** - "Inner face: cool teal-green. Symbol: one cartoon running boot with three small speed lines behind it, leaning forward, plus a tiny puff of dust."
+
+Keys: **R** twice (within 2 seconds) runs away; the first press turns the label into "Press R again", so a stray key never ends a capture.
+In the bag or shop: **G** goes back to the game, **Esc** too, **B** closes the bag, **E** closes the shop.

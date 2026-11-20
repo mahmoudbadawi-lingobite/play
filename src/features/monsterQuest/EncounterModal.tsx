@@ -16,6 +16,32 @@ type Phase = 'intro' | 'loading' | 'question' | 'feedback' | 'throw' | 'flying' 
 type Fly = 'fly' | 'absorb' | 'wobble' | 'pop' | null;
 interface Float { id: number; text: string; tone: string }
 
+/** Run away: painted button (public/monster-quest/world/ui/btn-run.png) with the old pill as fallback. R twice (within 2 s) runs, so a stray key press never ends a capture. */
+function RunButton({ busy, onRun }: { busy: boolean; onRun: () => void }) {
+  const [img, setImg] = useState(true), [armed, setArmed] = useState(false);
+  const run = useRef(onRun); run.current = onRun;
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName; if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key !== 'r' && e.key !== 'R') return;
+      if (busy) return;
+      if (armed) { clearTimeout(timer.current); setArmed(false); run.current(); }
+      else { sfx.click(); setArmed(true); clearTimeout(timer.current); timer.current = setTimeout(() => setArmed(false), 2000); }
+    };
+    window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h);
+  }, [armed, busy]);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  if (!img) return <button onClick={onRun} disabled={busy} className="rounded-full bg-white/20 px-3 py-1.5 text-sm font-bold text-white hover:bg-white/30">🏃 {armed ? 'Press R again' : 'Run away'} <kbd className="mq-run-key-plain">R</kbd></button>;
+  return (
+    <button className={`mq-runbtn ${armed ? 'armed' : ''}`} onClick={onRun} disabled={busy} aria-keyshortcuts="R" title="Run away (press R twice)">
+      <img className="mq-runbtn-art" src={`${import.meta.env.BASE_URL}monster-quest/world/ui/btn-run.png`} alt="" draggable={false} onError={() => setImg(false)} />
+      <i className="mq-runbtn-label">{armed ? 'Press R again' : 'Run away'}</i>
+      <kbd className="mq-act-key">R</kbd>
+    </button>
+  );
+}
+
 export function EncounterModal({ encounter, onClose, scene }: { encounter: Encounter; onClose: (goTo?: 'monsters') => void; /** painted backdrop of the place the encounter started in */ scene?: SceneKind | null }) {
   const mq = useMq();
   const sp = mq.speciesById.get(encounter.species_id)!;
@@ -133,7 +159,7 @@ export function EncounterModal({ encounter, onClose, scene }: { encounter: Encou
             <div className="mt-1 flex items-center gap-1.5"><TypeBadge type={sp.type} small /><RarityBadge rarity={sp.rarity} /></div>
           </div>
           {phase !== 'caught' && phase !== 'escaped' && phase !== 'flying' && (
-            <button onClick={run} disabled={busy} className="rounded-full bg-white/20 px-3 py-1.5 text-sm font-bold text-white hover:bg-white/30">🏃 Run away</button>
+            <RunButton busy={busy} onRun={run} />
           )}
         </div>
 
