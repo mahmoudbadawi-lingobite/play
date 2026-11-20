@@ -22,6 +22,20 @@ import './world-panels.css';
 
 const reducedPref = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
+/** Round action button. Uses painted art from public/monster-quest/world/ui/btn-<art>.png when the file exists, otherwise the emoji. */
+const ACT_ART: Record<string, { file: string; emoji: string }> = { battle: { file: 'battle', emoji: '⚔️' }, int: { file: 'talk', emoji: '👆' }, bag: { file: 'bag', emoji: '🎒' } };
+function ActBtn({ kind, label, keyCap, ready, disabled, onClick }: { kind: 'battle' | 'int' | 'bag'; label: string; keyCap: string; ready?: boolean; disabled?: boolean; onClick: () => void }) {
+  const [img, setImg] = useState(true);
+  const a = ACT_ART[kind];
+  return (
+    <button className={`mq-act mq-act-${kind} ${img ? 'has-img' : ''} ${ready ? 'ready' : ''}`} disabled={disabled} onClick={onClick} aria-keyshortcuts={keyCap} title={`${label} (${keyCap})`}>
+      {img ? <img className="mq-act-art" src={`${import.meta.env.BASE_URL}monster-quest/world/ui/btn-${a.file}.png`} alt="" draggable={false} onError={() => setImg(false)} /> : <span>{a.emoji}</span>}
+      <i className="mq-act-label">{label}</i>
+      <kbd className="mq-act-key">{keyCap}</kbd>
+    </button>
+  );
+}
+
 export function WorldView({ worldId, onLeave, onSwitch }: { worldId: number; onLeave: () => void; onSwitch?: (id: number) => void }) {
   const mq = useMq(), w = worldDef(worldId), level = levelInfo(mq.state.xp).level, levelRef = useRef(level); levelRef.current = level;
   const host = useRef<HTMLDivElement>(null), canvas = useRef<HTMLCanvasElement>(null), mini = useRef<HTMLCanvasElement>(null), full = useRef<HTMLCanvasElement>(null);
@@ -67,6 +81,13 @@ export function WorldView({ worldId, onLeave, onSwitch }: { worldId: number; onL
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [worldId]);
   useEffect(() => { eng.current?.setPaused(paused); }, [paused]);
+  useEffect(() => {   // B opens the bag (E and F are handled by the engine)
+    const h = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName; if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      if ((e.key === 'b' || e.key === 'B') && !paused) { e.preventDefault(); setPanel('inventory'); }
+    };
+    window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h);
+  }, [paused]);
   const pick = async (id: string) => {
     setPickBusy(true); setPickErr(null);
     try {
@@ -126,9 +147,9 @@ export function WorldView({ worldId, onLeave, onSwitch }: { worldId: number; onL
         {/* bottom: joystick + action buttons + minimap */}
         <Joystick onMove={(x, y) => eng.current?.setJoystick(x, y)} />
         <div className="mq-actions">
-          <button className="mq-act mq-act-battle" disabled={!hud?.canBattle || paused} onClick={() => eng.current?.search()}><span>⚔️</span>Battle</button>
-          <button className={`mq-act mq-act-int ${hud?.prompt ? 'ready' : ''}`} disabled={!hud?.prompt || paused} onClick={() => { sfx.click(); eng.current?.interact(); }}><span>👆</span>{verb}</button>
-          <button className="mq-act mq-act-bag" onClick={() => setPanel('inventory')}><span>🎒</span>Bag</button>
+          <ActBtn kind="battle" label="Battle" keyCap="F" disabled={!hud?.canBattle || paused} onClick={() => eng.current?.search()} />
+          <ActBtn kind="int" label={verb} keyCap="E" ready={!!hud?.prompt} disabled={!hud?.prompt || paused} onClick={() => { sfx.click(); eng.current?.interact(); }} />
+          <ActBtn kind="bag" label="Bag" keyCap="B" onClick={() => { sfx.click(); setPanel('inventory'); }} />
         </div>
         <button className="mq-minimap" onClick={() => setShowMap(true)} aria-label="Open map"><canvas ref={mini} width={132} height={132} /></button>
         {hud?.prompt && !paused && <div className="mq-prompt">{verb}: {hud.prompt.name} <kbd>E</kbd></div>}
