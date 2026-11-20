@@ -86,3 +86,6 @@ rich saturated colours, light from top left. Scale: a house door about 1.3 units
 - Progress keys of chests/plates/mystery markers are now namespaced `<locationId>:<id>` for worlds > 1 (ids repeat across derived worlds); World 1 keeps its old keys. Chests opened in worlds 2-6 before this change show as closed again.
 - Each village (worlds 2-6) has a west `back` portal to the previous world (`{ exit: 'portal' }`, same trainer-level check).
 - World-select covers: put `public/monster-quest/world/covers/world-N.jpg` (N = 1..6); the card falls back to the gradient while a file is missing. Prompts: `docs/WORLD_COVER_PROMPTS.md`.
+
+## Server zones (overlay 11)
+Worlds 3-6 now request `desert`/`snow`/`ocean`/`sky` with automatic fallback to `forest`. See docs/SERVER_ZONES.md for the database part.

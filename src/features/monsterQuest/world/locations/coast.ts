@@ -46,7 +46,7 @@ const gate = (g: LocationDef['gates'][number]) => ({ ...g, label: g.label.replac
   to: 'loc' in g.to ? { ...g.to, loc: g.to.loc.replace('mossgate-village', 'pearl-harbor').replace('whispering-woods', 'driftwood-beach').replace('lilypad-hollow', 'coral-lagoon').replace('heartwood-hollow', 'sunken-grotto') } : g.id === 'exit' ? { exit: 'portal' as const, world: 6, message: 'The glowing doorway to Skyspire Crown shimmers.' } : g.to });
 
 const common = (l: LocationDef, id: string, name: string, mood: string, mini: string): LocationDef => ({
-  ...l, id, name, world: 5, theme: 'coast', pal: PAL, serverZone: 'forest', particles: 'sparkles', mood, mini,
+  ...l, id, name, world: 5, theme: 'coast', pal: PAL, serverZone: 'ocean', particles: 'sparkles', mood, mini,
   props: l.props.map(dress), zones: zones(l.zones), interactables: l.interactables.map(sign(id)), gates: l.gates.map(gate),
   landmark: l.landmark ? { ...l.landmark, name: l.landmark.name.replace('Mossgate Village', 'Pearl Harbor').replace('Hollow tree', 'Leaning palm').replace('Waterfall', 'Sea-cave falls').replace('Underground waterfall', 'Sea-cave falls') } : l.landmark,
   lights: (l.lights ?? []).map((q) => ({ ...q, c: q.c === '#8fe3ff' || q.c === '#b9ffee' ? '#7fe9e0' : q.c === '#b9ff7a' ? '#ffd27a' : q.c })),
@@ -67,7 +67,7 @@ canyon.mood = 'Two turquoise lagoons, a rocky ledge and a sea-cave waterfall.';
 
 const tomb: LocationDef = {
   ...common(g4, 'sunken-grotto', 'Sunken Grotto', 'Glowing pearls, blue coral and a deep tide pool.', '#1b5a78'),
-  theme: 'coast-cave', pal: PAL_TOMB, serverZone: 'forest', particles: 'sparkles',
+  theme: 'coast-cave', pal: PAL_TOMB, serverZone: 'ocean', particles: 'sparkles',
 };
 tomb.props = tomb.props.map((p) => p.kind === 'fireCrystal' ? { ...p } : p);
 

@@ -55,7 +55,9 @@ export function WorldView({ worldId, onLeave, onSwitch }: { worldId: number; onL
         onProgress: (p) => saveProgress(mq.userId, p), onLoading: setLoading,
         // Same server call and same modal as before. Only the zone id is mapped (see LocationDef.serverZone).
         onEncounter: async (serverZone) => {
-          const enc = await api.startEncounter(serverZone), d = eng.current?.debugBaked()?.def;   // the backdrop follows the place you are standing in
+          // Worlds 3-6 ask for their own zone (desert/snow/ocean/sky). Until the database knows it, fall back to 'forest'.
+          let enc; try { enc = await api.startEncounter(serverZone); } catch (err) { if (serverZone === 'forest') throw err; enc = await api.startEncounter('forest'); }
+          const d =eng.current?.debugBaked()?.def;   // the backdrop follows the place you are standing in
           setScene(d?.style === 'storybook' ? (d.theme === 'valley' ? 'valley' : d.theme === 'ember' ? 'ruins' : d.theme === 'ember-cave' ? 'caverns' : d.theme === 'grove' ? 'grove' : d.theme === 'grove-roots' ? 'roots' : d.theme === 'sand' ? 'sand' : d.theme === 'sand-tomb' ? 'tomb' : d.theme === 'frost' ? 'frost' : d.theme === 'frost-cave' ? 'frostcave' : d.theme === 'coast' ? 'coast' : d.theme === 'coast-cave' ? 'grotto' : d.theme === 'sky' ? 'sky' : d.theme === 'sky-cave' ? 'sanctum' : 'village') : null); setEncounter(enc);
         },
       },
