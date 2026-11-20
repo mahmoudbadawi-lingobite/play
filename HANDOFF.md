@@ -88,4 +88,4 @@ rich saturated colours, light from top left. Scale: a house door about 1.3 units
 - World-select covers: put `public/monster-quest/world/covers/world-N.jpg` (N = 1..6); the card falls back to the gradient while a file is missing. Prompts: `docs/WORLD_COVER_PROMPTS.md`.
 
 ## Server zones (overlay 11)
-Worlds 3-6 now request `desert`/`snow`/`ocean`/`sky` with automatic fallback to `forest`. See docs/SERVER_ZONES.md for the database part.
+Worlds 3-6 request desert/snow/ocean/sky (fallback forest). Run supabase/monster_quest_world_zones_patch.sql for the new sky zone. See docs/SERVER_ZONES.md.
