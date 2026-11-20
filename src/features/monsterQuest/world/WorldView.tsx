@@ -66,6 +66,14 @@ export function WorldView({ worldId, onLeave, onSwitch }: { worldId: number; onL
         onHud: setHud, onDialog: (d) => { dialogLine.current = 0; setDialog(d); }, onShop: () => setPanel('shop'), onExitWorld: onLeave, onToast: showToast,
         canPortal: (id) => { const t = WORLDS.find((x) => x.id === id); return !t || !t.built ? 'More adventures are coming soon!' : levelRef.current < t.unlockLevel ? `The portal hums but stays shut. Reach trainer level ${t.unlockLevel} to pass through.` : null; },
         onSwitchWorld: (id) => (onSwitch ? onSwitch(id) : onLeave()),
+        onChest: async (key, world, puzzle) => {
+          const r = await api.openChest(key, world, puzzle);
+          if (r.already) return { already: true, lines: ['Already opened today. Chests refill every day, so come back tomorrow!'] };
+          void mq.refresh().catch(() => undefined);
+          const names = (k: string, n: number) => { const it = mq.items.find((x) => x.key === k); return `${n} ${it?.name ?? k}${n > 1 ? 's' : ''}`; };
+          const got = [r.coins ? `🪙 ${r.coins} coins` : '', r.gems ? `💎 ${r.gems} gem${r.gems > 1 ? 's' : ''}` : '', ...Object.entries(r.items ?? {}).map(([k, n]) => names(k, n))].filter(Boolean);
+          return { already: false, lines: [puzzle ? 'The sealed chest clicks open and sparkles!' : 'The chest creaks open and glitters!', got.length ? `You found ${got.join(', ')}.` : 'It is empty this time.'] };
+        },
         onProgress: (p) => saveProgress(mq.userId, p), onLoading: setLoading,
         // Same server call and same modal as before. Only the zone id is mapped (see LocationDef.serverZone).
         onEncounter: async (serverZone) => {

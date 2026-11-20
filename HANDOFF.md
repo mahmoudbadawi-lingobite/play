@@ -89,3 +89,8 @@ rich saturated colours, light from top left. Scale: a house door about 1.3 units
 
 ## Server zones (overlay 11)
 Worlds 3-6 request desert/snow/ocean/sky (fallback forest). Run supabase/monster_quest_world_zones_patch.sql for the new sky zone. See docs/SERVER_ZONES.md.
+
+## Chest rewards (overlay 17)
+Chests call `mq_open_chest(chest_key, world, puzzle)` (supabase/monster_quest_chests_patch.sql): one reward per chest per UTC day, prize decided on the server,
+puzzle chests pay triple coins + 1 gem + 2 Great Orbs. Local `progress.chests` now stores `key@YYYY-MM-DD` (chests opened today); old plain entries are ignored, so every chest shows closed once.
+If the function is missing the chest shows the server error text instead of opening.

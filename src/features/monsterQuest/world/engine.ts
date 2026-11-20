@@ -34,6 +34,8 @@ export interface EngineCallbacks {
   canPortal?: (world: number) => string | null;
   onSwitchWorld?: (world: number) => void;
   onToast: (msg: string) => void;
+  /** Open a chest on the server (daily reward). Resolves with the lines to show; rejects with a readable message when it cannot be opened. */
+  onChest?: (chestKey: string, world: number, puzzle: boolean) => Promise<{ already: boolean; lines: string[] }>;
   /** returns when the encounter UI is done starting; throw to show an error toast */
   onEncounter: (serverZone: string, zoneId: string, rare: boolean) => Promise<void>;
   onProgress: (p: Progress) => void;
@@ -44,6 +46,8 @@ export interface EngineOptions {
   progress: Progress; reduced: boolean; cb: EngineCallbacks;
 }
 
+/** The server counts days in UTC, so chest refills use the UTC date too. */
+const dayKey = () => new Date().toISOString().slice(0, 10);
 interface Entity { y: number; draw: () => void }
 
 export class WorldEngine {
@@ -74,7 +78,7 @@ export class WorldEngine {
   constructor(o: EngineOptions) {
     this.o = o; this.cv = o.canvas; this.c = o.canvas.getContext('2d')!; this.reduced = o.reduced;
     this.who = characterById(o.character);
-    this.flags = new Set(o.progress.flags); this.visited = new Set(o.progress.visited); this.opened = new Set(o.progress.chests);
+    this.flags = new Set(o.progress.flags); this.visited = new Set(o.progress.visited); this.opened = new Set(o.progress.chests.filter((c) => c.endsWith('@' + dayKey())).map((c) => c.slice(0, c.lastIndexOf('@'))));
     this.loadFrames(); this.setProps(o.props ?? []);
     for (let i = 0; i < 46; i++) { const r = rng(i + 7); this.particles.push({ x: r(), y: r(), v: 0.02 + r() * 0.05, ph: r() * 6.28, r: 1.5 + r() * 2.5 }); }
     this.resize(); this.ro = new ResizeObserver(() => this.resize()); this.ro.observe(o.host);
@@ -101,6 +105,8 @@ export class WorldEngine {
   get field() { return this.loc?.field ?? null; }
   /** test hook: teleport (used by the automated checks) */
   /** Progress key of an interactable: ids repeat across worlds, so everything after World 1 is namespaced by location (World 1 keeps its old keys so saved progress stays valid). */
+  private chestBusy = false;
+  private saveChests() { this.o.progress.chests = [...this.opened].map((k) => `${k}@${dayKey()}`); this.o.cb.onProgress(this.o.progress); }
   private ik(it: InteractDef) { const d = this.loc?.def; return d && d.world > 1 ? `${d.id}:${it.id}` : it.id; }
   private plateOn(it: InteractDef) { return this.plates.has(this.ik(it)); }
   debugTeleport(x: number, y: number) { this.p.x = x; this.p.y = y; this.p.vx = this.p.vy = 0; this.cam.x = x; this.cam.y = y; }
@@ -139,8 +145,15 @@ export class WorldEngine {
       case 'chest': {
         const cdef = this.loc!.def;
         if (it.link === 'plates' && !(cdef.interactables.filter((q) => q.kind === 'plate').every((q) => this.plateOn(q)))) { cb.onDialog({ name: 'Sealed chest', lines: [cdef.world === 1 ? 'The lid will not budge. Two glowing tiles in the ruined halls look like they belong to it.' : 'The lid will not budge. Glowing rune plates in this chamber look like they belong to it.'], icon: 'chest' }); break; }
-        const first = !this.opened.has(this.ik(it)); this.opened.add(this.ik(it)); this.o.progress.chests = [...this.opened]; cb.onProgress(this.o.progress); this.setFlag(`chest:${it.id}`);
-        cb.onDialog({ name: 'Treasure chest', lines: first ? ['The chest creaks open and glitters. Its rewards will arrive when chest rewards are switched on for this world.'] : ['Already opened. Chests refill daily once rewards are switched on.'], icon: 'chest' });
+        const key = this.ik(it);
+        const showOpen = (lines: string[]) => { this.opened.add(key); this.saveChests(); this.setFlag(`chest:${it.id}`); cb.onDialog({ name: 'Treasure chest', lines, icon: 'chest' }); };
+        if (!cb.onChest) { showOpen(['The chest creaks open and glitters.']); break; }
+        if (this.chestBusy) break;
+        this.chestBusy = true;
+        cb.onChest(key, cdef.world, it.link === 'plates')
+          .then((r) => showOpen(r.lines))
+          .catch((e) => cb.onDialog({ name: 'Treasure chest', lines: [(e as Error)?.message || 'The lid is stuck. Try again in a moment.'], icon: 'chest' }))
+          .finally(() => { this.chestBusy = false; });
         break;
       }
       case 'stone': cb.onDialog({ name: 'Fast-travel stone', lines: ['Runes glow under your hand. Villages you have visited are saved here.', `Villages found: ${[...this.visited].filter((v) => LOCATIONS[v]?.kind === 'village').map((v) => LOCATIONS[v].name).join(', ') || 'none yet'}.`], icon: 'stone' }); break;

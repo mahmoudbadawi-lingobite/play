@@ -1,5 +1,5 @@
 import { supabase } from '../../lib/supabase';
-import type { AnswerResult, BankQuestion, Battle, ClassProgress, Cosmetic, Encounter, Item, Mission, MonsterXpResult, OwnedMonster, PlayerState, Question, Species, StudentProgress, ThrowResult, Zone } from './types';
+import type { AnswerResult, BankQuestion, Battle, Cosmetic, Encounter, Item, Mission, MonsterXpResult, OwnedMonster, PlayerState, Question, Species, ThrowResult, Zone } from './types';
 
 function fail(error: { message: string } | null): never {
   throw new Error(error?.message ?? 'Something went wrong');
@@ -108,11 +108,6 @@ export async function deleteBankQuestion(id: string): Promise<void> {
   const { error } = await supabase.from('mq_questions').delete().eq('id', id);
   if (error) fail(error);
 }
-/** Teacher dashboard: one class (days = 7 / 30, or null for all time) and one student of that class. */
-export const classProgress = (classId: string, days: number | null) => rpc<ClassProgress>('mq_class_progress', { p_class_id: classId, p_days: days });
-export const studentProgress = (classId: string, studentId: string, days: number | null) => rpc<StudentProgress>('mq_student_progress', { p_class_id: classId, p_student_id: studentId, p_days: days });
-/** Change who receives the given questions (empty class list = everyone). Returns how many were updated. */
-export const setQuestionAudience = (ids: string[], classIds: string[]) => rpc<number>('mq_set_question_audience', { p_ids: ids, p_class_ids: classIds });
 export async function questionStats(): Promise<Record<string, { asked: number; correct: number }>> {
   const { data, error } = await supabase.rpc('mq_question_stats');
   if (error) fail(error);
@@ -120,3 +115,7 @@ export async function questionStats(): Promise<Record<string, { asked: number; c
   for (const r of (data ?? []) as any[]) out[r.question_id] = { asked: Number(r.asked), correct: Number(r.correct) };
   return out;
 }
+
+export interface ChestResult { already: boolean; coins?: number; gems?: number; items?: Record<string, number> }
+/** Opens a chest on the server. One reward per chest per day (UTC); the server decides what is inside. */
+export const openChest = (chest: string, world: number, puzzle: boolean) => rpc<ChestResult>('mq_open_chest', { p_chest: chest, p_world: world, p_puzzle: puzzle });
