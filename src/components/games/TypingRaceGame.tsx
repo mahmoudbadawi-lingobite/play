@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { GameProps } from './GameShell';
+import { ListenButton } from '../common/ListenButton';
 
 const TIME_PER_QUESTION = 12;
 
@@ -59,6 +60,7 @@ export function TypingRaceGame({ items, onFinish }: GameProps) {
       {current.imageUrl && (
         <img src={current.imageUrl} alt="" className="mx-auto mb-3 h-32 w-auto max-w-full rounded-lg object-contain" />
       )}
+      {current.audio && <div className="mb-3"><ListenButton text={current.audio} /></div>}
       <p className="font-display text-xl text-primary">{current.clue}</p>
 
       <input

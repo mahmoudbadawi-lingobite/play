@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { maskHint, norm } from '../blockQuest/engine';
+import { ListenButton } from '../../common/ListenButton';
 import { huntImageUrl } from './huntAssets';
 import { TIER_COINS, TIER_LABEL, type HuntQuestion } from './huntQuestions';
 
@@ -100,6 +101,7 @@ export function ChestModal({
         {!open && (
           <>
             {q.item.imageUrl && <img src={q.item.imageUrl} alt="" className="mx-auto mt-3 max-h-32 rounded-xl border-2 border-[#2B2B6B]/30 object-contain" />}
+            {q.item.audio && <div className="mt-3 text-center"><ListenButton text={q.item.audio} /></div>}
             <p dir="auto" className="mt-3 rounded-2xl bg-white p-3 text-base font-bold text-[#2B2B6B] shadow-inner">{q.item.clue}</p>
 
             {q.tier === 'gold' ? (

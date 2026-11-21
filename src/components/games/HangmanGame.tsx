@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { GameProps } from './GameShell';
+import { ListenButton } from '../common/ListenButton';
 
 const MAX_MISSES = 6;
 const KEYBOARD = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -44,6 +45,7 @@ export function HangmanGame({ items, onFinish }: GameProps) {
       {current.imageUrl && (
         <img src={current.imageUrl} alt="" className="mx-auto mb-3 h-32 w-auto max-w-full rounded-lg object-contain" />
       )}
+      {current.audio && <div className="mb-3"><ListenButton text={current.audio} /></div>}
       <p className="mb-4 font-display text-lg text-primary">{current.clue}</p>
 
       <div className="mb-6 flex justify-center gap-2 text-2xl font-bold tracking-widest text-primary">

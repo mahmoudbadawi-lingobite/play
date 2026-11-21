@@ -304,7 +304,8 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
   }, [timedOut]);
 
   useEffect(() => {
-    if (phase === 'ask' && gate?.kind === 'listen') speak(gate.item.term);
+    if (phase === 'ask' && gate?.item.audio) speak(gate.item.audio);
+    else if (phase === 'ask' && gate?.kind === 'listen') speak(gate.item.term);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, gateIndex]);
 
@@ -326,7 +327,7 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
 
   const playing = phase === 'approach' || phase === 'ask' || phase === 'passing';
   const asking = phase === 'ask';
-  const bannerLabel = gate.kind === 'listen' ? 'Listen' : gate.kind === 'bridge' ? 'Build the bridge' : gate.kind === 'boss' ? 'Final gate' : 'Clue';
+  const bannerLabel = gate.item.audio ? 'Listen' : gate.kind === 'listen' ? 'Listen' : gate.kind === 'bridge' ? 'Build the bridge' : gate.kind === 'boss' ? 'Final gate' : 'Clue';
   const bannerHelp =
     gate.kind === 'listen'
       ? 'Tap the speaker, then pick the word you hear.'
@@ -428,8 +429,8 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
               <div className="min-w-0 text-center">
                 <div className="flex items-center justify-center gap-1.5">
                   <span className="rounded-full bg-secondary px-2 py-px text-[10px] font-extrabold text-secondary-foreground">{bannerLabel}</span>
-                  {gate.kind === 'listen' && speechAvailable() && (
-                    <button type="button" onClick={() => speak(gate.item.term)} aria-label="Hear the word again" className="bq-btn rounded-full bg-primary px-2 py-px text-[11px] font-bold text-primary-foreground">
+                  {(gate.kind === 'listen' || !!gate.item.audio) && speechAvailable() && (
+                    <button type="button" onClick={() => speak(gate.item.audio ?? gate.item.term)} aria-label="Hear the word again" className="bq-btn rounded-full bg-primary px-2 py-px text-[11px] font-bold text-primary-foreground">
                       🔊 Hear it
                     </button>
                   )}

@@ -1,3 +1,4 @@
+import { speakNatural, speechAvailable } from '../../../lib/speech';
 import type { ContentItem, SkillTemplate } from '../../../types';
 
 export type Phase = 'start' | 'approach' | 'ask' | 'passing' | 'done';
@@ -37,21 +38,10 @@ export function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-export function speechAvailable(): boolean {
-  return typeof window !== 'undefined' && 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
-}
+export { speechAvailable, stopSpeaking } from '../../../lib/speech';
 
 export function speak(text: string) {
-  if (!speechAvailable()) return;
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-US';
-  utterance.rate = 0.9;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utterance);
-}
-
-export function stopSpeaking() {
-  if (speechAvailable()) window.speechSynthesis.cancel();
+  speakNatural(text);
 }
 
 const BRIDGE_RE = /^\p{L}{2,10}$/u;
@@ -73,6 +63,8 @@ export function maskHint(term: string, reveal: number): string {
 function buildOptions(gateId: string, item: ContentItem, all: ContentItem[]): PortalOption[] {
   const seen = new Set<string>([norm(item.term)]);
   const distractors: string[] = [];
+  // listening / reading content brings its own wrong answers
+  for (const w of item.wrong ?? []) { const key = norm(w); if (key && !seen.has(key) && distractors.length < 2) { seen.add(key); distractors.push(w.trim()); } }
   for (const other of shuffle(all)) {
     const key = norm(other.term);
     if (!key || seen.has(key)) continue;
@@ -113,6 +105,7 @@ export function buildGates(items: ContentItem[], skill: SkillTemplate | undefine
       else if (canBridge(item.term) && i % 4 === 1) kind = 'bridge';
     }
 
+    if (item.audio) kind = 'portal'; // listening items are answered at a portal, after hearing the audio
     const options = kind === 'portal' || kind === 'listen' ? buildOptions(id, item, items) : [];
     const letters: BridgeLetter[] =
       kind === 'bridge'

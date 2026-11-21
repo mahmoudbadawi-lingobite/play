@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { GameProps } from './GameShell';
+import { ListenButton } from '../common/ListenButton';
 
 function scramble(word: string): { char: string; id: string }[] {
   const letters = word.split('').map((char, i) => ({ char, id: `${i}-${char}-${Math.random()}` }));
@@ -62,6 +63,7 @@ export function WordBuilderGame({ items, onFinish }: GameProps) {
       {current.imageUrl && (
         <img src={current.imageUrl} alt="" className="mx-auto mb-3 h-32 w-auto max-w-full rounded-lg object-contain" />
       )}
+      {current.audio && <div className="mb-3"><ListenButton text={current.audio} /></div>}
       <p className="font-display text-xl text-primary">{current.clue}</p>
 
       <div className="mt-5 flex min-h-[3.5rem] flex-wrap gap-2 rounded-lg border-2 border-dashed border-border p-3">

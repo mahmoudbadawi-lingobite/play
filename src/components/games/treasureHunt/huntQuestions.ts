@@ -98,7 +98,8 @@ export function buildQuestions(items: ContentItem[], _skill: SkillTemplate | und
     let tier: Tier = def.tiers[i % def.tiers.length];
     if (tier === 'gold' && !canType(item.term)) tier = 'silver';
     const need = tier === 'bronze' ? 2 : 3;
-    const wrong = tier === 'gold' ? [] : distractors(item, items, need, shuffle);
+    const own = (item.wrong ?? []).filter((w) => w && norm(w) !== norm(item.term));
+    const wrong = tier === 'gold' ? [] : own.length >= need ? own.slice(0, need) : distractors(item, items, need, shuffle);
     // not enough different terms for a silver chest: it becomes a bronze one
     if (tier === 'silver' && wrong.length < 3) tier = 'bronze';
     const id = `q${i}`;
