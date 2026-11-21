@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -19,6 +19,12 @@ export function CreateContentPage() {
 
   const subj = useSubjects();
   const [tags, setTags] = useState<SubjectTags>(NO_TAGS);
+  const focus = useMemo(() => {
+    const s = subj.subjectById(tags.subjectId); if (!s) return undefined;
+    const d = s.domains.find((x) => x.id === tags.domainId);
+    const k = d?.skills.find((x) => x.id === tags.skillId) ?? s.domains.flatMap((x) => x.skills).find((x) => x.id === tags.skillId);
+    return { subject: s.name, domain: d?.name, skill: k?.name, skillHint: k?.description };
+  }, [subj, tags]);
   const [skill, setSkill] = useState<SkillTemplate>('vocabulary');
   const [title, setTitle] = useState('');
   const [aiItems, setAiItems] = useState<ContentItem[]>([]);
@@ -118,7 +124,12 @@ export function CreateContentPage() {
         )}
       </div>
 
-      <AiContentPanel skill={skill} title={title} onItemsChange={setAiItems} />
+      <div className="card-surface mt-4 p-6">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Subject and skill</p>
+        <SubjectSkillPicker subjects={subj.allowed} canRequest value={tags} onChange={setTags} />
+      </div>
+
+      <AiContentPanel focus={focus} skill={skill} title={title} onItemsChange={setAiItems} />
 
       <details className="card-surface mt-4 p-4">
         <summary className="cursor-pointer text-sm font-semibold text-primary">
@@ -148,11 +159,6 @@ export function CreateContentPage() {
           <p className="mt-2 text-xs text-muted-foreground">The pasted AI content above is used. Clear it to use the spreadsheet instead.</p>
         )}
       </details>
-
-      <div className="card-surface mt-4 p-6">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Subject and skill</p>
-        <SubjectSkillPicker subjects={subj.allowed} canRequest value={tags} onChange={setTags} />
-      </div>
 
       <div className="card-surface mt-4 p-6">
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Final step · Share and create</p>

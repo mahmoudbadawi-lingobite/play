@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { AiContentPanel } from '../components/common/AiContentPanel';
@@ -22,6 +22,12 @@ export function EditContentPage() {
 
   const subj = useSubjects();
   const [tags, setTags] = useState<SubjectTags>(NO_TAGS);
+  const focus = useMemo(() => {
+    const s = subj.subjectById(tags.subjectId); if (!s) return undefined;
+    const d = s.domains.find((x) => x.id === tags.domainId);
+    const k = d?.skills.find((x) => x.id === tags.skillId) ?? s.domains.flatMap((x) => x.skills).find((x) => x.id === tags.skillId);
+    return { subject: s.name, domain: d?.name, skill: k?.name, skillHint: k?.description };
+  }, [subj, tags]);
   const [skill, setSkill] = useState<SkillTemplate>('vocabulary');
   const [title, setTitle] = useState('');
   const [visibility, setVisibility] = useState<Visibility>('public');
@@ -122,7 +128,12 @@ export function EditContentPage() {
         </div>
       </div>
 
-      <AiContentPanel skill={skill} title={title} onItemsChange={setAiItems} />
+      <div className="card-surface mt-4 p-6">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Subject and skill</p>
+        <SubjectSkillPicker subjects={subj.allowed} canRequest value={tags} onChange={setTags} />
+      </div>
+
+      <AiContentPanel focus={focus} skill={skill} title={title} onItemsChange={setAiItems} />
 
       <details className="card-surface mt-4 p-4">
         <summary className="cursor-pointer text-sm font-semibold text-primary">Prefer a spreadsheet? Edit content offline</summary>
@@ -147,11 +158,6 @@ export function EditContentPage() {
           </ul>
         )}
       </details>
-
-      <div className="card-surface mt-4 p-6">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Subject and skill</p>
-        <SubjectSkillPicker subjects={subj.allowed} canRequest value={tags} onChange={setTags} />
-      </div>
 
       <div className="card-surface mt-4 p-6">
         <div className="flex flex-col gap-3 sm:flex-row">

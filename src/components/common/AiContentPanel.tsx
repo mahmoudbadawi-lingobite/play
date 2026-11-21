@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { buildContentPrompt, parseContentReply, SKILL_HELP } from '../../lib/contentPrompt';
+import { buildContentPrompt, parseContentReply, SKILL_HELP, type PromptOptions } from '../../lib/contentPrompt';
 import type { ContentItem, SkillTemplate } from '../../types';
 
 const AI_SHORTCUTS = [
@@ -22,7 +22,9 @@ export function AiContentPanel({
   skill,
   title,
   onItemsChange,
+  focus,
 }: {
+  focus?: PromptOptions['focus'];
   skill: SkillTemplate;
   title: string;
   onItemsChange: (items: ContentItem[]) => void;
@@ -37,8 +39,8 @@ export function AiContentPanel({
   const [copied, setCopied] = useState(false);
 
   const prompt = useMemo(
-    () => buildContentPrompt({ skill, title, grade, count, subject, topic, hasAttachment, rawText }),
-    [skill, title, grade, count, subject, topic, hasAttachment, rawText],
+    () => buildContentPrompt({ skill, title, grade, count, subject, topic, hasAttachment, rawText, focus }),
+    [skill, title, grade, count, subject, topic, hasAttachment, rawText, focus],
   );
   const parsed = useMemo(() => (pasteText.trim() ? parseContentReply(pasteText, skill) : null), [pasteText, skill]);
 
@@ -103,7 +105,9 @@ export function AiContentPanel({
         <label className="block">
           <span className="mb-1 block text-xs font-semibold text-primary">Subject / language</span>
           <input
-            value={subject}
+            value={focus?.subject ?? subject}
+            disabled={!!focus}
+            title={focus ? 'Taken from the subject you chose above' : undefined}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="English"
             className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary"

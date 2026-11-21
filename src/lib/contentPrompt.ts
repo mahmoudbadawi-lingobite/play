@@ -23,6 +23,8 @@ export interface PromptOptions {
   hasAttachment: boolean;
   /** Words / notes typed straight into the app. */
   rawText: string;
+  /** Chosen subject / domain / skill from the subject picker. Overrides `subject` and tells the AI which skill to practise. */
+  focus?: { subject: string; domain?: string; skill?: string; skillHint?: string | null };
 }
 
 export const SKILL_HELP: Record<SkillTemplate, string> = {
@@ -65,7 +67,7 @@ const SKILL_RULES: Record<SkillTemplate, { term: string; clue: string; extra: st
 
 export function buildContentPrompt(o: PromptOptions): string {
   const rules = SKILL_RULES[o.skill];
-  const subject = o.subject.trim() || 'English';
+  const subject = o.focus?.subject.trim() || o.subject.trim() || 'English';
   const raw = o.rawText.trim();
   const age = o.grade + 5;
 
@@ -88,6 +90,7 @@ export function buildContentPrompt(o: PromptOptions): string {
     `Skill: ${o.skill}`,
     `Students: Grade ${o.grade} (about ${age} years old)`,
     `Subject / language: ${subject}`,
+    ...(o.focus?.skill ? [`Skill focus: ${o.focus.domain ? `${o.focus.domain} > ` : ''}${o.focus.skill}${o.focus.skillHint ? ` (${o.focus.skillHint})` : ''}`, 'Every item must practise this specific skill, not just the general topic.'] : o.focus?.domain ? [`Area: ${o.focus.domain}`] : []),
     ...(o.topic.trim() ? [`Topic: ${o.topic.trim()}`] : []),
     `Number of items: exactly ${o.count}`,
     '',
