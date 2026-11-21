@@ -33,6 +33,8 @@ import { loadRemoteStoreItems } from './features/avatar/remoteCatalog';
 const AvatarPage = lazy(() => import('./pages/AvatarPage').then((m) => ({ default: m.AvatarPage })));
 const StoreAdminPage = lazy(() => import('./pages/StoreAdminPage').then((m) => ({ default: m.StoreAdminPage })));
 const MonsterQuestPage = lazy(() => import('./features/monsterQuest/MonsterQuestPage').then((m) => ({ default: m.MonsterQuestPage })));
+const TeacherSubjectsPage = lazy(() => import('./features/subjects/TeacherSubjectsPage').then((m) => ({ default: m.TeacherSubjectsPage })));
+const AdminSubjectsPage = lazy(() => import('./features/subjects/AdminSubjectsPage').then((m) => ({ default: m.AdminSubjectsPage })));
 const StorePage = lazy(() => import('./pages/StorePage').then((m) => ({ default: m.StorePage })));
 const pageFallback = <p className="p-10 text-center text-muted-foreground">Loading...</p>;
 import './i18n/config';
@@ -97,6 +99,12 @@ export default function App() {
                 } />
                 <Route path="/teacher/classes" element={
                   <ProtectedRoute roles={['teacher']}><TeacherClassesPage /></ProtectedRoute>
+                } />
+                <Route path="/teacher/subjects" element={
+                  <ProtectedRoute roles={['teacher']}><Suspense fallback={pageFallback}><TeacherSubjectsPage /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/admin/subjects" element={
+                  <ProtectedRoute roles={['admin']}><Suspense fallback={pageFallback}><AdminSubjectsPage /></Suspense></ProtectedRoute>
                 } />
                 <Route path="/admin" element={
                   <ProtectedRoute roles={['admin']}><AdminPage /></ProtectedRoute>

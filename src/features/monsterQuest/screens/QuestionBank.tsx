@@ -7,10 +7,13 @@ import * as api from '../api';
 import { QUESTION_TYPES } from '../config';
 import { ConfirmDialog, GameButton, Modal, Panel } from '../ui';
 import type { BankQuestion, QuestionType } from '../types';
+import { useSubjects } from '../../subjects/useSubjects';
+import { SubjectSkillPicker } from '../../subjects/SubjectSkillPicker';
+import { COGNITIVE_LEVELS } from '../../subjects/types';
 
 const blank = (audience: string[] = []): Partial<BankQuestion> => ({ type: 'mcq', subject: 'English', difficulty: 1, xp_reward: 5, active: true, prompt: '', answer: '', ...(audience.length ? { class_ids: audience } : {}) });
 const lines = (s: string) => s.split('\n').map((x) => x.trim()).filter(Boolean);
-const TEMPLATE_COLS = ['type', 'prompt', 'options', 'answer', 'explanation', 'topic', 'subject', 'grade', 'difficulty', 'xp_reward', 'time_limit_s', 'passage', 'tts_text', 'audio_url', 'image_url'];
+const TEMPLATE_COLS = ['type', 'prompt', 'options', 'answer', 'explanation', 'topic', 'subject', 'grade', 'difficulty', 'xp_reward', 'time_limit_s', 'passage', 'tts_text', 'audio_url', 'image_url', 'skill_id'];
 
 /** Turn one spreadsheet/JSON row into a bank question, or return an error string. */
 function rowToQuestion(r: Record<string, any>): Partial<BankQuestion> | string {
@@ -64,6 +67,7 @@ function AudiencePicker({ classes, value, onChange, light }: { classes: SchoolCl
 
 export function QuestionBank() {
   const { profile } = useAuth();
+  const subj = useSubjects();
   const [rows, setRows] = useState<BankQuestion[]>([]);
   const [stats, setStats] = useState<Record<string, { asked: number; correct: number }>>({});
   const [loading, setLoading] = useState(true);
@@ -75,6 +79,7 @@ export function QuestionBank() {
   const [sets, setSets] = useState<ContentSet[] | null>(null);
   const [classes, setClasses] = useState<SchoolClass[]>([]);
   const [newAudience, setNewAudience] = useState<string[]>([]);   // audience for new / imported / generated questions
+  const [fs, setFs] = useState('all');                          // subject filter
   const [fa, setFa] = useState<string>('all');                    // audience filter: all | everyone | <class id>
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [bulk, setBulk] = useState(false);
@@ -92,7 +97,7 @@ export function QuestionBank() {
   const classById = useMemo(() => new Map(classes.map((c) => [c.id, c.name])), [classes]);
   const audienceOf = (r: BankQuestion) => (r.class_ids?.length ? r.class_ids.map((id) => classById.get(id) ?? 'Another class').join(', ') : 'Everyone');
 
-  const shown = useMemo(() => rows.filter((r) => (ft === 'all' || r.type === ft) && (!fd || r.difficulty === fd) && (fa === 'all' || (fa === 'everyone' ? !r.class_ids?.length : (r.class_ids ?? []).includes(fa))) && (!q || r.prompt.toLowerCase().includes(q.toLowerCase()) || (r.topic ?? '').toLowerCase().includes(q.toLowerCase()))), [rows, q, ft, fd, fa]);
+  const shown = useMemo(() => rows.filter((r) => (ft === 'all' || r.type === ft) && (!fd || r.difficulty === fd) && (fs === 'all' || r.subject_id === fs) && (fa === 'all' || (fa === 'everyone' ? !r.class_ids?.length : (r.class_ids ?? []).includes(fa))) && (!q || r.prompt.toLowerCase().includes(q.toLowerCase()) || (r.topic ?? '').toLowerCase().includes(q.toLowerCase()))), [rows, q, ft, fd, fa, fs]);
   if (!profile) return null;
 
   /** Adds the chosen audience (only when one is chosen, so everything keeps working before the SQL update is run). */
@@ -106,6 +111,16 @@ export function QuestionBank() {
     try { const n = await api.setQuestionAudience([...sel], bulkAud); setInfo(`Updated the audience of ${n} question${n === 1 ? '' : 's'}.`); setSel(new Set()); await load(); }
     catch (e) { setErr((e as Error).message); }
   };
+  /** Subject tags for imported questions. Returns an error text when the subject is not one the user may use. Skipped (no tags) until the subjects SQL has been run. */
+  const tagFor = (named: string | null | undefined, hint?: { subjectId?: string | null; domainId?: string | null; skillId?: string | null }): Partial<BankQuestion> | string => {
+    if (!subj.ready) return {};
+    const want = (named ?? '').trim().toLowerCase();
+    const sub = (hint?.subjectId && subj.allowed.find((x) => x.id === hint.subjectId)) || subj.allowed.find((x) => x.id.toLowerCase() === want || x.name.toLowerCase() === want)
+      || (!want && subj.allowed.length === 1 ? subj.allowed[0] : undefined);
+    if (!sub) return want ? `you are not approved for the subject "${named}"` : 'choose a subject in the subject column';
+    const sameSub = hint?.subjectId === sub.id;
+    return { subject: sub.name, subject_id: sub.id, domain_id: sameSub ? hint?.domainId ?? null : null, skill_id: sameSub ? hint?.skillId ?? null : null };
+  };
   const onFile = async (f: File | undefined) => {
     if (!f) return; setErr(null); setInfo(null);
     try {
@@ -113,7 +128,12 @@ export function QuestionBank() {
       if (f.name.toLowerCase().endsWith('.json')) { const j = JSON.parse(await f.text()); data = Array.isArray(j) ? j : j.questions ?? []; }
       else { const wb = XLSX.read(await f.arrayBuffer()); data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' }); }
       const ok: Partial<BankQuestion>[] = [], bad: string[] = [];
-      data.forEach((r, i) => { const x = rowToQuestion(r); if (typeof x === 'string') bad.push(`Row ${i + 2}: ${x}`); else ok.push(x); });
+      data.forEach((r, i) => {
+        const x = rowToQuestion(r); if (typeof x === 'string') return void bad.push(`Row ${i + 2}: ${x}`);
+        const sk = String(r.skill_id ?? '').trim(); const sd = sk ? subj.subjects.find((z) => z.domains.some((d) => d.skills.some((k) => k.id === sk))) : undefined;
+        const tg = tagFor(String(r.subject ?? '') || null, sd ? { subjectId: sd.id, domainId: sd.domains.find((d) => d.skills.some((k) => k.id === sk))?.id, skillId: sk } : undefined);
+        if (typeof tg === 'string') bad.push(`Row ${i + 2}: ${tg}`); else ok.push({ ...x, ...tg });
+      });
       if (ok.length) await api.insertBankQuestions(withAudience(ok), profile.uid);
       setInfo(`Imported ${ok.length} question${ok.length === 1 ? '' : 's'}.${bad.length ? ` Skipped ${bad.length}: ${bad.slice(0, 5).join('; ')}${bad.length > 5 ? '…' : ''}` : ''}`);
       await load();
@@ -135,12 +155,13 @@ export function QuestionBank() {
     try {
       const items = s.items.filter((i) => i.term && i.clue);
       const terms = Array.from(new Set(items.map((i) => i.term.trim())));
+      const tg = tagFor(null, { subjectId: s.subjectId, domainId: s.domainId, skillId: s.skillId }); if (typeof tg === 'string') return setErr(tg.replace('choose a subject in the subject column', 'Choose a subject for this set first, or ask an admin to approve one for you.'));
       const out: Partial<BankQuestion>[] = items.map((it, idx) => {
         const wrong = terms.filter((t) => t.toLowerCase() !== it.term.trim().toLowerCase()).sort(() => Math.random() - 0.5).slice(0, 3);
         const useMcq = wrong.length === 3 && idx % 2 === 0;
         return useMcq
-          ? { type: 'mcq' as const, prompt: it.clue, options: [it.term.trim(), ...wrong], answer: it.term.trim(), explanation: `${it.term}: ${it.clue}`, topic: s.title, subject: 'English', difficulty: 2, xp_reward: 5, active: true }
-          : { type: 'type_answer' as const, prompt: it.clue, answer: [it.term.trim()], topic: s.title, subject: 'English', difficulty: 3, xp_reward: 6, time_limit_s: 40, active: true };
+          ? { type: 'mcq' as const, prompt: it.clue, options: [it.term.trim(), ...wrong], answer: it.term.trim(), explanation: `${it.term}: ${it.clue}`, topic: s.title, subject: 'English', ...tg, difficulty: 2, xp_reward: 5, active: true }
+          : { type: 'type_answer' as const, prompt: it.clue, answer: [it.term.trim()], topic: s.title, subject: 'English', ...tg, difficulty: 3, xp_reward: 6, time_limit_s: 40, active: true };
       });
       const n = await api.insertBankQuestions(withAudience(out), profile.uid);
       setInfo(`Created ${n} questions from "${s.title}".`); await load();
@@ -174,6 +195,7 @@ export function QuestionBank() {
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search prompt or topic…" aria-label="Search questions" className={`${inp} min-w-[160px] flex-1`} />
         <select value={ft} onChange={(e) => setFt(e.target.value as any)} className={inp} aria-label="Filter by type"><option value="all">All types</option>{QUESTION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</select>
         <select value={fd} onChange={(e) => setFd(+e.target.value)} className={inp} aria-label="Filter by difficulty"><option value={0}>Any difficulty</option>{[1, 2, 3, 4, 5].map((d) => <option key={d} value={d}>Difficulty {d}</option>)}</select>
+        {subj.ready && subj.allowed.length > 1 && <select value={fs} onChange={(e) => setFs(e.target.value)} className={inp} aria-label="Filter by subject"><option value="all">All subjects</option>{subj.allowed.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>}
         {targeting && <select value={fa} onChange={(e) => setFa(e.target.value)} className={inp} aria-label="Filter by audience"><option value="all">Any audience</option><option value="everyone">Everyone</option>{classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>}
       </div>
       {sel.size > 0 && (
@@ -194,7 +216,7 @@ export function QuestionBank() {
                 <tr key={r.id} className={`border-t border-white/10 ${r.active ? '' : 'opacity-50'}`}>
                   {targeting && <td className="p-2">{mine && <input type="checkbox" aria-label="Select question" checked={sel.has(r.id)} onChange={() => toggleSel(r.id)} />}</td>}
                   <td className="max-w-[320px] p-2 font-semibold"><span className="line-clamp-2">{r.prompt}</span></td>
-                  <td className="p-2 text-xs">{QUESTION_TYPES.find((t) => t.value === r.type)?.label}</td><td className="p-2 text-xs">{r.topic ?? '–'}</td>
+                  <td className="p-2 text-xs">{QUESTION_TYPES.find((t) => t.value === r.type)?.label}</td><td className="p-2 text-xs">{r.topic ?? '–'}{r.skill_id && <span className="block text-[10px] opacity-70">{subj.subjects.flatMap((x) => x.domains.flatMap((d) => d.skills)).find((k) => k.id === r.skill_id)?.name}</span>}</td>
                   {targeting && <td className="max-w-[160px] p-2 text-xs"><span className={`line-clamp-2 ${r.class_ids?.length ? 'font-bold text-yellow-200' : 'text-white/70'}`}>{audienceOf(r)}</span></td>}
                   <td className="p-2 text-center">{r.difficulty}</td><td className="p-2 text-center">{s?.asked ?? 0}</td><td className="p-2 text-center">{s?.asked ? `${Math.round((s.correct / s.asked) * 100)}%` : '–'}</td>
                   <td className="whitespace-nowrap p-2 text-right">{mine && (<><button className="mr-2 font-bold text-yellow-300 hover:underline" onClick={() => setEdit(r)}>Edit</button><button className="mr-2 font-bold text-sky-300 hover:underline" onClick={() => toggle(r)}>{r.active ? 'Hide' : 'Show'}</button><button className="font-bold text-red-300 hover:underline" onClick={() => setAskDel(r)}>Delete</button></>)}</td>
@@ -230,6 +252,9 @@ export function QuestionBank() {
 
 function QuestionForm({ initial, onClose, onSaved, userId, classes, targeting }: { initial: Partial<BankQuestion>; onClose: () => void; onSaved: () => void; userId: string; classes: SchoolClass[]; targeting: boolean }) {
   const [f, setF] = useState<Partial<BankQuestion>>(initial);
+  const subj = useSubjects();
+  const tagged = subj.ready; // false until the subjects SQL has been run: the form then works as before
+  const typeList = tagged ? QUESTION_TYPES.filter((x) => subj.typesFor(f.subject_id).some((d) => d.id === x.value) || x.value === f.type) : QUESTION_TYPES;
   // class ids this teacher can see are editable; ids of classes they do not own (an admin editing someone else's question) are kept as they are
   const known = new Set(classes.map((c) => c.id));
   const [aud, setAud] = useState<string[]>((initial.class_ids ?? []).filter((id) => known.has(id)));
@@ -251,6 +276,7 @@ function QuestionForm({ initial, onClose, onSaved, userId, classes, targeting }:
   const save = async () => {
     setErr(null);
     if (!f.prompt?.trim()) return setErr('Write the question first.');
+    if (tagged && !f.subject_id) return setErr('Choose the subject first.');
     let options: any = null, answer: any;
     if (t === 'mcq' || t === 'listening' || t === 'reading') {
       options = lines(optText); if (options.length < 2) return setErr('Add at least 2 options (one per line).');
@@ -264,7 +290,8 @@ function QuestionForm({ initial, onClose, onSaved, userId, classes, targeting }:
     } else { answer = lines(ansText); if (!answer.length) return setErr('Add at least one accepted answer.'); }
     setSaving(true);
     try {
-      await api.saveBankQuestion({ ...f, options, answer, prompt: f.prompt!.trim(), difficulty: f.difficulty ?? 1, xp_reward: f.xp_reward ?? 5, subject: f.subject || 'English',
+      await api.saveBankQuestion({ ...f, options, answer, prompt: f.prompt!.trim(), difficulty: f.difficulty ?? 1, xp_reward: f.xp_reward ?? 5, subject: (tagged ? subj.subjectById(f.subject_id)?.name : null) || f.subject || 'English',
+        ...(tagged ? { subject_id: f.subject_id ?? null, domain_id: f.domain_id ?? null, skill_id: f.skill_id ?? null, cognitive_level: f.cognitive_level ?? null } : {}),
         passage: f.passage || null, topic: f.topic || null, explanation: f.explanation || null, image_url: f.image_url || null, audio_url: f.audio_url || null, tts_text: f.tts_text || null,
         grade: f.grade ?? null, time_limit_s: f.time_limit_s ?? null, ...(targeting ? { class_ids: [...aud, ...kept] } : { class_ids: undefined }) }, userId);
       onSaved();
@@ -277,7 +304,7 @@ function QuestionForm({ initial, onClose, onSaved, userId, classes, targeting }:
       <p className="font-display text-lg font-extrabold text-[#10285a]">{f.id ? 'Edit question' : 'New question'}</p>
       <div className="max-h-[70vh] overflow-y-auto pr-1">
         <label className={lab}>Type</label>
-        <select value={t} onChange={(e) => { set({ type: e.target.value as QuestionType }); setAnsText(''); }} className={inp}>{QUESTION_TYPES.map((x) => <option key={x.value} value={x.value}>{x.label}</option>)}</select>
+        <select value={t} onChange={(e) => { set({ type: e.target.value as QuestionType }); setAnsText(''); }} className={inp}>{typeList.map((x) => <option key={x.value} value={x.value}>{x.label}</option>)}</select>
         <label className={lab}>Question / instruction</label><textarea value={f.prompt ?? ''} onChange={(e) => set({ prompt: e.target.value })} rows={2} className={inp} />
         {t === 'reading' && (<><label className={lab}>Reading passage</label><textarea value={f.passage ?? ''} onChange={(e) => set({ passage: e.target.value })} rows={4} className={inp} /></>)}
         {(t === 'listening' || t === 'spelling') && (<>
@@ -292,8 +319,15 @@ function QuestionForm({ initial, onClose, onSaved, userId, classes, targeting }:
         {t === 'word_match' && (<><label className={lab}>Pairs (one per line:  word = match)</label><textarea value={ansText} onChange={(e) => setAnsText(e.target.value)} rows={4} className={inp} /></>)}
         <label className={lab}>Explanation shown after answering</label><input value={f.explanation ?? ''} onChange={(e) => set({ explanation: e.target.value })} className={inp} />
         <label className={lab}>Image URL (optional)</label><input value={f.image_url ?? ''} onChange={(e) => set({ image_url: e.target.value })} className={inp} />
+        {tagged && (<div className="mt-2 rounded-xl bg-[#eaf2ff] p-2.5">
+          <p className="mb-1 text-xs font-extrabold uppercase text-[#3d5a94]">Subject and skill</p>
+          <SubjectSkillPicker subjects={subj.allowed} canRequest value={{ subjectId: f.subject_id ?? null, domainId: f.domain_id ?? null, skillId: f.skill_id ?? null }}
+            onChange={(v) => { const ok = subj.typesFor(v.subjectId).some((d) => d.id === f.type); set({ subject_id: v.subjectId, domain_id: v.domainId, skill_id: v.skillId, ...(ok || !v.subjectId ? {} : { type: (subj.typesFor(v.subjectId)[0]?.id ?? 'mcq') as QuestionType }) }); }} />
+          <label className={lab}>Thinking level (optional)</label>
+          <select value={f.cognitive_level ?? ''} onChange={(e) => set({ cognitive_level: e.target.value || null })} className={inp}><option value="">Not set</option>{COGNITIVE_LEVELS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>
+        </div>)}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          <div><label className={lab}>Subject</label><input value={f.subject ?? ''} onChange={(e) => set({ subject: e.target.value })} className={inp} /></div>
+          {!tagged && <div><label className={lab}>Subject</label><input value={f.subject ?? ''} onChange={(e) => set({ subject: e.target.value })} className={inp} /></div>}
           <div><label className={lab}>Topic</label><input value={f.topic ?? ''} onChange={(e) => set({ topic: e.target.value })} className={inp} /></div>
           <div><label className={lab}>Grade (optional)</label><input type="number" min={1} max={12} value={f.grade ?? ''} onChange={(e) => set({ grade: e.target.value ? +e.target.value : null })} className={inp} /></div>
           <div><label className={lab}>Difficulty (1–5)</label><select value={f.difficulty ?? 1} onChange={(e) => set({ difficulty: +e.target.value })} className={inp}>{[1, 2, 3, 4, 5].map((d) => <option key={d}>{d}</option>)}</select></div>

@@ -5,6 +5,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { AiContentPanel } from '../components/common/AiContentPanel';
 import { generateTemplate, parseTemplateFile } from '../lib/contentTemplates';
 import { checkDuplicateTitle, createContentSet } from '../lib/services';
+import { useSubjects } from '../features/subjects/useSubjects';
+import { SubjectSkillPicker } from '../features/subjects/SubjectSkillPicker';
+import { NO_TAGS, type SubjectTags } from '../features/subjects/types';
 import type { ContentItem, ContentSet, SkillTemplate, Visibility } from '../types';
 
 const SKILLS: SkillTemplate[] = ['vocabulary', 'grammar', 'reading', 'spelling'];
@@ -14,6 +17,8 @@ export function CreateContentPage() {
   const { profile } = useAuth();
   const navigate = useNavigate();
 
+  const subj = useSubjects();
+  const [tags, setTags] = useState<SubjectTags>(NO_TAGS);
   const [skill, setSkill] = useState<SkillTemplate>('vocabulary');
   const [title, setTitle] = useState('');
   const [aiItems, setAiItems] = useState<ContentItem[]>([]);
@@ -41,6 +46,7 @@ export function CreateContentPage() {
 
   const handleSave = async () => {
     if (!profile || !title.trim() || items.length === 0) return;
+    if (subj.ready && !tags.subjectId) { setSaveError('Choose the subject of this game first.'); return; }
     setSaving(true);
     setSaveError('');
     try {
@@ -51,6 +57,7 @@ export function CreateContentPage() {
         teacherName: profile.displayName ?? 'Teacher',
         visibility,
         items,
+        ...(subj.ready ? { subjectId: tags.subjectId, domainId: tags.domainId, skillId: tags.skillId } : {}),
       });
       navigate(`/play/${id}`);
     } catch {
@@ -141,6 +148,11 @@ export function CreateContentPage() {
           <p className="mt-2 text-xs text-muted-foreground">The pasted AI content above is used. Clear it to use the spreadsheet instead.</p>
         )}
       </details>
+
+      <div className="card-surface mt-4 p-6">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Subject and skill</p>
+        <SubjectSkillPicker subjects={subj.allowed} canRequest value={tags} onChange={setTags} />
+      </div>
 
       <div className="card-surface mt-4 p-6">
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Final step · Share and create</p>

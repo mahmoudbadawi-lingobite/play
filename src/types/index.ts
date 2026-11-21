@@ -51,6 +51,10 @@ export interface ContentSet {
   reportCount: number;
   createdAt: Date;
   updatedAt: Date;
+  /** subject tags; null until subjects_skills_patch.sql has been run */
+  subjectId?: string | null;
+  domainId?: string | null;
+  skillId?: string | null;
 }
 
 // --- Games ---

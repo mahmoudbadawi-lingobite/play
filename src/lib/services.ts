@@ -18,6 +18,9 @@ function rowToContentSet(row: any): ContentSet {
     reportCount: row.report_count ?? 0,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
+    subjectId: row.subject_id ?? null,
+    domainId: row.domain_id ?? null,
+    skillId: row.skill_id ?? null,
   };
 }
 
@@ -42,6 +45,9 @@ export async function createContentSet(input: {
   teacherName: string;
   visibility: Visibility;
   items: ContentItem[];
+  subjectId?: string | null;
+  domainId?: string | null;
+  skillId?: string | null;
 }): Promise<string> {
   const { data, error } = await supabase
     .from('content_sets')
@@ -53,6 +59,7 @@ export async function createContentSet(input: {
       teacher_name: input.teacherName,
       visibility: input.visibility,
       items: input.items,
+      ...(input.subjectId ? { subject_id: input.subjectId, domain_id: input.domainId ?? null, skill_id: input.skillId ?? null } : {}),
     })
     .select('id')
     .single();
@@ -120,6 +127,9 @@ export async function updateContentSet(id: string, input: {
   skill: SkillTemplate;
   visibility: Visibility;
   items?: ContentItem[];
+  subjectId?: string | null;
+  domainId?: string | null;
+  skillId?: string | null;
 }): Promise<void> {
   const updates: Record<string, unknown> = {
     title: input.title,
@@ -129,6 +139,7 @@ export async function updateContentSet(id: string, input: {
     updated_at: new Date().toISOString(),
   };
   if (input.items) updates.items = input.items;
+  if (input.subjectId) { updates.subject_id = input.subjectId; updates.domain_id = input.domainId ?? null; updates.skill_id = input.skillId ?? null; }
   await supabase.from('content_sets').update(updates).eq('id', id);
 }
 

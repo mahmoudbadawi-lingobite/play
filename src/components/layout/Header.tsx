@@ -96,6 +96,11 @@ export function Header() {
           {t('nav_classes')}
         </NavItem>
       )}
+      {profile?.role === 'teacher' && (
+        <NavItem to="/teacher/subjects" nav="classes" active={on('/teacher/subjects')} onClick={close}>
+          My Subjects
+        </NavItem>
+      )}
       {profile?.role === 'admin' && (
         <>
           <NavItem
@@ -127,6 +132,9 @@ export function Header() {
             }
           >
             Admin Chat
+          </NavItem>
+          <NavItem to="/admin/subjects" nav="admin" active={on('/admin/subjects')} onClick={close}>
+            <span className="classic-emoji">📚 </span>Subjects
           </NavItem>
           <NavItem to="/admin/store" nav="styleeditor" active={on('/admin/store')} onClick={close}>
             <span className="classic-emoji">🛍️ </span>Style Editor
