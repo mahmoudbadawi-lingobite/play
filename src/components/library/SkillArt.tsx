@@ -1,4 +1,4 @@
-// Illustrations for the Game Library cards (one transparent image per skill).
+// Illustrations for the Content Library cards (one transparent image per skill).
 // Images live in /public/kid/skill-<skill>.webp. Only shown in the Kid theme
 // (the parent adds the `kid-only` class).
 

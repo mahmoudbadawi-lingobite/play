@@ -65,7 +65,62 @@ const SKILL_RULES: Record<SkillTemplate, { term: string; clue: string; extra: st
   },
 };
 
+/** Listening / reading content carries more than a term and a clue: a spoken chunk or a short passage, plus wrong choices. */
+export function richKindOf(focus?: PromptOptions['focus']): 'listening' | 'reading' | null {
+  const text = `${(focus?.domains ?? []).join(' ')} ${(focus?.skills ?? []).map((k) => k.name).join(' ')}`.toLowerCase();
+  if (/listen/.test(text)) return 'listening';
+  if (/read|comprehension/.test(text) && /read/.test((focus?.domains ?? []).join(' ').toLowerCase())) return 'reading';
+  return null;
+}
+
+function buildRichPrompt(o: PromptOptions, kind: 'listening' | 'reading'): string {
+  const subject = o.focus?.subject.trim() || o.subject.trim() || 'English';
+  const raw = o.rawText.trim();
+  const out: string[] = [
+    `You are an experienced ${subject} teacher creating ${kind} content for an educational game.`,
+    '',
+    'CONTENT',
+    `Title: ${o.title.trim() || '[type a title on the page first]'}`,
+    `Type: ${kind === 'listening' ? 'LISTENING TRACK ACTIVITY (the text is read aloud, students answer by listening)' : 'READING COMPREHENSION (a short passage, then one question)'}`,
+    `Students: Grade ${o.grade} (about ${o.grade + 5} years old)`,
+    `Subject / language: ${subject}`,
+    ...(o.focus?.domains?.length ? [`Area: ${o.focus.domains.join(', ')}`] : []),
+    ...(o.focus?.skills?.length ? [`Skill focus: ${o.focus.skills.map((k) => (k.hint ? `${k.name} (${k.hint})` : k.name)).join('; ')}`, o.focus.skills.length > 1 ? 'Spread the questions across these skills.' : 'Every question must test this specific skill.'] : []),
+    ...(o.topic.trim() ? [`Topic: ${o.topic.trim()}`] : []),
+    `Number of items: one per chunk, up to ${o.count}.`,
+    '',
+    'SOURCE MATERIAL',
+    o.hasAttachment ? `My text is attached to this chat (file or image). Read it first, including text inside images, and use ONLY that text. Ignore any exercise answers already written on the page.${raw ? `\nAlso use these notes:\n${raw}` : ''}` : raw ? raw : 'No text was provided - write a short original text that suits the level and topic.',
+    '',
+    'HOW TO BUILD THE ITEMS',
+    kind === 'listening'
+      ? '• Cut the text into consecutive CHUNKS of 2-3 sentences (about 25-45 words), in story order, covering the whole text. Each chunk becomes exactly ONE item.\n• "audio" = the chunk, word for word. It is read aloud by the app, so no stage directions, no numbering, no "Question:".\n• Do NOT repeat the chunk inside the question: students must listen, not read.'
+      : '• Cut the text into consecutive passages of 3-5 sentences, in order, covering the whole text. Each passage becomes exactly ONE item.\n• "passage" = the passage, word for word.',
+    '• "clue" = ONE question about that chunk only. It must make sense on its own and be answerable from the chunk alone.',
+    '• "term" = the correct answer, short (1-8 words), taken from or clearly supported by the chunk.',
+    '• "wrong" = exactly 3 wrong answers: believable, about the same length as the term, clearly wrong.',
+    '• Mix question kinds across chunks: main idea, a detail, who said or did something, why, what happens next.',
+    '• Plain text only, no emojis or markdown. Escape any double quote inside a value as \\".',
+    '',
+    'OUTPUT FORMAT',
+    'Reply with ONE code block containing valid JSON and absolutely nothing else. Exactly this shape:',
+    '',
+    '```json',
+    '{',
+    '  "items": [',
+    kind === 'listening'
+      ? '    { "audio": "<the 2-3 sentence chunk>", "clue": "<the question>", "term": "<the right answer>", "wrong": ["<wrong 1>", "<wrong 2>", "<wrong 3>"] }'
+      : '    { "passage": "<the passage>", "clue": "<the question>", "term": "<the right answer>", "wrong": ["<wrong 1>", "<wrong 2>", "<wrong 3>"] }',
+    '  ]',
+    '}',
+    '```',
+  ];
+  return out.join('\n');
+}
+
 export function buildContentPrompt(o: PromptOptions): string {
+  const rich = richKindOf(o.focus);
+  if (rich) return buildRichPrompt(o, rich);
   const rules = SKILL_RULES[o.skill];
   const subject = o.focus?.subject.trim() || o.subject.trim() || 'English';
   const raw = o.rawText.trim();
@@ -147,6 +202,9 @@ const MAX_CLUE = 400;
 const TERM_KEYS = ['term', 'word', 'answer', 'target', 'correctanswer'];
 const CLUE_KEYS = ['clue', 'definition', 'question', 'hint', 'prompt', 'sentence', 'meaning'];
 const IMAGE_KEYS = ['imageurl', 'image'];
+const AUDIO_KEYS = ['audio', 'tts', 'ttstext', 'spoken', 'listening'];
+const PASSAGE_KEYS = ['passage'];
+const WRONG_KEYS = ['wrong', 'wronganswers', 'distractors', 'incorrect', 'options'];
 
 const normKey = (k: string) => k.toLowerCase().replace(/[^a-z0-9]/g, '');
 
@@ -206,7 +264,7 @@ function findArray(value: unknown): unknown[] | null {
   return null;
 }
 
-type RawRow = { term: string; clue: string; imageUrl: string };
+type RawRow = { term: string; clue: string; imageUrl: string; audio?: string; passage?: string; wrong?: string[] };
 
 function rowFromJson(entry: unknown): RawRow | null {
   if (Array.isArray(entry) && entry.length >= 2) {
@@ -219,7 +277,13 @@ function rowFromJson(entry: unknown): RawRow | null {
       for (const k of keys) if (map[k] !== undefined && map[k] !== null) return String(map[k]);
       return '';
     };
-    return { term: pick(TERM_KEYS), clue: pick(CLUE_KEYS), imageUrl: pick(IMAGE_KEYS) };
+    let wrong: string[] | undefined;
+    for (const k of WRONG_KEYS) {
+      const v = map[k];
+      if (Array.isArray(v)) { wrong = v.map((x) => String(x)); break; }
+      if (typeof v === 'string' && v.includes('|')) { wrong = v.split('|'); break; }
+    }
+    return { term: pick(TERM_KEYS), clue: pick(CLUE_KEYS), imageUrl: pick(IMAGE_KEYS), audio: pick(AUDIO_KEYS), passage: pick(PASSAGE_KEYS), wrong };
   }
   return null;
 }
@@ -306,18 +370,19 @@ export function parseContentReply(text: string, skill?: SkillTemplate): ContentP
       tooLong++;
       return;
     }
-    const key = term.toLowerCase();
+    const isRich = !!(row.audio?.trim() || row.passage?.trim());
+    const key = isRich ? `${term}||${clue}`.toLowerCase() : term.toLowerCase();
     if (seen.has(key)) {
       duplicates.push(term);
       return;
     }
     seen.add(key);
 
-    if (term.length >= 3) {
+    if (!isRich && term.length >= 3) {
       const leak = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(term)}(?![\\p{L}\\p{N}])`, 'iu');
       if (leak.test(clue)) leaks.push(term);
     }
-    if (skill === 'spelling' && !/^\p{L}+$/u.test(term)) notSingleWord++;
+    if (!isRich && skill === 'spelling' && !/^\p{L}+$/u.test(term)) notSingleWord++;
 
     const imageUrl = row.imageUrl.trim();
     items.push({
@@ -325,6 +390,9 @@ export function parseContentReply(text: string, skill?: SkillTemplate): ContentP
       term,
       clue,
       ...(/^https?:\/\//i.test(imageUrl) ? { imageUrl } : {}),
+      ...(row.audio?.trim() ? { audio: tidy(row.audio, false) } : {}),
+      ...(row.passage?.trim() ? { passage: tidy(row.passage, false) } : {}),
+      ...(row.wrong?.length ? { wrong: row.wrong.map((w) => tidy(w, false)).filter((w) => w && w.toLowerCase() !== term.toLowerCase()).slice(0, 5) } : {}),
     });
   });
 

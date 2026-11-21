@@ -171,7 +171,12 @@ export function QuestionBank() {
       const terms = Array.from(new Set(items.map((i) => i.term.trim())));
       const tg = tagFor(null, { subjectId: s.subjectId, domainIds: s.domainIds?.length ? s.domainIds : s.domainId ? [s.domainId] : [], skillIds: s.skillIds?.length ? s.skillIds : s.skillId ? [s.skillId] : [] }); if (typeof tg === 'string') return setErr(tg.replace('choose a subject in the subject column', 'Choose a subject for this set first, or ask an admin to approve one for you.'));
       const out: Partial<BankQuestion>[] = items.map((it, idx) => {
-        const wrong = terms.filter((t) => t.toLowerCase() !== it.term.trim().toLowerCase()).sort(() => Math.random() - 0.5).slice(0, 3);
+        const own = (it.wrong ?? []).filter(Boolean);
+        const wrong = own.length >= 2 ? own.slice(0, 3) : terms.filter((t) => t.toLowerCase() !== it.term.trim().toLowerCase()).sort(() => Math.random() - 0.5).slice(0, 3);
+        const choices = [it.term.trim(), ...wrong].sort(() => Math.random() - 0.5);
+        // listening / reading content keeps its audio text or passage and becomes the matching question type
+        if (it.audio && wrong.length >= 2) return { type: 'listening' as const, prompt: it.clue, tts_text: it.audio, options: choices, answer: it.term.trim(), explanation: `${it.term}`, topic: s.title, subject: 'English', ...tg, difficulty: 2, xp_reward: 6, time_limit_s: 40, active: true };
+        if (it.passage && wrong.length >= 2) return { type: 'reading' as const, prompt: it.clue, passage: it.passage, options: choices, answer: it.term.trim(), explanation: `${it.term}`, topic: s.title, subject: 'English', ...tg, difficulty: 2, xp_reward: 6, time_limit_s: 60, active: true };
         const useMcq = wrong.length === 3 && idx % 2 === 0;
         return useMcq
           ? { type: 'mcq' as const, prompt: it.clue, options: [it.term.trim(), ...wrong], answer: it.term.trim(), explanation: `${it.term}: ${it.clue}`, topic: s.title, subject: 'English', ...tg, difficulty: 2, xp_reward: 5, active: true }
@@ -224,7 +229,7 @@ export function QuestionBank() {
           <GameButton tone="gold" onClick={() => setAiOpen(true)}>🤖 Make with AI</GameButton>
           <GameButton tone="ghost" onClick={template}>⬇ Template</GameButton>
           <GameButton tone="red" onClick={() => setByClass({ all: false, picked: [] })}>🗑 Delete by class…</GameButton>
-          <GameButton tone="ghost" onClick={openSets}>📚 From a Game Library set</GameButton>
+          <GameButton tone="ghost" onClick={openSets}>📚 From the Content Library</GameButton>
         </div>
         {targeting && (
           <div className="mt-3">
@@ -304,7 +309,8 @@ export function QuestionBank() {
         </Modal>); })()}
       {sets && (
         <Modal onClose={() => setSets(null)}>
-          <p className="font-display text-lg font-extrabold text-[#10285a]">Create questions from a Game Library set</p>
+          <p className="mb-2 rounded-xl bg-[#fff6d6] p-2 text-xs font-bold text-[#6b4e00]">Listening and reading sets keep their audio text and passages. Other sets become text questions.</p>
+          <p className="font-display text-lg font-extrabold text-[#10285a]">Create questions from a Content Library set</p>
           <p className="mt-1 text-xs text-[#3d5a94]">Each term becomes a question: the clue is the prompt, the term is the answer (alternating multiple-choice and type-the-answer).</p>
           <div className="mt-2 max-h-72 space-y-1.5 overflow-y-auto">
             {sets.length === 0 && <p className="text-sm font-bold text-[#3d5a94]">Loading…</p>}

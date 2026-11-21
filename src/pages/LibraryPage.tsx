@@ -5,10 +5,13 @@ import { SkillArt } from '../components/library/SkillArt';
 import { CheckIcon, EditIcon, FlagIcon, LinkIcon, TrashIcon } from '../components/library/CardIcons';
 import { useAuth } from '../contexts/AuthContext';
 import type { ContentSet, SkillTemplate } from '../types';
+import { useSubjects } from '../features/subjects/useSubjects';
+import { setLabel } from '../features/subjects/label';
 
 const SKILLS: (SkillTemplate | 'all')[] = ['all', 'vocabulary', 'grammar', 'reading', 'spelling'];
 
 export function LibraryPage() {
+  const subj = useSubjects();
   const { profile } = useAuth();
   const [sets, setSets] = useState<ContentSet[]>([]);
   const [skill, setSkill] = useState<SkillTemplate | 'all'>('all');
@@ -51,7 +54,7 @@ export function LibraryPage() {
     <div className="kid-lib mx-auto max-w-6xl px-4 py-10">
       <div className="kid-sticky-head kid-page-head">
       <p className="kid-pill kid-only">Library</p>
-      <h1 className="kid-big-title font-display text-3xl font-bold text-primary">Game Library</h1>
+      <h1 className="kid-big-title font-display text-3xl font-bold text-primary">Content Library</h1>
       <p className="kid-sub mt-1 text-muted-foreground">Public games shared by teachers across LingoBite Play.</p>
       <Link to="/hunt" className="mt-3 inline-flex items-center gap-2 rounded-xl border-2 border-secondary px-4 py-2 text-sm font-bold text-primary hover:bg-secondary/10">
         🗺️ Treasure Hunt rooms: host or join a live game
@@ -86,7 +89,7 @@ export function LibraryPage() {
             <div key={set.id} data-skill={set.skill} className="kid-set-card card-surface flex flex-col p-4">
               <div className="kid-sc-top flex items-center justify-between gap-2">
                 <span className="kid-sc-pill rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold capitalize text-muted-foreground">
-                  {set.skill}
+                  {setLabel(subj.subjects, set)}
                 </span>
                 <span className="kid-sc-plays text-xs text-muted-foreground">{set.playCount} plays</span>
               </div>

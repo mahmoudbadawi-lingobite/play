@@ -1,4 +1,4 @@
-// Small stroke icons for the Game Library card actions.
+// Small stroke icons for the Content Library card actions.
 // They only show in the Kid theme (see .kid-sc-ico in kid-skin.css).
 
 type P = { className?: string };

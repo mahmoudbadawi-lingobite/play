@@ -119,6 +119,11 @@ export function EditContentPage() {
         </div>
       </div>
 
+      {focus?.domains?.some((d) => /listen/i.test(d)) && (
+        <p className="mt-3 rounded-lg border border-secondary/40 bg-secondary/10 p-3 text-sm text-primary">
+          🎧 Listening content: the AI cuts your text into short chunks, each with one question. In Monster Quest, use <b>Question Bank → From the Content Library</b> to turn them into listening questions that are read aloud.
+        </p>
+      )}
       <AiContentPanel focus={focus} skill={skill} title={title} onItemsChange={setAiItems} />
 
       <details className="card-surface mt-4 p-4">

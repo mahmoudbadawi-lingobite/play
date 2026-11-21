@@ -35,6 +35,12 @@ export interface ContentItem {
   term: string;            // the target word/phrase/answer
   clue: string;            // definition / sentence-with-blank / question / description
   imageUrl?: string;       // optional - required for Picture Match to be offered
+  /** Listening content: the short text that is read aloud (term = right answer, clue = the question about it). */
+  audio?: string;
+  /** Reading content: the short passage this question is about. */
+  passage?: string;
+  /** The wrong answer choices written by the AI (term is the right one). */
+  wrong?: string[];
 }
 
 export type Visibility = 'public' | 'private';
