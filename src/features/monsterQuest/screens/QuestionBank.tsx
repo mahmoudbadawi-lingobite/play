@@ -58,7 +58,7 @@ function AudiencePicker({ classes, value, onChange, light }: { classes: SchoolCl
   const toggle = (id: string) => onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
   return (
     <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Who gets these questions">
-      <button type="button" className={chip(value.length === 0)} aria-pressed={value.length === 0} onClick={() => onChange([])}>🌍 Everyone</button>
+      <button type="button" className={chip(value.length === 0)} aria-pressed={value.length === 0} onClick={() => onChange([])}>🌍 All my students</button>
       {classes.map((c) => <button key={c.id} type="button" className={chip(value.includes(c.id))} aria-pressed={value.includes(c.id)} onClick={() => toggle(c.id)}>{c.name} · {c.studentIds.length}</button>)}
       {classes.length === 0 && <span className="text-xs font-semibold opacity-70">Create a class under My Classes to aim questions at it.</span>}
     </div>
@@ -97,7 +97,7 @@ export function QuestionBank() {
   // false until monster_quest_teacher_stage1.sql has been run (the column does not exist yet)
   const targeting = rows.length === 0 || Array.isArray(rows[0].class_ids);
   const classById = useMemo(() => new Map(classes.map((c) => [c.id, c.name])), [classes]);
-  const audienceOf = (r: BankQuestion) => (r.class_ids?.length ? r.class_ids.map((id) => classById.get(id) ?? 'Another class').join(', ') : 'Everyone');
+  const audienceOf = (r: BankQuestion) => (r.class_ids?.length ? r.class_ids.map((id) => classById.get(id) ?? 'Another class').join(', ') : 'All my students');
 
   const shown = useMemo(() => rows.filter((r) => (ft === 'all' || r.type === ft) && (!fd || r.difficulty === fd) && (fs === 'all' || r.subject_id === fs) && (fa === 'all' || (fa === 'everyone' ? !r.class_ids?.length : (r.class_ids ?? []).includes(fa))) && (!q || r.prompt.toLowerCase().includes(q.toLowerCase()) || (r.topic ?? '').toLowerCase().includes(q.toLowerCase()))), [rows, q, ft, fd, fa, fs]);
   if (!profile) return null;
@@ -220,7 +220,7 @@ export function QuestionBank() {
             <p className="mb-1 text-xs font-extrabold uppercase text-white/80">New, imported and generated questions go to</p>
             <AudiencePicker classes={classes} value={newAudience} onChange={setNewAudience} />
           </div>)}
-        <p className="mt-2 text-xs font-semibold text-white/75">Students get questions in capture challenges, training and special attacks, matched to the monster and zone difficulty. A question aimed at classes is only asked to students in those classes; "Everyone" questions go to all students. You can edit or delete only your own; admins manage all.</p>
+        <p className="mt-2 text-xs font-semibold text-white/75">Students get questions in capture challenges, training and special attacks, matched to the monster and zone difficulty. A question aimed at classes is only asked to students in those classes; "All my students" questions go to the students of all your classes (not to other teachers' classes). You can edit or delete only your own; admins manage all.</p>
       </Panel>
       {!targeting && <p className="rounded-xl bg-yellow-500/90 px-3 py-2 text-sm font-bold text-[#10285a]" role="status">Class targeting is not switched on yet: run supabase/monster_quest_teacher_stage1.sql in the Supabase SQL editor, then reload.</p>}
       {info && <p className="rounded-xl bg-green-600/90 px-3 py-2 text-sm font-bold text-white" role="status">{info}</p>}
@@ -231,7 +231,7 @@ export function QuestionBank() {
         <select value={ft} onChange={(e) => setFt(e.target.value as any)} className={inp} aria-label="Filter by type"><option value="all">All types</option>{QUESTION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</select>
         <select value={fd} onChange={(e) => setFd(+e.target.value)} className={inp} aria-label="Filter by difficulty"><option value={0}>Any difficulty</option>{[1, 2, 3, 4, 5].map((d) => <option key={d} value={d}>Difficulty {d}</option>)}</select>
         {subj.ready && subj.allowed.length > 1 && <select value={fs} onChange={(e) => setFs(e.target.value)} className={inp} aria-label="Filter by subject"><option value="all">All subjects</option>{subj.allowed.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>}
-        {targeting && <select value={fa} onChange={(e) => setFa(e.target.value)} className={inp} aria-label="Filter by audience"><option value="all">Any audience</option><option value="everyone">Everyone</option>{classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>}
+        {targeting && <select value={fa} onChange={(e) => setFa(e.target.value)} className={inp} aria-label="Filter by audience"><option value="all">Any audience</option><option value="everyone">All my students</option>{classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>}
       </div>
       {sel.size > 0 && (
         <Panel>
@@ -269,7 +269,7 @@ export function QuestionBank() {
       {bulk && (
         <Modal onClose={() => setBulk(false)}>
           <p className="font-display text-lg font-extrabold text-[#10285a]">Who should get these {sel.size} question{sel.size === 1 ? '' : 's'}?</p>
-          <p className="mt-1 text-xs text-[#3d5a94]">Pick one or more of your classes, or Everyone. This replaces their current audience.</p>
+          <p className="mt-1 text-xs text-[#3d5a94]">Pick one or more of your classes, or All my students. This replaces their current audience.</p>
           <div className="mt-3"><AudiencePicker light classes={classes} value={bulkAud} onChange={setBulkAud} /></div>
           <div className="mt-4 grid grid-cols-2 gap-2"><GameButton tone="ghost" className="!text-[#10285a]" onClick={() => setBulk(false)}>Cancel</GameButton><GameButton tone="green" onClick={applyBulk}>Apply</GameButton></div>
         </Modal>)}
@@ -278,11 +278,11 @@ export function QuestionBank() {
         return (
         <Modal onClose={() => setByClass(null)}>
           <p className="font-display text-lg font-extrabold text-[#10285a]">Delete my questions by class</p>
-          <p className="mt-1 text-xs text-[#3d5a94]">Only questions you created. Choose all of them, or pick the classes (and/or Everyone) whose questions should go.</p>
+          <p className="mt-1 text-xs text-[#3d5a94]">Only questions you created. Choose all of them, or pick the classes (and/or All my students) whose questions should go.</p>
           <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Which questions to delete">
             <button type="button" className={chip(byClass.all)} aria-pressed={byClass.all} onClick={() => setByClass({ all: !byClass.all, picked: [] })}>All my questions</button>
             {!byClass.all && <>
-              <button type="button" className={chip(byClass.picked.includes('everyone'))} aria-pressed={byClass.picked.includes('everyone')} onClick={() => toggleP('everyone')}>🌍 Everyone</button>
+              <button type="button" className={chip(byClass.picked.includes('everyone'))} aria-pressed={byClass.picked.includes('everyone')} onClick={() => toggleP('everyone')}>🌍 All my students</button>
               {classes.map((c) => <button key={c.id} type="button" className={chip(byClass.picked.includes(c.id))} aria-pressed={byClass.picked.includes(c.id)} onClick={() => toggleP(c.id)}>{c.name}</button>)}
             </>}
           </div>
