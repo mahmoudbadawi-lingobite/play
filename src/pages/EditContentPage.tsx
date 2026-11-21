@@ -6,7 +6,8 @@ import { generateTemplate, parseTemplateFile } from '../lib/contentTemplates';
 import { getContentSet, updateContentSet } from '../lib/services';
 import { useSubjects } from '../features/subjects/useSubjects';
 import { SubjectSkillPicker } from '../features/subjects/SubjectSkillPicker';
-import { NO_PICKS, picksToArrays, picksToTags, rowToPicks, type Picks } from '../features/subjects/types';
+import { NO_PICKS, picksToArrays, picksToTags, rowToPicks, suggestFormat, type Picks } from '../features/subjects/types';
+import { SKILL_HELP } from '../lib/contentPrompt';
 import type { ContentItem, ContentSet, SkillTemplate, Visibility } from '../types';
 
 const SKILLS: SkillTemplate[] = ['vocabulary', 'grammar', 'reading', 'spelling'];
@@ -22,6 +23,7 @@ export function EditContentPage() {
 
   const subj = useSubjects();
   const [picks, setPicks] = useState<Picks>(NO_PICKS);
+  const pickAndFormat = (p: Picks) => { setPicks(p); const f = suggestFormat(p, subj.subjectById(p.subjectId)); if (f) setSkill(f); };
   const tags = useMemo(() => picksToTags(picks, subj.subjectById(picks.subjectId)), [picks, subj]);
   const focus = useMemo(() => {
     const s = subj.subjectById(picks.subjectId); if (!s) return undefined;
@@ -90,7 +92,13 @@ export function EditContentPage() {
       <h1 className="font-display text-3xl font-bold text-primary">Edit game</h1>
 
       <div className="card-surface mt-6 p-6">
-        <label className="mb-1 block text-sm font-semibold text-primary">Skill</label>
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Subject and skill</p>
+        <SubjectSkillPicker subjects={subj.allowed} canRequest value={picks} onChange={pickAndFormat} multi savesAll={subj.multi} />
+      </div>
+
+      <div className="card-surface mt-4 p-6">
+        <label className="mb-1 block text-sm font-semibold text-primary">Game format</label>
+        <p className="mb-2 text-xs text-muted-foreground">How the questions are built. It is set from the domain you pick above; change it only if you want a different layout. {SKILL_HELP[skill]}</p>
         <div className="flex flex-wrap gap-2">
           {SKILLS.map((s) => (
             <button
@@ -126,11 +134,6 @@ export function EditContentPage() {
             ))}
           </div>
         </div>
-      </div>
-
-      <div className="card-surface mt-4 p-6">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Subject and skill</p>
-        <SubjectSkillPicker subjects={subj.allowed} canRequest value={picks} onChange={setPicks} multi savesAll={subj.multi} />
       </div>
 
       <AiContentPanel focus={focus} skill={skill} title={title} onItemsChange={setAiItems} />

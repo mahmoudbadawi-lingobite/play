@@ -39,3 +39,16 @@ export const picksToArrays = (p: Picks, subject?: Subject): { domainIds: string[
   const implied = (subject?.domains ?? []).filter((d) => d.skills.some((k) => p.skillIds.includes(k.id))).map((d) => d.id);
   return { domainIds: Array.from(new Set([...p.domainIds, ...implied])), skillIds: p.skillIds };
 };
+
+/** Which of the four game formats (how the items are built) fits the chosen domain/skill. null = no opinion, keep the current format. */
+export const suggestFormat = (p: Picks, subject?: Subject): 'vocabulary' | 'grammar' | 'reading' | 'spelling' | null => {
+  if (!subject) return null;
+  const skill = subject.domains.flatMap((d) => d.skills).find((k) => k.id === p.skillIds[0]);
+  const dom = subject.domains.find((d) => d.id === (skill?.domainId ?? p.domainIds[0]));
+  const text = `${skill?.name ?? ''} ${dom?.name ?? ''}`.toLowerCase();
+  if (/spell|mechanic|punctuat/.test(text)) return 'spelling';
+  if (/vocab|lexi|word|collocation|idiom/.test(text)) return 'vocabulary';
+  if (/grammar|syntax|tense|clause/.test(text)) return 'grammar';
+  if (/read|comprehension|listen/.test(text)) return 'reading';
+  return null;
+};

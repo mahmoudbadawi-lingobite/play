@@ -87,7 +87,7 @@ export function buildContentPrompt(o: PromptOptions): string {
     '',
     'GAME',
     `Title: ${o.title.trim() || '[type a game title on the page first]'}`,
-    `Skill: ${o.skill}`,
+    o.focus?.skills?.length ? `Item format: ${o.skill} (see WHAT EACH ITEM CONTAINS)` : `Skill: ${o.skill}`,
     `Students: Grade ${o.grade} (about ${age} years old)`,
     `Subject / language: ${subject}`,
     ...(o.focus?.skills?.length

@@ -7,7 +7,8 @@ import { generateTemplate, parseTemplateFile } from '../lib/contentTemplates';
 import { checkDuplicateTitle, createContentSet } from '../lib/services';
 import { useSubjects } from '../features/subjects/useSubjects';
 import { SubjectSkillPicker } from '../features/subjects/SubjectSkillPicker';
-import { NO_PICKS, picksToArrays, picksToTags, type Picks } from '../features/subjects/types';
+import { NO_PICKS, picksToArrays, picksToTags, suggestFormat, type Picks } from '../features/subjects/types';
+import { SKILL_HELP } from '../lib/contentPrompt';
 import type { ContentItem, ContentSet, SkillTemplate, Visibility } from '../types';
 
 const SKILLS: SkillTemplate[] = ['vocabulary', 'grammar', 'reading', 'spelling'];
@@ -19,6 +20,7 @@ export function CreateContentPage() {
 
   const subj = useSubjects();
   const [picks, setPicks] = useState<Picks>(NO_PICKS);
+  const pickAndFormat = (p: Picks) => { setPicks(p); const f = suggestFormat(p, subj.subjectById(p.subjectId)); if (f) setSkill(f); };
   const tags = useMemo(() => picksToTags(picks, subj.subjectById(picks.subjectId)), [picks, subj]);
   const focus = useMemo(() => {
     const s = subj.subjectById(picks.subjectId); if (!s) return undefined;
@@ -78,8 +80,14 @@ export function CreateContentPage() {
       <h1 className="font-display text-3xl font-bold text-primary">{t('createGame')}</h1>
 
       <div className="card-surface mt-6 p-6">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Step 1 · Skill and title</p>
-        <label className="mb-1 block text-sm font-semibold text-primary">Skill</label>
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Step 1 · Subject and skill</p>
+        <SubjectSkillPicker subjects={subj.allowed} canRequest value={picks} onChange={pickAndFormat} multi savesAll={subj.multi} />
+      </div>
+
+      <div className="card-surface mt-4 p-6">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Step 2 · Game format and title</p>
+        <label className="mb-1 block text-sm font-semibold text-primary">Game format</label>
+        <p className="mb-2 text-xs text-muted-foreground">How the questions are built. It is set from the domain you pick above; change it only if you want a different layout. {SKILL_HELP[skill]}</p>
         <div className="flex flex-wrap gap-2">
           {SKILLS.map((s) => (
             <button
@@ -122,11 +130,6 @@ export function CreateContentPage() {
             </div>
           </div>
         )}
-      </div>
-
-      <div className="card-surface mt-4 p-6">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Subject and skill</p>
-        <SubjectSkillPicker subjects={subj.allowed} canRequest value={picks} onChange={setPicks} multi savesAll={subj.multi} />
       </div>
 
       <AiContentPanel focus={focus} skill={skill} title={title} onItemsChange={setAiItems} />
@@ -186,7 +189,7 @@ export function CreateContentPage() {
         </button>
         {!saving && (!title.trim() || items.length === 0) && (
           <p className="mt-2 text-center text-xs text-muted-foreground">
-            {!title.trim() ? 'Type a game title in Step 1. ' : ''}
+            {!title.trim() ? 'Type a game title in Step 2. ' : ''}
             {items.length === 0 ? "Paste the AI's reply above to enable this button." : ''}
           </p>
         )}
