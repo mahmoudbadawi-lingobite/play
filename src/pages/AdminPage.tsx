@@ -252,6 +252,12 @@ export function AdminPage() {
     <div className="mx-auto max-w-3xl px-4 py-10">
       <h1 className="font-display text-3xl font-bold text-primary">Admin</h1>
 
+      <Link to="/admin/subjects" className="card-surface mt-6 flex items-center justify-between gap-3 p-4 hover:border-secondary">
+        <span><span className="block font-display text-lg font-semibold text-primary">📚 Subjects, skills and question types</span>
+          <span className="block text-sm text-muted-foreground">Add subjects, edit their skills, and approve teachers' subject requests.</span></span>
+        <span className="text-sm font-semibold text-secondary">Open →</span>
+      </Link>
+
       <section className="mt-8">
         <h2 className="font-display text-xl font-semibold text-primary">Manage admins</h2>
 
