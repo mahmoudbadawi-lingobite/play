@@ -7,10 +7,8 @@ import { getContentSet, updateContentSet } from '../lib/services';
 import { useSubjects } from '../features/subjects/useSubjects';
 import { SubjectSkillPicker } from '../features/subjects/SubjectSkillPicker';
 import { NO_PICKS, picksToArrays, picksToTags, rowToPicks, suggestFormat, type Picks } from '../features/subjects/types';
-import { SKILL_HELP } from '../lib/contentPrompt';
 import type { ContentItem, ContentSet, SkillTemplate, Visibility } from '../types';
 
-const SKILLS: SkillTemplate[] = ['vocabulary', 'grammar', 'reading', 'spelling'];
 
 export function EditContentPage() {
   const { setId } = useParams<{ setId: string }>();
@@ -97,21 +95,6 @@ export function EditContentPage() {
       </div>
 
       <div className="card-surface mt-4 p-6">
-        <label className="mb-1 block text-sm font-semibold text-primary">Game format</label>
-        <p className="mb-2 text-xs text-muted-foreground">How the questions are built. It is set from the domain you pick above; change it only if you want a different layout. {SKILL_HELP[skill]}</p>
-        <div className="flex flex-wrap gap-2">
-          {SKILLS.map((s) => (
-            <button
-              key={s}
-              onClick={() => setSkill(s)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize ${
-                skill === s ? 'bg-primary text-primary-foreground' : 'border border-border bg-card text-primary/70'
-              }`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
 
         <label className="mt-5 block">
           <span className="mb-1 block text-sm font-semibold text-primary">Game title</span>

@@ -71,7 +71,7 @@ export function AiContentPanel({
         paste the AI's reply below. No template needed.
       </p>
       <p className="mt-2 rounded-lg bg-muted/40 px-3 py-2 text-xs text-primary">
-        <b className="capitalize">{skill}</b>: {SKILL_HELP[skill]}
+        <b>Each item:</b> {SKILL_HELP[skill]}
       </p>
 
       <div className="mt-4">
