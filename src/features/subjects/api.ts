@@ -5,6 +5,12 @@ const fail = (e: { message: string }): never => { throw new Error(e.message); };
 
 const mapSkill = (r: any): Skill => ({ id: r.id, domainId: r.domain_id, subjectId: r.subject_id, name: r.name, description: r.description ?? null, sort: r.sort ?? 0, active: r.active !== false });
 
+/** True once subjects_multi_skills_patch.sql has been run (the skill_ids column exists). */
+export async function probeMulti(): Promise<boolean> {
+  const { error } = await supabase.from('content_sets').select('skill_ids').limit(1);
+  return !error;
+}
+
 /** Everything: subjects with their domains, skills and allowed question types. Readable by everyone. */
 export async function loadCatalog(): Promise<Catalog> {
   const [s, t] = await Promise.all([

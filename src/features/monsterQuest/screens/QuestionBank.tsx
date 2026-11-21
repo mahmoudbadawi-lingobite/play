@@ -9,7 +9,7 @@ import { ConfirmDialog, GameButton, Modal, Panel } from '../ui';
 import type { BankQuestion, QuestionType } from '../types';
 import { useSubjects } from '../../subjects/useSubjects';
 import { SubjectSkillPicker } from '../../subjects/SubjectSkillPicker';
-import { COGNITIVE_LEVELS, picksToTags, tagsToPicks } from '../../subjects/types';
+import { COGNITIVE_LEVELS, picksToArrays, picksToTags, rowToPicks, type Picks } from '../../subjects/types';
 
 const blank = (audience: string[] = []): Partial<BankQuestion> => ({ type: 'mcq', subject: 'English', difficulty: 1, xp_reward: 5, active: true, prompt: '', answer: '', ...(audience.length ? { class_ids: audience } : {}) });
 const lines = (s: string) => s.split('\n').map((x) => x.trim()).filter(Boolean);
@@ -112,14 +112,16 @@ export function QuestionBank() {
     catch (e) { setErr((e as Error).message); }
   };
   /** Subject tags for imported questions. Returns an error text when the subject is not one the user may use. Skipped (no tags) until the subjects SQL has been run. */
-  const tagFor = (named: string | null | undefined, hint?: { subjectId?: string | null; domainId?: string | null; skillId?: string | null }): Partial<BankQuestion> | string => {
+  const tagFor = (named: string | null | undefined, hint?: { subjectId?: string | null; skillIds?: string[]; domainIds?: string[] }): Partial<BankQuestion> | string => {
     if (!subj.ready) return {};
     const want = (named ?? '').trim().toLowerCase();
     const sub = (hint?.subjectId && subj.allowed.find((x) => x.id === hint.subjectId)) || subj.allowed.find((x) => x.id.toLowerCase() === want || x.name.toLowerCase() === want)
       || (!want && subj.allowed.length === 1 ? subj.allowed[0] : undefined);
     if (!sub) return want ? `you are not approved for the subject "${named}"` : 'choose a subject in the subject column';
     const sameSub = hint?.subjectId === sub.id;
-    return { subject: sub.name, subject_id: sub.id, domain_id: sameSub ? hint?.domainId ?? null : null, skill_id: sameSub ? hint?.skillId ?? null : null };
+    const p: Picks = { subjectId: sub.id, domainIds: sameSub ? hint?.domainIds ?? [] : [], skillIds: sameSub ? hint?.skillIds ?? [] : [] };
+    const t = picksToTags(p, sub);
+    return { subject: sub.name, subject_id: sub.id, domain_id: t.domainId, skill_id: t.skillId, ...(subj.multi ? { domain_ids: picksToArrays(p, sub).domainIds, skill_ids: p.skillIds } : {}) };
   };
   const onFile = async (f: File | undefined) => {
     if (!f) return; setErr(null); setInfo(null);
@@ -130,8 +132,8 @@ export function QuestionBank() {
       const ok: Partial<BankQuestion>[] = [], bad: string[] = [];
       data.forEach((r, i) => {
         const x = rowToQuestion(r); if (typeof x === 'string') return void bad.push(`Row ${i + 2}: ${x}`);
-        const sk = String(r.skill_id ?? '').trim(); const sd = sk ? subj.subjects.find((z) => z.domains.some((d) => d.skills.some((k) => k.id === sk))) : undefined;
-        const tg = tagFor(String(r.subject ?? '') || null, sd ? { subjectId: sd.id, domainId: sd.domains.find((d) => d.skills.some((k) => k.id === sk))?.id, skillId: sk } : undefined);
+        const sks = String(r.skill_id ?? '').split(/[|,;]/).map((z) => z.trim()).filter(Boolean); const sd = sks.length ? subj.subjects.find((z) => z.domains.some((d) => d.skills.some((k) => k.id === sks[0]))) : undefined;
+        const tg = tagFor(String(r.subject ?? '') || null, sd ? { subjectId: sd.id, skillIds: sks.filter((k) => sd.domains.some((d) => d.skills.some((z) => z.id === k))) } : undefined);
         if (typeof tg === 'string') bad.push(`Row ${i + 2}: ${tg}`); else ok.push({ ...x, ...tg });
       });
       if (ok.length) await api.insertBankQuestions(withAudience(ok), profile.uid);
@@ -155,7 +157,7 @@ export function QuestionBank() {
     try {
       const items = s.items.filter((i) => i.term && i.clue);
       const terms = Array.from(new Set(items.map((i) => i.term.trim())));
-      const tg = tagFor(null, { subjectId: s.subjectId, domainId: s.domainId, skillId: s.skillId }); if (typeof tg === 'string') return setErr(tg.replace('choose a subject in the subject column', 'Choose a subject for this set first, or ask an admin to approve one for you.'));
+      const tg = tagFor(null, { subjectId: s.subjectId, domainIds: s.domainIds?.length ? s.domainIds : s.domainId ? [s.domainId] : [], skillIds: s.skillIds?.length ? s.skillIds : s.skillId ? [s.skillId] : [] }); if (typeof tg === 'string') return setErr(tg.replace('choose a subject in the subject column', 'Choose a subject for this set first, or ask an admin to approve one for you.'));
       const out: Partial<BankQuestion>[] = items.map((it, idx) => {
         const wrong = terms.filter((t) => t.toLowerCase() !== it.term.trim().toLowerCase()).sort(() => Math.random() - 0.5).slice(0, 3);
         const useMcq = wrong.length === 3 && idx % 2 === 0;
@@ -216,7 +218,7 @@ export function QuestionBank() {
                 <tr key={r.id} className={`border-t border-white/10 ${r.active ? '' : 'opacity-50'}`}>
                   {targeting && <td className="p-2">{mine && <input type="checkbox" aria-label="Select question" checked={sel.has(r.id)} onChange={() => toggleSel(r.id)} />}</td>}
                   <td className="max-w-[320px] p-2 font-semibold"><span className="line-clamp-2">{r.prompt}</span></td>
-                  <td className="p-2 text-xs">{QUESTION_TYPES.find((t) => t.value === r.type)?.label}</td><td className="p-2 text-xs">{r.topic ?? '–'}{r.skill_id && <span className="block text-[10px] opacity-70">{subj.subjects.flatMap((x) => x.domains.flatMap((d) => d.skills)).find((k) => k.id === r.skill_id)?.name}</span>}</td>
+                  <td className="p-2 text-xs">{QUESTION_TYPES.find((t) => t.value === r.type)?.label}</td><td className="p-2 text-xs">{r.topic ?? '–'}{(r.skill_ids?.length || r.skill_id) && <span className="block text-[10px] opacity-70">{(r.skill_ids?.length ? r.skill_ids : [r.skill_id!]).map((id) => subj.subjects.flatMap((x) => x.domains.flatMap((d) => d.skills)).find((k) => k.id === id)?.name).filter(Boolean).join(' · ')}</span>}</td>
                   {targeting && <td className="max-w-[160px] p-2 text-xs"><span className={`line-clamp-2 ${r.class_ids?.length ? 'font-bold text-yellow-200' : 'text-white/70'}`}>{audienceOf(r)}</span></td>}
                   <td className="p-2 text-center">{r.difficulty}</td><td className="p-2 text-center">{s?.asked ?? 0}</td><td className="p-2 text-center">{s?.asked ? `${Math.round((s.correct / s.asked) * 100)}%` : '–'}</td>
                   <td className="whitespace-nowrap p-2 text-right">{mine && (<><button className="mr-2 font-bold text-yellow-300 hover:underline" onClick={() => setEdit(r)}>Edit</button><button className="mr-2 font-bold text-sky-300 hover:underline" onClick={() => toggle(r)}>{r.active ? 'Hide' : 'Show'}</button><button className="font-bold text-red-300 hover:underline" onClick={() => setAskDel(r)}>Delete</button></>)}</td>
@@ -291,7 +293,7 @@ function QuestionForm({ initial, onClose, onSaved, userId, classes, targeting }:
     setSaving(true);
     try {
       await api.saveBankQuestion({ ...f, options, answer, prompt: f.prompt!.trim(), difficulty: f.difficulty ?? 1, xp_reward: f.xp_reward ?? 5, subject: (tagged ? subj.subjectById(f.subject_id)?.name : null) || f.subject || 'English',
-        ...(tagged ? { subject_id: f.subject_id ?? null, domain_id: f.domain_id ?? null, skill_id: f.skill_id ?? null, cognitive_level: f.cognitive_level ?? null } : {}),
+        ...(tagged ? { subject_id: f.subject_id ?? null, domain_id: f.domain_id ?? null, skill_id: f.skill_id ?? null, ...(subj.multi ? { domain_ids: f.domain_ids ?? [], skill_ids: f.skill_ids ?? [] } : {}), cognitive_level: f.cognitive_level ?? null } : {}),
         passage: f.passage || null, topic: f.topic || null, explanation: f.explanation || null, image_url: f.image_url || null, audio_url: f.audio_url || null, tts_text: f.tts_text || null,
         grade: f.grade ?? null, time_limit_s: f.time_limit_s ?? null, ...(targeting ? { class_ids: [...aud, ...kept] } : { class_ids: undefined }) }, userId);
       onSaved();
@@ -321,8 +323,8 @@ function QuestionForm({ initial, onClose, onSaved, userId, classes, targeting }:
         <label className={lab}>Image URL (optional)</label><input value={f.image_url ?? ''} onChange={(e) => set({ image_url: e.target.value })} className={inp} />
         {tagged && (<div className="mt-2 rounded-xl bg-[#eaf2ff] p-2.5">
           <p className="mb-1 text-xs font-extrabold uppercase text-[#3d5a94]">Subject and skill</p>
-          <SubjectSkillPicker subjects={subj.allowed} canRequest value={tagsToPicks({ subjectId: f.subject_id ?? null, domainId: f.domain_id ?? null, skillId: f.skill_id ?? null })}
-            onChange={(p) => { const v = picksToTags(p, subj.subjectById(p.subjectId)); const ok = subj.typesFor(v.subjectId).some((d) => d.id === f.type); set({ subject_id: v.subjectId, domain_id: v.domainId, skill_id: v.skillId, ...(ok || !v.subjectId ? {} : { type: (subj.typesFor(v.subjectId)[0]?.id ?? 'mcq') as QuestionType }) }); }} />
+          <SubjectSkillPicker subjects={subj.allowed} canRequest multi={subj.multi} savesAll value={rowToPicks({ subjectId: f.subject_id ?? null, domainId: f.domain_id, skillId: f.skill_id, domainIds: f.domain_ids, skillIds: f.skill_ids })}
+            onChange={(p) => { const sb = subj.subjectById(p.subjectId); const v = picksToTags(p, sb); const arr = picksToArrays(p, sb); const ok = subj.typesFor(v.subjectId).some((d) => d.id === f.type); set({ subject_id: v.subjectId, domain_id: v.domainId, skill_id: v.skillId, domain_ids: arr.domainIds, skill_ids: arr.skillIds, ...(ok || !v.subjectId ? {} : { type: (subj.typesFor(v.subjectId)[0]?.id ?? 'mcq') as QuestionType }) }); }} />
           <label className={lab}>Thinking level (optional)</label>
           <select value={f.cognitive_level ?? ''} onChange={(e) => set({ cognitive_level: e.target.value || null })} className={inp}><option value="">Not set</option>{COGNITIVE_LEVELS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>
         </div>)}

@@ -13,3 +13,6 @@
 
 ## Not included yet
 New question kinds for other subjects (e.g. numeric answer for Math) need a separate patch.
+
+## Several skills per game / question (second patch)
+Run `supabase/subjects_multi_skills_patch.sql` AFTER the first one (safe to re-run). Until then only the first chosen skill is saved.

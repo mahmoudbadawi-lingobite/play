@@ -64,7 +64,7 @@ export interface BankQuestion {
   /** classes that receive this question; empty = every student. Undefined until monster_quest_teacher_stage1.sql has been run. */
   class_ids?: string[];
   /** subject / skill tags. Undefined until subjects_skills_patch.sql has been run. */
-  subject_id?: string | null; domain_id?: string | null; skill_id?: string | null; cognitive_level?: string | null;
+  subject_id?: string | null; domain_id?: string | null; skill_id?: string | null; domain_ids?: string[]; skill_ids?: string[]; cognitive_level?: string | null;
 }
 
 // ---- trainer look / wardrobe

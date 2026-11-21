@@ -6,7 +6,7 @@ import { generateTemplate, parseTemplateFile } from '../lib/contentTemplates';
 import { getContentSet, updateContentSet } from '../lib/services';
 import { useSubjects } from '../features/subjects/useSubjects';
 import { SubjectSkillPicker } from '../features/subjects/SubjectSkillPicker';
-import { NO_PICKS, picksToTags, tagsToPicks, type Picks } from '../features/subjects/types';
+import { NO_PICKS, picksToArrays, picksToTags, rowToPicks, type Picks } from '../features/subjects/types';
 import type { ContentItem, ContentSet, SkillTemplate, Visibility } from '../types';
 
 const SKILLS: SkillTemplate[] = ['vocabulary', 'grammar', 'reading', 'spelling'];
@@ -50,7 +50,7 @@ export function EditContentPage() {
       }
       setOriginal(set);
       setSkill(set.skill);
-      setPicks(tagsToPicks({ subjectId: set.subjectId ?? null, domainId: set.domainId ?? null, skillId: set.skillId ?? null }));
+      setPicks(rowToPicks({ subjectId: set.subjectId ?? null, domainId: set.domainId, skillId: set.skillId, domainIds: set.domainIds, skillIds: set.skillIds }));
       setTitle(set.title);
       setVisibility(set.visibility);
       setLoading(false);
@@ -71,7 +71,7 @@ export function EditContentPage() {
       title: title.trim(),
       skill,
       visibility,
-      ...(subj.ready && tags.subjectId ? { subjectId: tags.subjectId, domainId: tags.domainId, skillId: tags.skillId } : {}),
+      ...(subj.ready && tags.subjectId ? { subjectId: tags.subjectId, domainId: tags.domainId, skillId: tags.skillId, ...(subj.multi ? picksToArrays(picks, subj.subjectById(picks.subjectId)) : {}) } : {}),
       ...(replacementItems ? { items: replacementItems } : {}),
     });
     setSaving(false);
@@ -130,7 +130,7 @@ export function EditContentPage() {
 
       <div className="card-surface mt-4 p-6">
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Subject and skill</p>
-        <SubjectSkillPicker subjects={subj.allowed} canRequest value={picks} onChange={setPicks} multi />
+        <SubjectSkillPicker subjects={subj.allowed} canRequest value={picks} onChange={setPicks} multi savesAll={subj.multi} />
       </div>
 
       <AiContentPanel focus={focus} skill={skill} title={title} onItemsChange={setAiItems} />

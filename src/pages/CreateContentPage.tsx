@@ -7,7 +7,7 @@ import { generateTemplate, parseTemplateFile } from '../lib/contentTemplates';
 import { checkDuplicateTitle, createContentSet } from '../lib/services';
 import { useSubjects } from '../features/subjects/useSubjects';
 import { SubjectSkillPicker } from '../features/subjects/SubjectSkillPicker';
-import { NO_PICKS, picksToTags, type Picks } from '../features/subjects/types';
+import { NO_PICKS, picksToArrays, picksToTags, type Picks } from '../features/subjects/types';
 import type { ContentItem, ContentSet, SkillTemplate, Visibility } from '../types';
 
 const SKILLS: SkillTemplate[] = ['vocabulary', 'grammar', 'reading', 'spelling'];
@@ -63,7 +63,7 @@ export function CreateContentPage() {
         teacherName: profile.displayName ?? 'Teacher',
         visibility,
         items,
-        ...(subj.ready ? { subjectId: tags.subjectId, domainId: tags.domainId, skillId: tags.skillId } : {}),
+        ...(subj.ready ? { subjectId: tags.subjectId, domainId: tags.domainId, skillId: tags.skillId, ...(subj.multi ? picksToArrays(picks, subj.subjectById(picks.subjectId)) : {}) } : {}),
       });
       navigate(`/play/${id}`);
     } catch {
@@ -126,7 +126,7 @@ export function CreateContentPage() {
 
       <div className="card-surface mt-4 p-6">
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Subject and skill</p>
-        <SubjectSkillPicker subjects={subj.allowed} canRequest value={picks} onChange={setPicks} multi />
+        <SubjectSkillPicker subjects={subj.allowed} canRequest value={picks} onChange={setPicks} multi savesAll={subj.multi} />
       </div>
 
       <AiContentPanel focus={focus} skill={skill} title={title} onItemsChange={setAiItems} />

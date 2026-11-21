@@ -55,6 +55,9 @@ export interface ContentSet {
   subjectId?: string | null;
   domainId?: string | null;
   skillId?: string | null;
+  /** every chosen domain / skill (empty until subjects_multi_skills_patch.sql has been run) */
+  domainIds?: string[];
+  skillIds?: string[];
 }
 
 // --- Games ---

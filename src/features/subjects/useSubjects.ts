@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { listMyTeacherSubjects, loadCatalog } from './api';
+import { listMyTeacherSubjects, loadCatalog, probeMulti } from './api';
 import type { Catalog, Subject, TeacherSubject } from './types';
 
+let multiCache: Promise<boolean> | null = null;
+const multiProbe = () => (multiCache ??= probeMulti().catch(() => false));
 let cache: Promise<Catalog> | null = null;
 const catalog = (force = false) => { if (!cache || force) cache = loadCatalog().catch((e) => { cache = null; throw e; }); return cache; };
 
@@ -14,6 +16,7 @@ export function useSubjects() {
   const { profile } = useAuth();
   const [cat, setCat] = useState<Catalog>({ subjects: [], questionTypes: [] });
   const [mine, setMine] = useState<TeacherSubject[]>([]);
+  const [multi, setMulti] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const uid = profile?.uid, role = profile?.role;
@@ -25,6 +28,8 @@ export function useSubjects() {
       setCat(c); setMine(m);
     } catch (e) { setError((e as Error).message); } finally { setLoading(false); }
   }, [uid, role]);
+
+  useEffect(() => { let live = true; multiProbe().then((m) => { if (live) setMulti(m); }); return () => { live = false; }; }, []);
 
   useEffect(() => {
     let live = true;
@@ -54,5 +59,5 @@ export function useSubjects() {
     return all.filter((t) => s.questionTypes.includes(t.id));
   }, [cat.subjects, cat.questionTypes]);
 
-  return { loading, error, subjects: cat.subjects, questionTypes: cat.questionTypes, allowed, mine, subjectById, typesFor, reload, ready: !loading && !error };
+  return { multi, loading, error, subjects: cat.subjects, questionTypes: cat.questionTypes, allowed, mine, subjectById, typesFor, reload, ready: !loading && !error };
 }

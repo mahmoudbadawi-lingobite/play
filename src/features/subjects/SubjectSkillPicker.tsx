@@ -9,8 +9,8 @@ const chip = (on: boolean) => `rounded-full border-2 px-3 py-1.5 text-sm font-se
  * `multi` lets several skills be chosen (AI game builder); otherwise one domain and one skill (a single question).
  * `subjects` is the list the user may use (see useSubjects().allowed).
  */
-export function SubjectSkillPicker({ subjects, value, onChange, disabled, canRequest, multi }: {
-  subjects: Subject[]; value: Picks; onChange: (v: Picks) => void; disabled?: boolean; canRequest?: boolean; multi?: boolean;
+export function SubjectSkillPicker({ subjects, value, onChange, disabled, canRequest, multi, savesAll }: {
+  subjects: Subject[]; value: Picks; onChange: (v: Picks) => void; disabled?: boolean; canRequest?: boolean; multi?: boolean; savesAll?: boolean;
 }) {
   if (subjects.length === 0) {
     return (
@@ -82,7 +82,7 @@ export function SubjectSkillPicker({ subjects, value, onChange, disabled, canReq
               );
             })}
           </div>
-          {multi && value.skillIds.length > 1 && <p className="mt-2 text-xs text-muted-foreground">All {value.skillIds.length} skills guide the AI prompt. The game is saved with a single skill tag only when exactly one is chosen.</p>}
+          {multi && value.skillIds.length > 1 && <p className="mt-2 text-xs text-muted-foreground">{savesAll ? `All ${value.skillIds.length} skills guide the AI prompt and are saved.` : `All ${value.skillIds.length} skills guide the AI prompt. Only the first is saved until the multi-skill SQL patch is run.`}</p>}
         </div>
       )}
     </div>
