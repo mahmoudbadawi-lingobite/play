@@ -1,15 +1,16 @@
 import { Link } from 'react-router-dom';
-import type { Subject, SubjectTags } from './types';
+import type { Picks, Subject } from './types';
 
-const sel = 'w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-secondary disabled:opacity-50';
-const lab = 'mb-1 block text-xs font-semibold text-muted-foreground';
+const lab = 'mb-1.5 block text-xs font-semibold text-muted-foreground';
+const chip = (on: boolean) => `rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition disabled:opacity-50 ${on ? 'border-secondary bg-secondary text-white' : 'border-border bg-card text-primary hover:border-secondary'}`;
 
 /**
- * Subject > domain > skill. `subjects` is the list the user may use (see useSubjects().allowed).
- * Subject is required; domain and skill narrow it down and are optional.
+ * Tap-to-choose: subject, then domains (All, or one or more), then the skills of those domains.
+ * `multi` lets several skills be chosen (AI game builder); otherwise one domain and one skill (a single question).
+ * `subjects` is the list the user may use (see useSubjects().allowed).
  */
-export function SubjectSkillPicker({ subjects, value, onChange, disabled, canRequest }: {
-  subjects: Subject[]; value: SubjectTags; onChange: (v: SubjectTags) => void; disabled?: boolean; canRequest?: boolean;
+export function SubjectSkillPicker({ subjects, value, onChange, disabled, canRequest, multi }: {
+  subjects: Subject[]; value: Picks; onChange: (v: Picks) => void; disabled?: boolean; canRequest?: boolean; multi?: boolean;
 }) {
   if (subjects.length === 0) {
     return (
@@ -19,34 +20,71 @@ export function SubjectSkillPicker({ subjects, value, onChange, disabled, canReq
     );
   }
   const subject = subjects.find((s) => s.id === value.subjectId);
-  const domain = subject?.domains.find((d) => d.id === value.domainId);
-  const skills = (domain ? domain.skills : subject?.domains.flatMap((d) => d.skills) ?? []).filter((k) => k.active);
+  const domains = subject?.domains.filter((d) => d.skills.some((k) => k.active) || true) ?? [];
+  const shownDomains = value.domainIds.length ? domains.filter((d) => value.domainIds.includes(d.id)) : domains;
+  const visible = new Set(shownDomains.flatMap((d) => d.skills.filter((k) => k.active).map((k) => k.id)));
+
+  const pickSubject = (id: string) => onChange({ subjectId: id, domainIds: [], skillIds: [] });
+  const pickDomain = (id: string | null) => {
+    let ids: string[];
+    if (id === null) ids = [];
+    else if (value.domainIds.includes(id)) ids = value.domainIds.filter((x) => x !== id);
+    else ids = multi ? [...value.domainIds, id] : [id];
+    const keep = new Set((ids.length ? domains.filter((d) => ids.includes(d.id)) : domains).flatMap((d) => d.skills.map((k) => k.id)));
+    onChange({ ...value, domainIds: ids, skillIds: value.skillIds.filter((k) => keep.has(k)) });
+  };
+  const pickSkill = (id: string) => {
+    const has = value.skillIds.includes(id);
+    onChange({ ...value, skillIds: has ? value.skillIds.filter((x) => x !== id) : multi ? [...value.skillIds, id] : [id] });
+  };
+
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="space-y-4">
       <div>
-        <label className={lab}>Subject</label>
-        <select className={sel} disabled={disabled} value={value.subjectId ?? ''}
-          onChange={(e) => onChange({ subjectId: e.target.value || null, domainId: null, skillId: null })}>
-          <option value="">Choose a subject…</option>
-          {subjects.map((s) => <option key={s.id} value={s.id}>{s.icon ? `${s.icon} ` : ''}{s.name}</option>)}
-        </select>
+        <span className={lab}>Subject</span>
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Subject">
+          {subjects.map((s) => (
+            <button key={s.id} type="button" disabled={disabled} aria-pressed={s.id === value.subjectId} className={chip(s.id === value.subjectId)} onClick={() => pickSubject(s.id)}>
+              {s.icon ? `${s.icon} ` : ''}{s.name}
+            </button>
+          ))}
+        </div>
       </div>
-      <div>
-        <label className={lab}>Domain (optional)</label>
-        <select className={sel} disabled={disabled || !subject} value={value.domainId ?? ''}
-          onChange={(e) => onChange({ ...value, domainId: e.target.value || null, skillId: null })}>
-          <option value="">All domains</option>
-          {subject?.domains.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-        </select>
-      </div>
-      <div>
-        <label className={lab}>Skill (optional)</label>
-        <select className={sel} disabled={disabled || !subject} value={value.skillId ?? ''}
-          onChange={(e) => { const k = skills.find((x) => x.id === e.target.value); onChange({ ...value, skillId: k?.id ?? null, domainId: k?.domainId ?? value.domainId }); }}>
-          <option value="">No specific skill</option>
-          {skills.map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
-        </select>
-      </div>
+
+      {subject && (
+        <div>
+          <span className={lab}>Domain {multi ? '(all, or tap one or more)' : '(optional)'}</span>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Domain">
+            <button type="button" disabled={disabled} aria-pressed={value.domainIds.length === 0} className={chip(value.domainIds.length === 0)} onClick={() => pickDomain(null)}>All domains</button>
+            {domains.map((d) => (
+              <button key={d.id} type="button" disabled={disabled} aria-pressed={value.domainIds.includes(d.id)} className={chip(value.domainIds.includes(d.id))} onClick={() => pickDomain(d.id)}>{d.name}</button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {subject && visible.size > 0 && (
+        <div>
+          <span className={lab}>Skill {multi ? '(tap one or more, or none for the whole domain)' : '(optional)'}</span>
+          <div className="space-y-3">
+            {shownDomains.map((d) => {
+              const ks = d.skills.filter((k) => k.active);
+              if (!ks.length) return null;
+              return (
+                <div key={d.id}>
+                  {shownDomains.length > 1 && <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{d.name}</p>}
+                  <div className="flex flex-wrap gap-2" role="group" aria-label={`${d.name} skills`}>
+                    {ks.map((k) => (
+                      <button key={k.id} type="button" disabled={disabled} title={k.description ?? undefined} aria-pressed={value.skillIds.includes(k.id)} className={chip(value.skillIds.includes(k.id))} onClick={() => pickSkill(k.id)}>{k.name}</button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {multi && value.skillIds.length > 1 && <p className="mt-2 text-xs text-muted-foreground">All {value.skillIds.length} skills guide the AI prompt. The game is saved with a single skill tag only when exactly one is chosen.</p>}
+        </div>
+      )}
     </div>
   );
 }

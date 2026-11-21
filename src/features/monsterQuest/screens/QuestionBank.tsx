@@ -9,7 +9,7 @@ import { ConfirmDialog, GameButton, Modal, Panel } from '../ui';
 import type { BankQuestion, QuestionType } from '../types';
 import { useSubjects } from '../../subjects/useSubjects';
 import { SubjectSkillPicker } from '../../subjects/SubjectSkillPicker';
-import { COGNITIVE_LEVELS } from '../../subjects/types';
+import { COGNITIVE_LEVELS, picksToTags, tagsToPicks } from '../../subjects/types';
 
 const blank = (audience: string[] = []): Partial<BankQuestion> => ({ type: 'mcq', subject: 'English', difficulty: 1, xp_reward: 5, active: true, prompt: '', answer: '', ...(audience.length ? { class_ids: audience } : {}) });
 const lines = (s: string) => s.split('\n').map((x) => x.trim()).filter(Boolean);
@@ -321,8 +321,8 @@ function QuestionForm({ initial, onClose, onSaved, userId, classes, targeting }:
         <label className={lab}>Image URL (optional)</label><input value={f.image_url ?? ''} onChange={(e) => set({ image_url: e.target.value })} className={inp} />
         {tagged && (<div className="mt-2 rounded-xl bg-[#eaf2ff] p-2.5">
           <p className="mb-1 text-xs font-extrabold uppercase text-[#3d5a94]">Subject and skill</p>
-          <SubjectSkillPicker subjects={subj.allowed} canRequest value={{ subjectId: f.subject_id ?? null, domainId: f.domain_id ?? null, skillId: f.skill_id ?? null }}
-            onChange={(v) => { const ok = subj.typesFor(v.subjectId).some((d) => d.id === f.type); set({ subject_id: v.subjectId, domain_id: v.domainId, skill_id: v.skillId, ...(ok || !v.subjectId ? {} : { type: (subj.typesFor(v.subjectId)[0]?.id ?? 'mcq') as QuestionType }) }); }} />
+          <SubjectSkillPicker subjects={subj.allowed} canRequest value={tagsToPicks({ subjectId: f.subject_id ?? null, domainId: f.domain_id ?? null, skillId: f.skill_id ?? null })}
+            onChange={(p) => { const v = picksToTags(p, subj.subjectById(p.subjectId)); const ok = subj.typesFor(v.subjectId).some((d) => d.id === f.type); set({ subject_id: v.subjectId, domain_id: v.domainId, skill_id: v.skillId, ...(ok || !v.subjectId ? {} : { type: (subj.typesFor(v.subjectId)[0]?.id ?? 'mcq') as QuestionType }) }); }} />
           <label className={lab}>Thinking level (optional)</label>
           <select value={f.cognitive_level ?? ''} onChange={(e) => set({ cognitive_level: e.target.value || null })} className={inp}><option value="">Not set</option>{COGNITIVE_LEVELS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>
         </div>)}

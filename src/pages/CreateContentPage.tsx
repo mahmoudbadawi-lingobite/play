@@ -7,7 +7,7 @@ import { generateTemplate, parseTemplateFile } from '../lib/contentTemplates';
 import { checkDuplicateTitle, createContentSet } from '../lib/services';
 import { useSubjects } from '../features/subjects/useSubjects';
 import { SubjectSkillPicker } from '../features/subjects/SubjectSkillPicker';
-import { NO_TAGS, type SubjectTags } from '../features/subjects/types';
+import { NO_PICKS, picksToTags, type Picks } from '../features/subjects/types';
 import type { ContentItem, ContentSet, SkillTemplate, Visibility } from '../types';
 
 const SKILLS: SkillTemplate[] = ['vocabulary', 'grammar', 'reading', 'spelling'];
@@ -18,13 +18,13 @@ export function CreateContentPage() {
   const navigate = useNavigate();
 
   const subj = useSubjects();
-  const [tags, setTags] = useState<SubjectTags>(NO_TAGS);
+  const [picks, setPicks] = useState<Picks>(NO_PICKS);
+  const tags = useMemo(() => picksToTags(picks, subj.subjectById(picks.subjectId)), [picks, subj]);
   const focus = useMemo(() => {
-    const s = subj.subjectById(tags.subjectId); if (!s) return undefined;
-    const d = s.domains.find((x) => x.id === tags.domainId);
-    const k = d?.skills.find((x) => x.id === tags.skillId) ?? s.domains.flatMap((x) => x.skills).find((x) => x.id === tags.skillId);
-    return { subject: s.name, domain: d?.name, skill: k?.name, skillHint: k?.description };
-  }, [subj, tags]);
+    const s = subj.subjectById(picks.subjectId); if (!s) return undefined;
+    const skills = s.domains.flatMap((x) => x.skills).filter((x) => picks.skillIds.includes(x.id)).map((x) => ({ name: x.name, hint: x.description }));
+    return { subject: s.name, domains: s.domains.filter((x) => picks.domainIds.includes(x.id)).map((x) => x.name), skills };
+  }, [subj, picks]);
   const [skill, setSkill] = useState<SkillTemplate>('vocabulary');
   const [title, setTitle] = useState('');
   const [aiItems, setAiItems] = useState<ContentItem[]>([]);
@@ -126,7 +126,7 @@ export function CreateContentPage() {
 
       <div className="card-surface mt-4 p-6">
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Subject and skill</p>
-        <SubjectSkillPicker subjects={subj.allowed} canRequest value={tags} onChange={setTags} />
+        <SubjectSkillPicker subjects={subj.allowed} canRequest value={picks} onChange={setPicks} multi />
       </div>
 
       <AiContentPanel focus={focus} skill={skill} title={title} onItemsChange={setAiItems} />

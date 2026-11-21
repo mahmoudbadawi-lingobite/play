@@ -24,7 +24,7 @@ export interface PromptOptions {
   /** Words / notes typed straight into the app. */
   rawText: string;
   /** Chosen subject / domain / skill from the subject picker. Overrides `subject` and tells the AI which skill to practise. */
-  focus?: { subject: string; domain?: string; skill?: string; skillHint?: string | null };
+  focus?: { subject: string; domains?: string[]; skills?: { name: string; hint?: string | null }[] };
 }
 
 export const SKILL_HELP: Record<SkillTemplate, string> = {
@@ -90,7 +90,10 @@ export function buildContentPrompt(o: PromptOptions): string {
     `Skill: ${o.skill}`,
     `Students: Grade ${o.grade} (about ${age} years old)`,
     `Subject / language: ${subject}`,
-    ...(o.focus?.skill ? [`Skill focus: ${o.focus.domain ? `${o.focus.domain} > ` : ''}${o.focus.skill}${o.focus.skillHint ? ` (${o.focus.skillHint})` : ''}`, 'Every item must practise this specific skill, not just the general topic.'] : o.focus?.domain ? [`Area: ${o.focus.domain}`] : []),
+    ...(o.focus?.skills?.length
+      ? [...(o.focus.domains?.length ? [`Area: ${o.focus.domains.join(', ')}`] : []), `Skill focus: ${o.focus.skills.map((k) => (k.hint ? `${k.name} (${k.hint})` : k.name)).join('; ')}`,
+         o.focus.skills.length > 1 ? 'Spread the items across these skills; every item must practise one of them, not just the general topic.' : 'Every item must practise this specific skill, not just the general topic.']
+      : o.focus?.domains?.length ? [`Area: ${o.focus.domains.join(', ')}`] : []),
     ...(o.topic.trim() ? [`Topic: ${o.topic.trim()}`] : []),
     `Number of items: exactly ${o.count}`,
     '',

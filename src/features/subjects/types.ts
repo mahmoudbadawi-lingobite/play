@@ -18,3 +18,14 @@ export const COGNITIVE_LEVELS: { id: 'recall' | 'application' | 'analysis' | 'sy
   { id: 'synthesis', label: 'Synthesis / Evaluation', hint: 'Combine evidence, judge, infer' },
 ];
 export type CognitiveLevel = (typeof COGNITIVE_LEVELS)[number]['id'];
+
+/** What the tap-to-choose picker edits: one subject, any number of domains and skills (none = all). */
+export interface Picks { subjectId: string | null; domainIds: string[]; skillIds: string[] }
+export const NO_PICKS: Picks = { subjectId: null, domainIds: [], skillIds: [] };
+export const tagsToPicks = (t: SubjectTags): Picks => ({ subjectId: t.subjectId, domainIds: t.domainId ? [t.domainId] : [], skillIds: t.skillId ? [t.skillId] : [] });
+/** The database stores one domain and one skill. Several picked: the domain/skill is kept only when exactly one is chosen. */
+export const picksToTags = (p: Picks, subject?: Subject): SubjectTags => {
+  const skillId = p.skillIds.length === 1 ? p.skillIds[0] : null;
+  const skillDomain = skillId ? subject?.domains.find((d) => d.skills.some((k) => k.id === skillId))?.id ?? null : null;
+  return { subjectId: p.subjectId, domainId: p.domainIds.length === 1 ? p.domainIds[0] : skillDomain, skillId };
+};
