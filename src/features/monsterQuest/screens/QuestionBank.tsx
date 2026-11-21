@@ -75,6 +75,7 @@ export function QuestionBank() {
   const [info, setInfo] = useState<string | null>(null);
   const [edit, setEdit] = useState<Partial<BankQuestion> | null>(null);
   const [askBulkDel, setAskBulkDel] = useState(false);
+  const [byClass, setByClass] = useState<{ all: boolean; picked: string[] } | null>(null);   // 'Delete by class' dialog
   const [askDel, setAskDel] = useState<BankQuestion | null>(null);
   const [q, setQ] = useState(''); const [ft, setFt] = useState<QuestionType | 'all'>('all'); const [fd, setFd] = useState(0);
   const [sets, setSets] = useState<ContentSet[] | null>(null);
@@ -170,6 +171,27 @@ export function QuestionBank() {
       setInfo(`Created ${n} questions from "${s.title}".`); await load();
     } catch (e) { setErr((e as Error).message); }
   };
+  /** What the 'Delete by class' dialog would do. Only the teacher's own questions. A question also aimed at a class that is NOT chosen is kept. */
+  const byClassPlan = () => {
+    const mine = rows.filter((x) => x.created_by === profile.uid);
+    if (!byClass) return { del: [] as BankQuestion[], kept: [] as BankQuestion[] };
+    if (byClass.all) return { del: mine, kept: [] as BankQuestion[] };
+    const del: BankQuestion[] = [], kept: BankQuestion[] = [];
+    for (const x of mine) {
+      const aud = x.class_ids ?? [];
+      if (!aud.length) { if (byClass.picked.includes('everyone')) del.push(x); continue; }
+      if (aud.every((id) => byClass.picked.includes(id))) del.push(x); else if (aud.some((id) => byClass.picked.includes(id))) kept.push(x);
+    }
+    return { del, kept };
+  };
+  const deleteByClass = async () => {
+    const { del } = byClassPlan(); setByClass(null); setErr(null); setInfo(null);
+    let done = 0; const failed: string[] = [];
+    for (const x of del) { try { await api.deleteBankQuestion(x.id); done++; } catch (e) { failed.push((e as Error).message); } }
+    setSel(new Set());
+    setInfo(`Deleted ${done} question${done === 1 ? '' : 's'}.${failed.length ? ` ${failed.length} could not be deleted: ${failed[0]}` : ''}`);
+    await load();
+  };
   const removeSelected = async () => {
     setAskBulkDel(false); setErr(null); setInfo(null);
     const ids = [...sel].filter((id) => { const r = rows.find((x) => x.id === id); return r && isMine(r); });
@@ -190,6 +212,7 @@ export function QuestionBank() {
           <GameButton tone="green" onClick={() => setEdit(blank(targeting ? newAudience : []))}>＋ New question</GameButton>
           <label className="mq-btn mq-btn-blue cursor-pointer">⬆ Import (.xlsx / .csv / .json)<input type="file" accept=".xlsx,.xls,.csv,.json" className="hidden" onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ''; }} /></label>
           <GameButton tone="ghost" onClick={template}>⬇ Template</GameButton>
+          <GameButton tone="red" onClick={() => setByClass({ all: false, picked: [] })}>🗑 Delete by class…</GameButton>
           <GameButton tone="ghost" onClick={openSets}>📚 From a Game Library set</GameButton>
         </div>
         {targeting && (
@@ -240,7 +263,7 @@ export function QuestionBank() {
       </Panel>
       <p className="text-xs font-semibold text-white/60">Showing {shown.length} of {rows.length}. Students never see answers in their browser; answers are checked on the server.</p>
 
-      {askBulkDel && <ConfirmDialog title={`Delete ${sel.size} question${sel.size === 1 ? '' : 's'}?`} message="They will be removed for everyone, including from past results. This cannot be undone." confirmLabel="Delete all selected" tone="red" onConfirm={removeSelected} onCancel={() => setAskBulkDel(false)} />}
+      {askBulkDel && <ConfirmDialog title={`Delete ${sel.size} question${sel.size === 1 ? '' : 's'}?`} message="These questions and their statistics will be removed. Students' progress and rewards are not affected. This cannot be undone." confirmLabel="Delete all selected" tone="red" onConfirm={removeSelected} onCancel={() => setAskBulkDel(false)} />}
       {askDel && <ConfirmDialog title="Delete this question?" message="This cannot be undone." confirmLabel="Delete" tone="red" onConfirm={() => remove(askDel)} onCancel={() => setAskDel(null)} />}
       {edit && <QuestionForm initial={edit} onClose={() => setEdit(null)} onSaved={async () => { setEdit(null); await load(); }} userId={profile.uid} classes={classes} targeting={targeting} />}
       {bulk && (
@@ -250,6 +273,23 @@ export function QuestionBank() {
           <div className="mt-3"><AudiencePicker light classes={classes} value={bulkAud} onChange={setBulkAud} /></div>
           <div className="mt-4 grid grid-cols-2 gap-2"><GameButton tone="ghost" className="!text-[#10285a]" onClick={() => setBulk(false)}>Cancel</GameButton><GameButton tone="green" onClick={applyBulk}>Apply</GameButton></div>
         </Modal>)}
+      {byClass && (() => { const plan = byClassPlan(); const chip = (on: boolean) => `rounded-full border-2 px-3 py-1 text-xs font-extrabold ${on ? 'border-[#c0392b] bg-[#c0392b] text-white' : 'border-[#1b4fb3] bg-white text-[#10285a]'}`;
+        const toggleP = (id: string) => setByClass({ all: false, picked: byClass.picked.includes(id) ? byClass.picked.filter((z) => z !== id) : [...byClass.picked, id] });
+        return (
+        <Modal onClose={() => setByClass(null)}>
+          <p className="font-display text-lg font-extrabold text-[#10285a]">Delete my questions by class</p>
+          <p className="mt-1 text-xs text-[#3d5a94]">Only questions you created. Choose all of them, or pick the classes (and/or Everyone) whose questions should go.</p>
+          <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Which questions to delete">
+            <button type="button" className={chip(byClass.all)} aria-pressed={byClass.all} onClick={() => setByClass({ all: !byClass.all, picked: [] })}>All my questions</button>
+            {!byClass.all && <>
+              <button type="button" className={chip(byClass.picked.includes('everyone'))} aria-pressed={byClass.picked.includes('everyone')} onClick={() => toggleP('everyone')}>🌍 Everyone</button>
+              {classes.map((c) => <button key={c.id} type="button" className={chip(byClass.picked.includes(c.id))} aria-pressed={byClass.picked.includes(c.id)} onClick={() => toggleP(c.id)}>{c.name}</button>)}
+            </>}
+          </div>
+          <p className="mt-3 rounded-xl bg-[#eaf2ff] p-2.5 text-sm font-bold text-[#10285a]">{plan.del.length} question{plan.del.length === 1 ? '' : 's'} will be deleted.{plan.kept.length > 0 && <span className="block text-xs font-semibold text-[#3d5a94]">{plan.kept.length} also aimed at other classes will be kept.</span>}</p>
+          <p className="mt-1 text-xs text-[#3d5a94]">Statistics of deleted questions are removed. Students' progress and rewards are not affected. This cannot be undone.</p>
+          <div className="mt-4 grid grid-cols-2 gap-2"><GameButton tone="ghost" className="!text-[#10285a]" onClick={() => setByClass(null)}>Cancel</GameButton><GameButton tone="red" disabled={plan.del.length === 0} onClick={deleteByClass}>Delete {plan.del.length}</GameButton></div>
+        </Modal>); })()}
       {sets && (
         <Modal onClose={() => setSets(null)}>
           <p className="font-display text-lg font-extrabold text-[#10285a]">Create questions from a Game Library set</p>
