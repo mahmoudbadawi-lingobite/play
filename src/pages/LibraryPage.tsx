@@ -54,7 +54,7 @@ export function LibraryPage() {
     <div className="kid-lib mx-auto max-w-6xl px-4 py-10">
       <div className="kid-sticky-head kid-page-head">
       <p className="kid-pill kid-only">Library</p>
-      <h1 className="kid-big-title font-display text-3xl font-bold text-primary">Content Library</h1>
+      <h1 className="kid-big-title font-display text-3xl font-bold text-primary">Game Library</h1>
       <p className="kid-sub mt-1 text-muted-foreground">Public games shared by teachers across LingoBite Play.</p>
       <Link to="/hunt" className="mt-3 inline-flex items-center gap-2 rounded-xl border-2 border-secondary px-4 py-2 text-sm font-bold text-primary hover:bg-secondary/10">
         🗺️ Treasure Hunt rooms: host or join a live game
