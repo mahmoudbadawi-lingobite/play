@@ -74,6 +74,7 @@ export function QuestionBank() {
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [edit, setEdit] = useState<Partial<BankQuestion> | null>(null);
+  const [askBulkDel, setAskBulkDel] = useState(false);
   const [askDel, setAskDel] = useState<BankQuestion | null>(null);
   const [q, setQ] = useState(''); const [ft, setFt] = useState<QuestionType | 'all'>('all'); const [fd, setFd] = useState(0);
   const [sets, setSets] = useState<ContentSet[] | null>(null);
@@ -169,6 +170,15 @@ export function QuestionBank() {
       setInfo(`Created ${n} questions from "${s.title}".`); await load();
     } catch (e) { setErr((e as Error).message); }
   };
+  const removeSelected = async () => {
+    setAskBulkDel(false); setErr(null); setInfo(null);
+    const ids = [...sel].filter((id) => { const r = rows.find((x) => x.id === id); return r && isMine(r); });
+    let done = 0; const failed: string[] = [];
+    for (const id of ids) { try { await api.deleteBankQuestion(id); done++; } catch (e) { failed.push((e as Error).message); } }
+    setSel(new Set());
+    setInfo(`Deleted ${done} question${done === 1 ? '' : 's'}.${failed.length ? ` ${failed.length} could not be deleted: ${failed[0]}` : ''}`);
+    await load();
+  };
   const remove = async (r: BankQuestion) => { setAskDel(null); try { await api.deleteBankQuestion(r.id); await load(); } catch (e) { setErr((e as Error).message); } };
   const toggle = async (r: BankQuestion) => { try { await api.saveBankQuestion({ id: r.id, active: !r.active }, profile.uid); await load(); } catch (e) { setErr((e as Error).message); } };
   const inp = 'rounded-xl border-2 border-[#1b4fb3] bg-white px-2.5 py-1.5 text-sm font-semibold text-[#10285a]';
@@ -204,7 +214,8 @@ export function QuestionBank() {
         <Panel>
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-bold text-white">{sel.size} selected</span>
-            <GameButton tone="blue" onClick={() => { setBulkAud([]); setBulk(true); }}>🎯 Set audience…</GameButton>
+            {targeting && <GameButton tone="blue" onClick={() => { setBulkAud([]); setBulk(true); }}>🎯 Set audience…</GameButton>}
+            <GameButton tone="red" onClick={() => setAskBulkDel(true)}>🗑 Delete {sel.size}…</GameButton>
             <GameButton tone="ghost" onClick={() => setSel(new Set())}>Clear</GameButton>
           </div>
         </Panel>)}
@@ -212,11 +223,11 @@ export function QuestionBank() {
       <Panel className="!p-0 overflow-x-auto">
         {loading ? <p className="p-4 font-bold text-white">Loading…</p> : (
           <table className="w-full min-w-[640px] text-left text-sm text-white">
-            <thead className="bg-black/25 text-xs uppercase"><tr>{targeting && <th className="w-8 p-2"><input type="checkbox" aria-label="Select all my questions shown" checked={allSelected} onChange={() => setSel(allSelected ? new Set() : new Set(mineShown.map((r) => r.id)))} /></th>}<th className="p-2">Question</th><th className="p-2">Type</th><th className="p-2">Topic</th>{targeting && <th className="p-2">Audience</th>}<th className="p-2 text-center">Diff.</th><th className="p-2 text-center">Asked</th><th className="p-2 text-center">Correct</th><th className="p-2" /></tr></thead>
+            <thead className="bg-black/25 text-xs uppercase"><tr><th className="w-8 p-2"><input type="checkbox" aria-label="Select all my questions shown" checked={allSelected} onChange={() => setSel(allSelected ? new Set() : new Set(mineShown.map((r) => r.id)))} /></th><th className="p-2">Question</th><th className="p-2">Type</th><th className="p-2">Topic</th>{targeting && <th className="p-2">Audience</th>}<th className="p-2 text-center">Diff.</th><th className="p-2 text-center">Asked</th><th className="p-2 text-center">Correct</th><th className="p-2" /></tr></thead>
             <tbody>
               {shown.map((r) => { const s = stats[r.id]; const mine = isMine(r); return (
                 <tr key={r.id} className={`border-t border-white/10 ${r.active ? '' : 'opacity-50'}`}>
-                  {targeting && <td className="p-2">{mine && <input type="checkbox" aria-label="Select question" checked={sel.has(r.id)} onChange={() => toggleSel(r.id)} />}</td>}
+                  <td className="p-2">{mine && <input type="checkbox" aria-label="Select question" checked={sel.has(r.id)} onChange={() => toggleSel(r.id)} />}</td>
                   <td className="max-w-[320px] p-2 font-semibold"><span className="line-clamp-2">{r.prompt}</span></td>
                   <td className="p-2 text-xs">{QUESTION_TYPES.find((t) => t.value === r.type)?.label}</td><td className="p-2 text-xs">{r.topic ?? '–'}{(r.skill_ids?.length || r.skill_id) && <span className="block text-[10px] opacity-70">{(r.skill_ids?.length ? r.skill_ids : [r.skill_id!]).map((id) => subj.subjects.flatMap((x) => x.domains.flatMap((d) => d.skills)).find((k) => k.id === id)?.name).filter(Boolean).join(' · ')}</span>}</td>
                   {targeting && <td className="max-w-[160px] p-2 text-xs"><span className={`line-clamp-2 ${r.class_ids?.length ? 'font-bold text-yellow-200' : 'text-white/70'}`}>{audienceOf(r)}</span></td>}
@@ -229,6 +240,7 @@ export function QuestionBank() {
       </Panel>
       <p className="text-xs font-semibold text-white/60">Showing {shown.length} of {rows.length}. Students never see answers in their browser; answers are checked on the server.</p>
 
+      {askBulkDel && <ConfirmDialog title={`Delete ${sel.size} question${sel.size === 1 ? '' : 's'}?`} message="They will be removed for everyone, including from past results. This cannot be undone." confirmLabel="Delete all selected" tone="red" onConfirm={removeSelected} onCancel={() => setAskBulkDel(false)} />}
       {askDel && <ConfirmDialog title="Delete this question?" message="This cannot be undone." confirmLabel="Delete" tone="red" onConfirm={() => remove(askDel)} onCancel={() => setAskDel(null)} />}
       {edit && <QuestionForm initial={edit} onClose={() => setEdit(null)} onSaved={async () => { setEdit(null); await load(); }} userId={profile.uid} classes={classes} targeting={targeting} />}
       {bulk && (
