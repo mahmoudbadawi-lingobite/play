@@ -42,7 +42,7 @@ export function MyGamesPage() {
       <div className="flex items-center justify-between">
         <h1 className="font-display text-3xl font-bold text-primary">My Games</h1>
         <Link to="/teacher/create" className="rounded-xl bg-secondary px-4 py-2.5 text-sm font-semibold text-secondary-foreground hover:opacity-90">
-          + Create a game
+          + Create Content
         </Link>
       </div>
 

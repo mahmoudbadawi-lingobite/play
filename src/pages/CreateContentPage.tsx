@@ -173,7 +173,7 @@ export function CreateContentPage() {
           disabled={!title.trim() || items.length === 0 || saving}
           className="mt-5 w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-40"
         >
-          {saving ? 'Creating...' : items.length > 0 ? `Create game (${items.length} items)` : 'Create game'}
+          {saving ? 'Creating...' : items.length > 0 ? `Create content (${items.length} items)` : 'Create content'}
         </button>
         {!saving && (!title.trim() || items.length === 0) && (
           <p className="mt-2 text-center text-xs text-muted-foreground">
