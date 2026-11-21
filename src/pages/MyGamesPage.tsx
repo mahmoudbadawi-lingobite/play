@@ -5,7 +5,11 @@ import { listMyContentSets, deleteContentSet } from '../lib/services';
 import { compatibleGames } from '../games/registry';
 import type { ContentSet } from '../types';
 
+import { useSubjects } from '../features/subjects/useSubjects';
+import { setLabel } from '../features/subjects/label';
+
 export function MyGamesPage() {
+  const subj = useSubjects();
   const { profile } = useAuth();
   const [sets, setSets] = useState<ContentSet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +56,7 @@ export function MyGamesPage() {
             <div key={set.id} className="card-surface flex flex-col p-5">
               <div className="flex items-center justify-between">
                 <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold capitalize text-muted-foreground">
-                  {set.skill}
+                  {setLabel(subj.subjects, set)}
                 </span>
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${set.visibility === 'public' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
                   {set.visibility === 'public' ? '🌐 Public' : '🔒 Private'}

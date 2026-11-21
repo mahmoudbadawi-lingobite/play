@@ -4,7 +4,11 @@ import { getContentSet } from '../lib/services';
 import { compatibleGames } from '../games/registry';
 import type { ContentSet } from '../types';
 
+import { useSubjects } from '../features/subjects/useSubjects';
+import { setLabel } from '../features/subjects/label';
+
 export function GamePickerPage() {
+  const subj = useSubjects();
   const { setId } = useParams<{ setId: string }>();
   const [searchParams] = useSearchParams();
   const ref = searchParams.get('ref');
@@ -24,7 +28,7 @@ export function GamePickerPage() {
   return (
     <div className="kid-picker mx-auto max-w-4xl px-4 py-10">
       <div className="kid-page-head">
-        <p className="kid-pill text-sm uppercase tracking-wide text-secondary">{set.skill}</p>
+        <p className="kid-pill text-sm uppercase tracking-wide text-secondary">{setLabel(subj.subjects, set)}</p>
         <h1 className="kid-big-title font-display text-3xl font-bold text-primary">{set.title}</h1>
         <p className="kid-sub mt-1 text-muted-foreground">Pick how you want to play this one.</p>
       </div>
