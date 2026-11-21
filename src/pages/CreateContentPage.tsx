@@ -117,7 +117,7 @@ export function CreateContentPage() {
 
       {focus?.domains?.some((d) => /listen/i.test(d)) && (
         <p className="mt-3 rounded-lg border border-secondary/40 bg-secondary/10 p-3 text-sm text-primary">
-          🎧 Library games have no audio. To make real listening questions (text cut into short chunks that are read aloud), use <b>Monster Quest → Question Bank → 🤖 Make with AI</b>.
+          🎧 Listening content: the AI cuts your text into short chunks, each with one question. In Monster Quest, use <b>Question Bank → From the Content Library</b> to turn them into listening questions that are read aloud.
         </p>
       )}
       <AiContentPanel focus={focus} skill={skill} title={title} onItemsChange={setAiItems} />
