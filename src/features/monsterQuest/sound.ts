@@ -1,3 +1,4 @@
+import { speakNatural } from './voice';
 /** Tiny synthesized sound effects (no audio files needed). Mute preference is a UI setting, so localStorage is fine. */
 const KEY = 'lingobite:mq:muted';
 let ctx: AudioContext | null = null;
@@ -59,14 +60,5 @@ export const sfx = {
   coin: () => { tone(988, 0, 0.07, 'square', 0.06); tone(1319, 0.07, 0.15, 'square', 0.06); },
 };
 
-export function speak(text: string, rate = 0.9) {
-  try {
-    if (!('speechSynthesis' in window)) return false;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'en-US';
-    u.rate = rate;
-    window.speechSynthesis.speak(u);
-    return true;
-  } catch { return false; }
-}
+/** Reads text aloud with the most natural voice the device has (see voice.ts). */
+export function speak(text: string, rate = 0.9) { return speakNatural(text, rate); }
