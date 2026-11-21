@@ -9,6 +9,7 @@ import { ConfirmDialog, GameButton, Modal, Panel } from '../ui';
 import type { BankQuestion, QuestionType } from '../types';
 import { useSubjects } from '../../subjects/useSubjects';
 import { SubjectSkillPicker } from '../../subjects/SubjectSkillPicker';
+import { AiQuestionMaker } from './AiQuestionMaker';
 import { COGNITIVE_LEVELS, picksToArrays, picksToTags, rowToPicks, type Picks } from '../../subjects/types';
 
 const blank = (audience: string[] = []): Partial<BankQuestion> => ({ type: 'mcq', subject: 'English', difficulty: 1, xp_reward: 5, active: true, prompt: '', answer: '', ...(audience.length ? { class_ids: audience } : {}) });
@@ -75,6 +76,7 @@ export function QuestionBank() {
   const [info, setInfo] = useState<string | null>(null);
   const [edit, setEdit] = useState<Partial<BankQuestion> | null>(null);
   const [askBulkDel, setAskBulkDel] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const [byClass, setByClass] = useState<{ all: boolean; picked: string[] } | null>(null);   // 'Delete by class' dialog
   const [askDel, setAskDel] = useState<BankQuestion | null>(null);
   const [q, setQ] = useState(''); const [ft, setFt] = useState<QuestionType | 'all'>('all'); const [fd, setFd] = useState(0);
@@ -125,24 +127,32 @@ export function QuestionBank() {
     const t = picksToTags(p, sub);
     return { subject: sub.name, subject_id: sub.id, domain_id: t.domainId, skill_id: t.skillId, ...(subj.multi ? { domain_ids: picksToArrays(p, sub).domainIds, skill_ids: p.skillIds } : {}) };
   };
+  /** Validate, tag and insert rows from a file or from the AI maker. `defaults` tags rows that name no skill of their own. Returns the message to show. */
+  const importData = async (data: Record<string, any>[], defaults?: Picks): Promise<string> => {
+    {
+      const ok: Partial<BankQuestion>[] = [], bad: string[] = [];
+      data.forEach((r, i) => {
+        const x = rowToQuestion(r); if (typeof x === 'string') return void bad.push(`Row ${i + 2}: ${x}`);
+        const sks = String(r.skill_id ?? '').split(/[|,;]/).map((z) => z.trim()).filter(Boolean); const sd = sks.length ? subj.subjects.find((z) => z.domains.some((d) => d.skills.some((k) => k.id === sks[0]))) : undefined;
+        const tg = tagFor(String(r.subject ?? '') || (defaults ? subj.subjectById(defaults.subjectId)?.name ?? null : null), sd ? { subjectId: sd.id, skillIds: sks.filter((k) => sd.domains.some((d) => d.skills.some((z) => z.id === k))) } : defaults && !sks.length ? { subjectId: defaults.subjectId, domainIds: defaults.domainIds, skillIds: defaults.skillIds } : undefined);
+        if (typeof tg === 'string') bad.push(`Row ${i + 2}: ${tg}`); else ok.push({ ...x, ...tg });
+      });
+      if (ok.length) await api.insertBankQuestions(withAudience(ok), profile.uid);
+      const msg = `Imported ${ok.length} question${ok.length === 1 ? '' : 's'}.${bad.length ? ` Skipped ${bad.length}: ${bad.slice(0, 5).join('; ')}${bad.length > 5 ? '…' : ''}` : ''}`;
+      await load();
+      return msg;
+    }
+  };
   const onFile = async (f: File | undefined) => {
     if (!f) return; setErr(null); setInfo(null);
     try {
       let data: Record<string, any>[];
       if (f.name.toLowerCase().endsWith('.json')) { const j = JSON.parse(await f.text()); data = Array.isArray(j) ? j : j.questions ?? []; }
       else { const wb = XLSX.read(await f.arrayBuffer()); data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' }); }
-      const ok: Partial<BankQuestion>[] = [], bad: string[] = [];
-      data.forEach((r, i) => {
-        const x = rowToQuestion(r); if (typeof x === 'string') return void bad.push(`Row ${i + 2}: ${x}`);
-        const sks = String(r.skill_id ?? '').split(/[|,;]/).map((z) => z.trim()).filter(Boolean); const sd = sks.length ? subj.subjects.find((z) => z.domains.some((d) => d.skills.some((k) => k.id === sks[0]))) : undefined;
-        const tg = tagFor(String(r.subject ?? '') || null, sd ? { subjectId: sd.id, skillIds: sks.filter((k) => sd.domains.some((d) => d.skills.some((z) => z.id === k))) } : undefined);
-        if (typeof tg === 'string') bad.push(`Row ${i + 2}: ${tg}`); else ok.push({ ...x, ...tg });
-      });
-      if (ok.length) await api.insertBankQuestions(withAudience(ok), profile.uid);
-      setInfo(`Imported ${ok.length} question${ok.length === 1 ? '' : 's'}.${bad.length ? ` Skipped ${bad.length}: ${bad.slice(0, 5).join('; ')}${bad.length > 5 ? '…' : ''}` : ''}`);
-      await load();
+      setInfo(await importData(data));
     } catch (e) { setErr(`Import failed: ${(e as Error).message}`); }
   };
+  const addFromAi = async (data: Record<string, any>[], picks: Picks) => { try { return await importData(data, picks); } catch (e) { return `Import failed: ${(e as Error).message}`; } };
   const template = () => {
     const ws = XLSX.utils.aoa_to_sheet([TEMPLATE_COLS,
       ['mcq', 'What is the opposite of "hot"?', 'cold|warm|big|fast', 'cold', 'Cold is the opposite of hot.', 'Vocabulary', 'English', 7, 1, 5, '', '', '', '', ''],
@@ -211,6 +221,7 @@ export function QuestionBank() {
         <div className="flex flex-wrap items-center gap-2">
           <GameButton tone="green" onClick={() => setEdit(blank(targeting ? newAudience : []))}>＋ New question</GameButton>
           <label className="mq-btn mq-btn-blue cursor-pointer">⬆ Import (.xlsx / .csv / .json)<input type="file" accept=".xlsx,.xls,.csv,.json" className="hidden" onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ''; }} /></label>
+          <GameButton tone="gold" onClick={() => setAiOpen(true)}>🤖 Make with AI</GameButton>
           <GameButton tone="ghost" onClick={template}>⬇ Template</GameButton>
           <GameButton tone="red" onClick={() => setByClass({ all: false, picked: [] })}>🗑 Delete by class…</GameButton>
           <GameButton tone="ghost" onClick={openSets}>📚 From a Game Library set</GameButton>
@@ -273,6 +284,7 @@ export function QuestionBank() {
           <div className="mt-3"><AudiencePicker light classes={classes} value={bulkAud} onChange={setBulkAud} /></div>
           <div className="mt-4 grid grid-cols-2 gap-2"><GameButton tone="ghost" className="!text-[#10285a]" onClick={() => setBulk(false)}>Cancel</GameButton><GameButton tone="green" onClick={applyBulk}>Apply</GameButton></div>
         </Modal>)}
+      {aiOpen && <Modal wide onClose={() => setAiOpen(false)}><AiQuestionMaker subj={subj} onAdd={addFromAi} /></Modal>}
       {byClass && (() => { const plan = byClassPlan(); const chip = (on: boolean) => `rounded-full border-2 px-3 py-1 text-xs font-extrabold ${on ? 'border-[#c0392b] bg-[#c0392b] text-white' : 'border-[#1b4fb3] bg-white text-[#10285a]'}`;
         const toggleP = (id: string) => setByClass({ all: false, picked: byClass.picked.includes(id) ? byClass.picked.filter((z) => z !== id) : [...byClass.picked, id] });
         return (
