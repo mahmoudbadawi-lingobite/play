@@ -141,4 +141,5 @@ export const AR: Record<string, string> = {
   "Pick one or more of your classes": "اختر صفاً أو أكثر من صفوفك", "English": "الإنجليزية", "Subject / language": "المادة / اللغة", "Clue": "التلميح", "Clues": "الدلائل", "Answer": "الإجابة", "Hint": "تلميح",
   "Image URL (optional)": "رابط الصورة (اختياري)", "Newest": "الأحدث", "Sort": "ترتيب", "Your answer": "إجابتك", "Loading roster...": "جارٍ تحميل القائمة...", "✔ Playing": "✔ قيد اللعب", "Nothing": "لا شيء", "One word or note per line": "كلمة أو ملاحظة في كل سطر",
   "Letter blocks": "مكعبات الحروف", "Open in:": "افتح في:", "Copy & open:": "انسخ وافتح:", "with your students.": "مع طلابك.", "🗑 Delete by class…": "🗑 حذف حسب الصف…", "Delete {n}…": "حذف {n}…", "Make with AI": "أنشئ بالذكاء الاصطناعي",
+  "{n} games": "{n} ألعاب", "All games": "كل الألعاب", "All {name}": "كل {name}", "No public games here yet.": "لا توجد ألعاب عامة هنا بعد.",
 };

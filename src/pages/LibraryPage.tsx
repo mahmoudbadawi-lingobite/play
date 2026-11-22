@@ -1,33 +1,42 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { listPublicContentSets, reportContentSet, deleteContentSet } from '../lib/services';
 import { SkillArt } from '../components/library/SkillArt';
 import { CheckIcon, EditIcon, FlagIcon, LinkIcon, TrashIcon } from '../components/library/CardIcons';
 import { useAuth } from '../contexts/AuthContext';
-import type { ContentSet, SkillTemplate } from '../types';
+import type { ContentSet } from '../types';
+import { LibraryCards, filterSets, shownCount, type Level } from '../components/library/LibraryCards';
 import { useSubjects } from '../features/subjects/useSubjects';
 import { setLabel } from '../features/subjects/label';
 
 import { tr } from '../i18n/tr';
-const SKILLS: (SkillTemplate | 'all')[] = ['all', 'vocabulary', 'grammar', 'reading', 'spelling'];
 
 export function LibraryPage() {
   const subj = useSubjects();
   const { profile } = useAuth();
   const [sets, setSets] = useState<ContentSet[]>([]);
-  const [skill, setSkill] = useState<SkillTemplate | 'all'>('all');
+  const [params, setParams] = useSearchParams();
+  const level: Level = { subject: params.get('s'), domain: params.get('d'), grade: params.get('g') ? Number(params.get('g')) : null };
+  const go = (n: Partial<Level>) => {
+    const m = { ...level, ...n };
+    const p = new URLSearchParams();
+    if (m.subject) p.set('s', m.subject);
+    if (m.domain) p.set('d', m.domain);
+    if (m.grade) p.set('g', String(m.grade));
+    setParams(p);
+  };
   const [loading, setLoading] = useState(true);
   const [reportedIds, setReportedIds] = useState<string[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const refresh = () => {
     setLoading(true);
-    listPublicContentSets(skill === 'all' ? undefined : skill)
+    listPublicContentSets()
       .then(setSets)
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { refresh(); }, [skill]);
+  useEffect(() => { refresh(); }, []);
 
   const handleReport = async (id: string) => {
     if (!profile || reportedIds.includes(id)) return;
@@ -65,28 +74,16 @@ export function LibraryPage() {
         🐲 Monster Quest: explore, answer questions, capture monsters
       </Link>
 
-      <div className="kid-chips mt-5 flex flex-wrap gap-2">
-        {SKILLS.map((s) => (
-          <button
-            key={s}
-            onClick={() => setSkill(s)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize ${
-              skill === s ? 'bg-primary text-primary-foreground' : 'border border-border bg-card text-primary/70'
-            }`}
-          >
-            {s}
-          </button>
-        ))}
-      </div>
       </div>
 
+      <LibraryCards sets={sets} subjects={subj.subjects} level={level} go={go} loading={loading}>
       {loading ? (
         <p className="mt-8 text-muted-foreground">{tr('Loading games...')}</p>
-      ) : sets.length === 0 ? (
-        <p className="mt-8 text-muted-foreground">{tr('No public games yet for this skill.')}</p>
+      ) : shownCount(sets, subj.subjects, level) === 0 ? (
+        <p className="mt-8 text-muted-foreground">{tr('No public games here yet.')}</p>
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {sets.map((set) => (
+          {filterSets(sets, subj.subjects, level).map((set) => (
             <div key={set.id} data-skill={set.skill} className="kid-set-card card-surface flex flex-col p-4">
               <div className="kid-sc-top flex items-center justify-between gap-2">
                 <span className="kid-sc-pill rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold capitalize text-muted-foreground">
@@ -155,6 +152,7 @@ export function LibraryPage() {
           ))}
         </div>
       )}
+      </LibraryCards>
     </div>
   );
 }
