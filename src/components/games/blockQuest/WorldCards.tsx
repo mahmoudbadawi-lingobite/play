@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { webglAvailable } from '../../../features/avatar/webgl';
 import { WORLDS, type World } from './worlds';
 
+import { tr } from '../../../i18n/tr';
 function Card({ w, selected, onPick }: { w: World; selected: boolean; onPick: () => void }) {
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
@@ -39,7 +40,7 @@ function Card({ w, selected, onPick }: { w: World; selected: boolean; onPick: ()
 /** "Pick your world": each card is a picture of the real 3D world. */
 export function WorldCards({ worldId, onWorld }: { worldId: string; onWorld: (id: string) => void }) {
   return (
-    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3" role="group" aria-label="Worlds">
+    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3" role="group" aria-label={tr('Worlds')}>
       {WORLDS.map((w) => (
         <Card key={w.id} w={w} selected={w.id === worldId} onPick={() => onWorld(w.id)} />
       ))}

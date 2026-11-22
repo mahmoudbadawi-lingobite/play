@@ -11,6 +11,7 @@ import {
 } from '../lib/escapeRoomService';
 import type { EscapeRoom, Visibility } from '../types';
 
+import { tr } from '../i18n/tr';
 export function CreateEscapeRoomPage() {
   const { profile } = useAuth();
   const navigate = useNavigate();
@@ -93,10 +94,10 @@ export function CreateEscapeRoomPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
-      <h1 className="font-display text-3xl font-bold text-primary">Create an Escape Room</h1>
+      <h1 className="font-display text-3xl font-bold text-primary">{tr('Create an Escape Room')}</h1>
 
       <div className="mt-6 flex items-center justify-between">
-        <p className="text-sm font-semibold text-primary">Step 1 · AI Prompt Generator (optional)</p>
+        <p className="text-sm font-semibold text-primary">{tr('Step 1 · AI Prompt Generator (optional)')}</p>
         <button onClick={() => setShowPromptGenerator((v) => !v)} className="text-xs font-semibold text-secondary">
           {showPromptGenerator ? 'Hide' : 'Show'}
         </button>
@@ -110,22 +111,22 @@ export function CreateEscapeRoomPage() {
       <div className="card-surface mt-6 p-6">
         {!imageUrl ? (
           <div>
-            <p className="mb-2 text-sm font-semibold text-primary">Step 2 · Upload the room's background image</p>
+            <p className="mb-2 text-sm font-semibold text-primary">{tr('Step 2 · Upload the room\'s background image')}</p>
             <input
               type="file"
               accept="image/*"
               onChange={(e) => handleImageUpload(e.target.files?.[0])}
               className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-secondary-foreground"
             />
-            {uploading && <p className="mt-2 text-sm text-muted-foreground">Uploading to Cloudinary...</p>}
+            {uploading && <p className="mt-2 text-sm text-muted-foreground">{tr('Uploading to Cloudinary...')}</p>}
             {uploadError && <p className="mt-2 text-sm text-destructive">{uploadError}</p>}
           </div>
         ) : (
           <div>
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-semibold text-primary">Step 3 · Place your clues</p>
+              <p className="text-sm font-semibold text-primary">{tr('Step 3 · Place your clues')}</p>
               <button onClick={() => { setImageUrl(null); setHotspots([]); }} className="text-xs font-semibold text-destructive">
-                Change image
+                {tr('Change image')}
               </button>
             </div>
             <HotspotEditor
@@ -141,29 +142,29 @@ export function CreateEscapeRoomPage() {
         {imageUrl && (
           <>
             <label className="mt-6 block">
-              <span className="mb-1 block text-sm font-semibold text-primary">Room title</span>
+              <span className="mb-1 block text-sm font-semibold text-primary">{tr('Room title')}</span>
               <input
                 value={title}
                 onChange={(e) => handleTitleChange(e.target.value)}
                 onBlur={handleTitleBlur}
-                placeholder="e.g. The Vocabulary Vault"
+                placeholder={tr('e.g. The Vocabulary Vault')}
                 className="w-full rounded-lg border border-border px-4 py-2.5 outline-none focus:border-secondary"
               />
               <span className="mt-1 block text-xs text-muted-foreground">
-                Defaults to your chosen theme below - edit it any time.
+                {tr('Defaults to your chosen theme below - edit it any time.')}
               </span>
             </label>
 
             {duplicate && (
               <div className="mt-2 rounded-lg border border-secondary bg-secondary/10 p-3 text-sm">
-                <p className="font-semibold text-primary">A public escape room with this title already exists</p>
+                <p className="font-semibold text-primary">{tr('A public escape room with this title already exists')}</p>
                 <p className="text-muted-foreground">"{duplicate.title}" by {duplicate.teacherName}</p>
                 <div className="mt-2 flex gap-2">
                   <button onClick={() => navigate(`/escape-room/${duplicate.id}`)} className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">
-                    Use existing instead
+                    {tr('Use existing instead')}
                   </button>
                   <button onClick={() => setDuplicate(null)} className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-primary">
-                    Create mine anyway
+                    {tr('Create mine anyway')}
                   </button>
                 </div>
               </div>
@@ -178,7 +179,7 @@ export function CreateEscapeRoomPage() {
                   onClick={() => handleThemeSelect(null)}
                   className={`rounded-full px-3 py-1.5 text-xs font-medium ${theme === null ? 'bg-primary text-primary-foreground' : 'border border-border text-primary/70'}`}
                 >
-                  None
+                  {tr('None')}
                 </button>
                 {ESCAPE_ROOM_THEMES.map((t) => (
                   <button
@@ -199,7 +200,7 @@ export function CreateEscapeRoomPage() {
               <textarea
                 value={storyText}
                 onChange={(e) => setStoryText(e.target.value)}
-                placeholder="Paste the story you generated with the AI prompt above, or write your own..."
+                placeholder={tr('Paste the story you generated with the AI prompt above, or write your own...')}
                 rows={4}
                 className="w-full rounded-lg border border-border px-4 py-2.5 text-sm outline-none focus:border-secondary"
               />
@@ -222,7 +223,7 @@ export function CreateEscapeRoomPage() {
 
             {incompleteHotspot && hotspots.length > 0 && (
               <p className="mt-3 text-sm text-destructive">
-                ⚠ Every clue needs a locate hint, a question, and a correct answer (and at least one wrong option, if multiple choice) before saving.
+                {tr('⚠ Every clue needs a locate hint, a question, and a correct answer (and at least one wrong option, if multiple choice) before saving.')}
               </p>
             )}
             {saveError && <p className="mt-3 text-sm text-destructive">⚠ {saveError}</p>}

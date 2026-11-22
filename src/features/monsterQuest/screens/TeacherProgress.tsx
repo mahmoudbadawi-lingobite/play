@@ -6,6 +6,7 @@ import * as api from '../api';
 import type { ClassProgress, DayCount, ProgressStudent, StudentProgress, TopicStat } from '../types';
 import { Bar, GameButton, Modal, Panel } from '../ui';
 
+import { tr } from '../../../i18n/tr';
 type Period = 7 | 30 | null;
 type SortKey = 'attention' | 'name' | 'accLow' | 'mostActive' | 'leastActive';
 
@@ -108,27 +109,27 @@ function StudentDetail({ classId, student, days, onClose }: { classId: string; s
         <p className="mt-2 text-sm font-bold">Accuracy {acc === null ? '–' : `${acc}%`} <span className="font-semibold text-[#3d5a94]">({student.correct} of {student.answers} answers {days ? `in the last ${days} days` : 'all time'})</span></p>
 
         {err && <p className="mt-3 rounded-xl bg-red-100 px-3 py-2 text-sm font-bold text-red-700" role="alert">{err}</p>}
-        {!d && !err && <p className="mt-3 text-sm font-semibold">Loading…</p>}
+        {!d && !err && <p className="mt-3 text-sm font-semibold">{tr('Loading…')}</p>}
         {d && (
           <div className="mt-3 space-y-4">
             <section>
-              <h3 className="mb-1 text-xs font-extrabold uppercase text-[#3d5a94]">Accuracy by topic (weakest first)</h3>
+              <h3 className="mb-1 text-xs font-extrabold uppercase text-[#3d5a94]">{tr('Accuracy by topic (weakest first)')}</h3>
               <TopicList topics={d.topics} />
             </section>
             <section>
-              <h3 className="mb-1 text-xs font-extrabold uppercase text-[#3d5a94]">Answers per day, last 14 days</h3>
+              <h3 className="mb-1 text-xs font-extrabold uppercase text-[#3d5a94]">{tr('Answers per day, last 14 days')}</h3>
               <Spark data={d.activity} light />
             </section>
             <section>
-              <h3 className="mb-1 text-xs font-extrabold uppercase text-[#3d5a94]">Monsters</h3>
+              <h3 className="mb-1 text-xs font-extrabold uppercase text-[#3d5a94]">{tr('Monsters')}</h3>
               {d.monsters.length === 0
-                ? <p className="text-sm font-semibold opacity-70">No monsters caught yet.</p>
+                ? <p className="text-sm font-semibold opacity-70">{tr('No monsters caught yet.')}</p>
                 : <p className="flex flex-wrap gap-1">{d.monsters.map((m, i) => <span key={i} className="rounded-full bg-[#dbe7ff] px-2 py-0.5 text-xs font-bold">{m.name} Lv{m.level}{m.in_team ? ' ★' : ''}</span>)}</p>}
             </section>
             <section>
-              <h3 className="mb-1 text-xs font-extrabold uppercase text-[#3d5a94]">Latest answers</h3>
+              <h3 className="mb-1 text-xs font-extrabold uppercase text-[#3d5a94]">{tr('Latest answers')}</h3>
               {d.recent.length === 0
-                ? <p className="text-sm font-semibold opacity-70">No answers yet.</p>
+                ? <p className="text-sm font-semibold opacity-70">{tr('No answers yet.')}</p>
                 : (
                   <ul className="max-h-56 space-y-1 overflow-y-auto pr-1">
                     {d.recent.map((r, i) => (
@@ -144,7 +145,7 @@ function StudentDetail({ classId, student, days, onClose }: { classId: string; s
             </section>
           </div>
         )}
-        <div className="mt-4"><GameButton tone="ghost" className="!text-[#10285a]" onClick={onClose}>Close</GameButton></div>
+        <div className="mt-4"><GameButton tone="ghost" className="!text-[#10285a]" onClick={onClose}>{tr('Close')}</GameButton></div>
       </div>
     </Modal>
   );
@@ -219,10 +220,10 @@ export function TeacherProgress() {
     <div className="space-y-3 text-white">
       <Panel>
         <div className="flex flex-wrap items-center gap-2">
-          <select value={classId} onChange={(e) => setClassId(e.target.value)} className={inp} aria-label="Class" disabled={!classes?.length}>
+          <select value={classId} onChange={(e) => setClassId(e.target.value)} className={inp} aria-label={tr('Class')} disabled={!classes?.length}>
             {(classes ?? []).map((c) => <option key={c.id} value={c.id}>{c.name} ({c.studentIds.length})</option>)}
           </select>
-          <div role="group" aria-label="Period" className="flex gap-1">
+          <div role="group" aria-label={tr('Period')} className="flex gap-1">
             {([[7, 'Last 7 days'], [30, 'Last 30 days'], [null, 'All time']] as [Period, string][]).map(([p, label]) => (
               <button key={label} type="button" className={chip(period === p)} aria-pressed={period === p} onClick={() => setPeriod(p)}>{label}</button>
             ))}
@@ -233,9 +234,9 @@ export function TeacherProgress() {
         <p className="mt-2 text-xs font-semibold text-white/75">Answers come from capture challenges, training and special attacks. Accuracy follows the period you pick; level, XP and monsters are totals.</p>
       </Panel>
 
-      {classes && classes.length === 0 && <Panel><p className="font-bold">You have no classes yet.</p><p className="text-sm font-semibold text-white/80">Create a class under My Classes and ask your students to join with its code. They will show up here once they play.</p></Panel>}
+      {classes && classes.length === 0 && <Panel><p className="font-bold">{tr('You have no classes yet.')}</p><p className="text-sm font-semibold text-white/80">{tr('Create a class under My Classes and ask your students to join with its code. They will show up here once they play.')}</p></Panel>}
       {err && <p className="rounded-xl bg-yellow-500/90 px-3 py-2 text-sm font-bold text-[#10285a]" role="alert">{err}</p>}
-      {loading && !data && !err && <Panel><p className="font-bold">Loading…</p></Panel>}
+      {loading && !data && !err && <Panel><p className="font-bold">{tr('Loading…')}</p></Panel>}
 
       {data && (
         <div className={`space-y-3 transition-opacity ${loading ? 'opacity-60' : ''}`}>
@@ -247,23 +248,23 @@ export function TeacherProgress() {
           </div>
 
           {data.students.length === 0 ? (
-            <Panel><p className="font-bold">No students have joined this class yet.</p>{cls?.joinCode && <p className="text-sm font-semibold text-white/80">Share the join code <span className="rounded bg-black/30 px-1.5 py-0.5 font-mono font-extrabold tracking-widest">{cls.joinCode}</span> with your students.</p>}</Panel>
+            <Panel><p className="font-bold">{tr('No students have joined this class yet.')}</p>{cls?.joinCode && <p className="text-sm font-semibold text-white/80">Share the join code <span className="rounded bg-black/30 px-1.5 py-0.5 font-mono font-extrabold tracking-widest">{cls.joinCode}</span> {tr('with your students.')}</p>}</Panel>
           ) : (
             <Panel>
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <h2 className="font-display text-lg font-extrabold">Students</h2>
+                <h2 className="font-display text-lg font-extrabold">{tr('Students')}</h2>
                 <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase text-white/80">Sort
-                  <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className={inp} aria-label="Sort students">
-                    <option value="attention">Needs attention first</option><option value="name">Name</option><option value="accLow">Accuracy, lowest first</option>
-                    <option value="mostActive">Most recently active</option><option value="leastActive">Least recently active</option>
+                  <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className={inp} aria-label={tr('Sort students')}>
+                    <option value="attention">{tr('Needs attention first')}</option><option value="name">{tr('Name')}</option><option value="accLow">{tr('Accuracy, lowest first')}</option>
+                    <option value="mostActive">{tr('Most recently active')}</option><option value="leastActive">{tr('Least recently active')}</option>
                   </select>
                 </label>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[680px] text-left text-sm">
                   <thead className="bg-black/25 text-xs uppercase"><tr>
-                    <th scope="col" className="p-2">Student</th><th scope="col" className="p-2 text-center">Lvl</th><th scope="col" className="p-2 text-center">Monsters</th>
-                    <th scope="col" className="p-2 text-center">Answers</th><th scope="col" className="p-2">Accuracy</th><th scope="col" className="p-2">Last active</th><th scope="col" className="p-2">Status</th>
+                    <th scope="col" className="p-2">{tr('Student')}</th><th scope="col" className="p-2 text-center">{tr('Lvl')}</th><th scope="col" className="p-2 text-center">{tr('Monsters')}</th>
+                    <th scope="col" className="p-2 text-center">{tr('Answers')}</th><th scope="col" className="p-2">{tr('Accuracy')}</th><th scope="col" className="p-2">{tr('Last active')}</th><th scope="col" className="p-2">{tr('Status')}</th>
                   </tr></thead>
                   <tbody>
                     {sorted.map((s) => {
@@ -276,26 +277,26 @@ export function TeacherProgress() {
                           <td className="p-2 text-center">{s.answers}</td>
                           <td className="p-2"><div className="flex items-center gap-2"><div className="w-16"><Bar pct={p ?? 0} color={tone(p)} label={`${s.name} accuracy`} height={8} /></div><span className="w-10 font-bold" style={{ color: tone(p) }}>{p === null ? '–' : `${p}%`}</span></div></td>
                           <td className="p-2 text-xs font-semibold">{ago(s.last_active)}</td>
-                          <td className="p-2">{fl.length === 0 ? <span className="text-xs font-bold text-green-300">On track</span> : <span className="flex flex-wrap gap-1">{fl.map((f) => <span key={f} className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ${f === 'Low accuracy' ? 'bg-red-500 text-white' : 'bg-amber-400 text-[#10285a]'}`}>{f}</span>)}</span>}</td>
+                          <td className="p-2">{fl.length === 0 ? <span className="text-xs font-bold text-green-300">{tr('On track')}</span> : <span className="flex flex-wrap gap-1">{fl.map((f) => <span key={f} className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ${f === 'Low accuracy' ? 'bg-red-500 text-white' : 'bg-amber-400 text-[#10285a]'}`}>{f}</span>)}</span>}</td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
               </div>
-              <p className="mt-2 text-xs font-semibold text-white/60">Tap a name for that student's topics, monsters and latest answers.</p>
+              <p className="mt-2 text-xs font-semibold text-white/60">{tr('Tap a name for that student\'s topics, monsters and latest answers.')}</p>
             </Panel>
           )}
 
           <div className="grid gap-3 md:grid-cols-2">
             <Panel>
-              <h2 className="mb-2 font-display text-lg font-extrabold">Topics to revisit</h2>
+              <h2 className="mb-2 font-display text-lg font-extrabold">{tr('Topics to revisit')}</h2>
               <TopicList topics={data.topics} />
             </Panel>
             <Panel>
-              <h2 className="mb-2 font-display text-lg font-extrabold">Hardest questions</h2>
+              <h2 className="mb-2 font-display text-lg font-extrabold">{tr('Hardest questions')}</h2>
               {data.hard.length === 0
-                ? <p className="text-sm font-semibold opacity-70">A question appears here once at least 3 answers have been given.</p>
+                ? <p className="text-sm font-semibold opacity-70">{tr('A question appears here once at least 3 answers have been given.')}</p>
                 : (
                   <ol className="space-y-2">
                     {data.hard.map((h) => (

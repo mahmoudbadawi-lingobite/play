@@ -3,6 +3,7 @@ import * as api from '../api';
 import { useMq } from '../context';
 import { GameButton, Panel, fmt } from '../ui';
 
+import { tr } from '../../../i18n/tr';
 type Kind = 'xp' | 'monsters' | 'weekly' | 'wins';
 const TABS: { k: Kind; label: string; unit: string }[] = [
   { k: 'xp', label: 'Highest XP', unit: 'XP' }, { k: 'monsters', label: 'Most monsters', unit: 'monsters' }, { k: 'weekly', label: 'Caught this week', unit: 'caught' }, { k: 'wins', label: 'Battle wins', unit: 'wins' },
@@ -20,8 +21,8 @@ export function Leaderboard() {
       <div className="flex flex-wrap gap-2">{TABS.map((t) => <GameButton key={t.k} tone={kind === t.k ? 'gold' : 'ghost'} onClick={() => setKind(t.k)}>{t.label}</GameButton>)}</div>
       <Panel>
         {err && <p className="font-bold text-red-300">{err}</p>}
-        {!rows && !err && <p className="font-bold text-white/80">Loading…</p>}
-        {rows && rows.length === 0 && <p className="font-bold text-white/80">No one is on this board yet. Be the first!</p>}
+        {!rows && !err && <p className="font-bold text-white/80">{tr('Loading…')}</p>}
+        {rows && rows.length === 0 && <p className="font-bold text-white/80">{tr('No one is on this board yet. Be the first!')}</p>}
         <ol className="space-y-1.5">
           {rows?.map((r) => (
             <li key={r.user_id} className={`flex items-center gap-3 rounded-xl px-3 py-2 ${r.user_id === userId ? 'bg-yellow-300/25 ring-2 ring-yellow-300' : 'bg-white/10'}`}>
@@ -31,7 +32,7 @@ export function Leaderboard() {
               <span className="w-24 text-right font-extrabold tabular-nums text-yellow-300">{fmt(Number(r.value))} <span className="text-[10px] opacity-70">{unit}</span></span>
             </li>))}
         </ol>
-        <p className="mt-3 text-xs font-semibold text-white/60">Ranked points will join the boards when online battles open (Phase 3).</p>
+        <p className="mt-3 text-xs font-semibold text-white/60">{tr('Ranked points will join the boards when online battles open (Phase 3).')}</p>
       </Panel>
     </div>
   );

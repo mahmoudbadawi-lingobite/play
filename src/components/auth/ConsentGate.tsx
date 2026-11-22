@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 
+import { tr } from '../../i18n/tr';
 /**
  * Wraps the app's protected content. If the signed-in user is a student who
  * hasn't confirmed parental awareness yet, shows a one-time consent
@@ -27,9 +28,9 @@ export function ConsentGate({ children }: { children: ReactNode }) {
   return (
     <div className="mx-auto max-w-md px-4 py-16">
       <div className="card-surface p-6">
-        <h1 className="font-display text-xl font-bold text-primary">Before you start playing</h1>
+        <h1 className="font-display text-xl font-bold text-primary">{tr('Before you start playing')}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          LingoBite Play is for students learning English at school. If you're
+          {tr('LingoBite Play is for students learning English at school. If you\'re')}
           under 18, a parent or guardian should know you're using this app and
           that your teacher can see your name and scores in class results.
         </p>
@@ -42,14 +43,14 @@ export function ConsentGate({ children }: { children: ReactNode }) {
             type="email"
             value={parentEmail}
             onChange={(e) => setParentEmail(e.target.value)}
-            placeholder="parent@example.com"
+            placeholder={tr('parent@example.com')}
             className="w-full rounded-lg border border-border px-4 py-2.5 outline-none focus:border-secondary"
           />
         </label>
 
         <label className="mt-4 flex items-start gap-2 text-sm text-primary">
           <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} className="mt-0.5" />
-          <span>A parent/guardian (or my teacher, if I'm playing at school) knows I'm using LingoBite Play.</span>
+          <span>{tr('A parent/guardian (or my teacher, if I\'m playing at school) knows I\'m using LingoBite Play.')}</span>
         </label>
 
         <button

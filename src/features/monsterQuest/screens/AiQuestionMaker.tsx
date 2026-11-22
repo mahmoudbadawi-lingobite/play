@@ -7,6 +7,7 @@ import { QUESTION_TYPES } from '../config';
 import { GameButton } from '../ui';
 import { buildQuestionPrompt, defaultTypes, parseQuestionReply } from '../questionPrompt';
 
+import { tr } from '../../../i18n/tr';
 type Subjects = ReturnType<typeof useSubjects>;
 
 /** Build an AI prompt for questions, then take the AI's reply and add the questions to the bank. */
@@ -47,38 +48,38 @@ export function AiQuestionMaker({ subj, onAdd }: { subj: Subjects; onAdd: (rows:
 
   return (
     <div className="text-[#10285a]">
-      <p className="font-display text-lg font-extrabold">Make questions with AI</p>
+      <p className="font-display text-lg font-extrabold">{tr('Make questions with AI')}</p>
       <p className="text-xs text-[#3d5a94]">1 Choose subject and skills · 2 paste your text · 3 copy the prompt into any AI chat · 4 paste the reply here.</p>
       <div className="mt-3"><SubjectSkillPicker subjects={subj.allowed} canRequest multi value={picks} onChange={(p) => setPicks(p)} /></div>
 
       {subject && (<>
         <span className={lab}>Question types {types === null ? '(chosen from your domain, tap to change)' : ''}</span>
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Question types">
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label={tr('Question types')}>
           {QUESTION_TYPES.filter((t) => allowed.includes(t.value)).map((t) => (
             <button key={t.value} type="button" className={chip(usable.includes(t.value))} aria-pressed={usable.includes(t.value)}
               onClick={() => setTypes(usable.includes(t.value) ? usable.filter((x) => x !== t.value) : [...usable, t.value])}>{t.label}</button>))}
         </div>
-        {usable.includes('listening') && <p className="mt-2 rounded-xl bg-[#eaf2ff] p-2 text-xs font-bold">Listening: the AI cuts your text into chunks of 2-3 sentences. Each chunk becomes one listening question that is read aloud.</p>}
+        {usable.includes('listening') && <p className="mt-2 rounded-xl bg-[#eaf2ff] p-2 text-xs font-bold">{tr('Listening: the AI cuts your text into chunks of 2-3 sentences. Each chunk becomes one listening question that is read aloud.')}</p>}
 
-        <span className={lab}>Your text (optional)</span>
-        <textarea value={material} onChange={(e) => setMaterial(e.target.value)} rows={6} placeholder="Paste the story, passage, dialogue or word list here. You can also attach a photo or file in the AI chat and tick the box below." className={inp} />
-        <label className="mt-1 flex items-center gap-2 text-xs font-bold"><input type="checkbox" checked={attach} onChange={(e) => setAttach(e.target.checked)} /> I will attach the text as a file or image in the AI chat</label>
+        <span className={lab}>{tr('Your text (optional)')}</span>
+        <textarea value={material} onChange={(e) => setMaterial(e.target.value)} rows={6} placeholder={tr('Paste the story, passage, dialogue or word list here. You can also attach a photo or file in the AI chat and tick the box below.')} className={inp} />
+        <label className="mt-1 flex items-center gap-2 text-xs font-bold"><input type="checkbox" checked={attach} onChange={(e) => setAttach(e.target.checked)} /> {tr('I will attach the text as a file or image in the AI chat')}</label>
 
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <div><label className={lab}>How many</label><input type="number" min={1} max={40} value={count} onChange={(e) => setCount(Math.max(1, Math.min(40, Number(e.target.value) || 1)))} className={inp} /></div>
-          <div><label className={lab}>Difficulty</label><select value={difficulty} onChange={(e) => setDifficulty(Number(e.target.value))} className={inp}>{[1, 2, 3, 4, 5].map((d) => <option key={d} value={d}>{d}</option>)}</select></div>
-          <div><label className={lab}>Topic</label><input value={topic} onChange={(e) => setTopic(e.target.value)} className={inp} placeholder="optional" /></div>
+          <div><label className={lab}>{tr('How many')}</label><input type="number" min={1} max={40} value={count} onChange={(e) => setCount(Math.max(1, Math.min(40, Number(e.target.value) || 1)))} className={inp} /></div>
+          <div><label className={lab}>{tr('Difficulty')}</label><select value={difficulty} onChange={(e) => setDifficulty(Number(e.target.value))} className={inp}>{[1, 2, 3, 4, 5].map((d) => <option key={d} value={d}>{d}</option>)}</select></div>
+          <div><label className={lab}>{tr('Topic')}</label><input value={topic} onChange={(e) => setTopic(e.target.value)} className={inp} placeholder={tr('optional')} /></div>
         </div>
 
         <div className="mt-3"><GradePicker value={grade} onChange={setGrade} /></div>
 
-        <span className={lab}>Prompt to copy</span>
+        <span className={lab}>{tr('Prompt to copy')}</span>
         <textarea readOnly value={prompt} rows={7} className={`${inp} font-mono text-xs`} onFocus={(e) => e.currentTarget.select()} />
         <div className="mt-2"><GameButton tone="blue" onClick={copy} disabled={!usable.length}>{copied ? '✓ Copied' : '📋 Copy prompt'}</GameButton></div>
 
-        <span className={lab}>AI reply</span>
-        <textarea value={reply} onChange={(e) => setReply(e.target.value)} rows={5} placeholder="Paste the AI's JSON reply here" className={`${inp} font-mono text-xs`} />
-        <div className="mt-2"><GameButton tone="green" onClick={add} disabled={!reply.trim()}>➕ Add these questions</GameButton></div>
+        <span className={lab}>{tr('AI reply')}</span>
+        <textarea value={reply} onChange={(e) => setReply(e.target.value)} rows={5} placeholder={tr('Paste the AI\'s JSON reply here')} className={`${inp} font-mono text-xs`} />
+        <div className="mt-2"><GameButton tone="green" onClick={add} disabled={!reply.trim()}>{tr('➕ Add these questions')}</GameButton></div>
       </>)}
       {msg && <p role="status" className="mt-3 rounded-xl bg-[#eaf2ff] p-2.5 text-sm font-bold">{msg}</p>}
     </div>

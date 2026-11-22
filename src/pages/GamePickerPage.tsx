@@ -7,6 +7,7 @@ import type { ContentSet } from '../types';
 import { useSubjects } from '../features/subjects/useSubjects';
 import { setLabel } from '../features/subjects/label';
 
+import { tr } from '../i18n/tr';
 export function GamePickerPage() {
   const subj = useSubjects();
   const { setId } = useParams<{ setId: string }>();
@@ -20,8 +21,8 @@ export function GamePickerPage() {
     getContentSet(setId).then(setSet).finally(() => setLoading(false));
   }, [setId]);
 
-  if (loading) return <p className="p-8 text-center text-muted-foreground">Loading...</p>;
-  if (!set) return <p className="p-8 text-center text-muted-foreground">Game not found.</p>;
+  if (loading) return <p className="p-8 text-center text-muted-foreground">{tr('Loading...')}</p>;
+  if (!set) return <p className="p-8 text-center text-muted-foreground">{tr('Game not found.')}</p>;
 
   const games = compatibleGames(set.items, set.skill);
 
@@ -30,7 +31,7 @@ export function GamePickerPage() {
       <div className="kid-page-head">
         <p className="kid-pill text-sm uppercase tracking-wide text-secondary">{setLabel(subj.subjects, set)}</p>
         <h1 className="kid-big-title font-display text-3xl font-bold text-primary">{set.title}</h1>
-        <p className="kid-sub mt-1 text-muted-foreground">Pick how you want to play this one.</p>
+        <p className="kid-sub mt-1 text-muted-foreground">{tr('Pick how you want to play this one.')}</p>
       </div>
 
       <div className="kid-game-grid mt-6 grid gap-4 sm:grid-cols-2">
@@ -47,8 +48,8 @@ export function GamePickerPage() {
             <span className="kg-art" aria-hidden="true" />
             <span className="kg-emoji text-3xl">{g.icon}</span>
             <div className="kg-body">
-              <p className="kg-title font-display font-semibold text-primary">{g.name}</p>
-              <p className="kg-desc text-sm text-muted-foreground">{g.description}</p>
+              <p className="kg-title font-display font-semibold text-primary">{tr(g.name)}</p>
+              <p className="kg-desc text-sm text-muted-foreground">{tr(g.description)}</p>
             </div>
             <span className="kg-go" aria-hidden="true" />
           </Link>
@@ -64,8 +65,8 @@ export function GamePickerPage() {
           <span className="kg-art" aria-hidden="true" />
           <span className="kg-emoji text-3xl">👥</span>
           <div className="kg-body">
-            <p className="kg-title font-display font-semibold text-primary">Treasure Hunt with friends</p>
-            <p className="kg-desc text-sm text-muted-foreground">Open a live room (2–10 players). Race each other or hunt as a team.</p>
+            <p className="kg-title font-display font-semibold text-primary">{tr('Treasure Hunt with friends')}</p>
+            <p className="kg-desc text-sm text-muted-foreground">{tr('Open a live room (2–10 players). Race each other or hunt as a team.')}</p>
           </div>
           <span className="kg-people" aria-hidden="true" />
           <span className="kg-go" aria-hidden="true" />

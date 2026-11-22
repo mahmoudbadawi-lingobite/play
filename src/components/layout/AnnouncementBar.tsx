@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getActiveAnnouncement, type Announcement } from '../../lib/services';
 import { linkify } from '../../lib/linkify';
 
+import { tr } from '../../i18n/tr';
 export function AnnouncementBar() {
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const [dismissed, setDismissed] = useState(false);
@@ -35,7 +36,7 @@ export function AnnouncementBar() {
 
       <button
         onClick={() => setDismissed(true)}
-        aria-label="Dismiss announcement"
+        aria-label={tr('Dismiss announcement')}
         className="absolute end-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-primary/60 hover:bg-primary/10 hover:text-primary"
       >
         ✕

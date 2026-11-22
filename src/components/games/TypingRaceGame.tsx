@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import type { GameProps } from './GameShell';
 import { ListenButton } from '../common/ListenButton';
 
+import { tr } from '../../i18n/tr';
+import { sameAnswer } from '../../lib/arabicText';
 const TIME_PER_QUESTION = 12;
 
 export function TypingRaceGame({ items, onFinish }: GameProps) {
@@ -43,14 +45,14 @@ export function TypingRaceGame({ items, onFinish }: GameProps) {
 
   const submit = () => {
     if (feedback) return;
-    const isCorrect = input.trim().toLowerCase() === current.term.trim().toLowerCase();
+    const isCorrect = sameAnswer(input, current.term);
     advance(isCorrect);
   };
 
   return (
     <div className="card-surface p-6">
       <div className="mb-4 flex items-center justify-between text-sm text-muted-foreground">
-        <span>Question {index + 1} / {questions.length}</span>
+        <span>{tr('Question {i} / {n}', { i: index + 1, n: questions.length })}</span>
         <span className={timeLeft <= 4 ? 'font-bold text-destructive' : ''}>⏱ {timeLeft}s</span>
       </div>
       <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-muted">
@@ -61,21 +63,22 @@ export function TypingRaceGame({ items, onFinish }: GameProps) {
         <img src={current.imageUrl} alt="" className="mx-auto mb-3 h-32 w-auto max-w-full rounded-lg object-contain" />
       )}
       {current.audio && <div className="mb-3"><ListenButton text={current.audio} /></div>}
-      <p className="font-display text-xl text-primary">{current.clue}</p>
+      <p dir="auto" className="font-display text-xl text-primary">{current.clue}</p>
 
       <input
         autoFocus
+        dir="auto"
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && submit()}
-        placeholder="Type the answer..."
+        placeholder={tr('Type the answer...')}
         className={`mt-4 w-full rounded-lg border px-4 py-3 text-lg outline-none ${
           feedback === 'correct' ? 'border-success bg-success/10' : feedback === 'wrong' ? 'border-destructive bg-destructive/10 animate-shake' : 'border-border'
         }`}
         disabled={!!feedback}
       />
       {feedback === 'wrong' && (
-        <p className="mt-2 text-sm text-destructive">Correct answer: {current.term}</p>
+        <p className="mt-2 text-sm text-destructive">{tr('Correct answer:')} {current.term}</p>
       )}
 
       <button
@@ -83,7 +86,7 @@ export function TypingRaceGame({ items, onFinish }: GameProps) {
         disabled={!!feedback || !input}
         className="mt-4 w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-40"
       >
-        Submit
+        {tr('Submit')}
       </button>
     </div>
   );

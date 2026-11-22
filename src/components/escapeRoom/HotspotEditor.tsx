@@ -3,6 +3,7 @@ import type { AnswerMode } from '../../types';
 import type { HotspotInput } from '../../lib/escapeRoomService';
 import { parseHotspotTemplateFile, type TemplateItem } from '../../lib/hotspotTemplate';
 
+import { tr } from '../../i18n/tr';
 interface Props {
   imageUrl: string;
   hotspots: HotspotInput[];
@@ -158,7 +159,7 @@ export function HotspotEditor({ imageUrl, hotspots, onChange, externalImportItem
           onClick={() => fileInputRef.current?.click()}
           className="rounded-lg border border-secondary px-3 py-1.5 text-xs font-semibold text-secondary hover:bg-secondary/10"
         >
-          Import clues from file (.xlsx)
+          {tr('Import clues from file (.xlsx)')}
         </button>
         <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleFileSelected} className="hidden" />
         {importError && <span className="text-xs font-medium text-destructive">{importError}</span>}
@@ -210,8 +211,8 @@ export function HotspotEditor({ imageUrl, hotspots, onChange, externalImportItem
               <span className="flex-1 truncate text-muted-foreground">{h.clueText || '(empty clue - click to fill in)'}</span>
               <button onClick={() => moveHotspot(i, -1)} disabled={i === 0} className="text-primary/60 hover:text-primary disabled:opacity-30">↑</button>
               <button onClick={() => moveHotspot(i, 1)} disabled={i === hotspots.length - 1} className="text-primary/60 hover:text-primary disabled:opacity-30">↓</button>
-              <button onClick={() => setEditingIndex(i)} className="font-semibold text-primary hover:text-secondary">Edit</button>
-              <button onClick={() => deleteHotspot(i)} className="font-semibold text-destructive hover:opacity-80">Delete</button>
+              <button onClick={() => setEditingIndex(i)} className="font-semibold text-primary hover:text-secondary">{tr('Edit')}</button>
+              <button onClick={() => deleteHotspot(i)} className="font-semibold text-destructive hover:opacity-80">{tr('Delete')}</button>
             </div>
           ))}
         </div>
@@ -222,11 +223,11 @@ export function HotspotEditor({ imageUrl, hotspots, onChange, externalImportItem
           <p className="mb-2 text-sm font-semibold text-primary">Clue #{editingIndex + 1}</p>
 
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-primary">Locate hint (shown before they click - helps them find the spot)</span>
+            <span className="mb-1 block text-xs font-semibold text-primary">{tr('Locate hint (shown before they click - helps them find the spot)')}</span>
             <textarea
               value={editing.locateHint}
               onChange={(e) => updateHotspot(editingIndex, { locateHint: e.target.value })}
-              placeholder="e.g. Look for the pink spiral seashell resting in the sand near the bottom of the steps."
+              placeholder={tr('e.g. Look for the pink spiral seashell resting in the sand near the bottom of the steps.')}
               rows={2}
               className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary"
             />
@@ -237,18 +238,18 @@ export function HotspotEditor({ imageUrl, hotspots, onChange, externalImportItem
             <textarea
               value={editing.locateHintExtra ?? ''}
               onChange={(e) => updateHotspot(editingIndex, { locateHintExtra: e.target.value })}
-              placeholder="e.g. Look closer to the ground, near the taller structure. (a small nudge, not a giveaway)"
+              placeholder={tr('e.g. Look closer to the ground, near the taller structure. (a small nudge, not a giveaway)')}
               rows={2}
               className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary"
             />
           </label>
 
           <label className="mt-3 block">
-            <span className="mb-1 block text-xs font-semibold text-primary">Question (shown after they click - what they must answer)</span>
+            <span className="mb-1 block text-xs font-semibold text-primary">{tr('Question (shown after they click - what they must answer)')}</span>
             <textarea
               value={editing.clueText}
               onChange={(e) => updateHotspot(editingIndex, { clueText: e.target.value })}
-              placeholder="What question should students answer for this object?"
+              placeholder={tr('What question should students answer for this object?')}
               rows={2}
               className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary"
             />
@@ -259,7 +260,7 @@ export function HotspotEditor({ imageUrl, hotspots, onChange, externalImportItem
             <textarea
               value={editing.questionHintExtra ?? ''}
               onChange={(e) => updateHotspot(editingIndex, { questionHintExtra: e.target.value })}
-              placeholder="e.g. Think of a related category or a rhyme - not the answer itself."
+              placeholder={tr('e.g. Think of a related category or a rhyme - not the answer itself.')}
               rows={2}
               className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary"
             />
@@ -280,7 +281,7 @@ export function HotspotEditor({ imageUrl, hotspots, onChange, externalImportItem
           </div>
 
           <label className="mt-3 block">
-            <span className="mb-1 block text-xs font-semibold text-primary">Correct answer</span>
+            <span className="mb-1 block text-xs font-semibold text-primary">{tr('Correct answer')}</span>
             <input
               value={editing.correctAnswer}
               onChange={(e) => updateHotspot(editingIndex, { correctAnswer: e.target.value })}
@@ -290,8 +291,8 @@ export function HotspotEditor({ imageUrl, hotspots, onChange, externalImportItem
 
           {editing.answerMode === 'choice' && (
             <div className="mt-3">
-              <span className="mb-1 block text-xs font-semibold text-primary">Wrong options (1-3, shown mixed with the correct answer)</span>
-              <span className="mb-1 block text-xs text-muted-foreground">Tip: keep these a similar length/style to the correct answer so it doesn't stand out.</span>
+              <span className="mb-1 block text-xs font-semibold text-primary">{tr('Wrong options (1-3, shown mixed with the correct answer)')}</span>
+              <span className="mb-1 block text-xs text-muted-foreground">{tr('Tip: keep these a similar length/style to the correct answer so it doesn\'t stand out.')}</span>
               {(editing.choices ?? []).map((choice, ci) => (
                 <div key={ci} className="mt-1 flex gap-2">
                   <input
@@ -307,7 +308,7 @@ export function HotspotEditor({ imageUrl, hotspots, onChange, externalImportItem
                     onClick={() => updateHotspot(editingIndex, { choices: (editing.choices ?? []).filter((_, x) => x !== ci) })}
                     className="text-xs font-semibold text-destructive"
                   >
-                    Remove
+                    {tr('Remove')}
                   </button>
                 </div>
               ))}
@@ -323,7 +324,7 @@ export function HotspotEditor({ imageUrl, hotspots, onChange, externalImportItem
           )}
 
           <button onClick={() => setEditingIndex(null)} className="mt-4 rounded-lg bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground">
-            Done
+            {tr('Done')}
           </button>
         </div>
       )}

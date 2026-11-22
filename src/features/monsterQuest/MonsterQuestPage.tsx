@@ -23,6 +23,7 @@ import './monsterQuest.css';
 import './ui-skin.css';
 import { menuBackground, ui } from './uiAssets';
 
+import { tr } from '../../i18n/tr';
 const NEVER_ASK_KEY = 'mq-fullscreen-never-ask';
 let askedThisVisit = false;
 
@@ -34,11 +35,11 @@ function FullscreenPrompt({ onEnter, onClose }: { onEnter: () => void; onClose: 
     <div className="mq-modal-bg" role="dialog" aria-modal="true" aria-labelledby="mq-fs-title" onClick={() => onClose(never)}>
       <div className="mq-modal text-center" onClick={(e) => e.stopPropagation()} style={{ color: '#10285a' }}>
         <p className="text-5xl" aria-hidden>⛶</p>
-        <h2 id="mq-fs-title" className="mt-1 font-display text-2xl font-extrabold">Play in full screen!</h2>
-        <p className="mt-2 text-sm font-bold opacity-80">For a better experience, play Monster Quest in full screen. A bigger playground, and all the tabs (Arena, Monsters, Shop…) stay one tap away.</p>
-        <button type="button" className="mq-btn mq-btn-gold mt-4 w-full text-lg" autoFocus onClick={() => { sfx.click(); onEnter(); }}>⛶ Enter full screen</button>
-        <button type="button" className="mq-btn mq-btn-blue mt-2 w-full" onClick={() => onClose(never)}>Not now</button>
-        <label className="mt-3 flex items-center justify-center gap-2 text-xs font-bold opacity-70"><input type="checkbox" checked={never} onChange={(e) => setNever(e.target.checked)} /> Don't ask me again</label>
+        <h2 id="mq-fs-title" className="mt-1 font-display text-2xl font-extrabold">{tr('Play in full screen!')}</h2>
+        <p className="mt-2 text-sm font-bold opacity-80">{tr('For a better experience, play Monster Quest in full screen. A bigger playground, and all the tabs (Arena, Monsters, Shop…) stay one tap away.')}</p>
+        <button type="button" className="mq-btn mq-btn-gold mt-4 w-full text-lg" autoFocus onClick={() => { sfx.click(); onEnter(); }}>{tr('⛶ Enter full screen')}</button>
+        <button type="button" className="mq-btn mq-btn-blue mt-2 w-full" onClick={() => onClose(never)}>{tr('Not now')}</button>
+        <label className="mt-3 flex items-center justify-center gap-2 text-xs font-bold opacity-70"><input type="checkbox" checked={never} onChange={(e) => setNever(e.target.checked)} /> {tr('Don\'t ask me again')}</label>
       </div>
     </div>
   );
@@ -73,12 +74,12 @@ function Shell() {
           <NavLink to="/monster-quest"><MqLogo /></NavLink>
           <div className="flex items-center gap-2 text-sm font-extrabold text-white">
             <span className="mq-pill mq-pill-ico"><img src={ui('coin')} alt="" draggable={false} />{fmt(mq.state.coins)}</span><span className="mq-pill mq-pill-ico"><img src={ui('gem')} alt="" draggable={false} />{fmt(mq.state.gems)}</span><span className="mq-pill">Lv {mq.state.level}</span>
-            {fs.supported && <button type="button" className="mq-pill mq-pill-ico mq-fs-btn" onClick={() => { sfx.click(); fs.toggle(); }} aria-pressed={fs.isFs} title={fs.isFs ? 'Exit full screen' : 'Play in full screen'}>{fs.isFs ? <><img src={ui('exit')} alt="" draggable={false} />Exit</> : '⛶ Full screen'}</button>}
+            {fs.supported && <button type="button" className="mq-pill mq-pill-ico mq-fs-btn" onClick={() => { sfx.click(); fs.toggle(); }} aria-pressed={fs.isFs} title={fs.isFs ? 'Exit full screen' : 'Play in full screen'}>{fs.isFs ? <><img src={ui('exit')} alt="" draggable={false} />{tr('Exit')}</> : '⛶ Full screen'}</button>}
           </div>
         </header>
         <div className="mq-shell-grid md:grid md:grid-cols-[150px_1fr] md:gap-4">
-          <nav className="mq-nav" aria-label="Monster Quest">
-            {fs.isFs && <button type="button" className="mq-nav-item mq-nav-exit" onClick={() => { sfx.click(); fs.exit(); }} title="Exit full screen"><img className="mq-nav-ico" src={ui('exit')} alt="" draggable={false} /><span>Exit</span></button>}
+          <nav className="mq-nav" aria-label={tr('Monster Quest')}>
+            {fs.isFs && <button type="button" className="mq-nav-item mq-nav-exit" onClick={() => { sfx.click(); fs.exit(); }} title={tr('Exit full screen')}><img className="mq-nav-ico" src={ui('exit')} alt="" draggable={false} /><span>{tr('Exit')}</span></button>}
             {nav.map((n) => {
               const id = n.to || 'home';
               return (
@@ -117,13 +118,13 @@ function Shell() {
 
 export function MonsterQuestPage() {
   const { profile, loading, signInWithGoogle } = useAuth();
-  if (loading) return <p className="p-10 text-center text-muted-foreground">Loading…</p>;
+  if (loading) return <p className="p-10 text-center text-muted-foreground">{tr('Loading…')}</p>;
   if (!profile) {
     return (
       <div className="mq-root"><div className="mx-auto max-w-md px-4 py-16 text-center">
         <MqLogo className="mb-4" />
-        <p className="font-bold text-white">Monster Quest saves your monsters, coins and progress to your account, so you need to sign in to play.</p>
-        <button onClick={signInWithGoogle} className="mq-btn mq-btn-gold mt-5">Sign in to play</button>
+        <p className="font-bold text-white">{tr('Monster Quest saves your monsters, coins and progress to your account, so you need to sign in to play.')}</p>
+        <button onClick={signInWithGoogle} className="mq-btn mq-btn-gold mt-5">{tr('Sign in to play')}</button>
       </div></div>
     );
   }

@@ -21,6 +21,7 @@ import './monsterAnimations.css';
 import './world.css';
 import './world-panels.css';
 
+import { tr } from '../../../i18n/tr';
 const reducedPref = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 /** Round action button. Uses painted art from public/monster-quest/world/ui/btn-<art>.png when the file exists, otherwise the emoji. */
@@ -133,25 +134,25 @@ export function WorldView({ worldId, onLeave, onSwitch }: { worldId: number; onL
         <div className="mq-hud-tl">
           <div className="mq-portrait" aria-hidden><CharacterPortrait id={who} /></div>
           <div className="mq-bars">
-            <div className="mq-bar"><b>HP</b><span><i style={{ width: '100%', background: '#ef4444' }} /></span></div>
-            <div className="mq-bar"><b>MP</b><span><i style={{ width: '100%', background: '#3b82f6' }} /></span></div>
+            <div className="mq-bar"><b>{tr('HP')}</b><span><i style={{ width: '100%', background: '#ef4444' }} /></span></div>
+            <div className="mq-bar"><b>{tr('MP')}</b><span><i style={{ width: '100%', background: '#3b82f6' }} /></span></div>
           </div>
         </div>
         {/* top right: currencies, quest */}
         <div className="mq-hud-tr">
           <div className="mq-chips"><span className="mq-chip"><Orb size={18} /> {orbs}</span><span className="mq-chip">🪙 {mq.state.coins}</span></div>
-          <div className="mq-quest" role="status"><span className="mq-quest-q">?</span><div><small>Quest</small><p>{quest}</p></div></div>
+          <div className="mq-quest" role="status"><span className="mq-quest-q">?</span><div><small>{tr('Quest')}</small><p>{quest}</p></div></div>
         </div>
-        <div className="mq-hud-loc" aria-live="polite"><button className="mq-back" onClick={onLeave} aria-label="Back to world map">← Worlds</button><span>{hud?.loc?.name ?? w.name}</span>{hud?.zoneLabel && <em>🌿 {hud.zoneLabel}</em>}</div>
+        <div className="mq-hud-loc" aria-live="polite"><button className="mq-back" onClick={onLeave} aria-label={tr('Back to world map')}>← Worlds</button><span>{hud?.loc?.name ?? w.name}</span>{hud?.zoneLabel && <em>🌿 {hud.zoneLabel}</em>}</div>
         <div className="mq-hud-tools">
-          <button className={`mq-tool ${calm ? 'on' : ''}`} onClick={() => setCalm(!calm)} aria-pressed={calm} title="Calm mode: stops ambient motion and animations">🌙</button>
-          <button className="mq-tool" onClick={() => (legacy ? setRepick(true) : setPanel('profile'))} aria-label="Explorers" title="Explorers and wardrobe">👤</button>
-          <button className="mq-tool" onClick={toggleFs} aria-label="Toggle full screen">⛶</button>
+          <button className={`mq-tool ${calm ? 'on' : ''}`} onClick={() => setCalm(!calm)} aria-pressed={calm} title={tr('Calm mode: stops ambient motion and animations')}>🌙</button>
+          <button className="mq-tool" onClick={() => (legacy ? setRepick(true) : setPanel('profile'))} aria-label={tr('Explorers')} title={tr('Explorers and wardrobe')}>👤</button>
+          <button className="mq-tool" onClick={toggleFs} aria-label={tr('Toggle full screen')}>⛶</button>
         </div>
 
-        {hint && <div className="mq-hint" onClick={() => setHint(false)}>Arrow keys / WASD or the joystick to walk · tap the ground to walk there · <b>E</b> to interact</div>}
+        {hint && <div className="mq-hint" onClick={() => setHint(false)}>Arrow keys / WASD or the joystick to walk · tap the ground to walk there · <b>E</b> {tr('to interact')}</div>}
         {toast && <div className="mq-toast" role="alert">{toast}</div>}
-        {loading && <div className="mq-loading">Painting the world…</div>}
+        {loading && <div className="mq-loading">{tr('Painting the world…')}</div>}
 
         {/* bottom: joystick + action buttons + minimap */}
         <Joystick onMove={(x, y) => eng.current?.setJoystick(x, y)} />
@@ -160,7 +161,7 @@ export function WorldView({ worldId, onLeave, onSwitch }: { worldId: number; onL
           <ActBtn kind="int" label={verb} keyCap="E" ready={!!hud?.prompt} disabled={!hud?.prompt || paused} onClick={() => { sfx.click(); eng.current?.interact(); }} />
           <ActBtn kind="bag" label="Bag" keyCap="B" onClick={() => { sfx.click(); setPanel('inventory'); }} />
         </div>
-        <button className="mq-minimap" onClick={() => setShowMap(true)} aria-label="Open map"><canvas ref={mini} width={132} height={132} /></button>
+        <button className="mq-minimap" onClick={() => setShowMap(true)} aria-label={tr('Open map')}><canvas ref={mini} width={132} height={132} /></button>
         {hud?.prompt && !paused && <div className="mq-prompt">{verb}: {hud.prompt.name} <kbd>E</kbd></div>}
 
         {dialog && (
@@ -173,7 +174,7 @@ export function WorldView({ worldId, onLeave, onSwitch }: { worldId: number; onL
         {picking && <CharacterPicker current={needPick ? (progress.current.character ?? null) : who} onPick={pick} busy={pickBusy} error={pickErr} />}
         {panel && !picking && <WorldPanel tab={panel} onTab={setPanel} onClose={() => setPanel(null)} />}
         {showMap && (
-          <div className="mq-fullmap" onClick={() => setShowMap(false)} role="dialog" aria-label="Map">
+          <div className="mq-fullmap" onClick={() => setShowMap(false)} role="dialog" aria-label={tr('Map')}>
             <div><canvas ref={full} width={640} height={480} /><p>{hud?.loc?.name} · tap to close</p></div>
           </div>
         )}

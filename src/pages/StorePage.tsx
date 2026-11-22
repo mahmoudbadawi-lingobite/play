@@ -16,6 +16,7 @@ import { AvatarStageView } from '../features/avatar/AvatarImage';
 import { ChooseHero } from '../features/avatar/ChooseHero';
 import { CoinPill, ItemThumb, LevelBadge, RARITY } from '../features/avatar/ui';
 
+import { tr } from '../i18n/tr';
 /** The look with `item` (or every piece of a set) put on, without saving anything. */
 function tryOn(look: Look, item: Item | null): Look {
   if (!item) return look;
@@ -56,7 +57,7 @@ export function StorePage() {
   if (!gender) {
     return (
       <div className="mx-auto max-w-xl px-4 py-10">
-        <ChooseHero title="Choose your hero to start shopping" />
+        <ChooseHero title={tr('Choose your hero to start shopping')} />
       </div>
     );
   }
@@ -104,18 +105,18 @@ export function StorePage() {
           <LevelBadge />
           <div className="text-center">
             <h1 className="font-display text-3xl font-extrabold text-white drop-shadow sm:text-4xl">🛍️ The Style Store</h1>
-            <p className="text-sm font-semibold text-white/90">Collect, customize and make your hero unique!</p>
+            <p className="text-sm font-semibold text-white/90">{tr('Collect, customize and make your hero unique!')}</p>
           </div>
           <div className="flex items-center gap-2">
             <CoinPill coins={state.coins} />
-            <Link to="/avatar" className="rounded-full border-2 border-white/70 bg-white/90 px-3 py-1.5 text-sm font-extrabold text-primary shadow">My Avatar</Link>
+            <Link to="/avatar" className="rounded-full border-2 border-white/70 bg-white/90 px-3 py-1.5 text-sm font-extrabold text-primary shadow">{tr('My Avatar')}</Link>
           </div>
         </div>
       </div>
 
       <div className="mt-4 flex flex-col gap-4 lg:grid lg:grid-cols-[220px_1fr_340px]">
         {/* Categories */}
-        <nav aria-label="Store categories" className="order-2 flex gap-2 overflow-x-auto pb-1 lg:order-1 lg:flex-col lg:overflow-visible">
+        <nav aria-label={tr('Store categories')} className="order-2 flex gap-2 overflow-x-auto pb-1 lg:order-1 lg:flex-col lg:overflow-visible">
           {CATEGORIES.map((c) => (
             <button
               key={c.id}
@@ -138,15 +139,15 @@ export function StorePage() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search items..."
-              aria-label="Search items"
+              placeholder={tr('Search items...')}
+              aria-label={tr('Search items')}
               className="min-w-0 flex-1 rounded-xl border-2 border-border bg-card px-4 py-2.5 outline-none focus:border-secondary"
             />
-            <select value={rarity} onChange={(e) => setRarity(e.target.value as Rarity | 'all')} aria-label="Rarity" className="rounded-xl border-2 border-border bg-card px-3 py-2.5 font-semibold text-primary">
-              <option value="all">All rarities</option>
-              <option value="common">Common</option>
-              <option value="rare">Rare</option>
-              <option value="epic">Epic</option>
+            <select value={rarity} onChange={(e) => setRarity(e.target.value as Rarity | 'all')} aria-label={tr('Rarity')} className="rounded-xl border-2 border-border bg-card px-3 py-2.5 font-semibold text-primary">
+              <option value="all">{tr('All rarities')}</option>
+              <option value="common">{tr('Common')}</option>
+              <option value="rare">{tr('Rare')}</option>
+              <option value="epic">{tr('Epic')}</option>
             </select>
           </div>
 
@@ -177,10 +178,10 @@ export function StorePage() {
                 </li>
               );
             })}
-            {items.length === 0 && <li className="col-span-full py-10 text-center text-muted-foreground">No items match your search.</li>}
+            {items.length === 0 && <li className="col-span-full py-10 text-center text-muted-foreground">{tr('No items match your search.')}</li>}
           </ul>
           <p className="mt-4 rounded-2xl bg-gradient-to-r from-[#4B3FD6] to-[#6C4DFF] px-4 py-3 text-sm font-bold text-white">
-            ✨ Earn coins by completing runs and answering questions! <Link to="/library" className="underline">Find a game</Link>
+            ✨ Earn coins by completing runs and answering questions! <Link to="/library" className="underline">{tr('Find a game')}</Link>
           </p>
         </section>
 
@@ -210,11 +211,11 @@ export function StorePage() {
                     {selSt?.equipped ? 'Equipped ✓' : selSt?.owned ? 'Wear it' : `Buy · 🪙 ${selSt?.price}`}
                   </button>
                   <button type="button" onClick={() => setSelectedId(null)} className="mt-2 w-full text-xs font-bold text-muted-foreground underline">
-                    Back to my current look
+                    {tr('Back to my current look')}
                   </button>
                 </>
               ) : (
-                <p className="text-center text-sm font-semibold text-muted-foreground">Tap an item to try it on your hero.</p>
+                <p className="text-center text-sm font-semibold text-muted-foreground">{tr('Tap an item to try it on your hero.')}</p>
               )}
             </div>
           </div>

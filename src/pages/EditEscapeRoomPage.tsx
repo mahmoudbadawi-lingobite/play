@@ -11,6 +11,7 @@ import {
 } from '../lib/escapeRoomService';
 import type { EscapeRoom, Visibility } from '../types';
 
+import { tr } from '../i18n/tr';
 export function EditEscapeRoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const { profile } = useAuth();
@@ -90,16 +91,16 @@ export function EditEscapeRoomPage() {
     }
   };
 
-  if (loading) return <p className="p-8 text-center text-muted-foreground">Loading...</p>;
-  if (notAllowed) return <p className="p-8 text-center text-muted-foreground">You don't have permission to edit this escape room.</p>;
-  if (!original || !imageUrl) return <p className="p-8 text-center text-muted-foreground">Escape room not found.</p>;
+  if (loading) return <p className="p-8 text-center text-muted-foreground">{tr('Loading...')}</p>;
+  if (notAllowed) return <p className="p-8 text-center text-muted-foreground">{tr('You don\'t have permission to edit this escape room.')}</p>;
+  if (!original || !imageUrl) return <p className="p-8 text-center text-muted-foreground">{tr('Escape room not found.')}</p>;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
-      <h1 className="font-display text-3xl font-bold text-primary">Edit Escape Room</h1>
+      <h1 className="font-display text-3xl font-bold text-primary">{tr('Edit Escape Room')}</h1>
 
       <div className="mt-6 flex items-center justify-between">
-        <p className="text-sm font-semibold text-primary">AI Prompt Generator (optional)</p>
+        <p className="text-sm font-semibold text-primary">{tr('AI Prompt Generator (optional)')}</p>
         <button onClick={() => setShowPromptGenerator((v) => !v)} className="text-xs font-semibold text-secondary">
           {showPromptGenerator ? 'Hide' : 'Show'}
         </button>
@@ -112,13 +113,13 @@ export function EditEscapeRoomPage() {
 
       <div className="card-surface mt-6 p-6">
         <div className="mb-4 flex items-center justify-between">
-          <p className="text-sm font-semibold text-primary">Background image and clues</p>
+          <p className="text-sm font-semibold text-primary">{tr('Background image and clues')}</p>
           <label className="cursor-pointer text-xs font-semibold text-secondary">
-            Replace image
+            {tr('Replace image')}
             <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e.target.files?.[0])} className="hidden" />
           </label>
         </div>
-        {uploading && <p className="mb-2 text-sm text-muted-foreground">Uploading to Cloudinary...</p>}
+        {uploading && <p className="mb-2 text-sm text-muted-foreground">{tr('Uploading to Cloudinary...')}</p>}
         {uploadError && <p className="mb-2 text-sm text-destructive">{uploadError}</p>}
 
         <HotspotEditor
@@ -130,7 +131,7 @@ export function EditEscapeRoomPage() {
         />
 
         <label className="mt-6 block">
-          <span className="mb-1 block text-sm font-semibold text-primary">Room title</span>
+          <span className="mb-1 block text-sm font-semibold text-primary">{tr('Room title')}</span>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -147,7 +148,7 @@ export function EditEscapeRoomPage() {
               onClick={() => setTheme(null)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium ${theme === null ? 'bg-primary text-primary-foreground' : 'border border-border text-primary/70'}`}
             >
-              None
+              {tr('None')}
             </button>
             {ESCAPE_ROOM_THEMES.map((t) => (
               <button
@@ -190,7 +191,7 @@ export function EditEscapeRoomPage() {
 
         {incompleteHotspot && hotspots.length > 0 && (
           <p className="mt-3 text-sm text-destructive">
-            ⚠ Every clue needs a locate hint, a question, and a correct answer (and at least one wrong option, if multiple choice) before saving.
+            {tr('⚠ Every clue needs a locate hint, a question, and a correct answer (and at least one wrong option, if multiple choice) before saving.')}
           </p>
         )}
         {saveError && <p className="mt-3 text-sm text-destructive">⚠ {saveError}</p>}
@@ -204,7 +205,7 @@ export function EditEscapeRoomPage() {
             {saving ? 'Saving...' : saved ? '✓ Saved' : 'Save changes'}
           </button>
           <button onClick={() => navigate(-1)} className="rounded-lg border border-border px-5 py-3 font-semibold text-primary hover:border-secondary">
-            Back
+            {tr('Back')}
           </button>
         </div>
       </div>

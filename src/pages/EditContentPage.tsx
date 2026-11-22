@@ -11,6 +11,8 @@ import { NO_PICKS, picksToArrays, picksToTags, rowToPicks, suggestFormat, type P
 import type { ContentItem, ContentSet, SkillTemplate, Visibility } from '../types';
 
 
+import { ListeningTracksPanel } from '../components/common/ListeningTracksPanel';
+import { tr } from '../i18n/tr';
 export function EditContentPage() {
   const { setId } = useParams<{ setId: string }>();
   const { profile } = useAuth();
@@ -83,18 +85,18 @@ export function EditContentPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  if (loading) return <p className="p-8 text-center text-muted-foreground">Loading...</p>;
-  if (notAllowed) return <p className="p-8 text-center text-muted-foreground">You don't have permission to edit this game.</p>;
-  if (!original) return <p className="p-8 text-center text-muted-foreground">Game not found.</p>;
+  if (loading) return <p className="p-8 text-center text-muted-foreground">{tr('Loading...')}</p>;
+  if (notAllowed) return <p className="p-8 text-center text-muted-foreground">{tr('You don\'t have permission to edit this game.')}</p>;
+  if (!original) return <p className="p-8 text-center text-muted-foreground">{tr('Game not found.')}</p>;
 
   const activeItems = replacementItems ?? original.items;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
-      <h1 className="font-display text-3xl font-bold text-primary">Edit game</h1>
+      <h1 className="font-display text-3xl font-bold text-primary">{tr('Edit game')}</h1>
 
       <div className="card-surface mt-6 p-6">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Subject and skill</p>
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tr('Subject and skill')}</p>
         <SubjectSkillPicker subjects={subj.allowed} canRequest value={picks} onChange={pickAndFormat} multi savesAll={subj.multi} />
         <div className="mt-4"><GradePicker value={grade} onChange={setGrade} /></div>
       </div>
@@ -102,7 +104,7 @@ export function EditContentPage() {
       <div className="card-surface mt-4 p-6">
 
         <label className="mt-5 block">
-          <span className="mb-1 block text-sm font-semibold text-primary">Game title</span>
+          <span className="mb-1 block text-sm font-semibold text-primary">{tr('Game title')}</span>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -126,13 +128,14 @@ export function EditContentPage() {
 
       {focus?.domains?.some((d) => /listen/i.test(d)) && (
         <p className="mt-3 rounded-lg border border-secondary/40 bg-secondary/10 p-3 text-sm text-primary">
-          🎧 Listening content: the AI cuts your text into short chunks, each with one question. In Monster Quest, use <b>Question Bank → From the Content Library</b> to turn them into listening questions that are read aloud.
+          🎧 Listening content: the AI cuts your text into short chunks, each with one question. In Monster Quest, use <b>{tr('Question Bank → From the Content Library')}</b> to turn them into listening questions that are read aloud.
         </p>
       )}
       <AiContentPanel focus={focus} grade={grade ?? undefined} skill={skill} title={title} onItemsChange={setAiItems} />
+      <ListeningTracksPanel items={activeItems} onChange={setAiItems} />
 
       <details className="card-surface mt-4 p-4">
-        <summary className="cursor-pointer text-sm font-semibold text-primary">Prefer a spreadsheet? Edit content offline</summary>
+        <summary className="cursor-pointer text-sm font-semibold text-primary">{tr('Prefer a spreadsheet? Edit content offline')}</summary>
         <button
           onClick={() => generateTemplate(skill)}
           className="mt-3 w-full rounded-lg border border-secondary px-4 py-2 text-sm font-semibold text-secondary hover:bg-secondary/10"
@@ -140,7 +143,7 @@ export function EditContentPage() {
           📥 Download template to edit content offline
         </button>
         <label className="mt-2 block">
-          <span className="mb-1 block text-xs text-muted-foreground">Upload to replace all content above:</span>
+          <span className="mb-1 block text-xs text-muted-foreground">{tr('Upload to replace all content above:')}</span>
           <input
             type="file"
             accept=".xlsx,.xls,.csv"
@@ -183,7 +186,7 @@ export function EditContentPage() {
             onClick={() => navigate(-1)}
             className="rounded-lg border border-border px-5 py-3 font-semibold text-primary hover:border-secondary"
           >
-            Back
+            {tr('Back')}
           </button>
         </div>
       </div>

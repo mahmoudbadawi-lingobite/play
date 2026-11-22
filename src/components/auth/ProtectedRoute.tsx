@@ -4,10 +4,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import type { UserRole } from '../../types';
 import { ConsentGate } from './ConsentGate';
 
+import { tr } from '../../i18n/tr';
 export function ProtectedRoute({ roles, children }: { roles?: UserRole[]; children: ReactNode }) {
   const { profile, loading, isGuest } = useAuth();
 
-  if (loading) return <div className="p-8 text-center text-muted-foreground">Loading...</div>;
+  if (loading) return <div className="p-8 text-center text-muted-foreground">{tr('Loading...')}</div>;
   if (!profile) {
     if (isGuest) return <Navigate to="/" replace />;
     return <Navigate to="/" replace />;

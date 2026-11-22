@@ -14,6 +14,7 @@ import { fmt } from '../ui';
 import { sfx } from '../sound';
 import { ui } from '../uiAssets';
 
+import { tr } from '../../../i18n/tr';
 /** Same pages and order as the side menu of Monster Quest (the ids are the route names). */
 export type PanelTab = 'home' | 'monsters' | 'arena' | 'quests' | 'style' | 'dex' | 'inventory' | 'shop' | 'leaderboard' | 'profile' | 'questions';
 const ITEMS: { id: PanelTab | 'explore'; icon: string; label: string }[] = [
@@ -43,8 +44,8 @@ export function WorldPanel({ tab, onTab, onClose }: { tab: PanelTab; onTab: (t: 
     e.preventDefault(); e.stopPropagation(); go(m[1] === '' ? 'home' : m[1]);
   };
   return (
-    <div className="mq-wpanel mq-root" role="dialog" aria-label="Game menu">
-      <nav className="mq-wnav" aria-label="Monster Quest menu">
+    <div className="mq-wpanel mq-root" role="dialog" aria-label={tr('Game menu')}>
+      <nav className="mq-wnav" aria-label={tr('Monster Quest menu')}>
         {items.map((n) => <button key={n.id} type="button" onClick={() => go(n.id)} className={`mq-nav-item ${tab === n.id ? 'is-active' : ''}`} aria-current={tab === n.id ? 'page' : undefined}><img className="mq-nav-ico" src={ui(n.icon)} alt="" draggable={false} /><span>{n.label}</span></button>)}
       </nav>
       <div className="mq-wpanel-top">

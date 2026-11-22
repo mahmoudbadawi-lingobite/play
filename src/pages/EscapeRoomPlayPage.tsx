@@ -12,6 +12,7 @@ import {
 } from '../lib/escapeRoomService';
 import type { EscapeRoom, EscapeRoomHotspot } from '../types';
 
+import { tr } from '../i18n/tr';
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -155,14 +156,14 @@ export function EscapeRoomPlayPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, hotspots.length]);
 
-  if (loading) return <p className="p-8 text-center text-muted-foreground">Loading room...</p>;
-  if (!room || hotspots.length === 0) return <p className="p-8 text-center text-muted-foreground">This escape room isn't available.</p>;
+  if (loading) return <p className="p-8 text-center text-muted-foreground">{tr('Loading room...')}</p>;
+  if (!room || hotspots.length === 0) return <p className="p-8 text-center text-muted-foreground">{tr('This escape room isn\'t available.')}</p>;
 
   if (!begun && room.storyText) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16">
         <div className="card-surface p-6 sm:p-8">
-          <p className="text-sm uppercase tracking-wide text-secondary">Escape Room</p>
+          <p className="text-sm uppercase tracking-wide text-secondary">{tr('Escape Room')}</p>
           <h1 className="mt-1 font-display text-2xl font-bold text-primary sm:text-3xl">{room.title}</h1>
           <p className="mt-4 whitespace-pre-wrap leading-relaxed text-primary">{room.storyText}</p>
           {'speechSynthesis' in window && (
@@ -177,7 +178,7 @@ export function EscapeRoomPlayPage() {
             onClick={handleBegin}
             className="mt-6 w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground hover:opacity-90"
           >
-            Begin
+            {tr('Begin')}
           </button>
         </div>
       </div>
@@ -282,22 +283,22 @@ export function EscapeRoomPlayPage() {
           <p className="mt-1 text-muted-foreground">{room.title}</p>
           <div className="mt-6 grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-muted-foreground">Wrong clicks/answers</p>
+              <p className="text-sm text-muted-foreground">{tr('Wrong clicks/answers')}</p>
               <p className="font-display text-2xl font-bold text-primary">{wrongClicks}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">XP earned</p>
+              <p className="text-sm text-muted-foreground">{tr('XP earned')}</p>
               <p className="font-display text-2xl font-bold text-secondary">+{xpEarned}</p>
             </div>
           </div>
-          {ref && <p className="mt-4 text-xs text-muted-foreground">Your score has been sent to your teacher.</p>}
+          {ref && <p className="mt-4 text-xs text-muted-foreground">{tr('Your score has been sent to your teacher.')}</p>}
           {!ref && isGuest && <p className="mt-4 text-xs text-muted-foreground">Guest progress isn't saved. Sign in to keep your XP. (session XP: {guestXP})</p>}
           <div className="mt-6 flex justify-center gap-3">
             <button onClick={handleShare} className="rounded-lg bg-secondary px-4 py-2 text-sm font-semibold text-secondary-foreground hover:opacity-90">
               {shareStatus === 'shared' ? '✓ Shared' : shareStatus === 'copied' ? '✓ Link copied' : '🔗 Share this room'}
             </button>
             <Link to="/escape-rooms" className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-primary">
-              Back to Escape Rooms
+              {tr('Back to Escape Rooms')}
             </Link>
           </div>
         </div>
@@ -309,7 +310,7 @@ export function EscapeRoomPlayPage() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm uppercase tracking-wide text-secondary">Escape Room</p>
+          <p className="text-sm uppercase tracking-wide text-secondary">{tr('Escape Room')}</p>
           <h1 className="font-display text-2xl font-bold text-primary">{room.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">Clue {currentIndex + 1} of {hotspots.length} · {solvedCount} solved</p>
         </div>
@@ -357,13 +358,13 @@ export function EscapeRoomPlayPage() {
         {hint && !unlocked && <p className="mt-2 text-sm text-primary">{hint}</p>}
         {!unlocked && missesOnCurrent >= LOCATE_HINT_THRESHOLD && current?.locateHintExtra && (
           <p className="mt-2 rounded-lg border border-secondary bg-secondary/10 px-3 py-2 text-sm text-primary">
-            💡 <span className="font-semibold">Extra hint:</span> {current.locateHintExtra}
+            💡 <span className="font-semibold">{tr('Extra hint:')}</span> {current.locateHintExtra}
           </p>
         )}
 
         {unlocked && current && (
           <div className="mt-4 rounded-lg border border-secondary bg-secondary/10 p-4">
-            <p className="mb-2 text-sm font-semibold text-primary">Found it! ❓ Answer to unlock it:</p>
+            <p className="mb-2 text-sm font-semibold text-primary">{tr('Found it! ❓ Answer to unlock it:')}</p>
             <p className="mb-3 text-primary">{current.clueText}</p>
 
             {current.answerMode === 'type' ? (
@@ -373,11 +374,11 @@ export function EscapeRoomPlayPage() {
                   value={typedAnswer}
                   onChange={(e) => setTypedAnswer(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSubmitAnswer(typedAnswer)}
-                  placeholder="Type your answer..."
+                  placeholder={tr('Type your answer...')}
                   className={`flex-1 rounded-lg border px-3 py-2 outline-none ${answerFeedback === 'wrong' ? 'border-destructive bg-destructive/10 animate-shake' : 'border-border'}`}
                 />
                 <button onClick={() => handleSubmitAnswer(typedAnswer)} className="rounded-lg bg-primary px-4 py-2 font-semibold text-primary-foreground">
-                  Submit
+                  {tr('Submit')}
                 </button>
               </div>
             ) : (
@@ -393,10 +394,10 @@ export function EscapeRoomPlayPage() {
                 ))}
               </div>
             )}
-            {answerFeedback === 'wrong' && <p className="mt-2 text-sm text-destructive">Not quite - try again.</p>}
+            {answerFeedback === 'wrong' && <p className="mt-2 text-sm text-destructive">{tr('Not quite - try again.')}</p>}
             {wrongAnswersOnCurrent >= ANSWER_HINT_THRESHOLD && current.questionHintExtra && (
               <p className="mt-2 rounded-lg border border-secondary bg-secondary/10 px-3 py-2 text-sm text-primary">
-                💡 <span className="font-semibold">Hint:</span> {current.questionHintExtra}
+                💡 <span className="font-semibold">{tr('Hint:')}</span> {current.questionHintExtra}
               </p>
             )}
           </div>

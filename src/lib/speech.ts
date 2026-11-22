@@ -6,7 +6,16 @@ export type SpeechLang = 'en' | 'ar';
 const bestBy: Partial<Record<SpeechLang, SpeechSynthesisVoice | null>> = {};
 let hooked = false;
 
+/** Teacher-uploaded recordings, keyed by the exact audio text. When one exists it is played instead of the synthetic voice. */
+const recordings = new Map<string, string>();
+let player: HTMLAudioElement | null = null;
+export function registerRecordings(items: { audio?: string; audioUrl?: string }[]) {
+  recordings.clear();
+  for (const it of items) if (it.audio && it.audioUrl) recordings.set(it.audio.trim(), it.audioUrl);
+}
+
 export function speechAvailable(): boolean {
+  if (recordings.size > 0) return true;
   return typeof window !== 'undefined' && 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
 }
 
@@ -52,6 +61,15 @@ export function voiceName(lang: SpeechLang = 'en'): string { initVoice(); refres
 
 /** Reads text aloud. The language is detected from the text unless given. */
 export function speakNatural(text: string, rate = 0.9, lang?: SpeechLang): boolean {
+  const rec = recordings.get(text.trim());
+  if (rec) {
+    try {
+      player?.pause();
+      player = new Audio(rec);
+      void player.play().catch(() => undefined);
+      return true;
+    } catch { /* fall through to the synthetic voice */ }
+  }
   try {
     if (!speechAvailable()) return false;
     initVoice();
@@ -68,5 +86,6 @@ export function speakNatural(text: string, rate = 0.9, lang?: SpeechLang): boole
 }
 
 export function stopSpeaking() {
+  try { player?.pause(); } catch { /* ignore */ }
   try { if (speechAvailable()) window.speechSynthesis.cancel(); } catch { /* ignore */ }
 }

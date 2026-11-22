@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { AdminNotificationsProvider } from './contexts/AdminNotificationsContext';
@@ -30,16 +31,33 @@ import { HuntEntryPage, HuntRoomPage } from './pages/HuntRoomPage';
 
 import { loadRemoteStoreItems } from './features/avatar/remoteCatalog';
 
-const AvatarPage = lazy(() => import('./pages/AvatarPage').then((m) => ({ default: m.AvatarPage })));
-const StoreAdminPage = lazy(() => import('./pages/StoreAdminPage').then((m) => ({ default: m.StoreAdminPage })));
-const MonsterQuestPage = lazy(() => import('./features/monsterQuest/MonsterQuestPage').then((m) => ({ default: m.MonsterQuestPage })));
-const TeacherSubjectsPage = lazy(() => import('./features/subjects/TeacherSubjectsPage').then((m) => ({ default: m.TeacherSubjectsPage })));
-const AdminSubjectsPage = lazy(() => import('./features/subjects/AdminSubjectsPage').then((m) => ({ default: m.AdminSubjectsPage })));
-const StorePage = lazy(() => import('./pages/StorePage').then((m) => ({ default: m.StorePage })));
-const pageFallback = <p className="p-10 text-center text-muted-foreground">Loading...</p>;
+/** After a new deploy an open tab still points at deleted chunk files: reload once to pick up the new build. */
+function lazyRetry<T extends { default: React.ComponentType<any> }>(load: () => Promise<T>) {
+  return lazy(() =>
+    load().then(
+      (m) => { try { sessionStorage.removeItem('chunk-reload'); } catch { /* ignore */ } return m; },
+      (err) => {
+        let again = false;
+        try { again = sessionStorage.getItem('chunk-reload') === '1'; if (!again) sessionStorage.setItem('chunk-reload', '1'); } catch { /* ignore */ }
+        if (!again) { window.location.reload(); return new Promise<T>(() => {}); }
+        throw err;
+      },
+    ),
+  );
+}
+const AvatarPage = lazyRetry(() => import('./pages/AvatarPage').then((m) => ({ default: m.AvatarPage })));
+const StoreAdminPage = lazyRetry(() => import('./pages/StoreAdminPage').then((m) => ({ default: m.StoreAdminPage })));
+const MonsterQuestPage = lazyRetry(() => import('./features/monsterQuest/MonsterQuestPage').then((m) => ({ default: m.MonsterQuestPage })));
+const TeacherSubjectsPage = lazyRetry(() => import('./features/subjects/TeacherSubjectsPage').then((m) => ({ default: m.TeacherSubjectsPage })));
+const AdminSubjectsPage = lazyRetry(() => import('./features/subjects/AdminSubjectsPage').then((m) => ({ default: m.AdminSubjectsPage })));
+const StorePage = lazyRetry(() => import('./pages/StorePage').then((m) => ({ default: m.StorePage })));
+const pageFallback = <p className="p-10 text-center text-muted-foreground">{tr('Loading...')}</p>;
 import './i18n/config';
 
+import { tr } from './i18n/tr';
 export default function App() {
+  const { i18n } = useTranslation();
+  const lang = i18n.language?.startsWith('ar') ? 'ar' : 'en';
   // Items an admin added in the Style Store admin page
   useEffect(() => {
     void loadRemoteStoreItems();
@@ -49,7 +67,7 @@ export default function App() {
       <AdminNotificationsProvider>
       <GuestProgressProvider>
         <BrowserRouter basename={import.meta.env.BASE_URL}>
-          <div className="min-h-screen bg-background">
+          <div key={lang} className="min-h-screen bg-background">
             <AnnouncementBar />
             <Header />
             <HeroMediaBanner />

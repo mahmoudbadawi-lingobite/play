@@ -17,6 +17,8 @@ import { TreasureHuntGame } from './treasureHunt/TreasureHuntGame';
 import { useAvatarState } from '../../features/avatar/avatarStore';
 import { AvatarImage } from '../../features/avatar/AvatarImage';
 
+import { registerRecordings } from '../../lib/speech';
+import { tr } from '../../i18n/tr';
 export interface GameProps {
   items: ContentSet['items'];
   /** The content set's skill - lets a game pick question styles that suit it. */
@@ -56,6 +58,7 @@ export function GameShell() {
     if (!setId) return;
     getContentSet(setId).then((s) => {
       setSet(s);
+      registerRecordings(s?.items ?? []);
       setLoading(false);
       if (s && !countedRef.current) {
         countedRef.current = true;
@@ -65,9 +68,9 @@ export function GameShell() {
     });
   }, [setId]);
 
-  if (loading) return <p className="p-8 text-center text-muted-foreground">Loading game...</p>;
+  if (loading) return <p className="p-8 text-center text-muted-foreground">{tr('Loading game...')}</p>;
   if (!set || !gameKey || !GAME_COMPONENTS[gameKey]) {
-    return <p className="p-8 text-center text-muted-foreground">This game isn't available.</p>;
+    return <p className="p-8 text-center text-muted-foreground">{tr('This game isn\'t available.')}</p>;
   }
 
   const GameComponent = GAME_COMPONENTS[gameKey];
@@ -117,25 +120,25 @@ export function GameShell() {
           ) : (
             <span className="text-4xl">🎉</span>
           )}
-          <h2 className="mt-3 font-display text-2xl font-bold text-primary">Nice work!</h2>
-          <p className="mt-1 text-muted-foreground">{set.title} · {gameDef.name}</p>
+          <h2 className="mt-3 font-display text-2xl font-bold text-primary">{tr('Nice work!')}</h2>
+          <p className="mt-1 text-muted-foreground">{set.title} · {tr(gameDef.name)}</p>
           <div className="mt-6 grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-muted-foreground">Accuracy</p>
+              <p className="text-sm text-muted-foreground">{tr('Accuracy')}</p>
               <p className="font-display text-2xl font-bold text-secondary">{accuracy}%</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">XP earned</p>
+              <p className="text-sm text-muted-foreground">{tr('XP earned')}</p>
               <p className="font-display text-2xl font-bold text-primary">+{xpEarned}</p>
             </div>
           </div>
           {isGuest && <p className="mt-4 text-xs text-muted-foreground">{t('guestNoticeSave')} (session XP: {guestXP})</p>}
           <div className="mt-6 flex justify-center gap-3">
             <button onClick={() => { setFinished(false); startRef.current = Date.now(); }} className="rounded-lg bg-secondary px-4 py-2 text-sm font-semibold text-secondary-foreground">
-              Play again
+              {tr('Play again')}
             </button>
             <Link to="/library" className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-primary">
-              Back to library
+              {tr('Back to library')}
             </Link>
           </div>
         </div>
@@ -145,7 +148,7 @@ export function GameShell() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <p className="text-sm uppercase tracking-wide text-secondary">{gameDef.name}</p>
+      <p className="text-sm uppercase tracking-wide text-secondary">{tr(gameDef.name)}</p>
       <h1 className="font-display text-2xl font-bold text-primary">{set.title}</h1>
       <div className="mt-6 ltr-always">
         <GameComponent items={set.items} skill={set.skill} onFinish={handleFinish} />

@@ -31,6 +31,7 @@ import { ChooseHero } from '../features/avatar/ChooseHero';
 import { useCatalogVersion } from '../features/avatar/useCatalog';
 import { CoinPill, ItemThumb, LevelBadge } from '../features/avatar/ui';
 
+import { tr } from '../i18n/tr';
 const SLOTS: Slot[] = [...REQUIRED_SLOTS, ...OPTIONAL_SLOTS];
 
 export function AvatarPage() {
@@ -65,7 +66,7 @@ export function AvatarPage() {
   return (
     <div className="mx-auto max-w-6xl px-3 py-6 sm:px-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-3xl font-bold text-primary">My Avatar</h1>
+        <h1 className="font-display text-3xl font-bold text-primary">{tr('My Avatar')}</h1>
         <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-[#6C4DFF] to-[#3FA9FF] px-3 py-2">
           <LevelBadge />
           <CoinPill coins={state.coins} />
@@ -77,18 +78,18 @@ export function AvatarPage() {
         <div className="relative self-start overflow-hidden rounded-3xl border-4 border-primary bg-gradient-to-b from-sky-300 via-sky-200 to-violet-200 lg:sticky lg:top-20">
           <AvatarStageView gender={gender} look={look} className="h-[420px] w-full sm:h-[520px]" onApi={setApi} />
           <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
-            <button type="button" onClick={() => api?.rotateBy(-0.6)} aria-label="Turn left" className="rounded-full bg-white/90 px-4 py-2 text-lg font-bold text-primary shadow">◀</button>
-            <button type="button" onClick={() => api?.zoomBy(0.85)} aria-label="Zoom in" className="rounded-full bg-white/90 px-4 py-2 text-lg font-bold text-primary shadow">＋</button>
-            <button type="button" onClick={() => api?.zoomBy(1.18)} aria-label="Zoom out" className="rounded-full bg-white/90 px-4 py-2 text-lg font-bold text-primary shadow">－</button>
-            <button type="button" onClick={() => api?.rotateBy(0.6)} aria-label="Turn right" className="rounded-full bg-white/90 px-4 py-2 text-lg font-bold text-primary shadow">▶</button>
+            <button type="button" onClick={() => api?.rotateBy(-0.6)} aria-label={tr('Turn left')} className="rounded-full bg-white/90 px-4 py-2 text-lg font-bold text-primary shadow">◀</button>
+            <button type="button" onClick={() => api?.zoomBy(0.85)} aria-label={tr('Zoom in')} className="rounded-full bg-white/90 px-4 py-2 text-lg font-bold text-primary shadow">＋</button>
+            <button type="button" onClick={() => api?.zoomBy(1.18)} aria-label={tr('Zoom out')} className="rounded-full bg-white/90 px-4 py-2 text-lg font-bold text-primary shadow">－</button>
+            <button type="button" onClick={() => api?.rotateBy(0.6)} aria-label={tr('Turn right')} className="rounded-full bg-white/90 px-4 py-2 text-lg font-bold text-primary shadow">▶</button>
           </div>
-          <p className="absolute left-3 top-3 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-primary">Drag to spin · scroll to zoom</p>
+          <p className="absolute left-3 top-3 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-primary">{tr('Drag to spin · scroll to zoom')}</p>
         </div>
 
         {/* Controls */}
         <div className="space-y-4">
           <section className="card-surface p-4">
-            <h2 className="font-display text-lg font-semibold text-primary">What I'm wearing</h2>
+            <h2 className="font-display text-lg font-semibold text-primary">{tr('What I\'m wearing')}</h2>
             <ul className="mt-2 divide-y divide-border/60">
               {SLOTS.map((slot) => {
                 const current = getItem(look[slot]);
@@ -116,7 +117,7 @@ export function AvatarPage() {
                         {!required && (
                           <button type="button" onClick={() => unequipSlot(slot)} className={`rounded-xl border-2 p-1 text-center text-xs font-bold ${!look[slot] ? 'border-secondary bg-secondary/15' : 'border-border'}`}>
                             <ItemThumb gender={gender} item={null} size={56} />
-                            None
+                            {tr('None')}
                           </button>
                         )}
                         {options.map((it) => (
@@ -127,7 +128,7 @@ export function AvatarPage() {
                         ))}
                         {options.length === 0 && (
                           <p className="col-span-full text-xs text-muted-foreground">
-                            Nothing here yet. Visit the <Link to="/store" className="font-bold text-secondary underline">Style Store</Link>!
+                            Nothing here yet. Visit the <Link to="/store" className="font-bold text-secondary underline">{tr('Style Store')}</Link>!
                           </p>
                         )}
                       </div>
@@ -139,14 +140,14 @@ export function AvatarPage() {
           </section>
 
           <section className="card-surface p-4">
-            <h2 className="font-display text-lg font-semibold text-primary">Skin and hair color</h2>
-            <p className="mt-2 text-xs font-semibold text-muted-foreground">Skin</p>
+            <h2 className="font-display text-lg font-semibold text-primary">{tr('Skin and hair color')}</h2>
+            <p className="mt-2 text-xs font-semibold text-muted-foreground">{tr('Skin')}</p>
             <div className="mt-1 flex flex-wrap gap-2">
               {SKINS.map((s) => (
                 <button key={s.id} type="button" onClick={() => setSkin(s.id)} aria-label={s.name} aria-pressed={look.skin === s.id} className={`h-9 w-9 rounded-full border-4 ${look.skin === s.id ? 'border-secondary' : 'border-white'} shadow`} style={{ background: s.color }} />
               ))}
             </div>
-            <p className="mt-3 text-xs font-semibold text-muted-foreground">Hair</p>
+            <p className="mt-3 text-xs font-semibold text-muted-foreground">{tr('Hair')}</p>
             <div className="mt-1 flex flex-wrap gap-2">
               {HAIR_COLORS.map((h) => (
                 <button key={h.id} type="button" onClick={() => setHairColor(h.id)} aria-label={h.name} aria-pressed={look.hairColor === h.id} className={`h-9 w-9 rounded-full border-4 ${look.hairColor === h.id ? 'border-secondary' : 'border-white'} shadow`} style={{ background: h.color }} />
@@ -157,8 +158,8 @@ export function AvatarPage() {
           <section className="card-surface p-4">
             <h2 className="font-display text-lg font-semibold text-primary">My favorite looks <span className="text-sm font-normal text-muted-foreground">({saved.length}/{MAX_SAVED_LOOKS})</span></h2>
             <div className="mt-2 flex gap-2">
-              <input value={name} onChange={(e) => setName(e.target.value)} maxLength={20} placeholder="Name this look" aria-label="Name this look" className="min-w-0 flex-1 rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary" />
-              <button type="button" onClick={doSave} className="rounded-lg bg-secondary px-4 py-2 text-sm font-bold text-secondary-foreground">Save look</button>
+              <input value={name} onChange={(e) => setName(e.target.value)} maxLength={20} placeholder={tr('Name this look')} aria-label={tr('Name this look')} className="min-w-0 flex-1 rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary" />
+              <button type="button" onClick={doSave} className="rounded-lg bg-secondary px-4 py-2 text-sm font-bold text-secondary-foreground">{tr('Save look')}</button>
             </div>
             {msg && <p className="mt-1 text-xs font-semibold text-secondary" aria-live="polite">{msg}</p>}
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -167,12 +168,12 @@ export function AvatarPage() {
                   <AvatarImage gender={gender} look={s.look} view="body" size={84} className="mx-auto" />
                   <p className="truncate text-sm font-bold text-primary">{s.name}</p>
                   <div className="mt-1 flex gap-1">
-                    <button type="button" onClick={() => wearSavedLook(s.id)} className="flex-1 rounded-lg bg-secondary px-2 py-1 text-xs font-bold text-secondary-foreground">Wear</button>
+                    <button type="button" onClick={() => wearSavedLook(s.id)} className="flex-1 rounded-lg bg-secondary px-2 py-1 text-xs font-bold text-secondary-foreground">{tr('Wear')}</button>
                     <button type="button" onClick={() => deleteSavedLook(s.id)} aria-label={`Delete ${s.name}`} className="rounded-lg border border-border px-2 py-1 text-xs font-bold text-primary">✕</button>
                   </div>
                 </div>
               ))}
-              {saved.length === 0 && <p className="col-span-full text-xs text-muted-foreground">Save your best outfits here and wear them again with one tap.</p>}
+              {saved.length === 0 && <p className="col-span-full text-xs text-muted-foreground">{tr('Save your best outfits here and wear them again with one tap.')}</p>}
             </div>
           </section>
 

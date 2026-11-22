@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import type { GameProps } from './GameShell';
 import { generateCrossword } from '../../games/crosswordGenerator';
 
+import { tr } from '../../i18n/tr';
 export function CrosswordGame({ items, onFinish }: GameProps) {
   const layout = useMemo(() => generateCrossword(items.slice(0, 12)), [items]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -61,7 +62,7 @@ export function CrosswordGame({ items, onFinish }: GameProps) {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Across</p>
+          <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">{tr('Across')}</p>
           {layout.words.filter((w) => w.direction === 'across').map((w) => (
             <div key={w.itemId} className="mb-1 flex items-center gap-2 text-sm text-primary">
               {w.imageUrl && <img src={w.imageUrl} alt="" className="h-8 w-8 rounded object-contain" />}
@@ -70,7 +71,7 @@ export function CrosswordGame({ items, onFinish }: GameProps) {
           ))}
         </div>
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Down</p>
+          <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">{tr('Down')}</p>
           {layout.words.filter((w) => w.direction === 'down').map((w) => (
             <div key={w.itemId} className="mb-1 flex items-center gap-2 text-sm text-primary">
               {w.imageUrl && <img src={w.imageUrl} alt="" className="h-8 w-8 rounded object-contain" />}
@@ -85,7 +86,7 @@ export function CrosswordGame({ items, onFinish }: GameProps) {
         disabled={checked}
         className="mt-6 w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-40"
       >
-        Check answers
+        {tr('Check answers')}
       </button>
     </div>
   );

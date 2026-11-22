@@ -13,6 +13,7 @@ import { AiQuestionMaker } from './AiQuestionMaker';
 import { GradePicker } from '../../subjects/GradePicker';
 import { COGNITIVE_LEVELS, picksToArrays, picksToTags, rowToPicks, type Picks } from '../../subjects/types';
 
+import { tr } from '../../../i18n/tr';
 const blank = (audience: string[] = []): Partial<BankQuestion> => ({ type: 'mcq', subject: 'English', difficulty: 1, xp_reward: 5, active: true, prompt: '', answer: '', ...(audience.length ? { class_ids: audience } : {}) });
 const lines = (s: string) => s.split('\n').map((x) => x.trim()).filter(Boolean);
 const TEMPLATE_COLS = ['type', 'prompt', 'options', 'answer', 'explanation', 'topic', 'subject', 'grade', 'difficulty', 'xp_reward', 'time_limit_s', 'passage', 'tts_text', 'audio_url', 'image_url', 'skill_id'];
@@ -59,10 +60,10 @@ function AudiencePicker({ classes, value, onChange, light }: { classes: SchoolCl
   const chip = (active: boolean) => `rounded-full border-2 px-3 py-1 text-xs font-extrabold ${active ? on : off}`;
   const toggle = (id: string) => onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
   return (
-    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Who gets these questions">
+    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={tr('Who gets these questions')}>
       <button type="button" className={chip(value.length === 0)} aria-pressed={value.length === 0} onClick={() => onChange([])}>🌍 All my students</button>
       {classes.map((c) => <button key={c.id} type="button" className={chip(value.includes(c.id))} aria-pressed={value.includes(c.id)} onClick={() => toggle(c.id)}>{c.name} · {c.studentIds.length}</button>)}
-      {classes.length === 0 && <span className="text-xs font-semibold opacity-70">Create a class under My Classes to aim questions at it.</span>}
+      {classes.length === 0 && <span className="text-xs font-semibold opacity-70">{tr('Create a class under My Classes to aim questions at it.')}</span>}
     </div>
   );
 }
@@ -176,7 +177,7 @@ export function QuestionBank() {
         const wrong = own.length >= 2 ? own.slice(0, 3) : terms.filter((t) => t.toLowerCase() !== it.term.trim().toLowerCase()).sort(() => Math.random() - 0.5).slice(0, 3);
         const choices = [it.term.trim(), ...wrong].sort(() => Math.random() - 0.5);
         // listening / reading content keeps its audio text or passage and becomes the matching question type
-        if (it.audio && wrong.length >= 2) return { type: 'listening' as const, prompt: it.clue, tts_text: it.audio, options: choices, answer: it.term.trim(), explanation: `${it.term}`, topic: s.title, subject: 'English', ...tg, difficulty: 2, xp_reward: 6, time_limit_s: 40, active: true };
+        if (it.audio && wrong.length >= 2) return { type: 'listening' as const, prompt: it.clue, tts_text: it.audio, audio_url: it.audioUrl ?? null, options: choices, answer: it.term.trim(), explanation: `${it.term}`, topic: s.title, subject: 'English', ...tg, difficulty: 2, xp_reward: 6, time_limit_s: 40, active: true };
         if (it.passage && wrong.length >= 2) return { type: 'reading' as const, prompt: it.clue, passage: it.passage, options: choices, answer: it.term.trim(), explanation: `${it.term}`, topic: s.title, subject: 'English', ...tg, difficulty: 2, xp_reward: 6, time_limit_s: 60, active: true };
         const useMcq = wrong.length === 3 && idx % 2 === 0;
         return useMcq
@@ -229,95 +230,95 @@ export function QuestionBank() {
           <label className="mq-btn mq-btn-blue cursor-pointer">⬆ Import (.xlsx / .csv / .json)<input type="file" accept=".xlsx,.xls,.csv,.json" className="hidden" onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ''; }} /></label>
           <GameButton tone="gold" onClick={() => setAiOpen(true)}>🤖 Make with AI</GameButton>
           <GameButton tone="ghost" onClick={template}>⬇ Template</GameButton>
-          <GameButton tone="red" onClick={() => setByClass({ all: false, picked: [] })}>🗑 Delete by class…</GameButton>
+          <GameButton tone="red" onClick={() => setByClass({ all: false, picked: [] })}>{tr('🗑 Delete by class…')}</GameButton>
           <GameButton tone="ghost" onClick={openSets}>📚 From the Content Library</GameButton>
         </div>
         {targeting && (
           <div className="mt-3">
-            <p className="mb-1 text-xs font-extrabold uppercase text-white/80">New, imported and generated questions go to</p>
+            <p className="mb-1 text-xs font-extrabold uppercase text-white/80">{tr('New, imported and generated questions go to')}</p>
             <AudiencePicker classes={classes} value={newAudience} onChange={setNewAudience} />
           </div>)}
         <p className="mt-2 text-xs font-semibold text-white/75">Students get questions in capture challenges, training and special attacks, matched to the monster and zone difficulty. A question aimed at classes is only asked to students in those classes; "All my students" questions go to the students of all your classes (not to other teachers' classes). You can edit or delete only your own; admins manage all.</p>
       </Panel>
-      {!targeting && <p className="rounded-xl bg-yellow-500/90 px-3 py-2 text-sm font-bold text-[#10285a]" role="status">Class targeting is not switched on yet: run supabase/monster_quest_teacher_stage1.sql in the Supabase SQL editor, then reload.</p>}
+      {!targeting && <p className="rounded-xl bg-yellow-500/90 px-3 py-2 text-sm font-bold text-[#10285a]" role="status">{tr('Class targeting is not switched on yet: run supabase/monster_quest_teacher_stage1.sql in the Supabase SQL editor, then reload.')}</p>}
       {info && <p className="rounded-xl bg-green-600/90 px-3 py-2 text-sm font-bold text-white" role="status">{info}</p>}
       {err && <p className="rounded-xl bg-red-500/90 px-3 py-2 text-sm font-bold text-white" role="alert">{err}</p>}
 
       <div className="flex flex-wrap gap-2">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search prompt or topic…" aria-label="Search questions" className={`${inp} min-w-[160px] flex-1`} />
-        <select value={ft} onChange={(e) => setFt(e.target.value as any)} className={inp} aria-label="Filter by type"><option value="all">All types</option>{QUESTION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</select>
-        <select value={fd} onChange={(e) => setFd(+e.target.value)} className={inp} aria-label="Filter by difficulty"><option value={0}>Any difficulty</option>{[1, 2, 3, 4, 5].map((d) => <option key={d} value={d}>Difficulty {d}</option>)}</select>
-        {subj.ready && subj.allowed.length > 1 && <select value={fs} onChange={(e) => setFs(e.target.value)} className={inp} aria-label="Filter by subject"><option value="all">All subjects</option>{subj.allowed.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>}
-        {targeting && <select value={fa} onChange={(e) => setFa(e.target.value)} className={inp} aria-label="Filter by audience"><option value="all">Any audience</option><option value="everyone">All my students</option>{classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>}
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr('Search prompt or topic…')} aria-label={tr('Search questions')} className={`${inp} min-w-[160px] flex-1`} />
+        <select value={ft} onChange={(e) => setFt(e.target.value as any)} className={inp} aria-label={tr('Filter by type')}><option value="all">{tr('All types')}</option>{QUESTION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</select>
+        <select value={fd} onChange={(e) => setFd(+e.target.value)} className={inp} aria-label={tr('Filter by difficulty')}><option value={0}>{tr('Any difficulty')}</option>{[1, 2, 3, 4, 5].map((d) => <option key={d} value={d}>Difficulty {d}</option>)}</select>
+        {subj.ready && subj.allowed.length > 1 && <select value={fs} onChange={(e) => setFs(e.target.value)} className={inp} aria-label={tr('Filter by subject')}><option value="all">{tr('All subjects')}</option>{subj.allowed.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>}
+        {targeting && <select value={fa} onChange={(e) => setFa(e.target.value)} className={inp} aria-label={tr('Filter by audience')}><option value="all">{tr('Any audience')}</option><option value="everyone">{tr('All my students')}</option>{classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>}
       </div>
       {sel.size > 0 && (
         <Panel>
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-bold text-white">{sel.size} selected</span>
             {targeting && <GameButton tone="blue" onClick={() => { setBulkAud([]); setBulk(true); }}>🎯 Set audience…</GameButton>}
-            <GameButton tone="red" onClick={() => setAskBulkDel(true)}>🗑 Delete {sel.size}…</GameButton>
-            <GameButton tone="ghost" onClick={() => setSel(new Set())}>Clear</GameButton>
+            <GameButton tone="red" onClick={() => setAskBulkDel(true)}>🗑 {tr('Delete {n}…', { n: sel.size })}</GameButton>
+            <GameButton tone="ghost" onClick={() => setSel(new Set())}>{tr('Clear')}</GameButton>
           </div>
         </Panel>)}
 
       <Panel className="!p-0 overflow-x-auto">
-        {loading ? <p className="p-4 font-bold text-white">Loading…</p> : (
+        {loading ? <p className="p-4 font-bold text-white">{tr('Loading…')}</p> : (
           <table className="w-full min-w-[640px] text-left text-sm text-white">
-            <thead className="bg-black/25 text-xs uppercase"><tr><th className="w-8 p-2"><input type="checkbox" aria-label="Select all my questions shown" checked={allSelected} onChange={() => setSel(allSelected ? new Set() : new Set(mineShown.map((r) => r.id)))} /></th><th className="p-2">Question</th><th className="p-2">Type</th><th className="p-2">Topic</th>{targeting && <th className="p-2">Audience</th>}<th className="p-2 text-center">Diff.</th><th className="p-2 text-center">Asked</th><th className="p-2 text-center">Correct</th><th className="p-2" /></tr></thead>
+            <thead className="bg-black/25 text-xs uppercase"><tr><th className="w-8 p-2"><input type="checkbox" aria-label={tr('Select all my questions shown')} checked={allSelected} onChange={() => setSel(allSelected ? new Set() : new Set(mineShown.map((r) => r.id)))} /></th><th className="p-2">{tr('Question')}</th><th className="p-2">{tr('Type')}</th><th className="p-2">{tr('Topic')}</th>{targeting && <th className="p-2">{tr('Audience')}</th>}<th className="p-2 text-center">{tr('Diff.')}</th><th className="p-2 text-center">{tr('Asked')}</th><th className="p-2 text-center">{tr('Correct')}</th><th className="p-2" /></tr></thead>
             <tbody>
               {shown.map((r) => { const s = stats[r.id]; const mine = isMine(r); return (
                 <tr key={r.id} className={`border-t border-white/10 ${r.active ? '' : 'opacity-50'}`}>
-                  <td className="p-2">{mine && <input type="checkbox" aria-label="Select question" checked={sel.has(r.id)} onChange={() => toggleSel(r.id)} />}</td>
+                  <td className="p-2">{mine && <input type="checkbox" aria-label={tr('Select question')} checked={sel.has(r.id)} onChange={() => toggleSel(r.id)} />}</td>
                   <td className="max-w-[320px] p-2 font-semibold"><span className="line-clamp-2">{r.prompt}</span></td>
                   <td className="p-2 text-xs">{QUESTION_TYPES.find((t) => t.value === r.type)?.label}</td><td className="p-2 text-xs">{r.topic ?? '–'}{r.grade ? <span className="ml-1 rounded bg-white/15 px-1 text-[10px] font-extrabold">G{r.grade}</span> : null}{(r.skill_ids?.length || r.skill_id) && <span className="block text-[10px] opacity-70">{(r.skill_ids?.length ? r.skill_ids : [r.skill_id!]).map((id) => subj.subjects.flatMap((x) => x.domains.flatMap((d) => d.skills)).find((k) => k.id === id)?.name).filter(Boolean).join(' · ')}</span>}</td>
                   {targeting && <td className="max-w-[160px] p-2 text-xs"><span className={`line-clamp-2 ${r.class_ids?.length ? 'font-bold text-yellow-200' : 'text-white/70'}`}>{audienceOf(r)}</span></td>}
                   <td className="p-2 text-center">{r.difficulty}</td><td className="p-2 text-center">{s?.asked ?? 0}</td><td className="p-2 text-center">{s?.asked ? `${Math.round((s.correct / s.asked) * 100)}%` : '–'}</td>
-                  <td className="whitespace-nowrap p-2 text-right">{mine && (<><button className="mr-2 font-bold text-yellow-300 hover:underline" onClick={() => setEdit(r)}>Edit</button><button className="mr-2 font-bold text-sky-300 hover:underline" onClick={() => toggle(r)}>{r.active ? 'Hide' : 'Show'}</button><button className="font-bold text-red-300 hover:underline" onClick={() => setAskDel(r)}>Delete</button></>)}</td>
+                  <td className="whitespace-nowrap p-2 text-right">{mine && (<><button className="mr-2 font-bold text-yellow-300 hover:underline" onClick={() => setEdit(r)}>{tr('Edit')}</button><button className="mr-2 font-bold text-sky-300 hover:underline" onClick={() => toggle(r)}>{r.active ? 'Hide' : 'Show'}</button><button className="font-bold text-red-300 hover:underline" onClick={() => setAskDel(r)}>{tr('Delete')}</button></>)}</td>
                 </tr>); })}
-              {shown.length === 0 && <tr><td colSpan={9} className="p-4 text-center font-bold text-white/80">No questions found.</td></tr>}
+              {shown.length === 0 && <tr><td colSpan={9} className="p-4 text-center font-bold text-white/80">{tr('No questions found.')}</td></tr>}
             </tbody>
           </table>)}
       </Panel>
       <p className="text-xs font-semibold text-white/60">Showing {shown.length} of {rows.length}. Students never see answers in their browser; answers are checked on the server.</p>
 
       {askBulkDel && <ConfirmDialog title={`Delete ${sel.size} question${sel.size === 1 ? '' : 's'}?`} message="These questions and their statistics will be removed. Students' progress and rewards are not affected. This cannot be undone." confirmLabel="Delete all selected" tone="red" onConfirm={removeSelected} onCancel={() => setAskBulkDel(false)} />}
-      {askDel && <ConfirmDialog title="Delete this question?" message="This cannot be undone." confirmLabel="Delete" tone="red" onConfirm={() => remove(askDel)} onCancel={() => setAskDel(null)} />}
+      {askDel && <ConfirmDialog title={tr('Delete this question?')} message="This cannot be undone." confirmLabel="Delete" tone="red" onConfirm={() => remove(askDel)} onCancel={() => setAskDel(null)} />}
       {edit && <QuestionForm initial={edit} onClose={() => setEdit(null)} onSaved={async () => { setEdit(null); await load(); }} userId={profile.uid} classes={classes} targeting={targeting} />}
       {bulk && (
         <Modal onClose={() => setBulk(false)}>
           <p className="font-display text-lg font-extrabold text-[#10285a]">Who should get these {sel.size} question{sel.size === 1 ? '' : 's'}?</p>
-          <p className="mt-1 text-xs text-[#3d5a94]">Pick one or more of your classes, or All my students. This replaces their current audience.</p>
+          <p className="mt-1 text-xs text-[#3d5a94]">{tr('Pick one or more of your classes, or All my students. This replaces their current audience.')}</p>
           <div className="mt-3"><AudiencePicker light classes={classes} value={bulkAud} onChange={setBulkAud} /></div>
-          <div className="mt-4 grid grid-cols-2 gap-2"><GameButton tone="ghost" className="!text-[#10285a]" onClick={() => setBulk(false)}>Cancel</GameButton><GameButton tone="green" onClick={applyBulk}>Apply</GameButton></div>
+          <div className="mt-4 grid grid-cols-2 gap-2"><GameButton tone="ghost" className="!text-[#10285a]" onClick={() => setBulk(false)}>{tr('Cancel')}</GameButton><GameButton tone="green" onClick={applyBulk}>{tr('Apply')}</GameButton></div>
         </Modal>)}
       {aiOpen && <Modal wide onClose={() => setAiOpen(false)}><AiQuestionMaker subj={subj} onAdd={addFromAi} /></Modal>}
       {byClass && (() => { const plan = byClassPlan(); const chip = (on: boolean) => `rounded-full border-2 px-3 py-1 text-xs font-extrabold ${on ? 'border-[#c0392b] bg-[#c0392b] text-white' : 'border-[#1b4fb3] bg-white text-[#10285a]'}`;
         const toggleP = (id: string) => setByClass({ all: false, picked: byClass.picked.includes(id) ? byClass.picked.filter((z) => z !== id) : [...byClass.picked, id] });
         return (
         <Modal onClose={() => setByClass(null)}>
-          <p className="font-display text-lg font-extrabold text-[#10285a]">Delete my questions by class</p>
-          <p className="mt-1 text-xs text-[#3d5a94]">Only questions you created. Choose all of them, or pick the classes (and/or All my students) whose questions should go.</p>
-          <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Which questions to delete">
-            <button type="button" className={chip(byClass.all)} aria-pressed={byClass.all} onClick={() => setByClass({ all: !byClass.all, picked: [] })}>All my questions</button>
+          <p className="font-display text-lg font-extrabold text-[#10285a]">{tr('Delete my questions by class')}</p>
+          <p className="mt-1 text-xs text-[#3d5a94]">{tr('Only questions you created. Choose all of them, or pick the classes (and/or All my students) whose questions should go.')}</p>
+          <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label={tr('Which questions to delete')}>
+            <button type="button" className={chip(byClass.all)} aria-pressed={byClass.all} onClick={() => setByClass({ all: !byClass.all, picked: [] })}>{tr('All my questions')}</button>
             {!byClass.all && <>
               <button type="button" className={chip(byClass.picked.includes('everyone'))} aria-pressed={byClass.picked.includes('everyone')} onClick={() => toggleP('everyone')}>🌍 All my students</button>
               {classes.map((c) => <button key={c.id} type="button" className={chip(byClass.picked.includes(c.id))} aria-pressed={byClass.picked.includes(c.id)} onClick={() => toggleP(c.id)}>{c.name}</button>)}
             </>}
           </div>
           <p className="mt-3 rounded-xl bg-[#eaf2ff] p-2.5 text-sm font-bold text-[#10285a]">{plan.del.length} question{plan.del.length === 1 ? '' : 's'} will be deleted.{plan.kept.length > 0 && <span className="block text-xs font-semibold text-[#3d5a94]">{plan.kept.length} also aimed at other classes will be kept.</span>}</p>
-          <p className="mt-1 text-xs text-[#3d5a94]">Statistics of deleted questions are removed. Students' progress and rewards are not affected. This cannot be undone.</p>
-          <div className="mt-4 grid grid-cols-2 gap-2"><GameButton tone="ghost" className="!text-[#10285a]" onClick={() => setByClass(null)}>Cancel</GameButton><GameButton tone="red" disabled={plan.del.length === 0} onClick={deleteByClass}>Delete {plan.del.length}</GameButton></div>
+          <p className="mt-1 text-xs text-[#3d5a94]">{tr('Statistics of deleted questions are removed. Students\' progress and rewards are not affected. This cannot be undone.')}</p>
+          <div className="mt-4 grid grid-cols-2 gap-2"><GameButton tone="ghost" className="!text-[#10285a]" onClick={() => setByClass(null)}>{tr('Cancel')}</GameButton><GameButton tone="red" disabled={plan.del.length === 0} onClick={deleteByClass}>Delete {plan.del.length}</GameButton></div>
         </Modal>); })()}
       {sets && (
         <Modal onClose={() => setSets(null)}>
-          <p className="mb-2 rounded-xl bg-[#fff6d6] p-2 text-xs font-bold text-[#6b4e00]">Listening and reading sets keep their audio text and passages. Other sets become text questions.</p>
-          <p className="font-display text-lg font-extrabold text-[#10285a]">Create questions from a Content Library set</p>
-          <p className="mt-1 text-xs text-[#3d5a94]">Each term becomes a question: the clue is the prompt, the term is the answer (alternating multiple-choice and type-the-answer).</p>
+          <p className="mb-2 rounded-xl bg-[#fff6d6] p-2 text-xs font-bold text-[#6b4e00]">{tr('Listening and reading sets keep their audio text and passages. Other sets become text questions.')}</p>
+          <p className="font-display text-lg font-extrabold text-[#10285a]">{tr('Create questions from a Content Library set')}</p>
+          <p className="mt-1 text-xs text-[#3d5a94]">{tr('Each term becomes a question: the clue is the prompt, the term is the answer (alternating multiple-choice and type-the-answer).')}</p>
           <div className="mt-2 max-h-72 space-y-1.5 overflow-y-auto">
-            {sets.length === 0 && <p className="text-sm font-bold text-[#3d5a94]">Loading…</p>}
+            {sets.length === 0 && <p className="text-sm font-bold text-[#3d5a94]">{tr('Loading…')}</p>}
             {sets.map((s) => <button key={s.id} type="button" onClick={() => fromSet(s)} className="flex w-full items-center justify-between rounded-xl bg-[#eaf2ff] px-3 py-2 text-left hover:bg-[#d6e6ff]"><span className="font-bold text-[#10285a]">{s.title}</span><span className="text-xs font-bold text-[#3d5a94]">{s.items.length} items</span></button>)}
           </div>
-          <GameButton tone="blue" className="mt-3 w-full" onClick={() => setSets(null)}>Cancel</GameButton>
+          <GameButton tone="blue" className="mt-3 w-full" onClick={() => setSets(null)}>{tr('Cancel')}</GameButton>
         </Modal>)}
     </div>
   );
@@ -376,41 +377,41 @@ function QuestionForm({ initial, onClose, onSaved, userId, classes, targeting }:
     <Modal onClose={onClose} wide>
       <p className="font-display text-lg font-extrabold text-[#10285a]">{f.id ? 'Edit question' : 'New question'}</p>
       <div className="max-h-[70vh] overflow-y-auto pr-1">
-        <label className={lab}>Type</label>
+        <label className={lab}>{tr('Type')}</label>
         <select value={t} onChange={(e) => { set({ type: e.target.value as QuestionType }); setAnsText(''); }} className={inp}>{typeList.map((x) => <option key={x.value} value={x.value}>{x.label}</option>)}</select>
-        <label className={lab}>Question / instruction</label><textarea value={f.prompt ?? ''} onChange={(e) => set({ prompt: e.target.value })} rows={2} className={inp} />
-        {t === 'reading' && (<><label className={lab}>Reading passage</label><textarea value={f.passage ?? ''} onChange={(e) => set({ passage: e.target.value })} rows={4} className={inp} /></>)}
+        <label className={lab}>{tr('Question / instruction')}</label><textarea value={f.prompt ?? ''} onChange={(e) => set({ prompt: e.target.value })} rows={2} className={inp} />
+        {t === 'reading' && (<><label className={lab}>{tr('Reading passage')}</label><textarea value={f.passage ?? ''} onChange={(e) => set({ passage: e.target.value })} rows={4} className={inp} /></>)}
         {(t === 'listening' || t === 'spelling') && (<>
           <label className={lab}>Text to speak (browser voice){t === 'spelling' ? ' — this is the word to spell' : ''}</label><input value={f.tts_text ?? ''} onChange={(e) => set({ tts_text: e.target.value })} className={inp} />
-          <label className={lab}>…or audio file URL (optional)</label><input value={f.audio_url ?? ''} onChange={(e) => set({ audio_url: e.target.value })} placeholder="https://…" className={inp} /></>)}
+          <label className={lab}>…or audio file URL (optional)</label><input value={f.audio_url ?? ''} onChange={(e) => set({ audio_url: e.target.value })} placeholder={tr('https://…')} className={inp} /></>)}
         {(t === 'mcq' || t === 'listening' || t === 'reading') && (<>
-          <label className={lab}>Options (one per line)</label><textarea value={optText} onChange={(e) => setOptText(e.target.value)} rows={4} className={inp} />
-          <label className={lab}>Correct option</label><select value={ansText} onChange={(e) => setAnsText(e.target.value)} className={inp}><option value="">Choose…</option>{optionList.map((o) => <option key={o} value={o}>{o}</option>)}</select></>)}
-        {t === 'true_false' && (<><label className={lab}>Correct answer</label><select value={ansText} onChange={(e) => setAnsText(e.target.value)} className={inp}><option value="">Choose…</option><option>True</option><option>False</option></select></>)}
-        {(t === 'fill_blank' || t === 'spelling' || t === 'type_answer') && (<><label className={lab}>Accepted answers (one per line)</label><textarea value={ansText} onChange={(e) => setAnsText(e.target.value)} rows={2} className={inp} /></>)}
-        {t === 'sentence_order' && (<><label className={lab}>Correct sentence (students get the words shuffled)</label><input value={ansText} onChange={(e) => setAnsText(e.target.value)} className={inp} /></>)}
+          <label className={lab}>{tr('Options (one per line)')}</label><textarea value={optText} onChange={(e) => setOptText(e.target.value)} rows={4} className={inp} />
+          <label className={lab}>{tr('Correct option')}</label><select value={ansText} onChange={(e) => setAnsText(e.target.value)} className={inp}><option value="">{tr('Choose…')}</option>{optionList.map((o) => <option key={o} value={o}>{o}</option>)}</select></>)}
+        {t === 'true_false' && (<><label className={lab}>{tr('Correct answer')}</label><select value={ansText} onChange={(e) => setAnsText(e.target.value)} className={inp}><option value="">{tr('Choose…')}</option><option>{tr('True')}</option><option>{tr('False')}</option></select></>)}
+        {(t === 'fill_blank' || t === 'spelling' || t === 'type_answer') && (<><label className={lab}>{tr('Accepted answers (one per line)')}</label><textarea value={ansText} onChange={(e) => setAnsText(e.target.value)} rows={2} className={inp} /></>)}
+        {t === 'sentence_order' && (<><label className={lab}>{tr('Correct sentence (students get the words shuffled)')}</label><input value={ansText} onChange={(e) => setAnsText(e.target.value)} className={inp} /></>)}
         {t === 'word_match' && (<><label className={lab}>Pairs (one per line:  word = match)</label><textarea value={ansText} onChange={(e) => setAnsText(e.target.value)} rows={4} className={inp} /></>)}
-        <label className={lab}>Explanation shown after answering</label><input value={f.explanation ?? ''} onChange={(e) => set({ explanation: e.target.value })} className={inp} />
-        <label className={lab}>Image URL (optional)</label><input value={f.image_url ?? ''} onChange={(e) => set({ image_url: e.target.value })} className={inp} />
+        <label className={lab}>{tr('Explanation shown after answering')}</label><input value={f.explanation ?? ''} onChange={(e) => set({ explanation: e.target.value })} className={inp} />
+        <label className={lab}>{tr('Image URL (optional)')}</label><input value={f.image_url ?? ''} onChange={(e) => set({ image_url: e.target.value })} className={inp} />
         {tagged && (<div className="mt-2 rounded-xl bg-[#eaf2ff] p-2.5">
-          <p className="mb-1 text-xs font-extrabold uppercase text-[#3d5a94]">Subject and skill</p>
+          <p className="mb-1 text-xs font-extrabold uppercase text-[#3d5a94]">{tr('Subject and skill')}</p>
           <SubjectSkillPicker subjects={subj.allowed} canRequest multi={subj.multi} savesAll value={rowToPicks({ subjectId: f.subject_id ?? null, domainId: f.domain_id, skillId: f.skill_id, domainIds: f.domain_ids, skillIds: f.skill_ids })}
             onChange={(p) => { const sb = subj.subjectById(p.subjectId); const v = picksToTags(p, sb); const arr = picksToArrays(p, sb); const ok = subj.typesFor(v.subjectId).some((d) => d.id === f.type); set({ subject_id: v.subjectId, domain_id: v.domainId, skill_id: v.skillId, domain_ids: arr.domainIds, skill_ids: arr.skillIds, ...(ok || !v.subjectId ? {} : { type: (subj.typesFor(v.subjectId)[0]?.id ?? 'mcq') as QuestionType }) }); }} />
           {<div className="mt-2"><GradePicker value={f.grade ?? null} onChange={(g) => set({ grade: g })} /></div>}
-          <label className={lab}>Thinking level (optional)</label>
-          <select value={f.cognitive_level ?? ''} onChange={(e) => set({ cognitive_level: e.target.value || null })} className={inp}><option value="">Not set</option>{COGNITIVE_LEVELS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>
+          <label className={lab}>{tr('Thinking level (optional)')}</label>
+          <select value={f.cognitive_level ?? ''} onChange={(e) => set({ cognitive_level: e.target.value || null })} className={inp}><option value="">{tr('Not set')}</option>{COGNITIVE_LEVELS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>
         </div>)}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {!tagged && <div><label className={lab}>Subject</label><input value={f.subject ?? ''} onChange={(e) => set({ subject: e.target.value })} className={inp} /></div>}
-          <div><label className={lab}>Topic</label><input value={f.topic ?? ''} onChange={(e) => set({ topic: e.target.value })} className={inp} /></div>
-          <div><label className={lab}>Difficulty (1–5)</label><select value={f.difficulty ?? 1} onChange={(e) => set({ difficulty: +e.target.value })} className={inp}>{[1, 2, 3, 4, 5].map((d) => <option key={d}>{d}</option>)}</select></div>
-          <div><label className={lab}>XP reward</label><input type="number" min={0} max={50} value={f.xp_reward ?? 5} onChange={(e) => set({ xp_reward: +e.target.value })} className={inp} /></div>
-          <div><label className={lab}>Timer (seconds)</label><input type="number" min={5} value={f.time_limit_s ?? ''} onChange={(e) => set({ time_limit_s: e.target.value ? +e.target.value : null })} placeholder="none" className={inp} /></div>
+          {!tagged && <div><label className={lab}>{tr('Subject')}</label><input value={f.subject ?? ''} onChange={(e) => set({ subject: e.target.value })} className={inp} /></div>}
+          <div><label className={lab}>{tr('Topic')}</label><input value={f.topic ?? ''} onChange={(e) => set({ topic: e.target.value })} className={inp} /></div>
+          <div><label className={lab}>{tr('Difficulty (1–5)')}</label><select value={f.difficulty ?? 1} onChange={(e) => set({ difficulty: +e.target.value })} className={inp}>{[1, 2, 3, 4, 5].map((d) => <option key={d}>{d}</option>)}</select></div>
+          <div><label className={lab}>{tr('XP reward')}</label><input type="number" min={0} max={50} value={f.xp_reward ?? 5} onChange={(e) => set({ xp_reward: +e.target.value })} className={inp} /></div>
+          <div><label className={lab}>{tr('Timer (seconds)')}</label><input type="number" min={5} value={f.time_limit_s ?? ''} onChange={(e) => set({ time_limit_s: e.target.value ? +e.target.value : null })} placeholder={tr('none')} className={inp} /></div>
         </div>
-        {targeting && (<><label className={lab}>Who gets this question?</label><AudiencePicker light classes={classes} value={aud} onChange={setAud} />{kept.length > 0 && <p className="mt-1 text-xs font-semibold text-[#3d5a94]">Also aimed at {kept.length} class{kept.length === 1 ? '' : 'es'} of another teacher (kept as is).</p>}</>)}
+        {targeting && (<><label className={lab}>{tr('Who gets this question?')}</label><AudiencePicker light classes={classes} value={aud} onChange={setAud} />{kept.length > 0 && <p className="mt-1 text-xs font-semibold text-[#3d5a94]">Also aimed at {kept.length} class{kept.length === 1 ? '' : 'es'} of another teacher (kept as is).</p>}</>)}
       </div>
       {err && <p className="mt-2 rounded-xl bg-red-500/90 px-3 py-2 text-sm font-bold text-white" role="alert">{err}</p>}
-      <div className="mt-3 grid grid-cols-2 gap-2"><GameButton tone="ghost" className="!text-[#10285a]" onClick={onClose}>Cancel</GameButton><GameButton tone="green" disabled={saving} onClick={save}>{saving ? 'Saving…' : 'Save question'}</GameButton></div>
+      <div className="mt-3 grid grid-cols-2 gap-2"><GameButton tone="ghost" className="!text-[#10285a]" onClick={onClose}>{tr('Cancel')}</GameButton><GameButton tone="green" disabled={saving} onClick={save}>{saving ? 'Saving…' : 'Save question'}</GameButton></div>
     </Modal>
   );
 }

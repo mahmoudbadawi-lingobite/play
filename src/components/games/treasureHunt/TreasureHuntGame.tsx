@@ -12,6 +12,7 @@ import { WorldPicker, capacityOf, isWorldChoice, randomPair, type WorldChoice } 
 import { getVolume, isMuted, playMusic, playSfx, preloadSounds, setMuted as setSfxMuted, setVolume as setSfxVolume, stopMusic, stopSfx } from './huntSound';
 import './treasureHunt.css';
 
+import { tr } from '../../../i18n/tr';
 /**
  * Treasure Hunt: explore worlds, read the clues, find the chests and answer the question that
  * locks each one. Solo, or inside a live room (`multi`): race (everyone has their own run on the
@@ -624,9 +625,9 @@ export function TreasureHuntGame({ items, skill, onFinish, multi }: GameProps & 
   const myPlace = rows.findIndex((r) => r.you) + 1;
 
   // ================================================================= screens
-  if (phase === 'loading') return <p className="p-8 text-center text-muted-foreground">Packing the map and the explorers…</p>;
+  if (phase === 'loading') return <p className="p-8 text-center text-muted-foreground">{tr('Packing the map and the explorers…')}</p>;
 
-  if (phase === 'start' && multi) return <p className="p-8 text-center text-muted-foreground">Getting the worlds ready…</p>;
+  if (phase === 'start' && multi) return <p className="p-8 text-center text-muted-foreground">{tr('Getting the worlds ready…')}</p>;
 
   if (phase === 'start') {
     const room = capacityOf(worldChoice);
@@ -634,9 +635,9 @@ export function TreasureHuntGame({ items, skill, onFinish, multi }: GameProps & 
     return (
       <div className="rounded-2xl border-2 border-border bg-card p-4">
         <p className="font-display text-xl font-bold text-primary">🗺️ Treasure Hunt</p>
-        <p className="mt-1 text-sm text-muted-foreground">Pick a world. Read the clues, find the hidden chests, and answer the question that locks each one.</p>
+        <p className="mt-1 text-sm text-muted-foreground">{tr('Pick a world. Read the clues, find the hidden chests, and answer the question that locks each one.')}</p>
 
-        <p className="mt-4 text-sm font-extrabold text-primary">Choose your explorer</p>
+        <p className="mt-4 text-sm font-extrabold text-primary">{tr('Choose your explorer')}</p>
         <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
           {EXPLORERS.map((e) => (
             <button key={e.id} type="button" onClick={() => setExplorer(e.id)} aria-pressed={explorer === e.id} className={`flex flex-col items-center rounded-2xl border-2 px-1 py-2 ${explorer === e.id ? 'border-[#FF9A1F] bg-[#FF9A1F]/15' : 'border-border'}`}>
@@ -646,10 +647,10 @@ export function TreasureHuntGame({ items, skill, onFinish, multi }: GameProps & 
           ))}
         </div>
 
-        <p className="mt-4 text-sm font-extrabold text-primary">Choose your world</p>
+        <p className="mt-4 text-sm font-extrabold text-primary">{tr('Choose your world')}</p>
         <WorldPicker value={worldChoice} onChange={setWorldChoice} />
 
-        <p className="mt-4 text-sm font-extrabold text-primary">Difficulty</p>
+        <p className="mt-4 text-sm font-extrabold text-primary">{tr('Difficulty')}</p>
         <div className="mt-2 grid gap-2 sm:grid-cols-3">
           {(Object.keys(DIFFICULTY) as Difficulty[]).map((d) => (
             <button key={d} type="button" onClick={() => setDifficulty(d)} aria-pressed={difficulty === d} className={`rounded-2xl border-2 px-3 py-2 text-left ${difficulty === d ? 'border-[#FF9A1F] bg-[#FF9A1F]/15' : 'border-border'}`}>
@@ -664,7 +665,7 @@ export function TreasureHuntGame({ items, skill, onFinish, multi }: GameProps & 
         </p>
 
         <button type="button" onClick={startRun} className="mt-4 w-full rounded-xl bg-secondary px-6 py-4 text-xl font-extrabold text-secondary-foreground shadow">
-          Start the hunt
+          {tr('Start the hunt')}
         </button>
       </div>
     );
@@ -693,9 +694,9 @@ export function TreasureHuntGame({ items, skill, onFinish, multi }: GameProps & 
               : 'The hunt is over, but some chests were opened.'}
         </p>
         <div className="mt-4 grid grid-cols-3 gap-3">
-          <div><p className="text-xs text-muted-foreground">Chests</p><p className="font-display text-2xl font-bold text-primary">{opened}/{totalChests}</p></div>
-          <div><p className="text-xs text-muted-foreground">Coins</p><p className="font-display text-2xl font-bold text-primary">🪙 {isCoop ? team?.coins ?? 0 : coins}</p></div>
-          <div><p className="text-xs text-muted-foreground">Accuracy</p><p className="font-display text-2xl font-bold text-secondary">{accuracy}%</p></div>
+          <div><p className="text-xs text-muted-foreground">{tr('Chests')}</p><p className="font-display text-2xl font-bold text-primary">{opened}/{totalChests}</p></div>
+          <div><p className="text-xs text-muted-foreground">{tr('Coins')}</p><p className="font-display text-2xl font-bold text-primary">🪙 {isCoop ? team?.coins ?? 0 : coins}</p></div>
+          <div><p className="text-xs text-muted-foreground">{tr('Accuracy')}</p><p className="font-display text-2xl font-bold text-secondary">{accuracy}%</p></div>
         </div>
 
         {multi && (
@@ -741,7 +742,7 @@ export function TreasureHuntGame({ items, skill, onFinish, multi }: GameProps & 
   return (
     <div>
       <div ref={wrapRef} className="hunt-stage relative w-full overflow-hidden rounded-2xl border-4 border-[#2B2B6B] bg-sky-200" style={{ height: 'min(72vh, 560px)' }}>
-        <canvas ref={canvasRef} className="block h-full w-full" aria-label="Treasure map" />
+        <canvas ref={canvasRef} className="block h-full w-full" aria-label={tr('Treasure map')} />
 
         {/* sound controls: mute + volume for the ambient music */}
         <div className="absolute left-2 top-12 z-40 flex items-center gap-1.5 rounded-full border-2 border-white/70 bg-[#2B2B6B]/90 px-2 py-1 shadow">
@@ -771,7 +772,7 @@ export function TreasureHuntGame({ items, skill, onFinish, multi }: GameProps & 
               setVolumeState(v);
               setMutedState(isMuted());
             }}
-            aria-label="Music volume"
+            aria-label={tr('Music volume')}
             className="h-1.5 w-16 cursor-pointer accent-[#FF9A1F] sm:w-24"
           />
         </div>
@@ -846,12 +847,12 @@ export function TreasureHuntGame({ items, skill, onFinish, multi }: GameProps & 
                 onPointerUp={releaseStick}
                 onPointerCancel={releaseStick}
                 className="absolute bottom-24 left-3 h-28 w-28 rounded-full border-4 border-white/70 bg-black/25"
-                aria-label="Move"
+                aria-label={tr('Move')}
               >
                 <span className="pointer-events-none absolute h-12 w-12 rounded-full border-4 border-white bg-[#FF9A1F] shadow" style={{ left: `calc(50% - 1.5rem + ${knob.x * 2.2}rem)`, top: `calc(50% - 1.5rem + ${knob.y * 2.2}rem)` }} />
               </div>
             ) : (
-              <p className="pointer-events-none absolute bottom-24 left-3 rounded-lg bg-black/35 px-2 py-1 text-[11px] font-bold text-white">Arrow keys / WASD to walk</p>
+              <p className="pointer-events-none absolute bottom-24 left-3 rounded-lg bg-black/35 px-2 py-1 text-[11px] font-bold text-white">{tr('Arrow keys / WASD to walk')}</p>
             )}
           </>
         )}
@@ -866,9 +867,9 @@ export function TreasureHuntGame({ items, skill, onFinish, multi }: GameProps & 
               <p className="text-sm text-[#2B2B6B]">{world.tagline}</p>
               <p className="mt-1 text-sm font-bold text-[#2B2B6B]">{stageChests} chest{stageChests === 1 ? '' : 's'} to find.</p>
               {multi ? (
-                <p className="mt-3 text-sm font-extrabold text-[#c2410c]">Get ready…</p>
+                <p className="mt-3 text-sm font-extrabold text-[#c2410c]">{tr('Get ready…')}</p>
               ) : (
-                <button type="button" onClick={() => setPhase('play')} className="mt-3 w-full rounded-xl bg-[#FF9A1F] px-5 py-3 text-lg font-extrabold text-white shadow">Let's go!</button>
+                <button type="button" onClick={() => setPhase('play')} className="mt-3 w-full rounded-xl bg-[#FF9A1F] px-5 py-3 text-lg font-extrabold text-white shadow">{tr('Let\'s go!')}</button>
               )}
             </div>
           </div>

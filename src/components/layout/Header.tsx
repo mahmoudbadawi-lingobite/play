@@ -8,6 +8,7 @@ import { useAvatarState } from '../../features/avatar/avatarStore';
 import { AvatarImage } from '../../features/avatar/AvatarImage';
 import { AnimatedLogo, AnimatedName, useLogoAnimation } from '../common/AnimatedLogo';
 
+import { tr } from '../../i18n/tr';
 /**
  * One sidebar / top-nav link.
  *  - `.kid-ic` is the icon slot (hidden in the classic look, drawn by the kid skin)
@@ -81,7 +82,7 @@ export function Header() {
         active={on('/escape-rooms', '/escape-room', '/teacher/create-escape-room', '/teacher/my-escape-rooms')}
         onClick={close}
       >
-        Escape Rooms
+        {tr('Escape Rooms')}
       </NavItem>
       <NavItem to="/store" nav="store" active={on('/store', '/avatar')} onClick={close}>
         <span className="classic-emoji">🛍️ </span>Style Store
@@ -98,7 +99,7 @@ export function Header() {
       )}
       {profile?.role === 'teacher' && (
         <NavItem to="/teacher/subjects" nav="classes" active={on('/teacher/subjects')} onClick={close}>
-          My Subjects
+          {tr('My Subjects')}
         </NavItem>
       )}
       {profile?.role === 'admin' && (
@@ -131,7 +132,7 @@ export function Header() {
               )
             }
           >
-            Admin Chat
+            {tr('Admin Chat')}
           </NavItem>
           <NavItem to="/admin/subjects" nav="admin" active={on('/admin/subjects')} onClick={close}>
             <span className="classic-emoji">📚 </span>Subjects
@@ -165,7 +166,7 @@ export function Header() {
         <div className="kid-controls flex shrink-0 items-center gap-2 sm:gap-3">
           <Link
             to="/avatar"
-            aria-label="My Avatar"
+            aria-label={tr('My Avatar')}
             className="kid-profile flex items-center gap-1 rounded-full border border-border bg-card py-0.5 pl-0.5 pr-2 text-xs font-bold text-primary hover:border-secondary"
           >
             <AvatarImage gender={avatar.gender} look={avatar.gender ? avatar.looks[avatar.gender] : null} size={32} />
@@ -176,8 +177,8 @@ export function Header() {
           <button
             onClick={toggleLanguage}
             className="kid-lang inline-flex items-center rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-primary/70 hover:border-secondary hover:text-secondary sm:px-2.5"
-            aria-label="Toggle language"
-            title="Toggle language"
+            aria-label={tr('Toggle language')}
+            title={tr('Toggle language')}
           >
             <span className="kid-btn-ic" aria-hidden="true" />
             <span className="kid-label">{i18n.language.startsWith('ar') ? 'EN' : 'AR'}</span>
@@ -203,7 +204,7 @@ export function Header() {
 
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Toggle menu"
+            aria-label={tr('Toggle menu')}
             aria-expanded={menuOpen}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-primary md:hidden"
           >

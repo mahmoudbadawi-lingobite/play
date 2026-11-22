@@ -1,6 +1,7 @@
 import { WORLD_IDS, worldPreviewUrl, type WorldId } from './huntAssets';
 import { MAX_CHESTS, WORLD_DEFS, worldBlurb, worldCapacity, worldName } from './huntWorld';
 
+import { tr } from '../../../i18n/tr';
 /** 'mix' = two different worlds picked at random, one after the other */
 export type WorldChoice = WorldId | 'mix';
 
@@ -24,7 +25,7 @@ export function WorldPicker({ value, onChange, disabled = false }: { value: Worl
     { id: 'mix', name: 'Surprise me', blurb: 'Two different worlds picked for you, one after the other', max: `Up to ${MAX_CHESTS} chests` },
   ];
   return (
-    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4" role="radiogroup" aria-label="World">
+    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4" role="radiogroup" aria-label={tr('World')}>
       {cards.map((c) => {
         const on = value === c.id;
         const sky = c.id === 'mix' ? (['#c9b6ff', '#ffd9a0'] as const) : WORLD_DEFS[c.id].sky;

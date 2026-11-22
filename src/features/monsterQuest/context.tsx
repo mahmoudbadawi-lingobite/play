@@ -4,6 +4,7 @@ import * as api from './api';
 import { DEFAULT_LOOK } from './art/Trainer';
 import type { Cosmetic, Item, Look, OwnedMonster, PlayerState, Species, Zone } from './types';
 
+import { tr } from '../../i18n/tr';
 interface MqCtx {
   userId: string; name: string; isStaff: boolean;
   zones: Zone[]; species: Species[]; speciesById: Map<string, Species>; items: Item[]; itemsByKey: Map<string, Item>;
@@ -71,14 +72,14 @@ export function MqProvider({ children }: { children: ReactNode }) {
     return (
       <div className="mx-auto max-w-lg p-8 text-center">
         <p className="text-4xl">🛠️</p>
-        <h2 className="mt-2 font-display text-xl font-bold text-primary">Monster Quest can't load yet</h2>
+        <h2 className="mt-2 font-display text-xl font-bold text-primary">{tr('Monster Quest can\'t load yet')}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           {missing ? 'The Monster Quest database tables are not installed in Supabase yet. Run supabase/monster_quest_patch.sql in the SQL editor, then try again.' : error}
         </p>
-        <button onClick={() => setAttempt((a) => a + 1)} className="mt-4 rounded-xl bg-secondary px-5 py-2 font-bold text-secondary-foreground">Try again</button>
+        <button onClick={() => setAttempt((a) => a + 1)} className="mt-4 rounded-xl bg-secondary px-5 py-2 font-bold text-secondary-foreground">{tr('Try again')}</button>
       </div>
     );
   }
-  if (!value) return <p className="p-10 text-center text-muted-foreground">Loading Monster Quest…</p>;
+  if (!value) return <p className="p-10 text-center text-muted-foreground">{tr('Loading Monster Quest…')}</p>;
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

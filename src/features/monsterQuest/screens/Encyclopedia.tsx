@@ -6,6 +6,7 @@ import { MonsterArt } from '../art/MonsterArt';
 import { Modal, Panel, RarityBadge, TypeBadge, GameButton } from '../ui';
 import type { Species } from '../types';
 
+import { tr } from '../../../i18n/tr';
 export function Encyclopedia() {
   const mq = useMq();
   const [seen, setSeen] = useState<Set<string>>(new Set());
@@ -19,7 +20,7 @@ export function Encyclopedia() {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <GameButton tone={tab === 'species' ? 'gold' : 'ghost'} onClick={() => setTab('species')}>Monsters ({caught.size}/{mq.species.length})</GameButton>
-        <GameButton tone={tab === 'types' ? 'gold' : 'ghost'} onClick={() => setTab('types')}>Type chart</GameButton>
+        <GameButton tone={tab === 'types' ? 'gold' : 'ghost'} onClick={() => setTab('types')}>{tr('Type chart')}</GameButton>
       </div>
       {tab === 'species' ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -27,7 +28,7 @@ export function Encyclopedia() {
             <button key={s.id} type="button" disabled={!sn} onClick={() => setOpen(s)} className="mq-mon-card" style={{ ['--tc' as string]: sn ? TYPE_META[s.type].color : '#64748b' }}>
               <MonsterArt spec={s.art} spriteUrl={s.sprite_url} size={90} anim="none" silhouette={!c} />
               <span className="font-display text-sm font-extrabold text-white">{sn ? s.name : '???'}</span>
-              {sn ? <span className="flex items-center gap-1"><TypeBadge type={s.type} small /><RarityBadge rarity={s.rarity} /></span> : <span className="text-[11px] font-bold text-white/60">Not discovered</span>}
+              {sn ? <span className="flex items-center gap-1"><TypeBadge type={s.type} small /><RarityBadge rarity={s.rarity} /></span> : <span className="text-[11px] font-bold text-white/60">{tr('Not discovered')}</span>}
               <span className="text-[11px] font-bold text-white/70">{c ? '✅ Captured' : sn ? '👀 Seen' : ''}</span>
             </button>); })}
         </div>
@@ -50,7 +51,7 @@ export function Encyclopedia() {
             <p className="mt-2 text-xs font-bold text-[#3d5a94]">Found in: {open.zones.map((z) => mq.zones.find((x) => x.id === z)?.name ?? z).join(', ')}</p>
             <p className="text-xs font-bold text-[#3d5a94]">Needs {open.required_correct} correct answer{open.required_correct > 1 ? 's' : ''} to capture</p>
           </div>
-          <GameButton tone="blue" className="mt-3 w-full" onClick={() => setOpen(null)}>Close</GameButton>
+          <GameButton tone="blue" className="mt-3 w-full" onClick={() => setOpen(null)}>{tr('Close')}</GameButton>
         </Modal>)}
     </div>
   );

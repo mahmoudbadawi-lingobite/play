@@ -11,6 +11,7 @@ import { ExplorerFace, TreasureHuntGame, type MultiSession } from '../components
 import { stopMusic } from '../components/games/treasureHunt/huntSound';
 import type { ContentSet } from '../types';
 
+import { tr } from '../i18n/tr';
 /**
  * Treasure Hunt rooms.
  *   /hunt            host a room (pick a game) or join with a code
@@ -84,13 +85,13 @@ export function HuntEntryPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <p className="text-sm uppercase tracking-wide text-secondary">Treasure Hunt</p>
-      <h1 className="font-display text-3xl font-bold text-primary">Play with friends</h1>
+      <p className="text-sm uppercase tracking-wide text-secondary">{tr('Treasure Hunt')}</p>
+      <h1 className="font-display text-3xl font-bold text-primary">{tr('Play with friends')}</h1>
       <p className="mt-1 text-muted-foreground">Up to {MAX_PLAYERS} explorers in one live room. Race each other or work together as a team.</p>
 
       <div className="card-surface mt-6 p-5">
-        <h2 className="font-display text-lg font-bold text-primary">Join a room</h2>
-        <p className="text-sm text-muted-foreground">Type the 5-letter code your host shows you.</p>
+        <h2 className="font-display text-lg font-bold text-primary">{tr('Join a room')}</h2>
+        <p className="text-sm text-muted-foreground">{tr('Type the 5-letter code your host shows you.')}</p>
         <form
           className="mt-3 flex gap-2"
           onSubmit={(e) => {
@@ -101,24 +102,24 @@ export function HuntEntryPage() {
           <input
             value={code}
             onChange={(e) => setCode(cleanRoomCode(e.target.value))}
-            placeholder="ABCDE"
-            aria-label="Room code"
+            placeholder={tr('ABCDE')}
+            aria-label={tr('Room code')}
             className="w-40 rounded-lg border-2 border-border bg-background px-3 py-2 text-center font-display text-2xl font-bold uppercase tracking-widest"
           />
           <button type="submit" disabled={code.length !== 5} className="rounded-lg bg-secondary px-5 py-2 text-lg font-extrabold text-secondary-foreground disabled:opacity-50">
-            Join
+            {tr('Join')}
           </button>
         </form>
       </div>
 
       <div className="card-surface mt-5 p-5">
-        <h2 className="font-display text-lg font-bold text-primary">Host a room</h2>
-        <p className="text-sm text-muted-foreground">Pick the game whose questions fill the chests.</p>
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search games…" className="mt-3 w-full rounded-lg border-2 border-border bg-background px-3 py-2 text-sm" />
+        <h2 className="font-display text-lg font-bold text-primary">{tr('Host a room')}</h2>
+        <p className="text-sm text-muted-foreground">{tr('Pick the game whose questions fill the chests.')}</p>
+        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tr('Search games…')} className="mt-3 w-full rounded-lg border-2 border-border bg-background px-3 py-2 text-sm" />
         {sets === null ? (
-          <p className="mt-3 text-sm text-muted-foreground">Loading games…</p>
+          <p className="mt-3 text-sm text-muted-foreground">{tr('Loading games…')}</p>
         ) : shown.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">No games found (a game needs at least 4 items).</p>
+          <p className="mt-3 text-sm text-muted-foreground">{tr('No games found (a game needs at least 4 items).')}</p>
         ) : (
           <ul className="mt-3 max-h-96 space-y-2 overflow-auto">
             {shown.map((s) => (
@@ -128,7 +129,7 @@ export function HuntEntryPage() {
                   <p className="text-xs capitalize text-muted-foreground">{s.skill} · {s.items.length} items · by {s.teacherName}</p>
                 </div>
                 <button type="button" onClick={() => host(s.id)} className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-bold text-secondary-foreground">
-                  Host
+                  {tr('Host')}
                 </button>
               </li>
             ))}
@@ -136,7 +137,7 @@ export function HuntEntryPage() {
         )}
         {presetSet && (
           <button type="button" onClick={() => host(presetSet)} className="mt-3 w-full rounded-xl bg-secondary px-5 py-3 text-lg font-extrabold text-secondary-foreground">
-            Host a room with the game you picked
+            {tr('Host a room with the game you picked')}
           </button>
         )}
       </div>
@@ -371,18 +372,18 @@ export function HuntRoomPage() {
   if (code.length !== 5) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <p className="text-muted-foreground">That room code does not look right.</p>
-        <Link to="/hunt" className="mt-4 inline-block rounded-lg bg-secondary px-4 py-2 font-semibold text-secondary-foreground">Back</Link>
+        <p className="text-muted-foreground">{tr('That room code does not look right.')}</p>
+        <Link to="/hunt" className="mt-4 inline-block rounded-lg bg-secondary px-4 py-2 font-semibold text-secondary-foreground">{tr('Back')}</Link>
       </div>
     );
   }
-  if (!identity || status === 'connecting') return <p className="p-10 text-center text-muted-foreground">Opening the room…</p>;
+  if (!identity || status === 'connecting') return <p className="p-10 text-center text-muted-foreground">{tr('Opening the room…')}</p>;
   if (status === 'error') {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <p className="text-4xl">🚪</p>
         <p className="mt-2 text-primary">{error}</p>
-        <Link to="/hunt" className="mt-4 inline-block rounded-lg bg-secondary px-4 py-2 font-semibold text-secondary-foreground">Back</Link>
+        <Link to="/hunt" className="mt-4 inline-block rounded-lg bg-secondary px-4 py-2 font-semibold text-secondary-foreground">{tr('Back')}</Link>
       </div>
     );
   }
@@ -417,7 +418,7 @@ export function HuntRoomPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
-      <p className="text-sm uppercase tracking-wide text-secondary">Treasure Hunt room</p>
+      <p className="text-sm uppercase tracking-wide text-secondary">{tr('Treasure Hunt room')}</p>
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="font-display text-4xl font-extrabold tracking-widest text-primary">{code}</h1>
         <button
@@ -431,7 +432,7 @@ export function HuntRoomPage() {
         >
           {copied ? 'Link copied!' : '🔗 Copy invite link'}
         </button>
-        <Link to="/hunt" className="ml-auto text-sm font-semibold text-muted-foreground hover:text-primary">Leave room</Link>
+        <Link to="/hunt" className="ml-auto text-sm font-semibold text-muted-foreground hover:text-primary">{tr('Leave room')}</Link>
       </div>
       <p className="mt-1 text-sm text-muted-foreground">Share the code or the link. {MIN_PLAYERS}–{MAX_PLAYERS} players.</p>
 
@@ -448,11 +449,11 @@ export function HuntRoomPage() {
             <li key={p.id} className={`flex flex-col items-center rounded-2xl border-2 px-1 py-2 ${p.id === identity.id ? 'border-[#FF9A1F] bg-[#FF9A1F]/10' : 'border-border'}`}>
               <ExplorerFace id={p.explorer} size={56} />
               <span className="mt-1 max-w-full truncate text-xs font-extrabold text-primary">{p.host ? '👑 ' : ''}{p.name}{p.id === identity.id ? ' (you)' : ''}</span>
-              {p.locked && <span className="text-[10px] text-muted-foreground">still playing</span>}
+              {p.locked && <span className="text-[10px] text-muted-foreground">{tr('still playing')}</span>}
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-sm font-extrabold text-primary">Your explorer</p>
+        <p className="mt-3 text-sm font-extrabold text-primary">{tr('Your explorer')}</p>
         <div className="mt-1 grid grid-cols-3 gap-2 sm:grid-cols-6">
           {EXPLORERS.map((e) => (
             <button key={e.id} type="button" onClick={() => pickExplorer(e.id)} aria-pressed={meInfo?.explorer === e.id} className={`flex flex-col items-center rounded-2xl border-2 px-1 py-1.5 ${meInfo?.explorer === e.id ? 'border-[#FF9A1F] bg-[#FF9A1F]/15' : 'border-border'}`}>
@@ -464,14 +465,14 @@ export function HuntRoomPage() {
       </div>
 
       <div className="card-surface mt-4 p-4">
-        <p className="font-display font-bold text-primary">The hunt</p>
+        <p className="font-display font-bold text-primary">{tr('The hunt')}</p>
         {!s ? (
-          <p className="mt-2 text-sm text-muted-foreground">Waiting for the host's settings…</p>
+          <p className="mt-2 text-sm text-muted-foreground">{tr('Waiting for the host\'s settings…')}</p>
         ) : (
           <>
             <p className="mt-1 text-sm text-muted-foreground">Game: <b className="text-primary">{s.setTitle}</b></p>
 
-            <p className="mt-3 text-sm font-extrabold text-primary">Mode</p>
+            <p className="mt-3 text-sm font-extrabold text-primary">{tr('Mode')}</p>
             <div className="mt-1 grid gap-2 sm:grid-cols-2">
               {([['race', '🏁 Race', 'Everybody hunts the same maps and questions. First to open the most chests wins.'], ['coop', '🤝 Co-op', 'One team shares the hearts. Find each chest together, one answer at a time.']] as [HuntMode, string, string][]).map(([m, label, blurb]) => (
                 <button key={m} type="button" disabled={!isHost} onClick={() => changeSettings({ mode: m })} aria-pressed={s.mode === m} className={`rounded-2xl border-2 px-3 py-2 text-left ${s.mode === m ? 'border-[#FF9A1F] bg-[#FF9A1F]/15' : 'border-border'} disabled:cursor-default`}>
@@ -481,10 +482,10 @@ export function HuntRoomPage() {
               ))}
             </div>
 
-            <p className="mt-3 text-sm font-extrabold text-primary">World</p>
+            <p className="mt-3 text-sm font-extrabold text-primary">{tr('World')}</p>
             <WorldPicker value={s.world} disabled={!isHost} onChange={(w) => changeSettings({ world: w })} />
 
-            <p className="mt-3 text-sm font-extrabold text-primary">Difficulty</p>
+            <p className="mt-3 text-sm font-extrabold text-primary">{tr('Difficulty')}</p>
             <div className="mt-1 grid gap-2 sm:grid-cols-3">
               {(Object.keys(DIFFICULTY) as Difficulty[]).map((d) => (
                 <button key={d} type="button" disabled={!isHost} onClick={() => changeSettings({ difficulty: d })} aria-pressed={s.difficulty === d} className={`rounded-2xl border-2 px-3 py-2 text-left ${s.difficulty === d ? 'border-[#FF9A1F] bg-[#FF9A1F]/15' : 'border-border'} disabled:cursor-default`}>
@@ -500,7 +501,7 @@ export function HuntRoomPage() {
         {isHost ? (
           <>
             <button type="button" onClick={start} disabled={!canStart} className="mt-4 w-full rounded-xl bg-secondary px-6 py-4 text-xl font-extrabold text-secondary-foreground shadow disabled:opacity-50">
-              Start the hunt
+              {tr('Start the hunt')}
             </button>
             {!canStart && (
               <p className="mt-2 text-center text-xs text-muted-foreground">
@@ -509,7 +510,7 @@ export function HuntRoomPage() {
             )}
           </>
         ) : (
-          <p className="mt-4 rounded-xl bg-muted px-3 py-3 text-center text-sm font-bold text-primary">Waiting for the host to start the hunt…</p>
+          <p className="mt-4 rounded-xl bg-muted px-3 py-3 text-center text-sm font-bold text-primary">{tr('Waiting for the host to start the hunt…')}</p>
         )}
       </div>
     </div>

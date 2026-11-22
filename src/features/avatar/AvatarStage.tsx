@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Gender, Look } from './catalog';
 import { createStage, type StageApi, type View } from './stage';
 
+import { tr } from '../../i18n/tr';
 export interface AvatarStageProps {
   gender: Gender;
   look: Look;
@@ -61,5 +62,5 @@ export default function AvatarStage({ gender, look, className, interactive = tru
   }, [pose]);
 
   if (failed) return null;
-  return <div ref={mountRef} className={className} role="img" aria-label="Your 3D character" />;
+  return <div ref={mountRef} className={className} role="img" aria-label={tr('Your 3D character')} />;
 }

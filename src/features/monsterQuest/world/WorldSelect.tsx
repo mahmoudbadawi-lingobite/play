@@ -3,11 +3,12 @@ import { useMq } from '../context';
 import { GameButton } from '../ui';
 import { WORLDS } from './worlds';
 
+import { tr } from '../../../i18n/tr';
 export function WorldSelect({ onEnter }: { onEnter: (id: number) => void }) {
   const mq = useMq(), level = levelInfo(mq.state.xp).level;
   return (
     <div className="space-y-3">
-      <p className="text-sm font-semibold text-white/85">Choose a world to explore. Each one is bigger and tougher than the last.</p>
+      <p className="text-sm font-semibold text-white/85">{tr('Choose a world to explore. Each one is bigger and tougher than the last.')}</p>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {WORLDS.map((w) => {
           const locked = level < w.unlockLevel, soon = !w.built, off = locked || soon;

@@ -6,6 +6,7 @@ import type { Gate, Phase } from './engine';
 import { S_FAR, S_NEAR, Scene } from './Scene';
 import { getWorld } from './worlds';
 
+import { tr } from '../../../i18n/tr';
 const RunnerView = lazy(() => import('../../../features/world3d/RunnerView'));
 
 export interface SceneViewProps {
@@ -72,7 +73,7 @@ export function SceneView(p: SceneViewProps) {
     bonkKey: p.bonkKey,
   };
   return (
-    <Suspense fallback={<div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-sky-300 to-sky-100 font-extrabold text-primary">Loading…</div>}>
+    <Suspense fallback={<div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-sky-300 to-sky-100 font-extrabold text-primary">{tr('Loading…')}</div>}>
       <RunnerView state={state} onCoin={p.onCoin} onError={() => setFailed(true)} className="absolute inset-0" />
     </Suspense>
   );

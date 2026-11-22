@@ -4,6 +4,7 @@ import { ListenButton } from '../../common/ListenButton';
 import { huntImageUrl } from './huntAssets';
 import { TIER_COINS, TIER_LABEL, type HuntQuestion } from './huntQuestions';
 
+import { tr } from '../../../i18n/tr';
 /**
  * The locked chest: the question that has to be answered to open it.
  * bronze / silver = pick the answer, gold = type it (with a timer on some).
@@ -79,10 +80,10 @@ export function ChestModal({
 
   const open = !!result;
   return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/55 p-3" role="dialog" aria-modal="true" aria-label="Locked chest">
+    <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/55 p-3" role="dialog" aria-modal="true" aria-label={tr('Locked chest')}>
       <div className={`relative max-h-full w-full max-w-md overflow-auto rounded-3xl border-4 border-[#2B2B6B] bg-[#FFF8E6] p-4 shadow-2xl ${shake ? 'hunt-shake' : ''}`}>
         {!open && (
-          <button type="button" onClick={onClose} aria-label="Close" className="absolute right-2 top-2 rounded-full bg-[#2B2B6B] px-2.5 py-0.5 text-sm font-extrabold text-white">✕</button>
+          <button type="button" onClick={onClose} aria-label={tr('Close')} className="absolute right-2 top-2 rounded-full bg-[#2B2B6B] px-2.5 py-0.5 text-sm font-extrabold text-white">✕</button>
         )}
         <div className="flex items-center gap-3">
           <img src={huntImageUrl(`ui/${open ? 'open' : 'chest'}-${q.tier}`)} alt="" className="h-16 w-auto shrink-0" draggable={false} />
@@ -106,7 +107,7 @@ export function ChestModal({
 
             {q.tier === 'gold' ? (
               <div className="mt-3">
-                <p className="mb-1 text-center font-mono text-xl font-extrabold tracking-widest text-[#7a5b00]" aria-label="letters hint">{maskHint(q.answer, Math.min(wrongCount, Math.max(0, q.answer.length - 1)))}</p>
+                <p className="mb-1 text-center font-mono text-xl font-extrabold tracking-widest text-[#7a5b00]" aria-label={tr('letters hint')}>{maskHint(q.answer, Math.min(wrongCount, Math.max(0, q.answer.length - 1)))}</p>
                 <div className="flex gap-2">
                   <input
                     ref={inputRef}
@@ -114,15 +115,15 @@ export function ChestModal({
                     value={typed}
                     onChange={(e) => setTyped(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && submit()}
-                    placeholder="Type the answer…"
+                    placeholder={tr('Type the answer…')}
                     autoComplete="off"
                     autoCapitalize="off"
                     spellCheck={false}
                     className="min-w-0 flex-1 rounded-xl border-2 border-[#2B2B6B] bg-white px-3 py-2 text-base font-bold"
                   />
-                  <button type="button" onClick={submit} className="rounded-xl bg-[#FF9A1F] px-4 py-2 font-extrabold text-white shadow">Open</button>
+                  <button type="button" onClick={submit} className="rounded-xl bg-[#FF9A1F] px-4 py-2 font-extrabold text-white shadow">{tr('Open')}</button>
                 </div>
-                {wrongCount > 0 && <p className="mt-1 text-center text-xs font-bold text-red-600">Not quite! One more letter is shown.</p>}
+                {wrongCount > 0 && <p className="mt-1 text-center text-xs font-bold text-red-600">{tr('Not quite! One more letter is shown.')}</p>}
               </div>
             ) : (
               <div className="mt-3 grid gap-2">

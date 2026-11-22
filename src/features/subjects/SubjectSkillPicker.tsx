@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { Picks, Subject } from './types';
 
+import { tr } from '../../i18n/tr';
 const lab = 'mb-1.5 block text-xs font-semibold text-muted-foreground';
 const chip = (on: boolean) => `rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition disabled:opacity-50 ${on ? 'border-secondary bg-secondary text-white' : 'border-border bg-card text-primary hover:border-secondary'}`;
 
@@ -15,7 +16,7 @@ export function SubjectSkillPicker({ subjects, value, onChange, disabled, canReq
   if (subjects.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
-        You have no subject yet. {canRequest ? <>Ask for one in <Link to="/teacher/subjects" className="font-semibold text-secondary underline">My subjects</Link>; an admin approves it.</> : 'Ask an admin to approve a subject for you.'}
+        You have no subject yet. {canRequest ? <>Ask for one in <Link to="/teacher/subjects" className="font-semibold text-secondary underline">{tr('My subjects')}</Link>; an admin approves it.</> : 'Ask an admin to approve a subject for you.'}
       </p>
     );
   }
@@ -41,8 +42,8 @@ export function SubjectSkillPicker({ subjects, value, onChange, disabled, canReq
   return (
     <div className="space-y-4">
       <div>
-        <span className={lab}>Subject</span>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Subject">
+        <span className={lab}>{tr('Subject')}</span>
+        <div className="flex flex-wrap gap-2" role="group" aria-label={tr('Subject')}>
           {subjects.map((s) => (
             <button key={s.id} type="button" disabled={disabled} aria-pressed={s.id === value.subjectId} className={chip(s.id === value.subjectId)} onClick={() => pickSubject(s.id)}>
               {s.icon ? `${s.icon} ` : ''}{s.name}
@@ -54,8 +55,8 @@ export function SubjectSkillPicker({ subjects, value, onChange, disabled, canReq
       {subject && (
         <div>
           <span className={lab}>Domain {multi ? '(all, or tap one or more)' : '(optional)'}</span>
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Domain">
-            <button type="button" disabled={disabled} aria-pressed={value.domainIds.length === 0} className={chip(value.domainIds.length === 0)} onClick={() => pickDomain(null)}>All domains</button>
+          <div className="flex flex-wrap gap-2" role="group" aria-label={tr('Domain')}>
+            <button type="button" disabled={disabled} aria-pressed={value.domainIds.length === 0} className={chip(value.domainIds.length === 0)} onClick={() => pickDomain(null)}>{tr('All domains')}</button>
             {domains.map((d) => (
               <button key={d.id} type="button" disabled={disabled} aria-pressed={value.domainIds.includes(d.id)} className={chip(value.domainIds.includes(d.id))} onClick={() => pickDomain(d.id)}>{d.name}</button>
             ))}

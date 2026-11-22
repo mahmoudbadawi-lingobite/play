@@ -37,6 +37,8 @@ export interface ContentItem {
   imageUrl?: string;       // optional - required for Picture Match to be offered
   /** Listening content: the short text that is read aloud (term = right answer, clue = the question about it). */
   audio?: string;
+  /** A recorded voice file (uploaded by the teacher) for `audio`. Played instead of the device voice. */
+  audioUrl?: string;
   /** Reading content: the short passage this question is about. */
   passage?: string;
   /** The wrong answer choices written by the AI (term is the right one). */

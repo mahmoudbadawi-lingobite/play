@@ -5,6 +5,7 @@ import { useAvatarState } from './avatarStore';
 import { AvatarImage } from './AvatarImage';
 import { webglAvailable } from './webgl';
 
+import { tr } from '../../i18n/tr';
 export const RARITY: Record<Rarity, { label: string; cls: string }> = {
   common: { label: 'Common', cls: 'bg-slate-200 text-slate-700' },
   rare: { label: 'Rare', cls: 'bg-sky-200 text-sky-900' },
@@ -46,7 +47,7 @@ export function LevelBadge({ className = '' }: { className?: string }) {
       </span>
       <div className="min-w-0">
         <p className="text-xs font-extrabold text-white drop-shadow">Level {info.level}</p>
-        <div className="mt-1 h-3 w-36 overflow-hidden rounded-full border border-white/70 bg-[#3B3B8F]" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={info.pct} aria-label="Progress to the next level">
+        <div className="mt-1 h-3 w-36 overflow-hidden rounded-full border border-white/70 bg-[#3B3B8F]" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={info.pct} aria-label={tr('Progress to the next level')}>
           <div className="h-full rounded-full bg-gradient-to-r from-[#FFB020] to-[#FF7A1F]" style={{ width: `${Math.max(6, info.pct)}%` }} />
         </div>
       </div>

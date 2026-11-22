@@ -12,6 +12,7 @@ import { StartPanel } from './StartPanel';
 import { getWorld, WORLDS } from './worlds';
 import './blockQuest.css';
 
+import { tr } from '../../../i18n/tr';
 const APPROACH_SECS = 2.6;
 const PASS_SECS = 1.15;
 const SCROLL_SPEED = 1.1;
@@ -323,7 +324,7 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
     };
   }, []);
 
-  if (!gate) return <p className="p-6 text-center text-muted-foreground">This game needs a few more items.</p>;
+  if (!gate) return <p className="p-6 text-center text-muted-foreground">{tr('This game needs a few more items.')}</p>;
 
   const playing = phase === 'approach' || phase === 'ask' || phase === 'passing';
   const asking = phase === 'ask';
@@ -387,7 +388,7 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
             <div
               className="h-2 w-full overflow-hidden rounded-full border border-white/70 bg-[#2B2B6B]/60"
               role="progressbar"
-              aria-label="Gates cleared"
+              aria-label={tr('Gates cleared')}
               aria-valuemin={0}
               aria-valuemax={gates.length}
               aria-valuenow={phase === 'start' ? 0 : phase === 'done' ? gates.length : gateIndex}
@@ -430,7 +431,7 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
                 <div className="flex items-center justify-center gap-1.5">
                   <span className="rounded-full bg-secondary px-2 py-px text-[10px] font-extrabold text-secondary-foreground">{bannerLabel}</span>
                   {(gate.kind === 'listen' || !!gate.item.audio) && speechAvailable() && (
-                    <button type="button" onClick={() => speak(gate.item.audio ?? gate.item.term)} aria-label="Hear the word again" className="bq-btn rounded-full bg-primary px-2 py-px text-[11px] font-bold text-primary-foreground">
+                    <button type="button" onClick={() => speak(gate.item.audio ?? gate.item.term)} aria-label={tr('Hear the word again')} className="bq-btn rounded-full bg-primary px-2 py-px text-[11px] font-bold text-primary-foreground">
                       🔊 Hear it
                     </button>
                   )}
@@ -467,7 +468,7 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
               <p className="mt-1 text-sm font-bold text-primary">
                 {result.accuracy}% first-try · 🪙 +{runCoins}
               </p>
-              <p className="text-xs text-muted-foreground">Saving your score…</p>
+              <p className="text-xs text-muted-foreground">{tr('Saving your score…')}</p>
             </div>
           </div>
         )}
@@ -480,7 +481,7 @@ export function BlockQuestGame({ items, skill, onFinish }: GameProps) {
       {playing && laneGate && (
         <>
           <AnswerButtons options={gate.options} lane={lane} wrongIds={wrongIds} glowLane={glowLane} disabled={!asking} onPick={commitLane} />
-          <p className="mt-2 hidden text-center text-xs text-muted-foreground sm:block">Tip: use ← → to move and Space to jump in, or just tap an answer.</p>
+          <p className="mt-2 hidden text-center text-xs text-muted-foreground sm:block">{tr('Tip: use ← → to move and Space to jump in, or just tap an answer.')}</p>
         </>
       )}
       {playing && gate.kind === 'bridge' && (

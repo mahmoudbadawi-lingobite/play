@@ -7,6 +7,7 @@ import { sfx } from '../sound';
 import { Bar, GameButton, Modal } from '../ui';
 import type { AnswerResult, OwnedMonster, Question } from '../types';
 
+import { tr } from '../../../i18n/tr';
 /** Training Dojo: a short quiz session whose correct answers give the monster XP (server-validated). */
 export function TrainModal({ monster, onClose }: { monster: OwnedMonster; onClose: () => void }) {
   const mq = useMq();
@@ -69,8 +70,8 @@ export function TrainModal({ monster, onClose }: { monster: OwnedMonster; onClos
       {err && <p className="mt-2 rounded-xl bg-red-500/90 px-3 py-2 text-sm font-bold text-white" role="alert">{err}</p>}
 
       {phase === 'intro' && (<div className="mt-3 text-center"><p className="text-sm font-semibold text-[#3d5a94]">Answer {total} questions. Every correct answer gives your monster XP (and you earn some too). Higher-level monsters get harder questions.</p>
-        <div className="mt-3 grid grid-cols-2 gap-2"><GameButton tone="ghost" className="!text-[#10285a]" onClick={close}>Not now</GameButton><GameButton tone="green" disabled={busy} onClick={start}>Start training</GameButton></div></div>)}
-      {phase === 'loading' && <p className="py-6 text-center font-bold text-[#3d5a94]">Getting a question…</p>}
+        <div className="mt-3 grid grid-cols-2 gap-2"><GameButton tone="ghost" className="!text-[#10285a]" onClick={close}>{tr('Not now')}</GameButton><GameButton tone="green" disabled={busy} onClick={start}>{tr('Start training')}</GameButton></div></div>)}
+      {phase === 'loading' && <p className="py-6 text-center font-bold text-[#3d5a94]">{tr('Getting a question…')}</p>}
       {phase === 'question' && q && <div className="mt-3 rounded-2xl bg-[#123a8f] p-3"><QuestionView key={q.id} q={q} busy={busy} onSubmit={submit} /></div>}
       {phase === 'feedback' && res && q && (
         <div className={`mq-card mt-3 ${res.correct ? 'mq-card-good' : 'mq-card-bad'}`} aria-live="polite">
@@ -83,9 +84,9 @@ export function TrainModal({ monster, onClose }: { monster: OwnedMonster; onClos
         </div>)}
       {phase === 'done' && (
         <div className="mt-3 text-center">
-          <p className="font-display text-2xl font-extrabold text-[#10285a]">Training complete! 🎉</p>
+          <p className="font-display text-2xl font-extrabold text-[#10285a]">{tr('Training complete! 🎉')}</p>
           <p className="mt-1 text-sm font-bold text-[#3d5a94]">+{gainedXp} monster XP{levels > 0 ? ` · ${levels} level${levels > 1 ? 's' : ''} gained` : ''}</p>
-          <GameButton className="mt-3 w-full" tone="blue" onClick={close}>Done</GameButton>
+          <GameButton className="mt-3 w-full" tone="blue" onClick={close}>{tr('Done')}</GameButton>
         </div>)}
     </Modal>
   );

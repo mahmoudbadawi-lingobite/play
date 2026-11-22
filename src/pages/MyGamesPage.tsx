@@ -8,6 +8,7 @@ import type { ContentSet } from '../types';
 import { useSubjects } from '../features/subjects/useSubjects';
 import { setLabel } from '../features/subjects/label';
 
+import { tr } from '../i18n/tr';
 export function MyGamesPage() {
   const subj = useSubjects();
   const { profile } = useAuth();
@@ -40,16 +41,16 @@ export function MyGamesPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-3xl font-bold text-primary">My Content</h1>
+        <h1 className="font-display text-3xl font-bold text-primary">{tr('My Content')}</h1>
         <Link to="/teacher/create" className="rounded-xl bg-secondary px-4 py-2.5 text-sm font-semibold text-secondary-foreground hover:opacity-90">
           + Create Content
         </Link>
       </div>
 
       {loading ? (
-        <p className="mt-8 text-muted-foreground">Loading...</p>
+        <p className="mt-8 text-muted-foreground">{tr('Loading...')}</p>
       ) : sets.length === 0 ? (
-        <p className="mt-8 text-muted-foreground">You haven't created any games yet.</p>
+        <p className="mt-8 text-muted-foreground">{tr('You haven\'t created any games yet.')}</p>
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sets.map((set) => (
@@ -63,7 +64,7 @@ export function MyGamesPage() {
                 </span>
               </div>
               <h3 className="mt-3 font-display text-lg font-semibold text-primary">{set.title}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">{set.items.length} items · {set.playCount} plays</p>
+              <p className="mt-1 text-xs text-muted-foreground">{tr('{i} items · {p} plays', { i: set.items.length, p: set.playCount })}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {compatibleGames(set.items, set.skill).map((g) => (
                   <span key={g.key} title={g.name} className="text-lg">{g.icon}</span>
@@ -72,16 +73,16 @@ export function MyGamesPage() {
 
               <div className="mt-4 grid grid-cols-2 gap-2">
                 <Link to={`/play/${set.id}`} className="rounded-lg bg-primary px-3 py-2 text-center text-xs font-semibold text-primary-foreground hover:opacity-90">
-                  Play
+                  {tr('Play')}
                 </Link>
                 <Link to={`/teacher/edit/${set.id}`} className="rounded-lg border border-border px-3 py-2 text-center text-xs font-semibold text-primary hover:border-secondary">
-                  Edit
+                  {tr('Edit')}
                 </Link>
                 <button onClick={() => handleShare(set.id)} className="rounded-lg border border-border px-3 py-2 text-xs font-semibold text-primary hover:border-secondary">
-                  {copiedId === set.id ? '✓ Copied' : 'Copy link'}
+                  {copiedId === set.id ? '✓ ' + tr('Copied') : tr('Copy link')}
                 </button>
                 <button onClick={() => handleDelete(set.id, set.title)} className="rounded-lg border border-destructive px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10">
-                  Delete
+                  {tr('Delete')}
                 </button>
               </div>
             </div>

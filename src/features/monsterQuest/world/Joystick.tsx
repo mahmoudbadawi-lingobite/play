@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 
+import { tr } from '../../../i18n/tr';
 /** Analog virtual joystick (bottom-left). Reports a vector with length 0..1; the engine applies the dead zone. */
 export function Joystick({ onMove }: { onMove: (x: number, y: number) => void }) {
   const base = useRef<HTMLDivElement>(null);
@@ -12,7 +13,7 @@ export function Joystick({ onMove }: { onMove: (x: number, y: number) => void })
   };
   const end = () => { id.current = null; setKnob([0, 0]); onMove(0, 0); };
   return (
-    <div ref={base} className="mq-joy" role="group" aria-label="Movement joystick"
+    <div ref={base} className="mq-joy" role="group" aria-label={tr('Movement joystick')}
       onPointerDown={(e) => { e.preventDefault(); id.current = e.pointerId; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); set(e); }}
       onPointerMove={(e) => { if (id.current === e.pointerId) set(e); }} onPointerUp={end} onPointerCancel={end} onLostPointerCapture={end}>
       <div className="mq-joy-ring" />

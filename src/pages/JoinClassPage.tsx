@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { joinClassByCode } from '../lib/services';
 import { ConsentGate } from '../components/auth/ConsentGate';
 
+import { tr } from '../i18n/tr';
 const PENDING_JOIN_CODE_KEY = 'pendingJoinCode';
 
 export function JoinClassPage() {
@@ -47,7 +48,7 @@ export function JoinClassPage() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-muted-foreground">Loading...</div>;
+    return <div className="p-8 text-center text-muted-foreground">{tr('Loading...')}</div>;
   }
 
   // Not signed in (and not playing as a guest): offer to sign in, then
@@ -57,7 +58,7 @@ export function JoinClassPage() {
       <div className="mx-auto max-w-md px-4 py-16">
         <div className="card-surface p-6 text-center">
           <span className="text-3xl">🔑</span>
-          <h1 className="mt-2 font-display text-2xl font-bold text-primary">Join your class</h1>
+          <h1 className="mt-2 font-display text-2xl font-bold text-primary">{tr('Join your class')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {codeFromLink
               ? `Sign in to join with class code ${codeFromLink}.`
@@ -67,7 +68,7 @@ export function JoinClassPage() {
             onClick={handleSignInThenJoin}
             className="mt-5 w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground"
           >
-            Sign in to continue
+            {tr('Sign in to continue')}
           </button>
         </div>
       </div>
@@ -80,15 +81,15 @@ export function JoinClassPage() {
       <div className="mx-auto max-w-md px-4 py-16">
         <div className="card-surface p-6 text-center">
           <span className="text-3xl">🔑</span>
-          <h1 className="mt-2 font-display text-2xl font-bold text-primary">Join your class</h1>
+          <h1 className="mt-2 font-display text-2xl font-bold text-primary">{tr('Join your class')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Guest play can't be linked to a class. Sign in with your student account to join.
+            {tr('Guest play can\'t be linked to a class. Sign in with your student account to join.')}
           </p>
           <button
             onClick={handleSignInThenJoin}
             className="mt-5 w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground"
           >
-            Sign in to continue
+            {tr('Sign in to continue')}
           </button>
         </div>
       </div>
@@ -100,8 +101,8 @@ export function JoinClassPage() {
       <div className="mx-auto max-w-md px-4 py-16">
         <div className="card-surface p-6 text-center">
           <span className="text-3xl">🔑</span>
-          <h1 className="mt-2 font-display text-2xl font-bold text-primary">Join a class</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Only student accounts can join a class.</p>
+          <h1 className="mt-2 font-display text-2xl font-bold text-primary">{tr('Join a class')}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{tr('Only student accounts can join a class.')}</p>
         </div>
       </div>
     );
@@ -112,8 +113,8 @@ export function JoinClassPage() {
       <div className="mx-auto max-w-md px-4 py-16">
         <div className="card-surface p-6 text-center">
           <span className="text-3xl">🔑</span>
-          <h1 className="mt-2 font-display text-2xl font-bold text-primary">Join your class</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Ask your teacher for the class code or join link.</p>
+          <h1 className="mt-2 font-display text-2xl font-bold text-primary">{tr('Join your class')}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{tr('Ask your teacher for the class code or join link.')}</p>
 
           {status === 'success' ? (
             <p className="mt-6 rounded-lg bg-success/10 p-4 font-semibold text-success">
@@ -125,11 +126,11 @@ export function JoinClassPage() {
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 maxLength={6}
-                placeholder="e.g. K7P2QX"
+                placeholder={tr('e.g. K7P2QX')}
                 className="mt-5 w-full rounded-lg border border-border px-4 py-3 text-center text-xl font-bold tracking-widest outline-none focus:border-secondary"
               />
               {status === 'notfound' && (
-                <p className="mt-2 text-sm text-destructive">No class found with that code - check with your teacher.</p>
+                <p className="mt-2 text-sm text-destructive">{tr('No class found with that code - check with your teacher.')}</p>
               )}
               <button
                 onClick={() => handleJoin(code)}

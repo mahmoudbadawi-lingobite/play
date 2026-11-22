@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { createClass, listMyClasses, getClassRoster, type RosterEntry } from '../lib/services';
 import type { SchoolClass } from '../types';
 
+import { tr } from '../i18n/tr';
 function buildJoinLink(joinCode: string): string {
   return `${window.location.origin}${import.meta.env.BASE_URL}join?code=${joinCode}`;
 }
@@ -90,24 +91,24 @@ export function TeacherClassesPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="font-display text-3xl font-bold text-primary">My Classes</h1>
+      <h1 className="font-display text-3xl font-bold text-primary">{tr('My Classes')}</h1>
 
       <div className="card-surface mt-6 flex gap-2 p-4">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="New class name, e.g. Grade 5 - Section A"
+          placeholder={tr('New class name, e.g. Grade 5 - Section A')}
           className="flex-1 rounded-lg border border-border px-4 py-2 outline-none focus:border-secondary"
         />
         <button onClick={handleCreate} className="rounded-lg bg-secondary px-4 py-2 font-semibold text-secondary-foreground">
-          Create class
+          {tr('Create class')}
         </button>
       </div>
 
       {loading ? (
-        <p className="mt-6 text-muted-foreground">Loading...</p>
+        <p className="mt-6 text-muted-foreground">{tr('Loading...')}</p>
       ) : classes.length === 0 ? (
-        <p className="mt-6 text-muted-foreground">No classes yet - create your first one above.</p>
+        <p className="mt-6 text-muted-foreground">{tr('No classes yet - create your first one above.')}</p>
       ) : (
         <div className="mt-6 space-y-3">
           {classes.map((c) => (
@@ -121,14 +122,14 @@ export function TeacherClassesPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={(e) => { e.stopPropagation(); handleCopyLink(c); }}
-                    title="Copy join link"
+                    title={tr('Copy join link')}
                     className="rounded-md border border-border px-2 py-1 text-xs font-semibold text-muted-foreground transition hover:border-secondary hover:text-secondary"
                   >
-                    {copiedLinkId === c.id ? 'Link copied!' : '🔗 Copy link'}
+                    {copiedLinkId === c.id ? tr('Link copied!') : '🔗 ' + tr('Copy link')}
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleCopyCode(c); }}
-                    title="Click to copy class code"
+                    title={tr('Click to copy class code')}
                     className="rounded-md bg-secondary/10 px-2 py-1 font-mono text-sm font-bold tracking-widest text-secondary transition hover:bg-secondary/20"
                   >
                     {copiedCodeId === c.id ? 'Copied!' : c.joinCode}
@@ -139,21 +140,21 @@ export function TeacherClassesPage() {
               {expandedId === c.id && (
                 <div className="mt-4 border-t border-border pt-3">
                   <p className="mb-2 text-xs text-muted-foreground">
-                    Stats reflect each student's overall activity across LingoBite Play, not only games played for this class.
+                    {tr('Stats reflect each student\'s overall activity across LingoBite Play, not only games played for this class.')}
                   </p>
                   {rosterLoading === c.id ? (
-                    <p className="text-sm text-muted-foreground">Loading roster...</p>
+                    <p className="text-sm text-muted-foreground">{tr('Loading roster...')}</p>
                   ) : (rosters[c.id]?.length ?? 0) === 0 ? (
-                    <p className="text-sm text-muted-foreground">No students have joined yet.</p>
+                    <p className="text-sm text-muted-foreground">{tr('No students have joined yet.')}</p>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="text-left text-xs uppercase text-muted-foreground">
-                            <th className="pb-2">Student</th>
-                            <th className="pb-2">Total XP</th>
-                            <th className="pb-2">Games played</th>
-                            <th className="pb-2">Avg accuracy</th>
+                            <th className="pb-2">{tr('Student')}</th>
+                            <th className="pb-2">{tr('Total XP')}</th>
+                            <th className="pb-2">{tr('Games played')}</th>
+                            <th className="pb-2">{tr('Avg accuracy')}</th>
                           </tr>
                         </thead>
                         <tbody>

@@ -3,6 +3,7 @@ import { ESCAPE_ROOM_THEMES } from '../../games/escapeRoomThemes';
 import { downloadHotspotTemplate, parseStoryAndCluesReply, type TemplateItem } from '../../lib/hotspotTemplate';
 import type { AnswerMode } from '../../types';
 
+import { tr } from '../../i18n/tr';
 const TEXT_AI_SHORTCUTS: AiShortcut[] = [
   { label: 'ChatGPT', url: 'https://chat.openai.com' },
   { label: 'Gemini', url: 'https://gemini.google.com/app' },
@@ -136,7 +137,7 @@ function CopyBox({ label, text, shortcuts }: { label: string; text: string; shor
       <textarea readOnly value={text} rows={8} className="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 font-mono text-xs text-primary" />
       {shortcuts && shortcuts.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
-          <span className="self-center text-xs text-muted-foreground">Open in:</span>
+          <span className="self-center text-xs text-muted-foreground">{tr('Open in:')}</span>
           {shortcuts.map((s) => (
             <button
               key={s.label}
@@ -282,7 +283,7 @@ OUTPUT FORMAT - respond with EXACTLY this structure and nothing else (no comment
 STORY:
 <your Part 1 story text here>
 
-CLUES:
+{tr('CLUES:')}
 | Object # | Object Label | Locate Hint | Extra Locate Hint (if stuck) | Question | Extra Answer Hint (if wrong) | Answer Mode (type/choice) | Correct Answer | Wrong Option 1 | Wrong Option 2 | Wrong Option 3 | X Percent (0-100, optional) | Y Percent (0-100, optional) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 1 | ... | ... | ... | ... | ... | ${answerMode} | ... | ${isChoice ? '...' : ''} | ${isChoice ? '...' : ''} | ${isChoice ? '...' : ''} | ... | ... |
@@ -317,16 +318,16 @@ CLUES:
 
   return (
     <div className="card-surface p-4 sm:p-6">
-      <p className="font-display text-lg font-semibold text-primary">AI Prompt Generator</p>
+      <p className="font-display text-lg font-semibold text-primary">{tr('AI Prompt Generator')}</p>
       <p className="mt-1 text-sm text-muted-foreground">
-        Fill this in, then copy each prompt into any AI tool to generate your background image, story,
+        {tr('Fill this in, then copy each prompt into any AI tool to generate your background image, story,')}
         and clues. For Step 2, attach the image you generated in Step 1 before sending the prompt - the
         AI will reply with the story and a clue table in one go. Paste that whole reply back in below
         and the app fills in the story and clues for you automatically.
       </p>
 
       <div className="mt-4">
-        <p className="mb-1.5 text-sm font-semibold text-primary">Theme</p>
+        <p className="mb-1.5 text-sm font-semibold text-primary">{tr('Theme')}</p>
         <div className="flex flex-wrap gap-2">
           {THEMES.map((t) => (
             <button
@@ -343,21 +344,21 @@ CLUES:
             onClick={() => setUseCustomTheme(true)}
             className={`rounded-full px-3 py-1.5 text-xs font-medium ${useCustomTheme ? 'bg-primary text-primary-foreground' : 'border border-border text-primary/70'}`}
           >
-            Custom...
+            {tr('Custom...')}
           </button>
         </div>
         {useCustomTheme && (
           <input
             value={customTheme}
             onChange={(e) => setCustomTheme(e.target.value)}
-            placeholder="Describe your own theme"
+            placeholder={tr('Describe your own theme')}
             className="mt-2 w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-secondary"
           />
         )}
       </div>
 
       <div className="mt-4">
-        <p className="mb-1.5 text-sm font-semibold text-primary">Grade</p>
+        <p className="mb-1.5 text-sm font-semibold text-primary">{tr('Grade')}</p>
         <div className="flex flex-wrap gap-1.5">
           {Array.from({ length: 12 }, (_, i) => i + 1).map((g) => (
             <button
@@ -374,7 +375,7 @@ CLUES:
       </div>
 
       <div className="mt-4">
-        <p className="mb-1.5 text-sm font-semibold text-primary">Difficulty</p>
+        <p className="mb-1.5 text-sm font-semibold text-primary">{tr('Difficulty')}</p>
         <div className="flex gap-2">
           {DIFFICULTIES.map((d) => (
             <button
@@ -391,7 +392,7 @@ CLUES:
       </div>
 
       <div className="mt-4">
-        <p className="mb-1.5 text-sm font-semibold text-primary">Answer format</p>
+        <p className="mb-1.5 text-sm font-semibold text-primary">{tr('Answer format')}</p>
         <div className="flex gap-2">
           {ANSWER_FORMATS.map((f) => (
             <button
@@ -411,7 +412,7 @@ CLUES:
       </div>
 
       <div className="mt-4">
-        <p className="mb-1.5 text-sm font-semibold text-primary">Question category</p>
+        <p className="mb-1.5 text-sm font-semibold text-primary">{tr('Question category')}</p>
         <div className="flex flex-wrap gap-2">
           {QUESTION_CATEGORIES.map((cat) => (
             <button
@@ -426,7 +427,7 @@ CLUES:
           ))}
         </div>
 
-        <p className="mb-1.5 mt-3 text-sm font-semibold text-primary">Question type</p>
+        <p className="mb-1.5 mt-3 text-sm font-semibold text-primary">{tr('Question type')}</p>
         {questionTypesForCurrentSelection.usedFallback && (
           <p className="mb-1.5 text-xs text-muted-foreground">
             {questionCategory} doesn't have {answerFormat === 'type' ? 'fill-in-the-blank' : 'multiple choice'} options yet - showing all types for this category instead.
@@ -449,7 +450,7 @@ CLUES:
       </div>
 
       <label className="mt-4 block">
-        <span className="mb-1 block text-sm font-semibold text-primary">Lesson topic (short label)</span>
+        <span className="mb-1 block text-sm font-semibold text-primary">{tr('Lesson topic (short label)')}</span>
         <input
           value={lessonTopic}
           onChange={(e) => setLessonTopic(e.target.value)}
@@ -466,7 +467,7 @@ CLUES:
           className="mt-0.5"
         />
         <span className="text-sm text-primary">
-          <span className="font-semibold">I have outside resources I'll attach with the prompt</span>
+          <span className="font-semibold">{tr('I have outside resources I\'ll attach with the prompt')}</span>
           <span className="block text-xs text-muted-foreground">
             (a worksheet, textbook page, reading passage, etc.) - the AI will analyze it to decide the vocabulary, grammar, or skills to use, instead of relying only on what you type below.
           </span>
@@ -510,9 +511,9 @@ CLUES:
       <CopyBox label="2. Story + clues prompt (attach your Step 1 image first)" text={storyAndCluesPrompt} shortcuts={TEXT_AI_SHORTCUTS} />
 
       <div className="mt-4 rounded-lg border border-secondary bg-secondary/5 p-3">
-        <p className="mb-1.5 text-sm font-semibold text-primary">Paste the AI's reply here</p>
+        <p className="mb-1.5 text-sm font-semibold text-primary">{tr('Paste the AI\'s reply here')}</p>
         <p className="mb-2 text-xs text-muted-foreground">
-          Copy the AI's ENTIRE reply to Prompt 2 (story + table, unedited) and paste it below. This fills
+          {tr('Copy the AI\'s ENTIRE reply to Prompt 2 (story + table, unedited) and paste it below. This fills')}
           in the story and drops clue pins onto your image automatically - no file needed.
         </p>
         <textarea
@@ -529,7 +530,7 @@ CLUES:
             disabled={!pasteText.trim()}
             className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground hover:opacity-90 disabled:opacity-40"
           >
-            Import story & clues
+            {tr('Import story & clues')}
           </button>
           {pasteStatus && (
             <span className={`text-xs font-medium ${pasteStatus.kind === 'success' ? 'text-secondary' : 'text-destructive'}`}>
@@ -541,7 +542,7 @@ CLUES:
 
       <div className="mt-3 rounded-lg border border-border bg-muted/20 p-3">
         <p className="text-xs text-muted-foreground">
-          Prefer working in a spreadsheet instead? Download a blank Excel template below, fill it in by
+          {tr('Prefer working in a spreadsheet instead? Download a blank Excel template below, fill it in by')}
           hand (or paste the AI's clue table into it), and use "Import clues from file" on the next page.
         </p>
         <button
@@ -549,7 +550,7 @@ CLUES:
           onClick={handleDownloadBlankTemplate}
           className="mt-2 rounded-lg border border-secondary px-3 py-1.5 text-xs font-semibold text-secondary hover:bg-secondary/10"
         >
-          Download blank template (.xlsx)
+          {tr('Download blank template (.xlsx)')}
         </button>
       </div>
     </div>

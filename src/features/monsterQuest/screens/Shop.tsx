@@ -8,6 +8,7 @@ import { sfx } from '../sound';
 import { ui } from '../uiAssets';
 import type { Item, ItemKind } from '../types';
 
+import { tr } from '../../../i18n/tr';
 const ITEM_ART = new Set(['quest_orb', 'great_orb', 'ultra_orb', 'prism_orb', 'potion', 'super_potion', 'xp_candy', 'big_xp_candy', 'evolution_stone', 'hyper_potion', 'revive_heart', 'gift_box']);
 const TAB_ICON: Record<ItemKind, string> = { ball: 'tab-ball', potion: 'tab-potion', booster: 'tab-booster', stone: 'tab-stone' };
 
@@ -39,7 +40,7 @@ export function Inventory() {
             </div>
           </Panel>);
       })}
-      {rows.length === 0 && <Panel><p className="text-sm font-bold text-white/85">Your bag is empty. Visit the Shop!</p></Panel>}
+      {rows.length === 0 && <Panel><p className="text-sm font-bold text-white/85">{tr('Your bag is empty. Visit the Shop!')}</p></Panel>}
     </div>
   );
 }
@@ -62,8 +63,8 @@ export function Shop({ onStyle }: { onStyle?: () => void } = {}) {
     <div className="mq-shop space-y-3">
       <div className="mq-shop-banner" style={{ backgroundImage: `url(${ui('shop-banner')})` }}>
         <div className="mq-shop-wallet">
-          <span className="mq-wallet mq-wallet-coin"><b>{fmt(mq.state.coins)}</b><i>coins</i></span>
-          <span className="mq-wallet mq-wallet-gem"><b>{fmt(mq.state.gems)}</b><i>gems</i></span>
+          <span className="mq-wallet mq-wallet-coin"><b>{fmt(mq.state.coins)}</b><i>{tr('coins')}</i></span>
+          <span className="mq-wallet mq-wallet-gem"><b>{fmt(mq.state.gems)}</b><i>{tr('gems')}</i></span>
         </div>
         {onStyle
           ? <button type="button" className="mq-shop-style" onClick={onStyle}>👕 Explorer style shop</button>
@@ -92,7 +93,7 @@ export function Shop({ onStyle }: { onStyle?: () => void } = {}) {
               </div>
             </div>);
         })}
-        {list.length === 0 && <p className="text-sm font-bold text-white/80">Nothing here yet.</p>}
+        {list.length === 0 && <p className="text-sm font-bold text-white/80">{tr('Nothing here yet.')}</p>}
       </div>
     </div>
   );

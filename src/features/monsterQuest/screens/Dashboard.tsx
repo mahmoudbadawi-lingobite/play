@@ -6,6 +6,7 @@ import { useMq } from '../context';
 import { ui } from '../uiAssets';
 import { Bar, Panel, RarityBadge, fmt } from '../ui';
 
+import { tr } from '../../../i18n/tr';
 export function Dashboard() {
   const { state, monsters, speciesById, name, isStaff, species } = useMq();
   const lv = levelInfo(state.xp);
@@ -39,9 +40,9 @@ export function Dashboard() {
           <p className="mt-1 text-xs font-semibold text-white/70">{fmt(lv.into)} / {fmt(lv.need)} XP to level {lv.level + 1} · shared with all LingoBite Play games</p>
         </div>
         <div className="flex gap-3 text-center text-white">
-          <div className="mq-stat"><img className="mq-stat-ico" src={ui('coin')} alt="" draggable={false} /><p className="font-extrabold tabular-nums">{fmt(state.coins)}</p><p className="text-[10px] font-bold uppercase opacity-70">Coins</p></div>
-          <div className="mq-stat"><img className="mq-stat-ico" src={ui('gem')} alt="" draggable={false} /><p className="font-extrabold tabular-nums">{fmt(state.gems)}</p><p className="text-[10px] font-bold uppercase opacity-70">Gems</p></div>
-          <div className="mq-stat"><img className="mq-stat-ico" src={ui('nav-monsters')} alt="" draggable={false} /><p className="font-extrabold tabular-nums">{monsters.length}</p><p className="text-[10px] font-bold uppercase opacity-70">Monsters</p></div>
+          <div className="mq-stat"><img className="mq-stat-ico" src={ui('coin')} alt="" draggable={false} /><p className="font-extrabold tabular-nums">{fmt(state.coins)}</p><p className="text-[10px] font-bold uppercase opacity-70">{tr('Coins')}</p></div>
+          <div className="mq-stat"><img className="mq-stat-ico" src={ui('gem')} alt="" draggable={false} /><p className="font-extrabold tabular-nums">{fmt(state.gems)}</p><p className="text-[10px] font-bold uppercase opacity-70">{tr('Gems')}</p></div>
+          <div className="mq-stat"><img className="mq-stat-ico" src={ui('nav-monsters')} alt="" draggable={false} /><p className="font-extrabold tabular-nums">{monsters.length}</p><p className="text-[10px] font-bold uppercase opacity-70">{tr('Monsters')}</p></div>
         </div>
       </Panel>
 
@@ -56,13 +57,13 @@ export function Dashboard() {
 
         <div className="space-y-4">
           <Panel>
-            <p className="font-display text-sm font-extrabold uppercase tracking-wide text-white/80">Today</p>
-            <div className="mt-2 flex items-center gap-2 text-xs font-bold text-white"><span className="w-16">Daily XP</span><Bar pct={(state.xp_today / state.xp_daily_cap) * 100} color="#facc15" label="Daily XP" /><span className="tabular-nums">{state.xp_today}/{state.xp_daily_cap}</span></div>
-            <p className="mt-3 text-xs font-semibold text-white/80">Answers: <span className="font-extrabold text-white">{state.correct_total}</span> correct · <span className="font-extrabold text-white">{state.wrong_total}</span> wrong{acc != null && <> · <span className="font-extrabold text-yellow-300">{acc}%</span> accuracy</>}</p>
+            <p className="font-display text-sm font-extrabold uppercase tracking-wide text-white/80">{tr('Today')}</p>
+            <div className="mt-2 flex items-center gap-2 text-xs font-bold text-white"><span className="w-16">{tr('Daily XP')}</span><Bar pct={(state.xp_today / state.xp_daily_cap) * 100} color="#facc15" label="Daily XP" /><span className="tabular-nums">{state.xp_today}/{state.xp_daily_cap}</span></div>
+            <p className="mt-3 text-xs font-semibold text-white/80">Answers: <span className="font-extrabold text-white">{state.correct_total}</span> correct · <span className="font-extrabold text-white">{state.wrong_total}</span> wrong{acc != null && <> · <span className="font-extrabold text-yellow-300">{acc}%</span> {tr('accuracy')}</>}</p>
           </Panel>
           <Panel>
-            <p className="font-display text-sm font-extrabold uppercase tracking-wide text-white/80">Latest captures</p>
-            {recent.length === 0 ? <p className="mt-2 text-sm font-semibold text-white/80">Nothing yet. Head into the Green Forest and walk through the tall grass!</p> : (
+            <p className="font-display text-sm font-extrabold uppercase tracking-wide text-white/80">{tr('Latest captures')}</p>
+            {recent.length === 0 ? <p className="mt-2 text-sm font-semibold text-white/80">{tr('Nothing yet. Head into the Green Forest and walk through the tall grass!')}</p> : (
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {recent.map((m) => { const sp = speciesById.get(m.species_id)!; return (
                   <Link key={m.id} to="/monster-quest/monsters" className="flex flex-col items-center rounded-xl bg-white/10 p-1.5 hover:bg-white/20" title={sp.name}>

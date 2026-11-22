@@ -3,6 +3,7 @@ import type { Question } from './types';
 import { sfx, speak } from './sound';
 import { GameButton } from './ui';
 
+import { tr } from '../../i18n/tr';
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 const PAIR_COLORS = ['#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#ef4444'];
 
@@ -87,19 +88,19 @@ export function QuestionView({ q, onSubmit, busy }: { q: Question; onSubmit: (an
       {isTyped && (
         <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (text.trim() && !disabled) send(text.trim()); }}>
           <input autoFocus value={text} onChange={(e) => setText(e.target.value)} disabled={disabled} autoComplete="off" autoCapitalize="off" spellCheck={false}
-            placeholder="Type your answer…" aria-label="Your answer" className="min-w-0 flex-1 rounded-2xl border-4 border-[#1b4fb3] bg-white px-4 py-3 text-lg font-bold text-[#10285a] outline-none focus:border-[#facc15]" />
-          <GameButton type="submit" tone="green" disabled={disabled || !text.trim()}>Go</GameButton>
+            placeholder={tr('Type your answer…')} aria-label={tr('Your answer')} className="min-w-0 flex-1 rounded-2xl border-4 border-[#1b4fb3] bg-white px-4 py-3 text-lg font-bold text-[#10285a] outline-none focus:border-[#facc15]" />
+          <GameButton type="submit" tone="green" disabled={disabled || !text.trim()}>{tr('Go')}</GameButton>
         </form>
       )}
 
       {q.type === 'sentence_order' && (
         <div className="mt-3">
-          <div className="min-h-[56px] rounded-2xl border-4 border-dashed border-[#1b4fb3] bg-white/90 p-2" aria-label="Your sentence">
+          <div className="min-h-[56px] rounded-2xl border-4 border-dashed border-[#1b4fb3] bg-white/90 p-2" aria-label={tr('Your sentence')}>
             <div className="flex flex-wrap gap-2">
               {chosen.map((wi, pos) => (
                 <button key={pos} type="button" disabled={disabled} onClick={() => { sfx.click(); setChosen(chosen.filter((_, p) => p !== pos)); }} className="mq-chip bg-[#facc15] text-[#10285a]">{words[wi]}</button>
               ))}
-              {chosen.length === 0 && <span className="px-2 py-1 text-sm font-semibold text-[#6b83b3]">Tap the words in order…</span>}
+              {chosen.length === 0 && <span className="px-2 py-1 text-sm font-semibold text-[#6b83b3]">{tr('Tap the words in order…')}</span>}
             </div>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -107,7 +108,7 @@ export function QuestionView({ q, onSubmit, busy }: { q: Question; onSubmit: (an
               <button key={i} type="button" disabled={disabled} onClick={() => { sfx.click(); setChosen([...chosen, i]); }} className="mq-chip bg-white text-[#10285a]">{w}</button>
             ))}
           </div>
-          <GameButton className="mt-3 w-full" tone="green" disabled={disabled || chosen.length !== words.length} onClick={() => send(chosen.map((i) => words[i]))}>Check sentence</GameButton>
+          <GameButton className="mt-3 w-full" tone="green" disabled={disabled || chosen.length !== words.length} onClick={() => send(chosen.map((i) => words[i]))}>{tr('Check sentence')}</GameButton>
         </div>
       )}
 
@@ -136,8 +137,8 @@ export function QuestionView({ q, onSubmit, busy }: { q: Question; onSubmit: (an
               })}
             </div>
           </div>
-          <p className="mt-2 text-center text-xs font-semibold text-white/80">Tap a word on the left, then its match on the right. Tap a matched card to undo.</p>
-          <GameButton className="mt-2 w-full" tone="green" disabled={disabled || Object.keys(pairs).length !== left.length} onClick={() => send(pairs)}>Check matches</GameButton>
+          <p className="mt-2 text-center text-xs font-semibold text-white/80">{tr('Tap a word on the left, then its match on the right. Tap a matched card to undo.')}</p>
+          <GameButton className="mt-2 w-full" tone="green" disabled={disabled || Object.keys(pairs).length !== left.length} onClick={() => send(pairs)}>{tr('Check matches')}</GameButton>
         </div>
       )}
     </div>

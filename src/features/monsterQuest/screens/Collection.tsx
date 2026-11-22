@@ -8,6 +8,7 @@ import { TrainModal } from './TrainModal';
 import { EvolveModal } from './EvolveModal';
 import type { ElementType, OwnedMonster, Rarity } from '../types';
 
+import { tr } from '../../../i18n/tr';
 export function Collection() {
   const mq = useMq();
   const [q, setQ] = useState('');
@@ -62,14 +63,14 @@ export function Collection() {
               {m && sp ? (<><MonsterArt spec={sp.art} spriteUrl={sp.sprite_url} size={58} anim="none" /><span className="text-[11px] font-bold">{sp.name}</span></>) : <span className="text-xs font-bold opacity-60">Slot {i + 1}</span>}
             </button>); })}
         </div>
-        <p className="mt-2 text-xs font-semibold text-white/70">Your team is saved to your account and is used in the Battle Arena.</p>
+        <p className="mt-2 text-xs font-semibold text-white/70">{tr('Your team is saved to your account and is used in the Battle Arena.')}</p>
       </Panel>
 
       <div className="flex flex-wrap items-center gap-2">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name…" aria-label="Search monsters" className={`${sel} min-w-[140px] flex-1`} />
-        <select value={type} onChange={(e) => setType(e.target.value as ElementType | 'all')} aria-label="Filter by type" className={sel}><option value="all">All types</option>{TYPE_ORDER.map((t) => <option key={t} value={t}>{TYPE_META[t].icon} {TYPE_META[t].label}</option>)}</select>
-        <select value={rarity} onChange={(e) => setRarity(e.target.value as Rarity | 'all')} aria-label="Filter by rarity" className={sel}><option value="all">All rarities</option>{(Object.keys(RARITY_META) as Rarity[]).map((r) => <option key={r} value={r}>{RARITY_META[r].label}</option>)}</select>
-        <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} aria-label="Sort" className={sel}><option value="recent">Newest</option><option value="level">Level</option><option value="name">Name</option><option value="type">Type</option><option value="rarity">Rarity</option></select>
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr('Search by name…')} aria-label={tr('Search monsters')} className={`${sel} min-w-[140px] flex-1`} />
+        <select value={type} onChange={(e) => setType(e.target.value as ElementType | 'all')} aria-label={tr('Filter by type')} className={sel}><option value="all">{tr('All types')}</option>{TYPE_ORDER.map((t) => <option key={t} value={t}>{TYPE_META[t].icon} {TYPE_META[t].label}</option>)}</select>
+        <select value={rarity} onChange={(e) => setRarity(e.target.value as Rarity | 'all')} aria-label={tr('Filter by rarity')} className={sel}><option value="all">{tr('All rarities')}</option>{(Object.keys(RARITY_META) as Rarity[]).map((r) => <option key={r} value={r}>{RARITY_META[r].label}</option>)}</select>
+        <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} aria-label={tr('Sort')} className={sel}><option value="recent">{tr('Newest')}</option><option value="level">{tr('Level')}</option><option value="name">{tr('Name')}</option><option value="type">{tr('Type')}</option><option value="rarity">{tr('Rarity')}</option></select>
         <button type="button" onClick={() => setFavOnly(!favOnly)} className={`${sel} ${favOnly ? '!bg-yellow-300' : ''}`} aria-pressed={favOnly}>⭐ Favorites</button>
       </div>
       {err && <p className="rounded-xl bg-red-500/90 px-3 py-2 text-sm font-bold text-white" role="alert">{err}</p>}
@@ -78,13 +79,13 @@ export function Collection() {
         {list.map((m) => { const sp = mq.speciesById.get(m.species_id)!; return (
           <button key={m.id} type="button" onClick={() => setOpen(m)} className="mq-mon-card" style={{ ['--tc' as string]: TYPE_META[sp.type].color }}>
             {m.favorite && <span className="absolute right-2 top-1.5 text-lg">⭐</span>}
-            {m.team_slot && <span className="absolute left-2 top-2 rounded-full bg-green-500 px-1.5 text-[10px] font-extrabold text-white">TEAM</span>}
+            {m.team_slot && <span className="absolute left-2 top-2 rounded-full bg-green-500 px-1.5 text-[10px] font-extrabold text-white">{tr('TEAM')}</span>}
             <MonsterArt spec={sp.art} spriteUrl={sp.sprite_url} size={96} />
             <span className="font-display text-sm font-extrabold text-white">{m.nickname || sp.name}</span>
             <span className="text-[11px] font-bold text-white/80">Lv. {m.level}</span>
             <span className="flex items-center gap-1"><TypeBadge type={sp.type} small /><RarityBadge rarity={sp.rarity} /></span>
           </button>); })}
-        {list.length === 0 && <p className="col-span-full py-6 text-center font-bold text-white/80">No monsters match those filters.</p>}
+        {list.length === 0 && <p className="col-span-full py-6 text-center font-bold text-white/80">{tr('No monsters match those filters.')}</p>}
       </div>
 
       {open && (() => { const m = mq.monsters.find((x) => x.id === open.id) ?? open; const sp = mq.speciesById.get(m.species_id)!; return (
@@ -100,11 +101,11 @@ export function Collection() {
             <StatRow label="DEF" value={m.defense} max={STAT_MAX.defense} color="#3b82f6" /><StatRow label="SPD" value={m.speed} max={STAT_MAX.speed} color="#facc15" />
           </div>
           <div className="mt-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#3d5a94]"><span className="w-12">XP</span><div className="flex-1"><Bar pct={(m.xp / (20 + m.level * 10)) * 100} color="linear-gradient(90deg,#38bdf8,#818cf8)" label="Monster XP" /></div><span className="tabular-nums">{m.xp}/{20 + m.level * 10}</span></div>
+            <div className="flex items-center gap-2 text-xs font-bold text-[#3d5a94]"><span className="w-12">{tr('XP')}</span><div className="flex-1"><Bar pct={(m.xp / (20 + m.level * 10)) * 100} color="linear-gradient(90deg,#38bdf8,#818cf8)" label="Monster XP" /></div><span className="tabular-nums">{m.xp}/{20 + m.level * 10}</span></div>
           </div>
           <div className="mt-2 grid grid-cols-2 gap-2">
             <GameButton tone="blue" onClick={() => { setOpen(null); setTrain(m); }}>🥋 Train</GameButton>
-            {sp.evolves_to ? <GameButton tone="gold" onClick={() => { setOpen(null); setEvo(m); }}>✨ Evolve</GameButton> : <GameButton tone="ghost" disabled className="!text-[#10285a]">Final form</GameButton>}
+            {sp.evolves_to ? <GameButton tone="gold" onClick={() => { setOpen(null); setEvo(m); }}>{tr('✨ Evolve')}</GameButton> : <GameButton tone="ghost" disabled className="!text-[#10285a]">{tr('Final form')}</GameButton>}
           </div>
           {mq.items.filter((i) => i.kind === 'booster' && (mq.state.inventory[i.key] ?? 0) > 0).map((i) => (
             <GameButton key={i.key} tone="ghost" className="mt-2 w-full !text-[#10285a]" onClick={() => run(async () => { const r = await api.useItem(i.key, m.id); setToast(`${i.name}: +${i.effect} XP${r.levels_gained ? `, level up to ${r.level}!` : ''}`); })}>
@@ -116,7 +117,7 @@ export function Collection() {
             <GameButton tone={m.favorite ? 'gold' : 'ghost'} className="!text-[#10285a]" onClick={() => run(() => api.toggleFavorite(m.id))}>{m.favorite ? '⭐ Favorite' : '☆ Favorite'}</GameButton>
             <GameButton tone={m.team_slot ? 'red' : 'green'} onClick={() => toggleTeam(m)}>{m.team_slot ? 'Remove from team' : 'Add to team'}</GameButton>
           </div>
-          <GameButton tone="blue" className="mt-2 w-full" onClick={() => setOpen(null)}>Close</GameButton>
+          <GameButton tone="blue" className="mt-2 w-full" onClick={() => setOpen(null)}>{tr('Close')}</GameButton>
         </Modal>); })()}
       {train && <TrainModal monster={train} onClose={() => setTrain(null)} />}
       {evo && <EvolveModal monster={evo} onClose={() => setEvo(null)} />}

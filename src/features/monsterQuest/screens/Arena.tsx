@@ -12,6 +12,7 @@ import { banner, ui, zoneBanner } from '../uiAssets';
 import { Bar, ConfirmDialog, GameButton, Panel, TypeBadge } from '../ui';
 import type { BEvent, BMon, Battle, Species } from '../types';
 
+import { tr } from '../../../i18n/tr';
 const DIFFS = [
   { k: 'easy', label: 'Easy', sub: '1 opponent, a bit weaker', stars: 1 },
   { k: 'normal', label: 'Normal', sub: '2 opponents, same level', stars: 2 },
@@ -43,14 +44,14 @@ export function Arena() {
       <div className="mq-menu-info">
         <img className="mq-menu-info-ico" src={ui('swords')} alt="" draggable={false} />
         <div>
-          <p className="font-display text-lg font-extrabold leading-tight text-white">Battle Arena</p>
-          <p className="text-sm font-semibold text-white/85">Turn-based battles against computer trainers. Use your battle team, mix attacks with <b>quiz-powered special moves</b>, and win coins, XP and monster experience. Online player-vs-player battles come in Phase 3.</p>
+          <p className="font-display text-lg font-extrabold leading-tight text-white">{tr('Battle Arena')}</p>
+          <p className="text-sm font-semibold text-white/85">Turn-based battles against computer trainers. Use your battle team, mix attacks with <b>{tr('quiz-powered special moves')}</b>, and win coins, XP and monster experience. Online player-vs-player battles come in Phase 3.</p>
         </div>
       </div>
       {team.length === 0 ? (
-        <Panel><p className="font-bold text-white">You need at least one monster on your battle team.</p><Link to="/monster-quest/monsters"><GameButton tone="gold" className="mt-2">Go to My Monsters</GameButton></Link></Panel>
+        <Panel><p className="font-bold text-white">{tr('You need at least one monster on your battle team.')}</p><Link to="/monster-quest/monsters"><GameButton tone="gold" className="mt-2">{tr('Go to My Monsters')}</GameButton></Link></Panel>
       ) : (
-        <MenuPanel icon="team" title="Your team">
+        <MenuPanel icon="team" title={tr('Your team')}>
           <div className="mq-team">{team.map((m) => { const sp = mq.speciesById.get(m.species_id)!; return (
             <div key={m.id} className="mq-team-chip">
               <div className="mq-team-stage"><img className="mq-team-plat" src={ui('platform-normal')} alt="" draggable={false} /><span className="mq-team-mon"><MonsterArt spec={sp.art} spriteUrl={sp.sprite_url} size={84} anim="none" /></span></div>
@@ -58,7 +59,7 @@ export function Arena() {
             </div>); })}</div>
         </MenuPanel>
       )}
-      <MenuPanel icon="pin" title="Arena">
+      <MenuPanel icon="pin" title={tr('Arena')}>
         <div className="mq-zone-grid">
           {mq.zones.map((z) => { const locked = level < z.unlock_level; return (
             <button key={z.id} type="button" disabled={locked} onClick={() => setZone(z.id)} aria-pressed={zone === z.id} className={`mq-card-banner ${zone === z.id ? 'is-sel' : ''} ${locked ? 'is-locked' : ''}`} style={{ backgroundImage: `url(${zoneBanner(z.id)})` }}>
@@ -67,7 +68,7 @@ export function Arena() {
             </button>); })}
         </div>
       </MenuPanel>
-      <MenuPanel icon="trophy" title="Difficulty">
+      <MenuPanel icon="trophy" title={tr('Difficulty')}>
         <div className="mq-diff-grid">
           {DIFFS.map((d) => (
             <button key={d.k} type="button" onClick={() => setDiff(d.k)} aria-pressed={diff === d.k} className={`mq-card-banner ${diff === d.k ? 'is-sel' : ''}`} style={{ backgroundImage: `url(${banner(d.k)})` }}>
@@ -77,8 +78,8 @@ export function Arena() {
         </div>
         {err && <p className="mt-3 rounded-xl bg-red-500/90 px-3 py-2 text-sm font-bold text-white" role="alert">{err}</p>}
         <div className="mq-menu-actions">
-          <GameButton tone="gold" disabled={busy || team.length === 0} onClick={start}><img className="mq-btn-ico" src={ui('sword')} alt="" draggable={false} />Start battle</GameButton>
-          {resumeId && <GameButton tone="blue" disabled={busy} onClick={resume}><img className="mq-btn-ico" src={ui('play')} alt="" draggable={false} />Resume unfinished battle</GameButton>}
+          <GameButton tone="gold" disabled={busy || team.length === 0} onClick={start}><img className="mq-btn-ico" src={ui('sword')} alt="" draggable={false} />{tr('Start battle')}</GameButton>
+          {resumeId && <GameButton tone="blue" disabled={busy} onClick={resume}><img className="mq-btn-ico" src={ui('play')} alt="" draggable={false} />{tr('Resume unfinished battle')}</GameButton>}
         </div>
       </MenuPanel>
     </div>
@@ -196,7 +197,7 @@ export function BattleScene({ initial, onExit, onRematch }: { initial: Battle; o
   const lvlAfter = levelInfo(mq.state.xp).level;
 
   return (
-    <div className="mq-arena mq-battle" role="region" aria-label="Battle">
+    <div className="mq-arena mq-battle" role="region" aria-label={tr('Battle')}>
       <div className="mq-view">
       <ArenaStage zone={battle.zone_id}>
         {om && osp && <Fighter side="opp" mon={om} sp={osp} attacking={fx.attacker === 'opp'} hit={fx.hit === 'opp'} pops={popsFor('opp')} />}
@@ -235,11 +236,11 @@ export function BattleScene({ initial, onExit, onRematch }: { initial: Battle; o
           <div className="mq-dock-panel rounded-2xl bg-[#0b2566]/90 p-3">
             <p className="mb-2 text-center text-sm font-extrabold text-yellow-300">⭐ Answer correctly to supercharge your attack!</p>
             <QuestionView key={pending.id} q={pending} busy={busy} onSubmit={(a) => void act('answer', undefined, a)} />
-            <GameButton tone="ghost" className="mt-2 w-full" disabled={busy} onClick={() => void act('cancel')}>Cancel (choose another move)</GameButton>
+            <GameButton tone="ghost" className="mt-2 w-full" disabled={busy} onClick={() => void act('cancel')}>{tr('Cancel (choose another move)')}</GameButton>
           </div>
         ) : menu === 'main' ? (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-            <GameButton tone="red" className="mq-bbtn" disabled={busy} onClick={() => void act('attack')}>⚔️ Attack</GameButton>
+            <GameButton tone="red" className="mq-bbtn" disabled={busy} onClick={() => void act('attack')}>{tr('⚔️ Attack')}</GameButton>
             <GameButton tone="gold" className="mq-bbtn" disabled={busy} onClick={() => void act('special')}>⭐ Special (quiz)</GameButton>
             <GameButton tone="blue" className="mq-bbtn" disabled={busy} onClick={() => void act('defend')}>🛡️ Defend</GameButton>
             <GameButton tone="green" className="mq-bbtn" disabled={busy || shown.player.filter((m) => !m.fainted).length < 2} onClick={() => setMenu('switch')}>🔄 Switch</GameButton>
@@ -250,29 +251,29 @@ export function BattleScene({ initial, onExit, onRematch }: { initial: Battle; o
             {shown.player.map((m, i) => { const sp = mq.speciesById.get(m.species_id)!; return (
               <button key={i} type="button" disabled={m.fainted || i === shown.pa || busy} onClick={() => void act('switch', String(i))} className="flex items-center gap-2 rounded-xl bg-white/10 p-2 text-left text-white disabled:opacity-40">
                 <MonsterArt spec={sp.art} spriteUrl={sp.sprite_url} size={44} anim="none" /><span className="flex-1"><span className="block text-sm font-extrabold">{m.name} Lv{m.level}</span><span className="block text-[11px] font-bold opacity-80">{m.fainted ? 'Fainted' : i === shown.pa ? 'In battle' : `${m.hp}/${m.max} HP`}</span></span></button>); })}
-          </div><GameButton tone="ghost" className="mt-2 w-full" onClick={() => setMenu('main')}>Back</GameButton></div>
+          </div><GameButton tone="ghost" className="mt-2 w-full" onClick={() => setMenu('main')}>{tr('Back')}</GameButton></div>
         ) : (
           <div className="mq-dock-panel rounded-2xl bg-[#0b2566]/90 p-2"><div className="grid gap-2 sm:grid-cols-2">
             {potions.map((i) => <button key={i.key} type="button" disabled={busy} onClick={() => void act('item', i.key)} className="rounded-xl bg-white/10 p-2 text-left text-white"><span className="block text-sm font-extrabold">{i.name} x{mq.state.inventory[i.key]}</span><span className="text-[11px] font-bold opacity-80">Heals {i.effect} HP</span></button>)}
-          </div><GameButton tone="ghost" className="mt-2 w-full" onClick={() => setMenu('main')}>Back</GameButton></div>
+          </div><GameButton tone="ghost" className="mt-2 w-full" onClick={() => setMenu('main')}>{tr('Back')}</GameButton></div>
         ))}
         </div>
 
-      {askGiveUp && <ConfirmDialog title="Give up this battle?" message="You will not earn any rewards." confirmLabel="Give up" cancelLabel="Keep fighting" tone="red" onConfirm={forfeit} onCancel={() => setAskGiveUp(false)} />}
+      {askGiveUp && <ConfirmDialog title={tr('Give up this battle?')} message="You will not earn any rewards." confirmLabel="Give up" cancelLabel="Keep fighting" tone="red" onConfirm={forfeit} onCancel={() => setAskGiveUp(false)} />}
       {final && battle.result && (
         <div className="mq-caught">
           <div className="relative z-10 w-full max-w-md px-4 text-center">
             <p className={`font-display text-4xl font-extrabold drop-shadow ${battle.result.won ? 'text-yellow-300' : 'text-sky-200'}`}>{battle.result.won ? 'Victory! 🏆' : 'Defeated…'}</p>
             <p className="mt-1 font-bold text-white/90">{battle.result.won ? `You beat ${battle.opp_name}!` : `${battle.opp_name} won this time. Train up and try again!`}</p>
             <div className="mq-card mt-3 grid grid-cols-3 text-[#10285a]">
-              <div><p className="text-xs font-bold opacity-70">Coins</p><p className="text-lg font-extrabold">+{battle.result.coins} 🪙</p></div>
-              <div><p className="text-xs font-bold opacity-70">Trainer XP</p><p className="text-lg font-extrabold">+{battle.result.xp}</p></div>
-              <div><p className="text-xs font-bold opacity-70">Monster XP</p><p className="text-lg font-extrabold">+{battle.result.monster_xp}</p></div>
+              <div><p className="text-xs font-bold opacity-70">{tr('Coins')}</p><p className="text-lg font-extrabold">+{battle.result.coins} 🪙</p></div>
+              <div><p className="text-xs font-bold opacity-70">{tr('Trainer XP')}</p><p className="text-lg font-extrabold">+{battle.result.xp}</p></div>
+              <div><p className="text-xs font-bold opacity-70">{tr('Monster XP')}</p><p className="text-lg font-extrabold">+{battle.result.monster_xp}</p></div>
             </div>
             {battle.result.levels.filter((l) => l.levels_gained > 0).map((l) => <p key={l.id} className="mt-2 font-extrabold text-amber-300">⭐ {l.name} reached level {l.level}!</p>)}
             {lvlAfter > levelInfo(xpBefore).level && <p className="mt-2 text-lg font-extrabold text-amber-300">🎉 Trainer level up! You are level {lvlAfter}</p>}
-            {battle.result.xp === 0 && battle.result.won && <p className="mt-1 text-xs font-semibold text-white/70">Daily battle XP limit reached. Coins and monster XP still count.</p>}
-            <div className="mt-3 grid grid-cols-2 gap-2"><GameButton tone="green" onClick={onRematch}>Battle again</GameButton><GameButton tone="blue" onClick={onExit}>Back to Arena</GameButton></div>
+            {battle.result.xp === 0 && battle.result.won && <p className="mt-1 text-xs font-semibold text-white/70">{tr('Daily battle XP limit reached. Coins and monster XP still count.')}</p>}
+            <div className="mt-3 grid grid-cols-2 gap-2"><GameButton tone="green" onClick={onRematch}>{tr('Battle again')}</GameButton><GameButton tone="blue" onClick={onExit}>{tr('Back to Arena')}</GameButton></div>
           </div>
         </div>)}
     </div>

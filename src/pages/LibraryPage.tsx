@@ -8,6 +8,7 @@ import type { ContentSet, SkillTemplate } from '../types';
 import { useSubjects } from '../features/subjects/useSubjects';
 import { setLabel } from '../features/subjects/label';
 
+import { tr } from '../i18n/tr';
 const SKILLS: (SkillTemplate | 'all')[] = ['all', 'vocabulary', 'grammar', 'reading', 'spelling'];
 
 export function LibraryPage() {
@@ -43,7 +44,7 @@ export function LibraryPage() {
   // Lets a teacher grab this game's link to paste into LingoTrace's
   // "Exams & Games" assignment field — works for ANY public set here,
   // not just ones this teacher authored, same link format as the
-  // "Copy link" button on My Games.
+  // "Copy link" button on My Content.
   const handleShare = (id: string) => {
     navigator.clipboard.writeText(`${window.location.origin}${import.meta.env.BASE_URL}play/${id}`);
     setCopiedId(id);
@@ -53,9 +54,9 @@ export function LibraryPage() {
   return (
     <div className="kid-lib mx-auto max-w-6xl px-4 py-10">
       <div className="kid-sticky-head kid-page-head">
-      <p className="kid-pill kid-only">Library</p>
-      <h1 className="kid-big-title font-display text-3xl font-bold text-primary">Content Library</h1>
-      <p className="kid-sub mt-1 text-muted-foreground">Public games shared by teachers across LingoBite Play.</p>
+      <p className="kid-pill kid-only">{tr('Library')}</p>
+      <h1 className="kid-big-title font-display text-3xl font-bold text-primary">{tr('Content Library')}</h1>
+      <p className="kid-sub mt-1 text-muted-foreground">{tr('Public games shared by teachers across LingoBite Play.')}</p>
       <Link to="/hunt" className="mt-3 inline-flex items-center gap-2 rounded-xl border-2 border-secondary px-4 py-2 text-sm font-bold text-primary hover:bg-secondary/10">
         🗺️ Treasure Hunt rooms: host or join a live game
       </Link>
@@ -80,9 +81,9 @@ export function LibraryPage() {
       </div>
 
       {loading ? (
-        <p className="mt-8 text-muted-foreground">Loading games...</p>
+        <p className="mt-8 text-muted-foreground">{tr('Loading games...')}</p>
       ) : sets.length === 0 ? (
-        <p className="mt-8 text-muted-foreground">No public games yet for this skill.</p>
+        <p className="mt-8 text-muted-foreground">{tr('No public games yet for this skill.')}</p>
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sets.map((set) => (
@@ -105,12 +106,12 @@ export function LibraryPage() {
                       to={`/play/${set.id}`}
                       className="whitespace-nowrap rounded-lg bg-secondary px-3 py-1.5 text-center text-sm font-semibold text-secondary-foreground hover:opacity-90"
                     >
-                      Choose a game
+                      {tr('Choose a game')}
                     </Link>
                     <button
                       onClick={() => handleShare(set.id)}
-                      title="Copy link"
-                      aria-label="Copy link"
+                      title={tr('Copy link')}
+                      aria-label={tr('Copy link')}
                       className="kid-sc-copy whitespace-nowrap rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-primary hover:border-secondary"
                     >
                       {copiedId === set.id ? <CheckIcon className="kid-sc-ico" /> : <LinkIcon className="kid-sc-ico" />}
@@ -125,7 +126,7 @@ export function LibraryPage() {
                     onClick={() => handleReport(set.id)}
                     disabled={reportedIds.includes(set.id)}
                     title={reportedIds.includes(set.id) ? 'Reported - thanks' : 'Report this content'}
-                    aria-label="Report this content"
+                    aria-label={tr('Report this content')}
                     className="kid-sc-act text-left text-muted-foreground hover:text-destructive disabled:text-success"
                   >
                     {reportedIds.includes(set.id) ? <CheckIcon className="kid-sc-ico" /> : <FlagIcon className="kid-sc-ico" />}
@@ -133,18 +134,18 @@ export function LibraryPage() {
                   </button>
                   {(profile.uid === set.teacherId || profile.role === 'admin') && (
                     <>
-                      <Link to={`/teacher/edit/${set.id}`} title="Edit" aria-label="Edit" className="kid-sc-act font-semibold text-primary hover:text-secondary">
+                      <Link to={`/teacher/edit/${set.id}`} title={tr('Edit')} aria-label={tr('Edit')} className="kid-sc-act font-semibold text-primary hover:text-secondary">
                         <EditIcon className="kid-sc-ico" />
-                        <span className="kid-sc-lbl">Edit</span>
+                        <span className="kid-sc-lbl">{tr('Edit')}</span>
                       </Link>
                       <button
                         onClick={() => handleDelete(set.id, set.title)}
-                        title="Delete"
-                        aria-label="Delete"
+                        title={tr('Delete')}
+                        aria-label={tr('Delete')}
                         className="kid-sc-act kid-sc-del font-semibold text-destructive hover:opacity-80"
                       >
                         <TrashIcon className="kid-sc-ico" />
-                        <span className="kid-sc-lbl">Delete</span>
+                        <span className="kid-sc-lbl">{tr('Delete')}</span>
                       </button>
                     </>
                   )}

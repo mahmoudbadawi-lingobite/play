@@ -6,6 +6,7 @@ import { sfx } from '../sound';
 import { GameButton, Modal, RarityBadge, TypeBadge } from '../ui';
 import type { OwnedMonster } from '../types';
 
+import { tr } from '../../../i18n/tr';
 /** Confirms, calls the server, then plays the evolution animation. The server decides whether evolution is allowed. */
 export function EvolveModal({ monster, onClose }: { monster: OwnedMonster; onClose: () => void }) {
   const mq = useMq();
@@ -41,7 +42,7 @@ export function EvolveModal({ monster, onClose }: { monster: OwnedMonster; onClo
           {item && <>Needs 1 {item.name} (you have {mq.state.inventory[item.key] ?? 0})</>}
         </p>
         {err && <p className="mt-2 rounded-xl bg-red-500/90 px-3 py-2 text-sm font-bold text-white" role="alert">{err}</p>}
-        <div className="mt-3 grid grid-cols-2 gap-2"><GameButton tone="ghost" className="!text-[#10285a]" onClick={onClose}>Cancel</GameButton><GameButton tone="gold" onClick={go}>Evolve!</GameButton></div>
+        <div className="mt-3 grid grid-cols-2 gap-2"><GameButton tone="ghost" className="!text-[#10285a]" onClick={onClose}>{tr('Cancel')}</GameButton><GameButton tone="gold" onClick={go}>{tr('Evolve!')}</GameButton></div>
       </div>)}
       {phase === 'anim' && (<div className="relative flex h-64 items-center justify-center overflow-hidden rounded-2xl bg-[#0b1b4d]">
         <div className="mq-evolve-aura" />
@@ -50,11 +51,11 @@ export function EvolveModal({ monster, onClose }: { monster: OwnedMonster; onClo
         <p className="absolute bottom-3 text-lg font-extrabold text-white">{from.name} is evolving…</p>
       </div>)}
       {phase === 'done' && (<div className="text-center">
-        <p className="font-display text-2xl font-extrabold text-amber-500">Evolution complete!</p>
+        <p className="font-display text-2xl font-extrabold text-amber-500">{tr('Evolution complete!')}</p>
         <div className="my-2 flex justify-center"><MonsterArt spec={to.art} spriteUrl={to.sprite_url} size={170} /></div>
         <p className="text-lg font-extrabold text-[#10285a]">{from.name} evolved into {to.name}!</p>
         <div className="mt-1 flex justify-center gap-2"><TypeBadge type={to.type} /><RarityBadge rarity={to.rarity} /></div>
-        <GameButton tone="blue" className="mt-3 w-full" onClick={onClose}>Awesome</GameButton>
+        <GameButton tone="blue" className="mt-3 w-full" onClick={onClose}>{tr('Awesome')}</GameButton>
       </div>)}
     </Modal>
   );

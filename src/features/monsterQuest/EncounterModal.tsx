@@ -12,6 +12,7 @@ import { sfx } from './sound';
 import { Bar, GameButton, RarityBadge, TypeBadge } from './ui';
 import type { AnswerResult, Encounter, Question, ThrowResult } from './types';
 
+import { tr } from '../../i18n/tr';
 type Phase = 'intro' | 'loading' | 'question' | 'feedback' | 'throw' | 'flying' | 'caught' | 'escaped';
 type Fly = 'fly' | 'absorb' | 'wobble' | 'pop' | null;
 interface Float { id: number; text: string; tone: string }
@@ -34,7 +35,7 @@ function RunButton({ busy, onRun }: { busy: boolean; onRun: () => void }) {
   useEffect(() => () => clearTimeout(timer.current), []);
   if (!img) return <button onClick={onRun} disabled={busy} className="rounded-full bg-white/20 px-3 py-1.5 text-sm font-bold text-white hover:bg-white/30">🏃 {armed ? 'Press R again' : 'Run away'} <kbd className="mq-run-key-plain">R</kbd></button>;
   return (
-    <button className={`mq-runbtn ${armed ? 'armed' : ''}`} onClick={onRun} disabled={busy} aria-keyshortcuts="R" title="Run away (press R twice)">
+    <button className={`mq-runbtn ${armed ? 'armed' : ''}`} onClick={onRun} disabled={busy} aria-keyshortcuts="R" title={tr('Run away (press R twice)')}>
       <img className="mq-runbtn-art" src={`${import.meta.env.BASE_URL}monster-quest/world/ui/btn-run.png`} alt="" draggable={false} onError={() => setImg(false)} />
       <i className="mq-runbtn-label">{armed ? 'Press R again' : 'Run away'}</i>
       <kbd className="mq-act-key">R</kbd>
@@ -165,7 +166,7 @@ export function EncounterModal({ encounter, onClose, scene }: { encounter: Encou
 
         {phase !== 'caught' && (
           <div className="mt-2 grid gap-2 rounded-2xl bg-black/25 p-2.5 text-white">
-            <div className="flex items-center gap-2 text-xs font-extrabold"><span className="w-24 shrink-0">Capture power</span><Bar pct={meter} color="linear-gradient(90deg,#22c55e,#facc15)" label="Capture power" /><span className="w-9 text-right tabular-nums">{meter}%</span></div>
+            <div className="flex items-center gap-2 text-xs font-extrabold"><span className="w-24 shrink-0">{tr('Capture power')}</span><Bar pct={meter} color="linear-gradient(90deg,#22c55e,#facc15)" label="Capture power" /><span className="w-9 text-right tabular-nums">{meter}%</span></div>
             <div className="flex items-center justify-between text-xs font-bold text-white/85">
               <span>Correct: {Math.min(correct, need)}/{need} needed to throw</span>
               <span>{'❤️'.repeat(Math.max(0, 3 - wrong))}{'🖤'.repeat(Math.min(3, wrong))}</span>
@@ -201,7 +202,7 @@ export function EncounterModal({ encounter, onClose, scene }: { encounter: Encou
               <GameButton className="mt-3 w-full" tone="green" onClick={loadQuestion} disabled={busy}>{correct > 0 ? 'Next question' : 'Start capture challenge'}</GameButton>
             </div>
           )}
-          {phase === 'loading' && <p className="py-6 text-center font-bold text-white">Thinking of a question…</p>}
+          {phase === 'loading' && <p className="py-6 text-center font-bold text-white">{tr('Thinking of a question…')}</p>}
           {phase === 'question' && q && <QuestionView key={q.id} q={q} busy={busy} onSubmit={submit} />}
 
           {phase === 'feedback' && res && q && (
@@ -209,13 +210,13 @@ export function EncounterModal({ encounter, onClose, scene }: { encounter: Encou
               <p className="text-lg font-extrabold">{res.correct ? (res.streak > 1 ? `Correct! ${res.streak} in a row! 🔥` : 'Correct! ✅') : res.late ? 'Too slow! ⏱' : 'Not quite ❌'}</p>
               {!res.correct && <p className="mt-1 text-sm font-semibold">Answer: <span className="font-extrabold">{formatCorrectAnswer(q.type, res.correct_answer)}</span></p>}
               {res.explanation && <p className="mt-1 text-sm">{res.explanation}</p>}
-              {res.correct && res.xp === 0 && <p className="mt-1 text-xs font-semibold opacity-80">Daily XP limit reached. You still earned coins and capture power!</p>}
+              {res.correct && res.xp === 0 && <p className="mt-1 text-xs font-semibold opacity-80">{tr('Daily XP limit reached. You still earned coins and capture power!')}</p>}
               {levelUp && <p className="mt-1 text-sm font-extrabold text-amber-600">⭐ Level up! You are now level {levelInfo(mq.state.xp).level}.</p>}
               <div className="mt-3 flex gap-2">
                 {res.escaped ? (
-                  <GameButton className="flex-1" tone="red" onClick={() => { ended.current = true; setPhase('escaped'); setNote(`${sp.name} got bored and ran away!`); }}>Continue</GameButton>
+                  <GameButton className="flex-1" tone="red" onClick={() => { ended.current = true; setPhase('escaped'); setNote(`${sp.name} got bored and ran away!`); }}>{tr('Continue')}</GameButton>
                 ) : (<>
-                  {res.can_throw && <GameButton className="flex-1" tone="gold" onClick={() => setPhase('throw')}>Throw an orb!</GameButton>}
+                  {res.can_throw && <GameButton className="flex-1" tone="gold" onClick={() => setPhase('throw')}>{tr('Throw an orb!')}</GameButton>}
                   <GameButton className="flex-1" tone={res.can_throw ? 'blue' : 'green'} onClick={loadQuestion}>{res.can_throw ? 'Answer more' : 'Next question'}</GameButton>
                 </>)}
               </div>
@@ -224,7 +225,7 @@ export function EncounterModal({ encounter, onClose, scene }: { encounter: Encou
 
           {phase === 'throw' && (
             <div className="mq-card">
-              <p className="text-center font-extrabold text-[#10285a]">Choose an orb</p>
+              <p className="text-center font-extrabold text-[#10285a]">{tr('Choose an orb')}</p>
               {note && <p className="mt-1 text-center text-sm font-semibold text-[#c2410c]">{note}</p>}
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {balls.map((b) => {
@@ -236,8 +237,8 @@ export function EncounterModal({ encounter, onClose, scene }: { encounter: Encou
                   );
                 })}
               </div>
-              {balls.every((b) => (mq.state.inventory[b.key] ?? 0) < 1) && <p className="mt-2 text-center text-sm font-bold text-red-600">No orbs left! Run away, then buy more in the Shop.</p>}
-              <GameButton className="mt-2 w-full" tone="blue" onClick={loadQuestion} disabled={busy}>Answer another question first (more power)</GameButton>
+              {balls.every((b) => (mq.state.inventory[b.key] ?? 0) < 1) && <p className="mt-2 text-center text-sm font-bold text-red-600">{tr('No orbs left! Run away, then buy more in the Shop.')}</p>}
+              <GameButton className="mt-2 w-full" tone="blue" onClick={loadQuestion} disabled={busy}>{tr('Answer another question first (more power)')}</GameButton>
             </div>
           )}
           {phase === 'flying' && <p className="py-4 text-center text-lg font-extrabold text-white">…</p>}
@@ -246,7 +247,7 @@ export function EncounterModal({ encounter, onClose, scene }: { encounter: Encou
             <div className="mq-card text-center">
               <p className="text-xl font-extrabold text-[#10285a]">💨 It got away!</p>
               <p className="mt-1 text-sm text-[#3d5a94]">{note ?? `${sp.name} ran off.`} Every question you answered still earned XP.</p>
-              <GameButton className="mt-3 w-full" tone="blue" onClick={() => finish()}>Back to exploring</GameButton>
+              <GameButton className="mt-3 w-full" tone="blue" onClick={() => finish()}>{tr('Back to exploring')}</GameButton>
             </div>
           )}
         </div>
@@ -256,18 +257,18 @@ export function EncounterModal({ encounter, onClose, scene }: { encounter: Encou
         <div className="mq-caught">
           <div className="mq-burst" aria-hidden="true">{Array.from({ length: 22 }, (_, i) => <span key={i} style={{ ['--a' as string]: `${(i / 22) * 360}deg`, ['--d' as string]: `${90 + (i % 5) * 30}px`, ['--c' as string]: ['#facc15', '#38bdf8', '#f472b6', '#4ade80'][i % 4] }} />)}</div>
           <div className="relative z-10 w-full max-w-md px-4 text-center">
-            <p className="font-display text-3xl font-extrabold text-yellow-300 drop-shadow">Gotcha!</p>
+            <p className="font-display text-3xl font-extrabold text-yellow-300 drop-shadow">{tr('Gotcha!')}</p>
             <div className="my-2 flex justify-center"><div className={animClassFor(sp.id, sp.type)} style={{ display: 'inline-block', lineHeight: 0 }}><MonsterArt spec={sp.art} spriteUrl={sp.sprite_url} size={170} anim="none" /></div></div>
             <p className="text-xl font-extrabold text-white">{sp.name} joined your collection!</p>
             <div className="mt-1 flex items-center justify-center gap-2"><TypeBadge type={sp.type} /><RarityBadge rarity={sp.rarity} /><span className="text-sm font-bold text-white/90">Lv. {encounter.level}</span></div>
             <div className="mq-card mt-3 flex justify-around text-[#10285a]">
-              <div><p className="text-xs font-bold opacity-70">XP earned</p><p className="text-lg font-extrabold">+{(won.xp ?? 0)} <span className="text-xs opacity-70">(+ answers)</span></p></div>
-              <div><p className="text-xs font-bold opacity-70">Coins</p><p className="text-lg font-extrabold">+{won.coins ?? 0} 🪙</p></div>
+              <div><p className="text-xs font-bold opacity-70">{tr('XP earned')}</p><p className="text-lg font-extrabold">+{(won.xp ?? 0)} <span className="text-xs opacity-70">(+ answers)</span></p></div>
+              <div><p className="text-xs font-bold opacity-70">{tr('Coins')}</p><p className="text-lg font-extrabold">+{won.coins ?? 0} 🪙</p></div>
             </div>
             {levelUp && <p className="mt-2 text-lg font-extrabold text-amber-300">⭐ Level up! You are now level {levelInfo(mq.state.xp).level}</p>}
             <div className="mt-3 flex gap-2">
-              <GameButton className="flex-1" tone="green" onClick={() => finish()}>Keep exploring</GameButton>
-              <GameButton className="flex-1" tone="blue" onClick={() => finish('monsters')}>My monsters</GameButton>
+              <GameButton className="flex-1" tone="green" onClick={() => finish()}>{tr('Keep exploring')}</GameButton>
+              <GameButton className="flex-1" tone="blue" onClick={() => finish('monsters')}>{tr('My monsters')}</GameButton>
             </div>
           </div>
         </div>

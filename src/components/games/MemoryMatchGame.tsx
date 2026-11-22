@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import { useEffect, useMemo, useState } from 'react';
 import type { GameProps } from './GameShell';
 
@@ -62,7 +63,7 @@ export function MemoryMatchGame({ items, onFinish }: GameProps) {
 
   return (
     <div>
-      <p className="mb-3 text-sm text-muted-foreground">Match each term with its clue · {matched.length / 2}/{pool.length} pairs</p>
+      <p className="mb-3 text-sm text-muted-foreground">{tr('Match each term with its clue · {a}/{b} pairs', { a: matched.length / 2, b: pool.length })}</p>
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
         {cards.map((card) => {
           const isFlipped = flipped.includes(card.cardId) || matched.includes(card.cardId);

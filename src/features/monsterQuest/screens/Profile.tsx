@@ -9,6 +9,7 @@ import { isMuted, setMuted, sfx } from '../sound';
 import { GameButton, Panel, RarityBadge, fmt } from '../ui';
 import { RARITY_META } from '../config';
 
+import { tr } from '../../../i18n/tr';
 export function Profile() {
   const mq = useMq();
   const [muted, setM] = useState(isMuted());
@@ -30,10 +31,10 @@ export function Profile() {
       </div>
       <CharacterShop />
       <Panel>
-        <p className="font-display text-sm font-extrabold uppercase tracking-wide text-white/80">Settings</p>
-        <label className="mt-2 flex cursor-pointer items-center gap-3 font-bold text-white"><input type="checkbox" className="h-5 w-5" checked={!muted} onChange={(e) => { setMuted(!e.target.checked); setM(!e.target.checked); if (e.target.checked) sfx.correct(); }} /> Sound effects</label>
-        <p className="mt-2 text-xs font-semibold text-white/65">Your XP is shared with the rest of LingoBite Play. Switch or buy explorers below and dress them in Style. Background music is planned for a later update.</p>
-        <Link to="/monster-quest/style" className="mt-3 inline-block"><GameButton tone="blue" type="button">Dress my explorer</GameButton></Link>
+        <p className="font-display text-sm font-extrabold uppercase tracking-wide text-white/80">{tr('Settings')}</p>
+        <label className="mt-2 flex cursor-pointer items-center gap-3 font-bold text-white"><input type="checkbox" className="h-5 w-5" checked={!muted} onChange={(e) => { setMuted(!e.target.checked); setM(!e.target.checked); if (e.target.checked) sfx.correct(); }} /> {tr('Sound effects')}</label>
+        <p className="mt-2 text-xs font-semibold text-white/65">{tr('Your XP is shared with the rest of LingoBite Play. Switch or buy explorers below and dress them in Style. Background music is planned for a later update.')}</p>
+        <Link to="/monster-quest/style" className="mt-3 inline-block"><GameButton tone="blue" type="button">{tr('Dress my explorer')}</GameButton></Link>
       </Panel>
     </div>
   );

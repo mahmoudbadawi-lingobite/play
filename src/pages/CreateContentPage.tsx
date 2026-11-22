@@ -12,6 +12,8 @@ import { NO_PICKS, picksToArrays, picksToTags, suggestFormat, type Picks } from 
 import type { ContentItem, ContentSet, SkillTemplate, Visibility } from '../types';
 
 
+import { ListeningTracksPanel } from '../components/common/ListeningTracksPanel';
+import { tr } from '../i18n/tr';
 export function CreateContentPage() {
   const { t } = useTranslation();
   const { profile } = useAuth();
@@ -81,21 +83,21 @@ export function CreateContentPage() {
       <h1 className="font-display text-3xl font-bold text-primary">{t('createGame')}</h1>
 
       <div className="card-surface mt-6 p-6">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Step 1 · Subject and skill</p>
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tr('Step 1 · Subject and skill')}</p>
         <SubjectSkillPicker subjects={subj.allowed} canRequest value={picks} onChange={pickAndFormat} multi savesAll={subj.multi} />
         <div className="mt-4"><GradePicker value={grade} onChange={setGrade} /></div>
       </div>
 
       <div className="card-surface mt-4 p-6">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Step 2 · Game title</p>
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tr('Step 2 · Game title')}</p>
 
         <label className="mt-5 block">
-          <span className="mb-1 block text-sm font-semibold text-primary">Game title</span>
+          <span className="mb-1 block text-sm font-semibold text-primary">{tr('Game title')}</span>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onBlur={handleTitleBlur}
-            placeholder="e.g. Animals - Beginner Vocabulary"
+            placeholder={tr('e.g. Animals - Beginner Vocabulary')}
             className="w-full rounded-lg border border-border px-4 py-2.5 outline-none focus:border-secondary"
           />
         </label>
@@ -121,10 +123,11 @@ export function CreateContentPage() {
 
       {focus?.domains?.some((d) => /listen/i.test(d)) && (
         <p className="mt-3 rounded-lg border border-secondary/40 bg-secondary/10 p-3 text-sm text-primary">
-          🎧 Listening content: the AI cuts your text into short chunks, each with one question. In Monster Quest, use <b>Question Bank → From the Content Library</b> to turn them into listening questions that are read aloud.
+          🎧 Listening content: the AI cuts your text into short chunks, each with one question. In Monster Quest, use <b>{tr('Question Bank → From the Content Library')}</b> to turn them into listening questions that are read aloud.
         </p>
       )}
       <AiContentPanel focus={focus} grade={grade ?? undefined} skill={skill} title={title} onItemsChange={setAiItems} />
+      <ListeningTracksPanel items={items} onChange={setAiItems} />
 
       <details className="card-surface mt-4 p-4">
         <summary className="cursor-pointer text-sm font-semibold text-primary">
@@ -151,12 +154,12 @@ export function CreateContentPage() {
           </ul>
         )}
         {aiItems.length > 0 && fileItems.length > 0 && (
-          <p className="mt-2 text-xs text-muted-foreground">The pasted AI content above is used. Clear it to use the spreadsheet instead.</p>
+          <p className="mt-2 text-xs text-muted-foreground">{tr('The pasted AI content above is used. Clear it to use the spreadsheet instead.')}</p>
         )}
       </details>
 
       <div className="card-surface mt-4 p-6">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Final step · Share and create</p>
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tr('Final step · Share and create')}</p>
         <div className="flex flex-col gap-3 sm:flex-row">
           <button
             onClick={() => setVisibility('public')}
@@ -177,7 +180,7 @@ export function CreateContentPage() {
           disabled={!title.trim() || items.length === 0 || saving}
           className="mt-5 w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-40"
         >
-          {saving ? 'Creating...' : items.length > 0 ? `Create content (${items.length} items)` : 'Create content'}
+          {saving ? tr('Creating...') : items.length > 0 ? tr('Create content ({n} items)', { n: items.length }) : tr('Create content')}
         </button>
         {!saving && (!title.trim() || items.length === 0) && (
           <p className="mt-2 text-center text-xs text-muted-foreground">

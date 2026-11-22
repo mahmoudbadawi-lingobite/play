@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { LaneGlyph } from './Scene';
 import { maskHint, norm, type BridgeLetter, type PortalOption } from './engine';
 
+import { tr } from '../../../i18n/tr';
 /** Darker than the portal colours so white text stays readable. */
 const BUTTON_COLORS = ['#5B43D6', '#0B7A6B', '#C8421F'] as const;
 const RING_COLOR = '#FFC83D';
@@ -22,7 +23,7 @@ export function AnswerButtons({
   onPick: (lane: number) => void;
 }) {
   return (
-    <div className="mt-3 grid gap-2 sm:grid-cols-3" role="group" aria-label="Answers">
+    <div className="mt-3 grid gap-2 sm:grid-cols-3" role="group" aria-label={tr('Answers')}>
       {options.map((opt, i) => {
         const wrong = wrongIds.includes(opt.id);
         const selected = lane === i && !disabled && !wrong;
@@ -84,7 +85,7 @@ export function LetterTray({
           </span>
         ))}
       </div>
-      <div className="mt-3 flex flex-wrap justify-center gap-2" role="group" aria-label="Letter blocks">
+      <div className="mt-3 flex flex-wrap justify-center gap-2" role="group" aria-label={tr('Letter blocks')}>
         {letters.map((l) => {
           const used = usedIds.includes(l.id);
           return (
@@ -149,8 +150,8 @@ export function BossPanel({
         disabled={disabled}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && submit()}
-        placeholder="Type the answer..."
-        aria-label="Type the answer"
+        placeholder={tr('Type the answer...')}
+        aria-label={tr('Type the answer')}
         autoComplete="off"
         autoCapitalize="off"
         spellCheck={false}
@@ -167,7 +168,7 @@ export function BossPanel({
         disabled={disabled || !norm(text)}
         className="bq-btn mt-3 w-full rounded-xl bg-secondary px-4 py-3 text-lg font-extrabold text-secondary-foreground disabled:opacity-50"
       >
-        Open the gate
+        {tr('Open the gate')}
       </button>
     </div>
   );

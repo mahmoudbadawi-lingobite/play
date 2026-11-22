@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { GameProps } from './GameShell';
 
+import { tr } from '../../i18n/tr';
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -26,7 +27,7 @@ export function PictureMatchGame({ items, onFinish }: GameProps) {
   }, [current]);
 
   if (rounds.length === 0) {
-    return <p className="p-6 text-muted-foreground">Not enough images in this set to play Picture Match.</p>;
+    return <p className="p-6 text-muted-foreground">{tr('Not enough images in this set to play Picture Match.')}</p>;
   }
 
   const choose = (option: string) => {
@@ -47,7 +48,7 @@ export function PictureMatchGame({ items, onFinish }: GameProps) {
 
   return (
     <div className="card-surface p-6">
-      <p className="mb-3 text-sm text-muted-foreground">Picture {index + 1} / {rounds.length}</p>
+      <p className="mb-3 text-sm text-muted-foreground">{tr('Picture {i} / {n}', { i: index + 1, n: rounds.length })}</p>
       <img
         src={current.imageUrl}
         alt="What is this?"
