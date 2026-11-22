@@ -103,7 +103,9 @@ export function QuestionBank() {
   const classById = useMemo(() => new Map(classes.map((c) => [c.id, c.name])), [classes]);
   const audienceOf = (r: BankQuestion) => (r.class_ids?.length ? r.class_ids.map((id) => classById.get(id) ?? 'Another class').join(', ') : 'All my students');
 
-  const shown = useMemo(() => rows.filter((r) => (ft === 'all' || r.type === ft) && (!fd || r.difficulty === fd) && (fs === 'all' || r.subject_id === fs) && (fa === 'all' || (fa === 'everyone' ? !r.class_ids?.length : (r.class_ids ?? []).includes(fa))) && (!q || r.prompt.toLowerCase().includes(q.toLowerCase()) || (r.topic ?? '').toLowerCase().includes(q.toLowerCase()))), [rows, q, ft, fd, fa, fs]);
+  const mySubjects = profile?.role === 'teacher' && subj.ready ? new Set(subj.allowed.map((x) => x.id)) : null;
+  const subjectOk = (id: string | null | undefined) => !mySubjects || mySubjects.has(id ?? 'english');
+  const shown = useMemo(() => rows.filter((r) => subjectOk(r.subject_id) && (ft === 'all' || r.type === ft) && (!fd || r.difficulty === fd) && (fs === 'all' || r.subject_id === fs) && (fa === 'all' || (fa === 'everyone' ? !r.class_ids?.length : (r.class_ids ?? []).includes(fa))) && (!q || r.prompt.toLowerCase().includes(q.toLowerCase()) || (r.topic ?? '').toLowerCase().includes(q.toLowerCase()))), [rows, q, ft, fd, fa, fs, subj.allowed, subj.ready]);
   if (!profile) return null;
 
   /** Adds the chosen audience (only when one is chosen, so everything keeps working before the SQL update is run). */
@@ -165,7 +167,7 @@ export function QuestionBank() {
       ['true_false', 'True or false: "Their" and "there" mean the same.', '', 'False', '', 'Grammar', 'English', 7, 1, 4, 15, '', '', '', '']]);
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Questions'); XLSX.writeFile(wb, 'monster-quest-questions-template.xlsx');
   };
-  const openSets = async () => { setSets([]); setSets([...(await listMyContentSets(profile.uid)), ...(await listPublicContentSets())].filter((s, i, a) => a.findIndex((x) => x.id === s.id) === i)); };
+  const openSets = async () => { setSets([]); setSets([...(await listMyContentSets(profile.uid)), ...(await listPublicContentSets())].filter((s, i, a) => a.findIndex((x) => x.id === s.id) === i && subjectOk(s.subjectId))); };
   const fromSet = async (s: ContentSet) => {
     setSets(null); setErr(null);
     try {

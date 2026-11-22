@@ -60,10 +60,11 @@ function Card({ img, title, count, onClick, tone }: { img: string; title: string
 
 const GRADES = Array.from({ length: 12 }, (_, i) => i + 1);
 
-export function LibraryCards({ sets, subjects, level, go, loading, children }: {
+export function LibraryCards({ sets, subjects, level, go, loading, children, onlyIds, canToggle, showOthers, onToggleOthers }: {
   sets: ContentSet[]; subjects: Subject[]; level: Level; go: (n: Partial<Level>) => void; loading: boolean; children: ReactNode;
+  onlyIds?: string[] | null; canToggle?: boolean; showOthers?: boolean; onToggleOthers?: () => void;
 }) {
-  const top = subjects.filter((s) => s.active && !s.parentId).sort((a, b) => a.sort - b.sort);
+  const top = subjects.filter((s) => s.active && !s.parentId && (!onlyIds || onlyIds.includes(s.id) || subjects.some((k) => k.parentId === s.id && onlyIds.includes(k.id)))).sort((a, b) => a.sort - b.sort);
   const subject = level.subject && level.subject !== 'all' ? subjects.find((s) => s.id === level.subject) ?? null : null;
   const gradeFiltered = (list: ContentSet[]) => (level.grade ? list.filter((s) => s.grade == null || s.grade === level.grade) : list);
   const countFor = (ids: string[], domainId?: string) =>
@@ -127,8 +128,15 @@ export function LibraryCards({ sets, subjects, level, go, loading, children }: {
     );
   }
 
+  const toggle = canToggle ? (
+    <button type="button" onClick={onToggleOthers} className="mt-3 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-primary hover:border-secondary">
+      {showOthers ? tr('Show only my subjects') : tr('Show other subjects too')}
+    </button>
+  ) : null;
+
   return (
     <>
+      {toggle}
       {crumbs}
       {gradeChips}
       {loading ? null : cards}

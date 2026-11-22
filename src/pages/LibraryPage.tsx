@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import type { ContentSet } from '../types';
 import { LibraryCards, filterSets, shownCount, type Level } from '../components/library/LibraryCards';
 import { useSubjects } from '../features/subjects/useSubjects';
-import { setLabel } from '../features/subjects/label';
+import { setArtKey, setLabel } from '../features/subjects/label';
 
 import { tr } from '../i18n/tr';
 
@@ -28,6 +28,11 @@ export function LibraryPage() {
   const [loading, setLoading] = useState(true);
   const [reportedIds, setReportedIds] = useState<string[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showOthers, setShowOthers] = useState(false);
+  // a teacher sees the subjects they are approved for; everyone else sees all
+  const onlyIds: string[] | null = profile?.role === 'teacher' && subj.ready && !showOthers ? subj.allowed.map((x) => x.id) : null;
+  const visibleSets = onlyIds ? sets.filter((s) => onlyIds.includes(s.subjectId ?? 'english')) : sets;
+  const canToggle = profile?.role === 'teacher' && subj.ready;
 
   const refresh = () => {
     setLoading(true);
@@ -76,15 +81,15 @@ export function LibraryPage() {
 
       </div>
 
-      <LibraryCards sets={sets} subjects={subj.subjects} level={level} go={go} loading={loading}>
+      <LibraryCards sets={visibleSets} subjects={subj.subjects} onlyIds={onlyIds} canToggle={canToggle} showOthers={showOthers} onToggleOthers={() => setShowOthers((v) => !v)} level={level} go={go} loading={loading}>
       {loading ? (
         <p className="mt-8 text-muted-foreground">{tr('Loading games...')}</p>
-      ) : shownCount(sets, subj.subjects, level) === 0 ? (
+      ) : shownCount(visibleSets, subj.subjects, level) === 0 ? (
         <p className="mt-8 text-muted-foreground">{tr('No public games here yet.')}</p>
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filterSets(sets, subj.subjects, level).map((set) => (
-            <div key={set.id} data-skill={set.skill} className="kid-set-card card-surface flex flex-col p-4">
+          {filterSets(visibleSets, subj.subjects, level).map((set) => (
+            <div key={set.id} data-skill={setArtKey(subj.subjects, set)} className="kid-set-card card-surface flex flex-col p-4">
               <div className="kid-sc-top flex items-center justify-between gap-2">
                 <span className="kid-sc-pill rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold capitalize text-muted-foreground">
                   {setLabel(subj.subjects, set)}
@@ -92,7 +97,7 @@ export function LibraryPage() {
                 <span className="kid-sc-plays text-xs text-muted-foreground">{set.playCount} plays</span>
               </div>
               <div className="kid-sc-body">
-                <SkillArt skill={set.skill} className="kid-sc-art kid-only" />
+                <SkillArt skill={setArtKey(subj.subjects, set)} className="kid-sc-art kid-only" />
                 <div className="kid-sc-main">
                   <div className="kid-sc-text">
                     <h3 className="kid-sc-title mt-2 font-display text-base font-semibold leading-tight text-primary">{set.title}</h3>
