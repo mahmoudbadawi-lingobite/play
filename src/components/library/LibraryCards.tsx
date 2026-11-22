@@ -25,7 +25,7 @@ export const shownCount = (sets: ContentSet[], subjects: Subject[], lv: Level) =
 
 function subjectArt(subjects: Subject[], id: string): string {
   const s = subjects.find((x) => x.id === id);
-  const root = s?.parentId ?? id;
+  const root = (s?.parentId ?? id).replace(/-ar$/, ''); // the Arabic edition of a subject shares its picture
   if (SUBJECT_ART.has(root)) return `${base}kid/subject-${root}.webp`;
   if (root === 'english') return `${base}kid/skill-vocabulary.webp`;
   return `${base}kid/subject-other.webp`;

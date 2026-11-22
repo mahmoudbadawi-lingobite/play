@@ -170,6 +170,7 @@ export function buildContentPrompt(o: PromptOptions): string {
     `• Use simple, clear language that suits Grade ${o.grade}. Keep each clue under about 120 characters.`,
     "• The game builds the wrong answer choices from the OTHER items' terms, so all terms in the set must be the same kind of thing (for example all animals, all past-tense verbs, or all place names) so the choices look believable.",
     '• Plain text only: no images, links, emojis or markdown inside the fields.',
+    ...(/math|رياض/i.test(o.focus?.subject ?? '') ? ['• Maths: write every question and answer in plain text (for example 7 x 8, 3/4, 12.5, x = 4), never LaTeX or $ signs. Each "term" is the final answer only (a number, a short expression, or one word). Use correct, checkable numbers, and keep all answers in a set the same kind (all whole numbers, all fractions, all shape names...).'] : []),
     '• If a value contains a double quote, escape it as \\" so the JSON stays valid.',
     '',
     'OUTPUT FORMAT',
