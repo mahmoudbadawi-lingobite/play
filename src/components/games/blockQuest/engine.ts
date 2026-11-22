@@ -66,6 +66,7 @@ function buildOptions(gateId: string, item: ContentItem, all: ContentItem[]): Po
   // listening / reading content brings its own wrong answers
   for (const w of item.wrong ?? []) { const key = norm(w); if (key && !seen.has(key) && distractors.length < 2) { seen.add(key); distractors.push(w.trim()); } }
   for (const other of shuffle(all)) {
+    if (distractors.length >= 2) break;
     const key = norm(other.term);
     if (!key || seen.has(key)) continue;
     seen.add(key);
