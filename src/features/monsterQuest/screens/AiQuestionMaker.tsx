@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { SubjectSkillPicker } from '../../subjects/SubjectSkillPicker';
 import { NO_PICKS, type Picks } from '../../subjects/types';
+import { GradePicker } from '../../subjects/GradePicker';
 import type { useSubjects } from '../../subjects/useSubjects';
 import { QUESTION_TYPES } from '../config';
 import { GameButton } from '../ui';
@@ -9,12 +10,12 @@ import { buildQuestionPrompt, defaultTypes, parseQuestionReply } from '../questi
 type Subjects = ReturnType<typeof useSubjects>;
 
 /** Build an AI prompt for questions, then take the AI's reply and add the questions to the bank. */
-export function AiQuestionMaker({ subj, onAdd }: { subj: Subjects; onAdd: (rows: Record<string, any>[], picks: Picks) => Promise<string> }) {
+export function AiQuestionMaker({ subj, onAdd }: { subj: Subjects; onAdd: (rows: Record<string, any>[], picks: Picks, grade: number | null) => Promise<string> }) {
   const [picks, setPicks] = useState<Picks>(NO_PICKS);
   const [types, setTypes] = useState<string[] | null>(null);       // null = follow the chosen domain
   const [count, setCount] = useState(8);
   const [difficulty, setDifficulty] = useState(2);
-  const [grade, setGrade] = useState('');
+  const [grade, setGrade] = useState<number | null>(null);
   const [topic, setTopic] = useState('');
   const [material, setMaterial] = useState('');
   const [attach, setAttach] = useState(false);
@@ -29,7 +30,7 @@ export function AiQuestionMaker({ subj, onAdd }: { subj: Subjects; onAdd: (rows:
   const prompt = useMemo(() => {
     if (!subject) return '';
     const skills = subject.domains.flatMap((x) => x.skills).filter((x) => picks.skillIds.includes(x.id)).map((x) => ({ name: x.name, hint: x.description }));
-    return buildQuestionPrompt({ subject: subject.name, domains: subject.domains.filter((x) => picks.domainIds.includes(x.id)).map((x) => x.name), skills, types: usable, count, difficulty, grade: grade ? Number(grade) : null, topic, material, hasAttachment: attach });
+    return buildQuestionPrompt({ subject: subject.name, domains: subject.domains.filter((x) => picks.domainIds.includes(x.id)).map((x) => x.name), skills, types: usable, count, difficulty, grade, topic, material, hasAttachment: attach, language: subject.language ?? 'en' });
   }, [subject, picks, usable.join(','), count, difficulty, grade, topic, material, attach]);
 
   const chip = (on: boolean) => `rounded-full border-2 px-3 py-1 text-xs font-extrabold ${on ? 'border-[#1b4fb3] bg-[#1b4fb3] text-white' : 'border-[#1b4fb3] bg-white text-[#10285a]'}`;
@@ -41,7 +42,7 @@ export function AiQuestionMaker({ subj, onAdd }: { subj: Subjects; onAdd: (rows:
     const r = parseQuestionReply(reply);
     if (r.error) return setMsg(r.error);
     if (!r.rows.length) return setMsg('Paste the AI reply first.');
-    setMsg(await onAdd(r.rows, picks)); setReply('');
+    setMsg(await onAdd(r.rows, picks, grade)); setReply('');
   };
 
   return (
@@ -66,9 +67,10 @@ export function AiQuestionMaker({ subj, onAdd }: { subj: Subjects; onAdd: (rows:
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <div><label className={lab}>How many</label><input type="number" min={1} max={40} value={count} onChange={(e) => setCount(Math.max(1, Math.min(40, Number(e.target.value) || 1)))} className={inp} /></div>
           <div><label className={lab}>Difficulty</label><select value={difficulty} onChange={(e) => setDifficulty(Number(e.target.value))} className={inp}>{[1, 2, 3, 4, 5].map((d) => <option key={d} value={d}>{d}</option>)}</select></div>
-          <div><label className={lab}>Grade</label><input value={grade} onChange={(e) => setGrade(e.target.value.replace(/\D/g, ''))} className={inp} placeholder="optional" /></div>
           <div><label className={lab}>Topic</label><input value={topic} onChange={(e) => setTopic(e.target.value)} className={inp} placeholder="optional" /></div>
         </div>
+
+        <div className="mt-3"><GradePicker value={grade} onChange={setGrade} /></div>
 
         <span className={lab}>Prompt to copy</span>
         <textarea readOnly value={prompt} rows={7} className={`${inp} font-mono text-xs`} onFocus={(e) => e.currentTarget.select()} />

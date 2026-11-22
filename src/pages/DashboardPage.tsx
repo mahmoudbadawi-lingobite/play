@@ -102,7 +102,7 @@ export function DashboardPage() {
               {t('createGame')}
             </Link>
             <Link to="/teacher/my-games" className="rounded-xl border border-border bg-card px-5 py-3 font-semibold text-primary hover:border-secondary">
-              My Games
+              My Content
             </Link>
             <Link to="/teacher/create-escape-room" className="rounded-xl bg-secondary px-5 py-3 font-semibold text-secondary-foreground hover:opacity-90">
               Create Escape Room

@@ -1,3 +1,4 @@
+import { buildArabicRichPrompt, buildArabicStandardPrompt } from './contentPromptAr';
 import type { ContentItem, SkillTemplate } from '../types';
 
 /**
@@ -24,7 +25,7 @@ export interface PromptOptions {
   /** Words / notes typed straight into the app. */
   rawText: string;
   /** Chosen subject / domain / skill from the subject picker. Overrides `subject` and tells the AI which skill to practise. */
-  focus?: { subject: string; domains?: string[]; skills?: { name: string; hint?: string | null }[] };
+  focus?: { subject: string; domains?: string[]; skills?: { name: string; hint?: string | null }[]; language?: 'en' | 'ar' };
 }
 
 export const SKILL_HELP: Record<SkillTemplate, string> = {
@@ -68,12 +69,13 @@ const SKILL_RULES: Record<SkillTemplate, { term: string; clue: string; extra: st
 /** Listening / reading content carries more than a term and a clue: a spoken chunk or a short passage, plus wrong choices. */
 export function richKindOf(focus?: PromptOptions['focus']): 'listening' | 'reading' | null {
   const text = `${(focus?.domains ?? []).join(' ')} ${(focus?.skills ?? []).map((k) => k.name).join(' ')}`.toLowerCase();
-  if (/listen/.test(text)) return 'listening';
-  if (/read|comprehension/.test(text) && /read/.test((focus?.domains ?? []).join(' ').toLowerCase())) return 'reading';
+  if (/listen|استماع/.test(text)) return 'listening';
+  if (/read|comprehension|قراءة/.test(text) && /read|قراءة/.test((focus?.domains ?? []).join(' ').toLowerCase())) return 'reading';
   return null;
 }
 
 function buildRichPrompt(o: PromptOptions, kind: 'listening' | 'reading'): string {
+  if (o.focus?.language === 'ar') return buildArabicRichPrompt(o, kind);
   const subject = o.focus?.subject.trim() || o.subject.trim() || 'English';
   const raw = o.rawText.trim();
   const out: string[] = [
@@ -121,6 +123,7 @@ function buildRichPrompt(o: PromptOptions, kind: 'listening' | 'reading'): strin
 export function buildContentPrompt(o: PromptOptions): string {
   const rich = richKindOf(o.focus);
   if (rich) return buildRichPrompt(o, rich);
+  if (o.focus?.language === 'ar') return buildArabicStandardPrompt(o);
   const rules = SKILL_RULES[o.skill];
   const subject = o.focus?.subject.trim() || o.subject.trim() || 'English';
   const raw = o.rawText.trim();

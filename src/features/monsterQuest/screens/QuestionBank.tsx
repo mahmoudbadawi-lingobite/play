@@ -10,6 +10,7 @@ import type { BankQuestion, QuestionType } from '../types';
 import { useSubjects } from '../../subjects/useSubjects';
 import { SubjectSkillPicker } from '../../subjects/SubjectSkillPicker';
 import { AiQuestionMaker } from './AiQuestionMaker';
+import { GradePicker } from '../../subjects/GradePicker';
 import { COGNITIVE_LEVELS, picksToArrays, picksToTags, rowToPicks, type Picks } from '../../subjects/types';
 
 const blank = (audience: string[] = []): Partial<BankQuestion> => ({ type: 'mcq', subject: 'English', difficulty: 1, xp_reward: 5, active: true, prompt: '', answer: '', ...(audience.length ? { class_ids: audience } : {}) });
@@ -128,14 +129,14 @@ export function QuestionBank() {
     return { subject: sub.name, subject_id: sub.id, domain_id: t.domainId, skill_id: t.skillId, ...(subj.multi ? { domain_ids: picksToArrays(p, sub).domainIds, skill_ids: p.skillIds } : {}) };
   };
   /** Validate, tag and insert rows from a file or from the AI maker. `defaults` tags rows that name no skill of their own. Returns the message to show. */
-  const importData = async (data: Record<string, any>[], defaults?: Picks): Promise<string> => {
+  const importData = async (data: Record<string, any>[], defaults?: Picks, defaultGrade?: number | null): Promise<string> => {
     {
       const ok: Partial<BankQuestion>[] = [], bad: string[] = [];
       data.forEach((r, i) => {
         const x = rowToQuestion(r); if (typeof x === 'string') return void bad.push(`Row ${i + 2}: ${x}`);
         const sks = String(r.skill_id ?? '').split(/[|,;]/).map((z) => z.trim()).filter(Boolean); const sd = sks.length ? subj.subjects.find((z) => z.domains.some((d) => d.skills.some((k) => k.id === sks[0]))) : undefined;
         const tg = tagFor(String(r.subject ?? '') || (defaults ? subj.subjectById(defaults.subjectId)?.name ?? null : null), sd ? { subjectId: sd.id, skillIds: sks.filter((k) => sd.domains.some((d) => d.skills.some((z) => z.id === k))) } : defaults && !sks.length ? { subjectId: defaults.subjectId, domainIds: defaults.domainIds, skillIds: defaults.skillIds } : undefined);
-        if (typeof tg === 'string') bad.push(`Row ${i + 2}: ${tg}`); else ok.push({ ...x, ...tg });
+        if (typeof tg === 'string') bad.push(`Row ${i + 2}: ${tg}`); else ok.push({ ...x, ...tg, grade: x.grade ?? defaultGrade ?? null });
       });
       if (ok.length) await api.insertBankQuestions(withAudience(ok), profile.uid);
       const msg = `Imported ${ok.length} question${ok.length === 1 ? '' : 's'}.${bad.length ? ` Skipped ${bad.length}: ${bad.slice(0, 5).join('; ')}${bad.length > 5 ? '…' : ''}` : ''}`;
@@ -152,7 +153,7 @@ export function QuestionBank() {
       setInfo(await importData(data));
     } catch (e) { setErr(`Import failed: ${(e as Error).message}`); }
   };
-  const addFromAi = async (data: Record<string, any>[], picks: Picks) => { try { return await importData(data, picks); } catch (e) { return `Import failed: ${(e as Error).message}`; } };
+  const addFromAi = async (data: Record<string, any>[], picks: Picks, grade: number | null) => { try { return await importData(data, picks, grade); } catch (e) { return `Import failed: ${(e as Error).message}`; } };
   const template = () => {
     const ws = XLSX.utils.aoa_to_sheet([TEMPLATE_COLS,
       ['mcq', 'What is the opposite of "hot"?', 'cold|warm|big|fast', 'cold', 'Cold is the opposite of hot.', 'Vocabulary', 'English', 7, 1, 5, '', '', '', '', ''],
@@ -268,7 +269,7 @@ export function QuestionBank() {
                 <tr key={r.id} className={`border-t border-white/10 ${r.active ? '' : 'opacity-50'}`}>
                   <td className="p-2">{mine && <input type="checkbox" aria-label="Select question" checked={sel.has(r.id)} onChange={() => toggleSel(r.id)} />}</td>
                   <td className="max-w-[320px] p-2 font-semibold"><span className="line-clamp-2">{r.prompt}</span></td>
-                  <td className="p-2 text-xs">{QUESTION_TYPES.find((t) => t.value === r.type)?.label}</td><td className="p-2 text-xs">{r.topic ?? '–'}{(r.skill_ids?.length || r.skill_id) && <span className="block text-[10px] opacity-70">{(r.skill_ids?.length ? r.skill_ids : [r.skill_id!]).map((id) => subj.subjects.flatMap((x) => x.domains.flatMap((d) => d.skills)).find((k) => k.id === id)?.name).filter(Boolean).join(' · ')}</span>}</td>
+                  <td className="p-2 text-xs">{QUESTION_TYPES.find((t) => t.value === r.type)?.label}</td><td className="p-2 text-xs">{r.topic ?? '–'}{r.grade ? <span className="ml-1 rounded bg-white/15 px-1 text-[10px] font-extrabold">G{r.grade}</span> : null}{(r.skill_ids?.length || r.skill_id) && <span className="block text-[10px] opacity-70">{(r.skill_ids?.length ? r.skill_ids : [r.skill_id!]).map((id) => subj.subjects.flatMap((x) => x.domains.flatMap((d) => d.skills)).find((k) => k.id === id)?.name).filter(Boolean).join(' · ')}</span>}</td>
                   {targeting && <td className="max-w-[160px] p-2 text-xs"><span className={`line-clamp-2 ${r.class_ids?.length ? 'font-bold text-yellow-200' : 'text-white/70'}`}>{audienceOf(r)}</span></td>}
                   <td className="p-2 text-center">{r.difficulty}</td><td className="p-2 text-center">{s?.asked ?? 0}</td><td className="p-2 text-center">{s?.asked ? `${Math.round((s.correct / s.asked) * 100)}%` : '–'}</td>
                   <td className="whitespace-nowrap p-2 text-right">{mine && (<><button className="mr-2 font-bold text-yellow-300 hover:underline" onClick={() => setEdit(r)}>Edit</button><button className="mr-2 font-bold text-sky-300 hover:underline" onClick={() => toggle(r)}>{r.active ? 'Hide' : 'Show'}</button><button className="font-bold text-red-300 hover:underline" onClick={() => setAskDel(r)}>Delete</button></>)}</td>
@@ -395,13 +396,13 @@ function QuestionForm({ initial, onClose, onSaved, userId, classes, targeting }:
           <p className="mb-1 text-xs font-extrabold uppercase text-[#3d5a94]">Subject and skill</p>
           <SubjectSkillPicker subjects={subj.allowed} canRequest multi={subj.multi} savesAll value={rowToPicks({ subjectId: f.subject_id ?? null, domainId: f.domain_id, skillId: f.skill_id, domainIds: f.domain_ids, skillIds: f.skill_ids })}
             onChange={(p) => { const sb = subj.subjectById(p.subjectId); const v = picksToTags(p, sb); const arr = picksToArrays(p, sb); const ok = subj.typesFor(v.subjectId).some((d) => d.id === f.type); set({ subject_id: v.subjectId, domain_id: v.domainId, skill_id: v.skillId, domain_ids: arr.domainIds, skill_ids: arr.skillIds, ...(ok || !v.subjectId ? {} : { type: (subj.typesFor(v.subjectId)[0]?.id ?? 'mcq') as QuestionType }) }); }} />
+          {<div className="mt-2"><GradePicker value={f.grade ?? null} onChange={(g) => set({ grade: g })} /></div>}
           <label className={lab}>Thinking level (optional)</label>
           <select value={f.cognitive_level ?? ''} onChange={(e) => set({ cognitive_level: e.target.value || null })} className={inp}><option value="">Not set</option>{COGNITIVE_LEVELS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>
         </div>)}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {!tagged && <div><label className={lab}>Subject</label><input value={f.subject ?? ''} onChange={(e) => set({ subject: e.target.value })} className={inp} /></div>}
           <div><label className={lab}>Topic</label><input value={f.topic ?? ''} onChange={(e) => set({ topic: e.target.value })} className={inp} /></div>
-          <div><label className={lab}>Grade (optional)</label><input type="number" min={1} max={12} value={f.grade ?? ''} onChange={(e) => set({ grade: e.target.value ? +e.target.value : null })} className={inp} /></div>
           <div><label className={lab}>Difficulty (1–5)</label><select value={f.difficulty ?? 1} onChange={(e) => set({ difficulty: +e.target.value })} className={inp}>{[1, 2, 3, 4, 5].map((d) => <option key={d}>{d}</option>)}</select></div>
           <div><label className={lab}>XP reward</label><input type="number" min={0} max={50} value={f.xp_reward ?? 5} onChange={(e) => set({ xp_reward: +e.target.value })} className={inp} /></div>
           <div><label className={lab}>Timer (seconds)</label><input type="number" min={5} value={f.time_limit_s ?? ''} onChange={(e) => set({ time_limit_s: e.target.value ? +e.target.value : null })} placeholder="none" className={inp} /></div>

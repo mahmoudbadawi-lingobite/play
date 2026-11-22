@@ -5,6 +5,7 @@ import { AiContentPanel } from '../components/common/AiContentPanel';
 import { generateTemplate, parseTemplateFile } from '../lib/contentTemplates';
 import { getContentSet, updateContentSet } from '../lib/services';
 import { useSubjects } from '../features/subjects/useSubjects';
+import { GradePicker } from '../features/subjects/GradePicker';
 import { SubjectSkillPicker } from '../features/subjects/SubjectSkillPicker';
 import { NO_PICKS, picksToArrays, picksToTags, rowToPicks, suggestFormat, type Picks } from '../features/subjects/types';
 import type { ContentItem, ContentSet, SkillTemplate, Visibility } from '../types';
@@ -21,12 +22,13 @@ export function EditContentPage() {
 
   const subj = useSubjects();
   const [picks, setPicks] = useState<Picks>(NO_PICKS);
+  const [grade, setGrade] = useState<number | null>(null);
   const pickAndFormat = (p: Picks) => { setPicks(p); const f = suggestFormat(p, subj.subjectById(p.subjectId)); if (f) setSkill(f); };
   const tags = useMemo(() => picksToTags(picks, subj.subjectById(picks.subjectId)), [picks, subj]);
   const focus = useMemo(() => {
     const s = subj.subjectById(picks.subjectId); if (!s) return undefined;
     const skills = s.domains.flatMap((x) => x.skills).filter((x) => picks.skillIds.includes(x.id)).map((x) => ({ name: x.name, hint: x.description }));
-    return { subject: s.name, domains: s.domains.filter((x) => picks.domainIds.includes(x.id)).map((x) => x.name), skills };
+    return { subject: s.name, language: s.language ?? 'en', domains: s.domains.filter((x) => picks.domainIds.includes(x.id)).map((x) => x.name), skills };
   }, [subj, picks]);
   const [skill, setSkill] = useState<SkillTemplate>('vocabulary');
   const [title, setTitle] = useState('');
@@ -50,6 +52,7 @@ export function EditContentPage() {
       }
       setOriginal(set);
       setSkill(set.skill);
+      setGrade(set.grade ?? null);
       setPicks(rowToPicks({ subjectId: set.subjectId ?? null, domainId: set.domainId, skillId: set.skillId, domainIds: set.domainIds, skillIds: set.skillIds }));
       setTitle(set.title);
       setVisibility(set.visibility);
@@ -71,6 +74,7 @@ export function EditContentPage() {
       title: title.trim(),
       skill,
       visibility,
+      ...(subj.gradeReady ? { grade } : {}),
       ...(subj.ready && tags.subjectId ? { subjectId: tags.subjectId, domainId: tags.domainId, skillId: tags.skillId, ...(subj.multi ? picksToArrays(picks, subj.subjectById(picks.subjectId)) : {}) } : {}),
       ...(replacementItems ? { items: replacementItems } : {}),
     });
@@ -92,6 +96,7 @@ export function EditContentPage() {
       <div className="card-surface mt-6 p-6">
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Subject and skill</p>
         <SubjectSkillPicker subjects={subj.allowed} canRequest value={picks} onChange={pickAndFormat} multi savesAll={subj.multi} />
+        <div className="mt-4"><GradePicker value={grade} onChange={setGrade} /></div>
       </div>
 
       <div className="card-surface mt-4 p-6">
@@ -124,7 +129,7 @@ export function EditContentPage() {
           🎧 Listening content: the AI cuts your text into short chunks, each with one question. In Monster Quest, use <b>Question Bank → From the Content Library</b> to turn them into listening questions that are read aloud.
         </p>
       )}
-      <AiContentPanel focus={focus} skill={skill} title={title} onItemsChange={setAiItems} />
+      <AiContentPanel focus={focus} grade={grade ?? undefined} skill={skill} title={title} onItemsChange={setAiItems} />
 
       <details className="card-surface mt-4 p-4">
         <summary className="cursor-pointer text-sm font-semibold text-primary">Prefer a spreadsheet? Edit content offline</summary>

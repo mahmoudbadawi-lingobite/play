@@ -5,6 +5,12 @@ const fail = (e: { message: string }): never => { throw new Error(e.message); };
 
 const mapSkill = (r: any): Skill => ({ id: r.id, domainId: r.domain_id, subjectId: r.subject_id, name: r.name, description: r.description ?? null, sort: r.sort ?? 0, active: r.active !== false });
 
+/** True once subjects_grade_language_patch.sql has been run (the grade column exists). */
+export async function probeGrade(): Promise<boolean> {
+  const { error } = await supabase.from('content_sets').select('grade').limit(1);
+  return !error;
+}
+
 /** True once subjects_multi_skills_patch.sql has been run (the skill_ids column exists). */
 export async function probeMulti(): Promise<boolean> {
   const { error } = await supabase.from('content_sets').select('skill_ids').limit(1);
@@ -21,6 +27,7 @@ export async function loadCatalog(): Promise<Catalog> {
   if (t.error) fail(t.error);
   const subjects: Subject[] = (s.data ?? []).map((r: any) => ({
     id: r.id, name: r.name, icon: r.icon ?? null, sort: r.sort ?? 0, active: r.active !== false,
+    language: r.language === undefined ? undefined : r.language === 'ar' ? 'ar' : 'en', parentId: r.parent_id ?? null,
     questionTypes: (r.subject_question_types ?? []).map((x: any) => x.question_type),
     domains: (r.subject_domains ?? [])
       .map((d: any): Domain => ({ id: d.id, subjectId: d.subject_id, name: d.name, sort: d.sort ?? 0, skills: (d.subject_skills ?? []).map(mapSkill).sort((a: Skill, b: Skill) => a.sort - b.sort || a.name.localeCompare(b.name)) }))
@@ -60,8 +67,9 @@ export async function decideTeacherSubject(teacherId: string, subjectId: string,
   const { error } = await supabase.from('teacher_subjects').update({ status }).eq('teacher_id', teacherId).eq('subject_id', subjectId);
   if (error) fail(error);
 }
-export async function saveSubject(s: { id: string; name: string; icon: string | null; sort: number; active: boolean }): Promise<void> {
-  const { error } = await supabase.from('subjects').upsert({ id: s.id, name: s.name, icon: s.icon, sort: s.sort, active: s.active });
+export async function saveSubject(s: { id: string; name: string; icon: string | null; sort: number; active: boolean; language?: 'en' | 'ar'; parentId?: string | null }): Promise<void> {
+  // language / parent only once the grade-language SQL has been run (the caller leaves them undefined before that)
+  const { error } = await supabase.from('subjects').upsert({ id: s.id, name: s.name, icon: s.icon, sort: s.sort, active: s.active, ...(s.language ? { language: s.language, parent_id: s.parentId ?? null } : {}) });
   if (error) fail(error);
 }
 export async function deleteSubject(id: string): Promise<void> {

@@ -64,6 +64,8 @@ export interface ContentSet {
   /** every chosen domain / skill (empty until subjects_multi_skills_patch.sql has been run) */
   domainIds?: string[];
   skillIds?: string[];
+  /** grade 1-12; null = any (undefined until subjects_grade_language_patch.sql has been run) */
+  grade?: number | null;
 }
 
 // --- Games ---

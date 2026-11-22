@@ -90,14 +90,16 @@ function Editor({ subjects, questionTypes, run }: { subjects: Subject[]; questio
           <button className={btn} disabled={!slug(newName)} onClick={addSubject}>Add</button>
         </div>
       </div>
-      {subject ? <SubjectEditor key={subject.id} subject={subject} questionTypes={questionTypes} run={run} onDeleted={() => setSel(null)} /> : <p className="text-sm text-muted-foreground">Choose or add a subject.</p>}
+      {subject ? <SubjectEditor key={subject.id} subject={subject} others={subjects} questionTypes={questionTypes} run={run} onDeleted={() => setSel(null)} /> : <p className="text-sm text-muted-foreground">Choose or add a subject.</p>}
     </div>
   );
 }
 
-function SubjectEditor({ subject, questionTypes, run, onDeleted }: { subject: Subject; questionTypes: { id: string; label: string }[]; run: (fn: () => Promise<unknown>, ok: string) => Promise<void>; onDeleted: () => void }) {
+function SubjectEditor({ subject, others, questionTypes, run, onDeleted }: { subject: Subject; others: Subject[]; questionTypes: { id: string; label: string }[]; run: (fn: () => Promise<unknown>, ok: string) => Promise<void>; onDeleted: () => void }) {
   const [name, setName] = useState(subject.name), [icon, setIcon] = useState(subject.icon ?? ''), [active, setActive] = useState(subject.active);
   const [types, setTypes] = useState<string[]>(subject.questionTypes);
+  const [language, setLanguage] = useState<'en' | 'ar'>(subject.language ?? 'en');
+  const [parentId, setParentId] = useState<string>(subject.parentId ?? '');
   const [paste, setPaste] = useState('');
   const [newDomain, setNewDomain] = useState('');
   const parsed = useMemo(() => (paste.trim() ? parseTaxonomy(paste) : []), [paste]);
@@ -117,8 +119,12 @@ function SubjectEditor({ subject, questionTypes, run, onDeleted }: { subject: Su
         <div className="flex flex-wrap items-end gap-2">
           <label className="grid gap-1 text-xs font-semibold text-muted-foreground">Name<input className={inp} value={name} onChange={(e) => setName(e.target.value)} /></label>
           <label className="grid gap-1 text-xs font-semibold text-muted-foreground">Icon<input className={`${inp} w-20`} value={icon} onChange={(e) => setIcon(e.target.value)} /></label>
+          {subject.language !== undefined && <>
+            <label className="grid gap-1 text-xs font-semibold text-muted-foreground">Language<select className={inp} value={language} onChange={(e) => setLanguage(e.target.value as 'en' | 'ar')}><option value="en">English</option><option value="ar">العربية (Arabic)</option></select></label>
+            <label className="grid gap-1 text-xs font-semibold text-muted-foreground">Under subject<select className={inp} value={parentId} onChange={(e) => setParentId(e.target.value)}><option value="">None (top level)</option>{others.filter((o) => o.id !== subject.id).map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select></label>
+          </>}
           <label className="flex items-center gap-2 pb-2 text-sm"><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> Active</label>
-          <button className={btn} onClick={() => run(() => saveSubject({ id: subject.id, name: name.trim() || subject.name, icon: icon.trim() || null, sort: subject.sort, active }), 'Saved')}>Save</button>
+          <button className={btn} onClick={() => run(() => saveSubject({ id: subject.id, name: name.trim() || subject.name, icon: icon.trim() || null, sort: subject.sort, active, ...(subject.language !== undefined ? { language, parentId: parentId || null } : {}) }), 'Saved')}>Save</button>
           <button className={btn2} onClick={() => { if (confirm(`Delete ${subject.name} with all its skills? Questions keep their text but lose this tag.`)) run(async () => { await deleteSubject(subject.id); onDeleted(); }, 'Deleted'); }}>Delete subject</button>
         </div>
         <p className="text-xs text-muted-foreground">Id: {subject.id}</p>

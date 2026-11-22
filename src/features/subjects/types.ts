@@ -1,6 +1,7 @@
 export interface Skill { id: string; domainId: string; subjectId: string; name: string; description: string | null; sort: number; active: boolean }
 export interface Domain { id: string; subjectId: string; name: string; sort: number; skills: Skill[] }
-export interface Subject { id: string; name: string; icon: string | null; sort: number; active: boolean; domains: Domain[]; questionTypes: string[] }
+export interface Subject { id: string; name: string; icon: string | null; sort: number; active: boolean; domains: Domain[]; questionTypes: string[];
+  /** 'en' | 'ar'. undefined until subjects_grade_language_patch.sql has been run. */ language?: 'en' | 'ar'; parentId?: string | null }
 export interface QuestionTypeDef { id: string; label: string; sort: number }
 export interface Catalog { subjects: Subject[]; questionTypes: QuestionTypeDef[] }
 
@@ -46,9 +47,9 @@ export const suggestFormat = (p: Picks, subject?: Subject): 'vocabulary' | 'gram
   const skill = subject.domains.flatMap((d) => d.skills).find((k) => k.id === p.skillIds[0]);
   const dom = subject.domains.find((d) => d.id === (skill?.domainId ?? p.domainIds[0]));
   const text = `${skill?.name ?? ''} ${dom?.name ?? ''}`.toLowerCase();
-  if (/spell|mechanic|punctuat/.test(text)) return 'spelling';
-  if (/vocab|lexi|word|collocation|idiom/.test(text)) return 'vocabulary';
-  if (/grammar|syntax|tense|clause/.test(text)) return 'grammar';
-  if (/read|comprehension|listen/.test(text)) return 'reading';
+  if (/spell|mechanic|punctuat|إملاء/.test(text)) return 'spelling';
+  if (/vocab|lexi|word|collocation|idiom|مفردات|ترادف|تضاد/.test(text)) return 'vocabulary';
+  if (/grammar|syntax|tense|clause|قواعد|نحو|صرف/.test(text)) return 'grammar';
+  if (/read|comprehension|listen|قراءة|استماع/.test(text)) return 'reading';
   return null;
 };

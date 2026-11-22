@@ -23,13 +23,17 @@ export function AiContentPanel({
   title,
   onItemsChange,
   focus,
+  grade: gradeProp,
 }: {
   focus?: PromptOptions['focus'];
+  /** when the page already has a grade picker, it is used here and the panel's own buttons are hidden */
+  grade?: number;
   skill: SkillTemplate;
   title: string;
   onItemsChange: (items: ContentItem[]) => void;
 }) {
-  const [grade, setGrade] = useState(5);
+  const [gradeOwn, setGrade] = useState(5);
+  const grade = gradeProp ?? gradeOwn;
   const [count, setCount] = useState(12);
   const [subject, setSubject] = useState('English');
   const [topic, setTopic] = useState('');
@@ -74,7 +78,7 @@ export function AiContentPanel({
         <b>Each item:</b> {SKILL_HELP[skill]}
       </p>
 
-      <div className="mt-4">
+      {gradeProp === undefined && <div className="mt-4">
         <p className="mb-1.5 text-sm font-semibold text-primary">Grade</p>
         <div className="flex flex-wrap gap-1.5">
           {Array.from({ length: 12 }, (_, i) => i + 1).map((g) => (
@@ -88,7 +92,7 @@ export function AiContentPanel({
             </button>
           ))}
         </div>
-      </div>
+      </div>}
 
       <div className="mt-4">
         <p className="mb-1.5 text-sm font-semibold text-primary">Number of items</p>

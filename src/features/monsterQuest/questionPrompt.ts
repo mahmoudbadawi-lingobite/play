@@ -16,6 +16,8 @@ export interface QuestionPromptOptions {
   topic: string;
   material: string;
   hasAttachment: boolean;
+  /** 'ar' writes the whole prompt in Arabic and asks for Arabic questions */
+  language?: 'en' | 'ar';
 }
 
 const TYPE_RULES: Record<string, string> = {
@@ -36,7 +38,54 @@ const TYPE_RULES: Record<string, string> = {
   ].join('\n'),
 };
 
+const TYPE_RULES_AR: Record<string, string> = {
+  mcq: 'mcq (اختيار من متعدد): prompt = السؤال؛ options = من 3 إلى 4 خيارات مفصولة بـ | ؛ answer = خيار واحد صحيح تماماً مطابق لأحد الخيارات. باقي الخيارات معقولة لكنها خاطئة بوضوح.',
+  true_false: 'true_false (صح أو خطأ): prompt = عبارة؛ options = ""؛ answer = True أو False (بالإنجليزية).',
+  fill_blank: 'fill_blank (إكمال): prompt = جملة فيها ___ مكان الكلمة المحذوفة؛ options = ""؛ answer = الكلمة الصحيحة (يمكن وضع بدائل صحيحة مفصولة بـ |).',
+  type_answer: 'type_answer (إجابة مكتوبة): prompt = سؤال قصير جوابه كلمة أو عبارة قصيرة؛ options = ""؛ answer = الإجابة (بدائل مقبولة مفصولة بـ |).',
+  spelling: 'spelling (إملاء): prompt = "استمع واكتب الكلمة."؛ tts_text = الكلمة (تُقرأ بصوت عالٍ)؛ options = ""؛ answer = الكلمة بإملاء صحيح وبالتشكيل عند الحاجة فقط.',
+  sentence_order: 'sentence_order (ترتيب الكلمات): prompt = "رتّب الكلمات لتكوّن جملة صحيحة."؛ options = ""؛ answer = الجملة الصحيحة (يخلط التطبيق كلماتها).',
+  word_match: 'word_match (توصيل): prompt = "صِل كل كلمة بمعناها."؛ options = ""؛ answer = من 3 إلى 5 أزواج بالشكل أ=ب|ج=د (كل طرف أيمن مختلف).',
+  reading: 'reading (قراءة وفهم): نص قصير واحد لكل سؤال. passage = من 3 إلى 5 جمل مأخوذة من المادة بنصها؛ prompt = سؤال واحد يُجاب عنه من هذا النص فقط؛ options = من 3 إلى 4 خيارات مفصولة بـ | ؛ answer = خيار واحد صحيح تماماً.',
+  listening: [
+    'listening (استماع) - نشاط مقطع صوتي:',
+    '  * قسّم المادة إلى مقاطع متتابعة من جملتين إلى ثلاث جمل (نحو 25 إلى 45 كلمة) بحسب ترتيب النص، بحيث تغطي المادة كلها.',
+    '  * كل مقطع يصبح سؤالاً واحداً بالضبط: tts_text = المقطع بنصه حرفياً (يقرؤه التطبيق بصوت عالٍ، دون إرشادات مسرحية أو ترقيم أو كلمة "سؤال")؛ prompt = سؤال واحد عن هذا المقطع فقط يُجاب عنه بالاستماع؛ options = من 3 إلى 4 خيارات مفصولة بـ | ؛ answer = خيار واحد صحيح تماماً.',
+    '  * لا تنسخ المقطع داخل السؤال ولا تضعه في passage: على الطالب أن يستمع لا أن يقرأ.',
+    '  * نوّع أسئلة المقاطع: الفكرة العامة، معلومة صريحة، من قال، لماذا، ماذا حدث بعد ذلك.',
+  ].join('\n'),
+};
+
+function buildQuestionPromptAr(o: QuestionPromptOptions): string {
+  const types = o.types.length ? o.types : ['mcq'];
+  const listening = types.includes('listening');
+  const out: string[] = [];
+  out.push(`أنت معلّم خبير تكتب أسئلة اختبار قصيرة للعبة Monster Quest. المادة: ${o.subject}.`);
+  if (o.domains.length) out.push(`المجال: ${o.domains.join('، ')}`);
+  if (o.skills.length) {
+    out.push(`المهارات المطلوب قياسها: ${o.skills.map((k) => (k.hint ? `${k.name} (${k.hint})` : k.name)).join('؛ ')}`);
+    out.push(o.skills.length > 1 ? 'وزّع الأسئلة على هذه المهارات. يجب أن يقيس كل سؤال إحدى هذه المهارات، لا الموضوع العام فقط.' : 'يجب أن يقيس كل سؤال هذه المهارة تحديداً، لا الموضوع العام فقط.');
+  }
+  out.push(`أنواع الأسئلة المسموحة: ${types.join(', ')}.`);
+  out.push(`مستوى الصعوبة: ${o.difficulty} من 5${o.grade ? `؛ الطلاب في الصف ${o.grade} تقريباً` : ''}. اجعل اللغة مناسبة لمستوى الطلاب.`);
+  out.push('اكتب جميع الأسئلة والخيارات والإجابات باللغة العربية الفصحى السليمة والمبسّطة، وبالتشكيل حيث يلزم لمنع اللبس فقط.');
+  if (o.topic.trim()) out.push(`الموضوع: ${o.topic.trim()}`);
+  out.push(listening ? `العدد: سؤال واحد لكل مقطع من المادة، بحد أقصى ${o.count} سؤالاً (توقف مبكراً إذا انتهت المادة).` : `العدد: ${o.count} سؤالاً.`);
+  out.push('', 'المادة المصدرية');
+  if (o.hasAttachment) out.push('(المادة مرفقة في هذه المحادثة كملف أو صورة. اقرأها أولاً بما في ذلك النص داخل الصور، واعتمد عليها وحدها، وتجاهل أي إجابات أو كتابة بخط اليد على الصفحة.)');
+  if (o.material.trim()) out.push(o.material.trim());
+  if (!o.hasAttachment && !o.material.trim()) out.push('(لم تُقدَّم مادة: اكتب محتوى أصلياً يناسب المادة والمهارات والمستوى.)');
+  out.push('', 'شكل كل نوع من الأسئلة');
+  types.forEach((t) => out.push(TYPE_RULES_AR[t] ?? `${t}: prompt = السؤال؛ answer = الإجابة الصحيحة.`));
+  out.push('', 'تنسيق المخرجات',
+    'أجب بكتلة JSON واحدة فقط ولا شيء غيرها: قائمة كائنات بهذه المفاتيح بالضبط (المفاتيح بالإنجليزية والقيم بالعربية):',
+    '{ "type": "...", "prompt": "...", "options": "أ|ب|ج|د", "answer": "...", "explanation": "جملة قصيرة تشرح لماذا الإجابة صحيحة", "topic": "عنوان قصير للموضوع", "difficulty": 1, "tts_text": "", "passage": "" }',
+    'القواعد: options سلسلة واحدة تفصل بين خياراتها | (سلسلة فارغة إن لم يكن للنوع خيارات)؛ difficulty رقم من 1 إلى 5؛ استخدم سلسلة فارغة للمفاتيح غير المنطبقة؛ لا تستخدم تنسيق markdown داخل القيم؛ لا تكرر الأسئلة؛ تأكد أن كل إجابة صحيحة فعلاً قبل الرد.');
+  return out.join('\n');
+}
+
 export function buildQuestionPrompt(o: QuestionPromptOptions): string {
+  if (o.language === 'ar') return buildQuestionPromptAr(o);
   const types = o.types.length ? o.types : ['mcq'];
   const listening = types.includes('listening');
   const out: string[] = [];
@@ -90,12 +139,12 @@ export function defaultTypes(p: Picks, subject?: Subject): string[] {
   const skill = subject.domains.flatMap((d) => d.skills).find((k) => k.id === p.skillIds[0]);
   const dom = subject.domains.find((d) => d.id === (skill?.domainId ?? p.domainIds[0]));
   const text = `${dom?.name ?? ''} ${skill?.name ?? ''}`.toLowerCase();
-  if (/listen/.test(text)) return ['listening'];
+  if (/listen|استماع/.test(text)) return ['listening'];
   if (/speak|pronunc/.test(text)) return ['listening', 'mcq'];
-  if (/read|comprehension/.test(text)) return ['reading'];
-  if (/spell|mechanic|punctuat/.test(text)) return ['spelling', 'sentence_order', 'mcq'];
+  if (/read|comprehension|قراءة/.test(text)) return ['reading'];
+  if (/spell|mechanic|punctuat|إملاء/.test(text)) return ['spelling', 'sentence_order', 'mcq'];
   if (/writ|composition|paragraph/.test(text)) return ['sentence_order', 'mcq'];
-  if (/vocab|lexi|word|collocation|idiom/.test(text)) return ['mcq', 'fill_blank', 'word_match'];
-  if (/grammar|syntax|tense|clause/.test(text)) return ['fill_blank', 'mcq', 'sentence_order'];
+  if (/vocab|lexi|word|collocation|idiom|مفردات|ترادف|تضاد/.test(text)) return ['mcq', 'fill_blank', 'word_match'];
+  if (/grammar|syntax|tense|clause|قواعد|نحو|صرف/.test(text)) return ['fill_blank', 'mcq', 'sentence_order'];
   return ['mcq'];
 }
