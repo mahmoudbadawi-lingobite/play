@@ -18,13 +18,29 @@ const BLAST_R = 62;
 const CRATER_R = 50;
 const SS = 1.5; // sprite supersampling
 const WATER_Y = MAP_H - 40;
+const STEP = 1 / 120; // fixed simulation step: every device replays a shot the same way
 
-export type Phase = 'question' | 'feedback' | 'move' | 'flight' | 'settle' | 'over';
+export type Phase = 'wait' | 'question' | 'feedback' | 'move' | 'flight' | 'settle' | 'over';
 export interface Question { prompt: string; passage?: string; audio?: string; options: string[]; correct: number }
 export interface GameStatus {
   phase: Phase; team: 0 | 1; timeLeft: number; moveLeft: number; winner: 0 | 1 | null; canAct: boolean; hp: [number, number];
   question: Question | null; picked: number; fizzle: boolean; asked: number; correct: [number, number]; animal: string;
+  shooter: string; controlled: boolean; turn: number;
 }
+
+/** Everything that must match on every device at the start of a turn. */
+export interface Snap {
+  animals: { x: number; y: number; hp: number; alive: boolean; water: boolean; fade: number; facing: 1 | -1 }[];
+  covers: number[]; craters: [number, number, number][]; turnIdx: number[]; correct: [number, number]; asked: number; turns: number;
+}
+/** The few messages that make a networked match: the host decides, everybody replays. */
+export type GameEvent =
+  | { k: 'turn'; team: 0 | 1; animal: number; q: Question; shooter: string; snap: Snap }
+  | { k: 'res'; pick: number }
+  | { k: 'pos'; x: number; y: number; vx: number; vy: number; g: boolean; f: 1 | -1; mv: boolean; ang: number; pw: number; aim: boolean; ml: number }
+  | { k: 'fire'; x: number; y: number; f: 1 | -1; ang: number; pw: number }
+  | { k: 'skip' }
+  | { k: 'over'; winner: 0 | 1 | null; snap: Snap };
 
 interface Animal {
   species: Species; team: 0 | 1; name: string;
@@ -95,9 +111,23 @@ export class CritterGame {
   turns = 0;
   private fbT = 0;
   private nextQuestion: () => Question;
+  // networking (a one-device match is simply a host with nobody to tell)
+  isHost = true;
+  net = false;
+  meId = '';
+  controlled = true;
+  shooterId = '';
+  localPick = -1;
+  craters: [number, number, number][] = [];
+  out?: (e: GameEvent) => void;
+  onShooterAnswer?: (pick: number) => void;
+  shooterFor?: (team: 0 | 1, n: number) => string;
+  private acc = 0;
+  private posT = 0;
+  private lastPosAt = 0;
   cw = 800; ch = 480;
 
-  constructor(terrain: Terrain, imgs: ImageStore, nextQuestion: () => Question) {
+  constructor(terrain: Terrain, imgs: ImageStore, nextQuestion: () => Question, auto = true) {
     this.nextQuestion = nextQuestion;
     this.terrain = terrain;
     this.imgs = imgs;
@@ -105,7 +135,9 @@ export class CritterGame {
     this.buildSprites();
     this.placeCovers();
     this.spawn();
-    this.startTurn(0);
+    this.active = this.animals[0];
+    this.phase = 'wait';
+    if (auto) this.hostBegin();
     this.cam.x = this.active.x; this.cam.y = this.active.y - 120;
   }
 
@@ -204,50 +236,116 @@ export class CritterGame {
   private alive(team?: number) { return this.animals.filter((a) => a.alive && !a.water && (team === undefined || a.team === team)); }
 
   // ------------------------------------------------------------------ turns
-  private startTurn(team: 0 | 1) {
-    this.team = team;
+  /** Host: start the match with the first team's turn. */
+  hostBegin() { this.hostNextTurn(0); }
+
+  private hostNextTurn(team: 0 | 1) {
     const list = this.animals.filter((a) => a.team === team && a.alive && !a.water);
-    this.active = list[this.turnIdx[team] % list.length];
-    this.turnIdx[team]++;
-    this.turns++;
-    this.phase = 'question';
-    this.question = this.nextQuestion();
-    this.picked = -1; this.fizzle = false;
-    this.timeLeft = QUESTION_TIME;
-    this.moveLeft = 0;
-    this.aiming = false;
-    this.angle = 0.8; this.power = 0.6;
-    this.mapView = false;
+    const n = this.turnIdx[team];
+    const e: GameEvent = { k: 'turn', team, animal: this.animals.indexOf(list[n % list.length]), q: this.nextQuestion(), shooter: this.shooterFor?.(team, n) ?? '', snap: this.snapshot() };
+    this.apply(e); this.out?.(e);
   }
 
-  /** The player picked an answer (or -1 when time ran out). A right answer earns a full shot, a wrong one a weak fizzle. */
-  answer(pick: number) {
-    if (this.phase !== 'question' || !this.question) return;
-    const ok = pick === this.question.correct;
-    this.picked = pick; this.fizzle = !ok; this.asked++;
-    if (ok) this.correct[this.team]++;
-    this.moveLeft = ok ? MOVE_BUDGET : FIZZLE_MOVE;
-    this.power = Math.min(this.power, this.maxPower);
-    this.phase = 'feedback'; this.fbT = 1.6;
+  /** Host: the shooter's answer came in (or time ran out, pick -1). A right answer earns a full shot, a wrong one a weak fizzle. */
+  hostResolve(pick: number) {
+    if (!this.isHost || this.phase !== 'question' || !this.question) return;
+    const e: GameEvent = { k: 'res', pick };
+    this.apply(e); this.out?.(e);
+  }
+
+  /** The shooter's device: pick an answer. */
+  submitAnswer(pick: number) {
+    if (this.phase !== 'question' || !this.controlled || this.localPick >= 0) return;
+    this.localPick = pick;
+    if (this.isHost) this.hostResolve(pick); else this.onShooterAnswer?.(pick);
   }
   get maxPower() { return this.fizzle ? FIZZLE_POWER : 1; }
 
-  private endTurn() {
+  private hostEnd() {
     const blue = this.alive(0).length; const red = this.alive(1).length;
     if (!blue || !red || this.turns >= MAX_TURNS) {
-      this.phase = 'over';
-      if (!blue || !red) this.winner = blue ? 0 : red ? 1 : null;
+      let winner: 0 | 1 | null;
+      if (!blue || !red) winner = blue ? 0 : red ? 1 : null;
       else { // time is up: the team with more health left wins
         const hp = [0, 0]; for (const a of this.animals) if (a.alive && !a.water) hp[a.team] += a.hp;
-        this.winner = hp[0] === hp[1] ? null : hp[0] > hp[1] ? 0 : 1;
+        winner = hp[0] === hp[1] ? null : hp[0] > hp[1] ? 0 : 1;
       }
+      const e: GameEvent = { k: 'over', winner, snap: this.snapshot() };
+      this.apply(e); this.out?.(e);
       return;
     }
-    this.startTurn(this.team === 0 ? 1 : 0);
+    this.hostNextTurn(this.team === 0 ? 1 : 0);
+  }
+
+  snapshot(): Snap {
+    return {
+      animals: this.animals.map((a) => ({ x: a.x, y: a.y, hp: a.hp, alive: a.alive, water: a.water, fade: a.fade, facing: a.facing })),
+      covers: this.covers.map((c) => c.hp), craters: this.craters.map((c) => [...c] as [number, number, number]), turnIdx: [...this.turnIdx],
+      correct: [...this.correct] as [number, number], asked: this.asked, turns: this.turns,
+    };
+  }
+  private restore(sn: Snap) {
+    sn.animals.forEach((d, i) => {
+      const a = this.animals[i];
+      Object.assign(a, d);
+      a.vx = 0; a.vy = 0; a.hitT = 0; a.aimT = 0; a.moving = false;
+      a.grounded = a.alive && !a.water && (this.groundSolid(a.x, a.y + 2) || this.groundSolid(a.x, a.y));
+    });
+    sn.covers.forEach((hp, i) => { this.covers[i].hp = hp; });
+    for (let i = this.craters.length; i < sn.craters.length; i++) { const c = sn.craters[i]; this.terrain.carve(c[0], c[1], c[2]); this.craters.push(c); }
+    this.turnIdx = [...sn.turnIdx]; this.correct = [...sn.correct] as [number, number]; this.asked = sn.asked; this.turns = sn.turns;
+  }
+
+  /** Every device (the host too) applies each event the same way. */
+  apply(e: GameEvent) {
+    switch (e.k) {
+      case 'turn': {
+        this.restore(e.snap);
+        this.team = e.team; this.active = this.animals[e.animal];
+        this.turnIdx[e.team]++; this.turns++;
+        this.shooterId = e.shooter;
+        this.controlled = !this.net || e.shooter === this.meId;
+        this.phase = 'question'; this.question = e.q; this.picked = -1; this.localPick = -1; this.fizzle = false;
+        this.timeLeft = QUESTION_TIME; this.moveLeft = 0; this.aiming = false; this.angle = 0.8; this.power = 0.6; this.mapView = false; this.shot = null;
+        break;
+      }
+      case 'res': {
+        if (this.phase !== 'question' || !this.question) break;
+        const ok = e.pick === this.question.correct;
+        this.picked = e.pick; this.fizzle = !ok; this.asked++;
+        if (ok) this.correct[this.team]++;
+        this.moveLeft = ok ? MOVE_BUDGET : FIZZLE_MOVE;
+        this.power = Math.min(this.power, this.maxPower);
+        this.phase = 'feedback'; this.fbT = 1.6;
+        break;
+      }
+      case 'pos': {
+        if (this.controlled || (this.phase !== 'move' && this.phase !== 'feedback')) break;
+        const a = this.active;
+        a.x = e.x; a.y = e.y; a.vx = e.vx; a.vy = e.vy; a.grounded = e.g; a.facing = e.f; a.moving = e.mv;
+        this.angle = e.ang; this.power = e.pw; this.aiming = e.aim; this.moveLeft = e.ml; this.lastPosAt = this.time;
+        break;
+      }
+      case 'fire': {
+        if (this.controlled || (this.phase !== 'move' && this.phase !== 'feedback')) break;
+        const a = this.active;
+        a.x = e.x; a.y = e.y; a.facing = e.f; a.grounded = true; a.vx = 0; a.vy = 0; a.moving = false;
+        this.angle = e.ang; this.power = e.pw;
+        this.launch();
+        break;
+      }
+      case 'skip':
+        if (this.phase === 'over') break;
+        this.shot = null; this.aiming = false; this.phase = 'settle'; this.settleT = 0.6;
+        break;
+      case 'over':
+        this.restore(e.snap); this.shot = null; this.phase = 'over'; this.winner = e.winner;
+        break;
+    }
   }
 
   // ------------------------------------------------------------------ player actions
-  get canAct() { return this.phase === 'move' && this.active.grounded && this.active.aimT <= 0; }
+  get canAct() { return this.phase === 'move' && this.controlled && this.active.grounded && this.active.aimT <= 0; }
 
   setAim(dx: number, dy: number) {
     // slingshot: pull back from the target
@@ -269,11 +367,23 @@ export class CritterGame {
     const a = this.active;
     if (!this.canAct || this.moveLeft < 40) return;
     a.vy = HOP_VY; a.vx = a.facing * 150; a.grounded = false; this.moveLeft -= 40;
+    this.sendPos();
+  }
+
+  private sendPos() {
+    const a = this.active;
+    this.out?.({ k: 'pos', x: Math.round(a.x * 10) / 10, y: Math.round(a.y * 10) / 10, vx: a.vx, vy: a.vy, g: a.grounded, f: a.facing, mv: a.moving, ang: this.angle, pw: this.power, aim: this.aiming, ml: this.moveLeft });
   }
 
   fire() {
-    const a = this.active;
     if (!this.canAct) return;
+    const a = this.active;
+    this.out?.({ k: 'fire', x: Math.round(a.x * 10) / 10, y: Math.round(a.y * 10) / 10, f: a.facing, ang: this.angle, pw: this.power });
+    this.launch();
+  }
+
+  private launch() {
+    const a = this.active;
     const dirx = Math.cos(this.angle) * a.facing; const diry = -Math.sin(this.angle);
     const v = this.power * SHOT_POWER;
     this.shot = { x: a.x + dirx * 30, y: a.y - 95 + diry * 30, vx: dirx * v, vy: diry * v, t: 0, owner: a, spin: 0, fizzle: this.fizzle };
@@ -295,15 +405,16 @@ export class CritterGame {
 
   // ------------------------------------------------------------------ simulation
   update(dtIn: number) {
-    const dt = Math.min(dtIn, 0.033);
+    const dt = Math.min(dtIn, 0.05);
     this.time += dt;
-    for (let s = 0; s < 2; s++) this.step(dt / 2);
+    this.acc += dt;
+    for (let n = 0; this.acc >= STEP && n < 10; n++) { this.step(STEP); this.acc -= STEP; if (n === 9) this.acc = 0; }
     for (const p of this.parts) { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; if (p.kind === 'drop') p.vy += 900 * dt; else { p.vx *= 0.96; p.vy *= 0.96; } }
     this.parts = this.parts.filter((p) => p.life > 0);
 
     if (this.phase === 'question') {
       this.timeLeft -= dt;
-      if (this.timeLeft <= 0) this.answer(-1);
+      if (this.timeLeft <= 0 && this.isHost) this.hostResolve(-1);
     }
     if (this.phase === 'feedback') {
       this.fbT -= dt;
@@ -311,12 +422,14 @@ export class CritterGame {
     }
     if (this.phase === 'move') {
       this.timeLeft -= dt;
-      if (this.timeLeft <= 0) { this.phase = 'settle'; this.settleT = 0.6; }
+      if (this.timeLeft <= 0 && this.isHost) { const e: GameEvent = { k: 'skip' }; this.apply(e); this.out?.(e); }
+      if (this.out && this.controlled) { this.posT -= dt; if (this.posT <= 0) { this.posT = 0.12; this.sendPos(); } }
     }
+    if (this.net && !this.controlled && this.active.moving && this.time - this.lastPosAt > 0.4) this.active.moving = false;
     if (this.phase === 'settle') {
       this.settleT -= dt;
       const busy = this.animals.some((a) => a.alive && !a.water && (!a.grounded || a.hitT > 0));
-      if (this.settleT <= 0 && !busy) this.endTurn();
+      if (this.settleT <= 0 && !busy && this.isHost) this.hostEnd();
     }
     this.updateCamera(dt);
     this.emitStatus();
@@ -336,7 +449,8 @@ export class CritterGame {
       if (a.fade <= 0) { a.alive = false; this.poof(a.x, a.y - 30); }
       return;
     }
-    a.moving = false;
+    const remoteActive = this.net && !this.controlled && a === this.active && (this.phase === 'move' || this.phase === 'feedback');
+    if (remoteActive) { if (a.moving) a.walkT += dt; } else a.moving = false;
     if (a.grounded) {
       if (a === this.active && this.canAct && this.moveDir !== 0 && this.moveLeft > 0) this.walk(a, this.moveDir as 1 | -1, dt);
       // ground vanished under the animal?
@@ -392,6 +506,7 @@ export class CritterGame {
     const kk = fizzle ? 0.5 : 1;
     const blast = BLAST_R * kk;
     this.terrain.carve(x, y, CRATER_R * kk);
+    this.craters.push([x, y, CRATER_R * kk]);
     for (let i = 0; i < (fizzle ? 8 : 26); i++) {
       const ang = Math.random() * Math.PI * 2; const sp = 80 + Math.random() * 320;
       this.parts.push({ x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 120, life: 0.7 + Math.random() * 0.5, max: 1.2, r: 3 + Math.random() * 4, kind: 'drop' });
@@ -452,7 +567,7 @@ export class CritterGame {
   private emitStatus() {
     const hp: [number, number] = [0, 0];
     for (const a of this.animals) if (a.alive && !a.water) hp[a.team] += a.hp;
-    const st: GameStatus = { phase: this.phase, team: this.team, timeLeft: Math.max(0, Math.ceil(this.timeLeft)), moveLeft: Math.round(this.moveLeft / 10), winner: this.winner, canAct: this.canAct, hp, question: this.phase === 'question' || this.phase === 'feedback' ? this.question : null, picked: this.picked, fizzle: this.fizzle, asked: this.asked, correct: [...this.correct] as [number, number], animal: this.active.name };
+    const st: GameStatus = { phase: this.phase, team: this.team, timeLeft: Math.max(0, Math.ceil(this.timeLeft)), moveLeft: Math.round(this.moveLeft / 10), winner: this.winner, canAct: this.canAct, hp, question: this.phase === 'question' || this.phase === 'feedback' ? this.question : null, picked: this.picked, fizzle: this.fizzle, asked: this.asked, correct: [...this.correct] as [number, number], animal: this.active.name, shooter: this.shooterId, controlled: this.controlled, turn: this.turns };
     const key = JSON.stringify(st);
     if (key !== this.lastStatus) { this.lastStatus = key; this.onStatus?.(st); }
   }

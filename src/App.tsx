@@ -28,6 +28,7 @@ import { EscapeRoomPlayPage } from './pages/EscapeRoomPlayPage';
 import { ConsentGate } from './components/auth/ConsentGate';
 import { InstallDock } from './components/common/InstallDock';
 import { HuntEntryPage, HuntRoomPage } from './pages/HuntRoomPage';
+import { CritterEntryPage, CritterRoomPage } from './pages/CritterRoomPage';
 
 import { loadRemoteStoreItems } from './features/avatar/remoteCatalog';
 
@@ -79,6 +80,8 @@ export default function App() {
                 <Route path="/play/:setId/:gameKey" element={<ConsentGate><GameShell /></ConsentGate>} />
                 <Route path="/hunt" element={<ConsentGate><HuntEntryPage /></ConsentGate>} />
                 <Route path="/hunt/:code" element={<ConsentGate><HuntRoomPage /></ConsentGate>} />
+                <Route path="/critter" element={<ConsentGate><CritterEntryPage /></ConsentGate>} />
+                <Route path="/critter/:code" element={<ConsentGate><CritterRoomPage /></ConsentGate>} />
                 <Route path="/monster-quest/*" element={<ConsentGate><Suspense fallback={pageFallback}><MonsterQuestPage /></Suspense></ConsentGate>} />
                 <Route path="/avatar" element={<Suspense fallback={pageFallback}><AvatarPage /></Suspense>} />
                 <Route path="/store" element={<Suspense fallback={pageFallback}><StorePage /></Suspense>} />

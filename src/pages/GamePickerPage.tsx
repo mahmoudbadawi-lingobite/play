@@ -72,6 +72,21 @@ export function GamePickerPage() {
           <span className="kg-go" aria-hidden="true" />
         </Link>
       )}
+      {games.some((g) => g.key === 'critter-clash') && !ref && (
+        <Link
+          to={`/critter?set=${encodeURIComponent(set.id)}`}
+          data-game="friends"
+          className="kid-game-card card-surface mt-4 flex items-center gap-4 border-2 border-secondary p-5 hover:bg-secondary/10"
+        >
+          <span className="kg-art" aria-hidden="true" />
+          <span className="kg-emoji text-3xl">🦛</span>
+          <div className="kg-body">
+            <p className="kg-title font-display font-semibold text-primary">{tr('Critter Clash with friends')}</p>
+            <p className="kg-desc text-sm text-muted-foreground">{tr('Open a live room (2–10 players). Two teams answer questions to earn their shots.')}</p>
+          </div>
+          <span className="kg-go" aria-hidden="true" />
+        </Link>
+      )}
     </div>
   );
 }

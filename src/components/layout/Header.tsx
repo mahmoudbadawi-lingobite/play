@@ -70,7 +70,7 @@ export function Header() {
 
   const navLinks = (
     <>
-      <NavItem to="/library" nav="library" active={on('/library', '/play', '/hunt')} onClick={close}>
+      <NavItem to="/library" nav="library" active={on('/library', '/play', '/hunt', '/critter')} onClick={close}>
         {t('nav_library')}
       </NavItem>
       <NavItem to="/monster-quest" nav="monster-quest" active={on('/monster-quest')} onClick={close}>
