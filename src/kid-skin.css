@@ -781,6 +781,7 @@ html[data-theme="kid"],
 [data-theme="kid"] .kid-game-card[data-game="crossword"]     { --ch: 8.2rem; --ar: 1.531; --c1: #a468fb; --c2: #a15efc; --c3: #ab62fc; --ink: #0a1f8c; --art: url(/kid/card-crossword.webp); --go: url(/kid/go-crossword.webp); }
 [data-theme="kid"] .kid-game-card[data-game="picture-match"] { --ch: 7rem;   --ar: 1.91; --c1: #fbaa22; --c2: #fb9f15; --c3: #f69515; --ink: #3d1290; --art: url(/kid/card-picture-match.webp); --go: url(/kid/go-picture-match.webp); }
 [data-theme="kid"] .kid-game-card[data-game="hangman"]       { --ch: 7rem;   --ar: 1.795; --c1: #02aac2; --c2: #02aac2; --c3: #05b6cc; --ink: #0a1f8c; --art: url(/kid/card-hangman.webp); --go: url(/kid/go-hangman.webp); }
+[data-theme="kid"] .kid-game-card[data-game="critter-clash"]  { --ch: 9.5rem; --ar: 1.5; --c1: #2fa9ff; --c2: #1b8ef2; --c3: #3db5ff; --ink: #0a1f8c; --art: url(/kid/card-critter-clash.webp); --go: url(/kid/go-block-quest.webp); }
 [data-theme="kid"] .kid-game-card[data-game="friends"]       { --ch: 5.6rem; --ar: 3.126; --c1: #986efb; --c2: #a474fc; --c3: #ab62fc; --ink: #5b1fb3; --art: url(/kid/card-friends.webp); --go: url(/kid/go-friends.webp); margin-top: 1.1rem; }
 
 /* tablet / phone: shrink the artwork, never the text */
