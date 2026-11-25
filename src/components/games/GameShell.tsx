@@ -12,6 +12,7 @@ import { WordBuilderGame } from './WordBuilderGame';
 import { CrosswordGame } from './CrosswordGame';
 import { PictureMatchGame } from './PictureMatchGame';
 import { HangmanGame } from './HangmanGame';
+import { CritterClashGame } from './critterClash/CritterClashGame';
 import { BlockQuestGame } from './blockQuest/BlockQuestGame';
 import { TreasureHuntGame } from './treasureHunt/TreasureHuntGame';
 import { useAvatarState } from '../../features/avatar/avatarStore';
@@ -35,6 +36,7 @@ const GAME_COMPONENTS: Record<GameKey, React.ComponentType<GameProps>> = {
   'crossword': CrosswordGame,
   'picture-match': PictureMatchGame,
   'hangman': HangmanGame,
+  'critter-clash': CritterClashGame,
 };
 
 export function GameShell() {

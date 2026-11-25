@@ -12,6 +12,15 @@ export interface GameDefinition {
 
 export const GAME_DEFINITIONS: GameDefinition[] = [
   {
+    key: 'critter-clash',
+    name: 'Critter Clash',
+    description: 'Funny animals on a destructible meadow throw water balloons. Early preview: one device, no questions yet.',
+    icon: '🦛',
+    minItems: 4,
+    requiresImages: false,
+    isCompatible: (items) => items.length >= 4,
+  },
+  {
     key: 'treasure-hunt',
     name: 'Treasure Hunt',
     description: 'Pick a world (jungle, desert, Saudi landmarks or a crystal cave), follow clues to hidden places and unlock chests with answers.',

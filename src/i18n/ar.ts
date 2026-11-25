@@ -143,4 +143,7 @@ export const AR: Record<string, string> = {
   "Letter blocks": "مكعبات الحروف", "Open in:": "افتح في:", "Copy & open:": "انسخ وافتح:", "with your students.": "مع طلابك.", "🗑 Delete by class…": "🗑 حذف حسب الصف…", "Delete {n}…": "حذف {n}…", "Make with AI": "أنشئ بالذكاء الاصطناعي",
   "{n} games": "{n} ألعاب", "All games": "كل الألعاب", "All {name}": "كل {name}", "No public games here yet.": "لا توجد ألعاب عامة هنا بعد.",
   "Show only my subjects": "اعرض موادي فقط", "Show other subjects too": "اعرض المواد الأخرى أيضاً",
+  "Could not load the game.": "تعذّر تحميل اللعبة.", "Building the meadow…": "جارٍ بناء المرج…", "Early preview: one device, no questions yet": "نسخة تجريبية مبكرة: جهاز واحد وبدون أسئلة بعد",
+  "{team}'s turn": "دور {team}", "Drag to aim, then press Fire": "اسحب للتصويب ثم اضغط إطلاق", "Blue team": "الفريق الأزرق", "Red team": "الفريق الأحمر", "{team} wins!": "فاز {team}!", "Draw!": "تعادل!",
+  "Left": "يسار", "Right": "يمين", "Hop": "قفز", "Fire": "إطلاق",
 };

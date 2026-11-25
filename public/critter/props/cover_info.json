@@ -1,0 +1,68 @@
+{
+ "boulder": {
+  "intact_bbox_px_in_512": [
+   32,
+   129,
+   480,
+   491
+  ],
+  "intact_height_px": 362,
+  "intact_width_px": 448,
+  "ground_row_in_512": 486
+ },
+ "wall": {
+  "intact_bbox_px_in_512": [
+   45,
+   258,
+   468,
+   471
+  ],
+  "intact_height_px": 213,
+  "intact_width_px": 423,
+  "ground_row_in_512": 467
+ },
+ "crates": {
+  "intact_bbox_px_in_512": [
+   134,
+   25,
+   380,
+   484
+  ],
+  "intact_height_px": 459,
+  "intact_width_px": 246,
+  "ground_row_in_512": 483
+ },
+ "barrel": {
+  "intact_bbox_px_in_512": [
+   72,
+   55,
+   438,
+   492
+  ],
+  "intact_height_px": 437,
+  "intact_width_px": 366,
+  "ground_row_in_512": 488
+ },
+ "hay": {
+  "intact_bbox_px_in_512": [
+   33,
+   152,
+   472,
+   496
+  ],
+  "intact_height_px": 344,
+  "intact_width_px": 439,
+  "ground_row_in_512": 493
+ },
+ "log": {
+  "intact_bbox_px_in_512": [
+   24,
+   272,
+   491,
+   462
+  ],
+  "intact_height_px": 190,
+  "intact_width_px": 467,
+  "ground_row_in_512": 460
+ }
+}

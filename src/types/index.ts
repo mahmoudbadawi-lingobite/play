@@ -80,7 +80,8 @@ export type GameKey =
   | 'crossword'
   | 'picture-match'
   | 'hangman'
-  | 'treasure-hunt';
+  | 'treasure-hunt'
+  | 'critter-clash';
 
 export interface GameResult {
   id: string;
