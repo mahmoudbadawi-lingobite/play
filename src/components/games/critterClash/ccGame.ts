@@ -8,15 +8,23 @@ const GRAVITY_SHOT = 900;
 const WALK_SPEED = 70;
 const HOP_VY = -680;
 const MOVE_BUDGET = 260;
-const TURN_TIME = 30;
+const QUESTION_TIME = 15;
+const AIM_TIME = 15;
+const FIZZLE_MOVE = 80;
+const FIZZLE_POWER = 0.4;
+const MAX_TURNS = 24;
 const SHOT_POWER = 1400;
 const BLAST_R = 62;
 const CRATER_R = 50;
 const SS = 1.5; // sprite supersampling
 const WATER_Y = MAP_H - 40;
 
-export type Phase = 'move' | 'flight' | 'settle' | 'over';
-export interface GameStatus { phase: Phase; team: 0 | 1; timeLeft: number; moveLeft: number; winner: 0 | 1 | null; canAct: boolean; hp: [number, number] }
+export type Phase = 'question' | 'feedback' | 'move' | 'flight' | 'settle' | 'over';
+export interface Question { prompt: string; passage?: string; audio?: string; options: string[]; correct: number }
+export interface GameStatus {
+  phase: Phase; team: 0 | 1; timeLeft: number; moveLeft: number; winner: 0 | 1 | null; canAct: boolean; hp: [number, number];
+  question: Question | null; picked: number; fizzle: boolean; asked: number; correct: [number, number]; animal: string;
+}
 
 interface Animal {
   species: Species; team: 0 | 1; name: string;
@@ -27,7 +35,7 @@ interface Animal {
 }
 interface Cover { name: CoverName; x: number; ground: number; hp: number; k: number; box: [number, number, number, number] }
 interface Particle { x: number; y: number; vx: number; vy: number; life: number; max: number; r: number; kind: 'drop' | 'puff' }
-interface Shot { x: number; y: number; vx: number; vy: number; t: number; owner: Animal; spin: number }
+interface Shot { x: number; y: number; vx: number; vy: number; t: number; owner: Animal; spin: number; fizzle: boolean }
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const SPECIES_SCALE = (s: Species) => clamp(390 / ANIMAL_INFO[s].h, 0.9, 1.15);
@@ -64,7 +72,7 @@ export class CritterGame {
   team: 0 | 1 = 0;
   turnIdx = [0, 0];
   active!: Animal;
-  timeLeft = TURN_TIME;
+  timeLeft = QUESTION_TIME;
   moveLeft = MOVE_BUDGET;
   settleT = 0;
   winner: 0 | 1 | null = null;
@@ -78,9 +86,19 @@ export class CritterGame {
   private time = 0;
   private lastStatus = '';
   onStatus?: (s: GameStatus) => void;
+  // questions
+  question: Question | null = null;
+  picked = -1;
+  fizzle = false;
+  asked = 0;
+  correct: [number, number] = [0, 0];
+  turns = 0;
+  private fbT = 0;
+  private nextQuestion: () => Question;
   cw = 800; ch = 480;
 
-  constructor(terrain: Terrain, imgs: ImageStore) {
+  constructor(terrain: Terrain, imgs: ImageStore, nextQuestion: () => Question) {
+    this.nextQuestion = nextQuestion;
     this.terrain = terrain;
     this.imgs = imgs;
     this.bg = this.buildBackground();
@@ -191,19 +209,38 @@ export class CritterGame {
     const list = this.animals.filter((a) => a.team === team && a.alive && !a.water);
     this.active = list[this.turnIdx[team] % list.length];
     this.turnIdx[team]++;
-    this.phase = 'move';
-    this.timeLeft = TURN_TIME;
-    this.moveLeft = MOVE_BUDGET;
+    this.turns++;
+    this.phase = 'question';
+    this.question = this.nextQuestion();
+    this.picked = -1; this.fizzle = false;
+    this.timeLeft = QUESTION_TIME;
+    this.moveLeft = 0;
     this.aiming = false;
     this.angle = 0.8; this.power = 0.6;
     this.mapView = false;
   }
 
+  /** The player picked an answer (or -1 when time ran out). A right answer earns a full shot, a wrong one a weak fizzle. */
+  answer(pick: number) {
+    if (this.phase !== 'question' || !this.question) return;
+    const ok = pick === this.question.correct;
+    this.picked = pick; this.fizzle = !ok; this.asked++;
+    if (ok) this.correct[this.team]++;
+    this.moveLeft = ok ? MOVE_BUDGET : FIZZLE_MOVE;
+    this.power = Math.min(this.power, this.maxPower);
+    this.phase = 'feedback'; this.fbT = 1.6;
+  }
+  get maxPower() { return this.fizzle ? FIZZLE_POWER : 1; }
+
   private endTurn() {
     const blue = this.alive(0).length; const red = this.alive(1).length;
-    if (!blue || !red) {
+    if (!blue || !red || this.turns >= MAX_TURNS) {
       this.phase = 'over';
-      this.winner = blue ? 0 : red ? 1 : null;
+      if (!blue || !red) this.winner = blue ? 0 : red ? 1 : null;
+      else { // time is up: the team with more health left wins
+        const hp = [0, 0]; for (const a of this.animals) if (a.alive && !a.water) hp[a.team] += a.hp;
+        this.winner = hp[0] === hp[1] ? null : hp[0] > hp[1] ? 0 : 1;
+      }
       return;
     }
     this.startTurn(this.team === 0 ? 1 : 0);
@@ -218,12 +255,12 @@ export class CritterGame {
     if (len < 6) return;
     this.active.facing = dx >= 0 ? 1 : -1;
     this.angle = clamp(Math.atan2(-dy, Math.abs(dx)), -0.35, 1.5);
-    this.power = clamp(len / 140, 0.15, 1);
+    this.power = clamp(len / 140, 0.15, this.maxPower);
     this.aiming = true;
   }
   adjust(dAngle: number, dPower: number) {
     this.angle = clamp(this.angle + dAngle, -0.35, 1.5);
-    this.power = clamp(this.power + dPower, 0.15, 1);
+    this.power = clamp(this.power + dPower, 0.15, this.maxPower);
     this.aiming = true;
   }
   face(dir: 1 | -1) { if (this.canAct) this.active.facing = dir; }
@@ -239,7 +276,7 @@ export class CritterGame {
     if (!this.canAct) return;
     const dirx = Math.cos(this.angle) * a.facing; const diry = -Math.sin(this.angle);
     const v = this.power * SHOT_POWER;
-    this.shot = { x: a.x + dirx * 30, y: a.y - 95 + diry * 30, vx: dirx * v, vy: diry * v, t: 0, owner: a, spin: 0 };
+    this.shot = { x: a.x + dirx * 30, y: a.y - 95 + diry * 30, vx: dirx * v, vy: diry * v, t: 0, owner: a, spin: 0, fizzle: this.fizzle };
     a.aimT = 0.35; this.aiming = false; this.phase = 'flight';
   }
 
@@ -264,6 +301,14 @@ export class CritterGame {
     for (const p of this.parts) { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; if (p.kind === 'drop') p.vy += 900 * dt; else { p.vx *= 0.96; p.vy *= 0.96; } }
     this.parts = this.parts.filter((p) => p.life > 0);
 
+    if (this.phase === 'question') {
+      this.timeLeft -= dt;
+      if (this.timeLeft <= 0) this.answer(-1);
+    }
+    if (this.phase === 'feedback') {
+      this.fbT -= dt;
+      if (this.fbT <= 0) { this.phase = 'move'; this.timeLeft = AIM_TIME; }
+    }
     if (this.phase === 'move') {
       this.timeLeft -= dt;
       if (this.timeLeft <= 0) { this.phase = 'settle'; this.settleT = 0.6; }
@@ -338,14 +383,16 @@ export class CritterGame {
       if (!a.alive || a.water || (a === s.owner && s.t < 0.3)) continue;
       if (Math.hypot(s.x - a.x, s.y - (a.y - 45)) < 38) { hit = true; break; }
     }
-    if (hit) { this.explode(s.x, s.y); this.finishShot(); }
+    if (hit) { this.explode(s.x, s.y, s.fizzle); this.finishShot(); }
   }
 
   private finishShot() { this.shot = null; this.phase = 'settle'; this.settleT = 1.0; }
 
-  private explode(x: number, y: number) {
-    this.terrain.carve(x, y, CRATER_R);
-    for (let i = 0; i < 26; i++) {
+  private explode(x: number, y: number, fizzle: boolean) {
+    const kk = fizzle ? 0.5 : 1;
+    const blast = BLAST_R * kk;
+    this.terrain.carve(x, y, CRATER_R * kk);
+    for (let i = 0; i < (fizzle ? 8 : 26); i++) {
       const ang = Math.random() * Math.PI * 2; const sp = 80 + Math.random() * 320;
       this.parts.push({ x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 120, life: 0.7 + Math.random() * 0.5, max: 1.2, r: 3 + Math.random() * 4, kind: 'drop' });
     }
@@ -353,17 +400,17 @@ export class CritterGame {
     for (const a of this.animals) {
       if (!a.alive || a.water) continue;
       const dx = a.x - x; const dy = a.y - 45 - y; const d = Math.hypot(dx, dy);
-      if (d > BLAST_R + 38) continue;
-      const f = 1 - d / (BLAST_R + 38);
-      a.hp = Math.max(0, a.hp - Math.round(40 * f));
+      if (d > blast + 38) continue;
+      const f = 1 - d / (blast + 38);
+      a.hp = Math.max(0, a.hp - Math.round(40 * f * kk));
       const n = d || 1;
-      a.vx = (dx / n) * 320 * f + (dx >= 0 ? 40 : -40); a.vy = -320 * f - 120; a.grounded = false; a.hitT = 0.9;
+      a.vx = ((dx / n) * 320 * f + (dx >= 0 ? 40 : -40)) * kk; a.vy = (-320 * f - 120) * kk; a.grounded = false; a.hitT = 0.9;
       if (a.hp <= 0) { a.alive = false; this.poof(a.x, a.y - 45); }
     }
     for (const c of this.covers) {
       if (c.hp <= 0) continue;
       const nx = clamp(x, c.box[0], c.box[2]); const ny = clamp(y, c.box[1], c.box[3]);
-      if (Math.hypot(nx - x, ny - y) < BLAST_R) { c.hp--; if (c.hp <= 0) this.poof((c.box[0] + c.box[2]) / 2, (c.box[1] + c.box[3]) / 2); }
+      if (Math.hypot(nx - x, ny - y) < blast) { c.hp--; if (c.hp <= 0) this.poof((c.box[0] + c.box[2]) / 2, (c.box[1] + c.box[3]) / 2); }
     }
   }
 
@@ -389,6 +436,7 @@ export class CritterGame {
     const fy = this.shot ? f.y : f.y - 100;
     let tx = f.x; let ty = fy;
     if (this.mapView) { tx = MAP_W / 2; ty = MAP_H / 2; }
+    else if (this.phase === 'question' || this.phase === 'feedback') ty += (this.ch * 0.22) / this.cam.z; // keep the animal above the question card
     const k = 1 - Math.pow(0.0015, dt);
     this.cam.z += (tz - this.cam.z) * k; this.cam.x += (tx - this.cam.x) * k; this.cam.y += (ty - this.cam.y) * k;
   }
@@ -404,7 +452,7 @@ export class CritterGame {
   private emitStatus() {
     const hp: [number, number] = [0, 0];
     for (const a of this.animals) if (a.alive && !a.water) hp[a.team] += a.hp;
-    const st: GameStatus = { phase: this.phase, team: this.team, timeLeft: Math.max(0, Math.ceil(this.timeLeft)), moveLeft: Math.round(this.moveLeft / 10), winner: this.winner, canAct: this.canAct, hp };
+    const st: GameStatus = { phase: this.phase, team: this.team, timeLeft: Math.max(0, Math.ceil(this.timeLeft)), moveLeft: Math.round(this.moveLeft / 10), winner: this.winner, canAct: this.canAct, hp, question: this.phase === 'question' || this.phase === 'feedback' ? this.question : null, picked: this.picked, fizzle: this.fizzle, asked: this.asked, correct: [...this.correct] as [number, number], animal: this.active.name };
     const key = JSON.stringify(st);
     if (key !== this.lastStatus) { this.lastStatus = key; this.onStatus?.(st); }
   }
@@ -529,8 +577,9 @@ export class CritterGame {
 
   private drawShot(ctx: CanvasRenderingContext2D, s: Shot) {
     ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(Math.atan2(s.vy, s.vx));
+    if (s.fizzle) ctx.scale(0.62, 0.62);
     const g = ctx.createRadialGradient(-4, -4, 2, 0, 0, 15);
-    g.addColorStop(0, '#d9f3ff'); g.addColorStop(1, '#3a9be0');
+    g.addColorStop(0, s.fizzle ? '#eef2f4' : '#d9f3ff'); g.addColorStop(1, s.fizzle ? '#93a9b8' : '#3a9be0');
     ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, 0, 15, 12, 0, 0, 7); ctx.fill();
     ctx.fillStyle = '#2d7fc0'; ctx.beginPath(); ctx.moveTo(-14, 0); ctx.lineTo(-21, -5); ctx.lineTo(-21, 5); ctx.closePath(); ctx.fill();
     ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.beginPath(); ctx.ellipse(-4, -5, 4, 2.5, -0.5, 0, 7); ctx.fill();
@@ -538,7 +587,7 @@ export class CritterGame {
   }
 
   private drawForeground(ctx: CanvasRenderingContext2D) {
-    const u = this.ch / 720;
+    const u = Math.min(this.ch / 720, this.cw / 960);
     const place = (file: string, k: number, corner: 'tl' | 'br' | 'bl') => {
       const im = this.imgs.get(file); if (!im) return;
       const w = im.width * k * u; const h = im.height * k * u;
@@ -564,12 +613,12 @@ export class CritterGame {
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.beginPath(); ctx.arc(this.cw / 2, 28 * s, 22 * s, 0, 7); ctx.fill();
     ctx.fillStyle = this.timeLeft < 6 ? '#ff7b6b' : '#fff'; ctx.font = `bold ${20 * s}px system-ui, sans-serif`;
-    if (this.phase === 'move') ctx.fillText(String(Math.max(0, Math.ceil(this.timeLeft))), this.cw / 2, 29 * s);
+    if (this.phase === 'move' || this.phase === 'question') ctx.fillText(String(Math.max(0, Math.ceil(this.timeLeft))), this.cw / 2, 29 * s);
     // movement bar
-    if (this.phase === 'move') {
+    if (this.phase === 'move' || this.phase === 'feedback') {
       const w = 120 * s; const x = this.cw / 2 - w / 2; const y = 56 * s;
       ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(x - 2, y - 2, w + 4, 10 * s);
-      ctx.fillStyle = '#ffd54a'; ctx.fillRect(x, y, w * this.moveLeft / MOVE_BUDGET, 6 * s);
+      ctx.fillStyle = '#ffd54a'; ctx.fillRect(x, y, w * Math.min(1, this.moveLeft / MOVE_BUDGET), 6 * s);
     }
   }
 }

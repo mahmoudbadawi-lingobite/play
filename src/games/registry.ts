@@ -14,7 +14,7 @@ export const GAME_DEFINITIONS: GameDefinition[] = [
   {
     key: 'critter-clash',
     name: 'Critter Clash',
-    description: 'Funny animals on a destructible meadow throw water balloons. Early preview: one device, no questions yet.',
+    description: 'Funny animals on a destructible meadow throw water balloons. Answer a question to earn your shot. Early version: two teams share one device.',
     icon: '🦛',
     minItems: 4,
     requiresImages: false,

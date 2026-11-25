@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GameProps } from '../GameShell';
 import { tr } from '../../../i18n/tr';
+import { speakNatural } from '../../../lib/speech';
+import { makeQuestionSource } from './ccQuestions';
 import { COVER_FILES, PROP_FILES, UI_FILES, WORLD_FILES, assetUrl, loadImages, speciesFiles, type ImageStore, type Species } from './ccAssets';
 import { CritterGame, type GameStatus } from './ccGame';
 import { Terrain } from './ccTerrain';
 
 const SPECIES: Species[] = ['hippo', 'llama', 'chicken', 'penguin', 'goat', 'bunny'];
 
-/** Critter Clash, stage 1: a one-device preview of the map, the animals and the throwing. */
-export function CritterClashGame(_props: GameProps) {
+/** Critter Clash, stage 2: one-device match. Each turn starts with a question; the answer decides how strong the shot is. */
+export function CritterClashGame({ items, onFinish }: GameProps) {
+  const itemsRef = useRef(items);
   const wrap = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const game = useRef<CritterGame | null>(null);
@@ -29,7 +32,7 @@ export function CritterClashGame(_props: GameProps) {
         await loadImages(files, store.current, (p) => !dead && setProgress(p * 0.5));
         const terrain = await Terrain.build(store.current, (p) => !dead && setProgress(0.5 + p * 0.5));
         if (dead) return;
-        const g = new CritterGame(terrain, store.current);
+        const g = new CritterGame(terrain, store.current, makeQuestionSource(itemsRef.current));
         g.onStatus = setSt;
         game.current = g;
         setReady(true);
@@ -112,15 +115,39 @@ export function CritterClashGame(_props: GameProps) {
   return (
     <div className="mx-auto w-full max-w-5xl">
       <div className="mb-2 text-center text-sm">
-        <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-800">{tr('Early preview: one device, no questions yet')}</span>
+        <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-800">{tr('Early version: two teams share one device')}</span>
       </div>
       <div ref={wrap} className="relative w-full overflow-hidden rounded-2xl bg-sky-200" style={{ height: 'clamp(300px, 62vh, 620px)' }}>
         <canvas ref={canvas} className="absolute inset-0 h-full w-full touch-none" />
-        {st && st.phase !== 'over' && <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white">{tr("{team}'s turn", { team: teamName })} · {tr('Drag to aim, then press Fire')}</div>}
+        {st && (st.phase === 'move' || st.phase === 'flight' || st.phase === 'settle') && <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/50 px-3 py-1 text-xs text-white">{tr("{team}'s turn", { team: teamName })} · {st.fizzle ? tr('Weak shot: drag to aim, then press Fire') : tr('Drag to aim, then press Fire')}</div>}
+        {st?.question && (
+          <div className="absolute inset-x-2 bottom-2 mx-auto max-w-xl rounded-2xl bg-white/95 p-3 shadow-lg">
+            <div className="mb-1 flex items-center justify-between text-xs font-semibold text-slate-600">
+              <span>{tr("{team}'s turn", { team: teamName })} · {st.animal}</span><span>⏱ {st.timeLeft}</span>
+            </div>
+            {st.question.passage && <p dir="auto" className="mb-1 text-sm text-slate-600">{st.question.passage}</p>}
+            <div className="mb-2 flex items-start gap-2">
+              <p dir="auto" className="flex-1 text-base font-semibold text-slate-900">{st.question.prompt}</p>
+              {st.question.audio && <button type="button" className="rounded-full bg-sky-100 px-2 py-1" aria-label={tr('Listen')} onClick={() => speakNatural(st.question!.audio!)}>🔊</button>}
+            </div>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {st.question.options.map((o, i) => {
+                const done = st.phase === 'feedback';
+                const cls = done ? (i === st.question!.correct ? 'bg-emerald-500 text-white' : i === st.picked ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-400') : 'bg-sky-100 text-slate-900 hover:bg-sky-200';
+                return <button key={i} type="button" dir="auto" disabled={done} onClick={() => g.answer(i)} className={`rounded-xl px-3 py-2 text-sm font-medium ${cls}`}>{o}</button>;
+              })}
+            </div>
+            {st.phase === 'feedback' && <p className="mt-2 text-center text-sm font-semibold">{st.fizzle ? tr('Not quite: weak shot and a short walk') : tr('Correct! Full-power shot')}</p>}
+          </div>
+        )}
         {st?.phase === 'over' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/40 text-white">
             <div className="text-3xl font-bold">{st.winner === null ? tr('Draw!') : tr('{team} wins!', { team: st.winner === 0 ? tr('Blue team') : tr('Red team') })}</div>
-            <button type="button" className="btn-primary" onClick={() => setRound((r) => r + 1)}>{tr('Play again')}</button>
+            <div className="text-sm">{tr('Correct answers')}: {tr('Blue team')} {st.correct[0]} · {tr('Red team')} {st.correct[1]}</div>
+            <div className="flex gap-2">
+              <button type="button" className="btn-primary" onClick={() => { const c = st.correct[0] + st.correct[1]; onFinish(st.asked ? Math.round((100 * c) / st.asked) : 0, Math.min(150, 10 * c + (st.winner === null ? 0 : 20))); }}>{tr('Finish')}</button>
+              <button type="button" className="btn-secondary" onClick={() => setRound((r) => r + 1)}>{tr('Play again')}</button>
+            </div>
           </div>
         )}
       </div>

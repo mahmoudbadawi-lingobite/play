@@ -146,4 +146,6 @@ export const AR: Record<string, string> = {
   "Could not load the game.": "تعذّر تحميل اللعبة.", "Building the meadow…": "جارٍ بناء المرج…", "Early preview: one device, no questions yet": "نسخة تجريبية مبكرة: جهاز واحد وبدون أسئلة بعد",
   "{team}'s turn": "دور {team}", "Drag to aim, then press Fire": "اسحب للتصويب ثم اضغط إطلاق", "Blue team": "الفريق الأزرق", "Red team": "الفريق الأحمر", "{team} wins!": "فاز {team}!", "Draw!": "تعادل!",
   "Left": "يسار", "Right": "يمين", "Hop": "قفز", "Fire": "إطلاق",
+  "Early version: two teams share one device": "نسخة مبكرة: فريقان يتشاركان جهازاً واحداً", "Weak shot: drag to aim, then press Fire": "رمية ضعيفة: اسحب للتصويب ثم اضغط إطلاق",
+  "Not quite: weak shot and a short walk": "ليست صحيحة: رمية ضعيفة ومشي قصير", "Correct! Full-power shot": "صحيح! رمية بكامل القوة", "Correct answers": "الإجابات الصحيحة",
 };

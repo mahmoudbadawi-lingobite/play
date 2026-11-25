@@ -24,7 +24,8 @@ export interface GameProps {
   items: ContentSet['items'];
   /** The content set's skill - lets a game pick question styles that suit it. */
   skill?: SkillTemplate;
-  onFinish: (accuracyPercent: number) => void;
+  /** `xpOverride` lets a game that scores its own XP (Critter Clash) replace the usual accuracy-based amount. */
+  onFinish: (accuracyPercent: number, xpOverride?: number) => void;
 }
 
 const GAME_COMPONENTS: Record<GameKey, React.ComponentType<GameProps>> = {
@@ -78,9 +79,9 @@ export function GameShell() {
   const GameComponent = GAME_COMPONENTS[gameKey];
   const gameDef = getGameDefinition(gameKey);
 
-  const handleFinish = async (accuracyPercent: number) => {
+  const handleFinish = async (accuracyPercent: number, xpOverride?: number) => {
     const durationSeconds = Math.round((Date.now() - startRef.current) / 1000);
-    const earned = Math.round((accuracyPercent / 100) * 50 + 10);
+    const earned = xpOverride ?? Math.round((accuracyPercent / 100) * 50 + 10);
     setAccuracy(accuracyPercent);
     setXpEarned(earned);
     setFinished(true);
