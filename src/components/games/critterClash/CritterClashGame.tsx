@@ -35,6 +35,33 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
   const [myPick, setMyPick] = useState(-1);
   const stats = useRef({ right: 0, answered: 0, assists: 0 });
   const readyIds = useRef(new Set<string>());
+  const root = useRef<HTMLDivElement>(null);
+  const [fsReal, setFsReal] = useState(false); // the browser's full screen
+  const [fsFake, setFsFake] = useState(false); // fallback for browsers (iPhone) that cannot full-screen a page element
+  const [offer, setOffer] = useState(false);
+  const full = fsReal || fsFake;
+
+  const enterFull = async () => {
+    setOffer(false);
+    const el = root.current as (HTMLDivElement & { webkitRequestFullscreen?: () => void }) | null;
+    try {
+      if (el?.requestFullscreen) await el.requestFullscreen();
+      else if (el?.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      else setFsFake(true);
+    } catch { setFsFake(true); }
+  };
+  const exitFull = useCallback(() => {
+    setFsFake(false);
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
+  }, []);
+  useEffect(() => {
+    const on = () => setFsReal(!!document.fullscreenElement && document.fullscreenElement === root.current);
+    document.addEventListener('fullscreenchange', on);
+    return () => { document.removeEventListener('fullscreenchange', on); if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined); };
+  }, []);
+  // a new match: suggest full screen once; when the match ends, leave full screen by itself
+  useEffect(() => { if (ready) setOffer(true); }, [ready, round]);
+  useEffect(() => { if (st?.phase === 'over') exitFull(); }, [st?.phase, exitFull]);
 
   const myTeam = multi?.roster.find((r) => r.id === multi.meId)?.team ?? null;
   const nameOf = (id: string) => multi?.roster.find((r) => r.id === id)?.name ?? '';
@@ -126,8 +153,9 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
     raf = requestAnimationFrame(loop);
 
     let drag: { x: number; y: number } | null = null;
-    const down = (e: PointerEvent) => { if (!g.canAct) return; drag = { x: e.offsetX, y: e.offsetY }; cv.setPointerCapture(e.pointerId); };
-    const move = (e: PointerEvent) => { if (drag) g.setAim((drag.x - e.offsetX) * dpr, (drag.y - e.offsetY) * dpr); };
+    // touch or drag anywhere: the animal aims toward your finger, the farther away the stronger the throw
+    const down = (e: PointerEvent) => { if (!g.canAct) return; drag = { x: e.offsetX, y: e.offsetY }; cv.setPointerCapture(e.pointerId); g.aimScreen(e.offsetX * dpr, e.offsetY * dpr); };
+    const move = (e: PointerEvent) => { if (drag) g.aimScreen(e.offsetX * dpr, e.offsetY * dpr); };
     const up = () => { drag = null; };
     cv.addEventListener('pointerdown', down); cv.addEventListener('pointermove', move); cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
 
@@ -203,8 +231,15 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl">
-      <div className="mb-2 text-center text-sm">
+    <div ref={root} className={full ? 'fixed inset-0 z-[100] flex flex-col bg-slate-900 p-2' : 'mx-auto w-full max-w-5xl'}>
+      {offer && !full && (
+        <div className="mb-2 flex items-center justify-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm">
+          <span>{tr('Play full screen?')}</span>
+          <button type="button" className="rounded-lg bg-emerald-600 px-3 py-1 font-semibold text-white" onClick={() => void enterFull()}>{tr('Full screen')}</button>
+          <button type="button" className="rounded-lg px-2 py-1 text-slate-600" onClick={() => setOffer(false)}>{tr('Not now')}</button>
+        </div>
+      )}
+      <div className={`mb-2 text-center text-sm ${full ? 'hidden' : ''}`}>
         {multi ? (
           <span className="rounded-full bg-sky-100 px-3 py-1 text-sky-800">{tr('You are on the {team}', { team: teamLabel(myTeam ?? 0) })}</span>
         ) : (
@@ -214,7 +249,7 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
           </>
         )}
       </div>
-      <div ref={wrap} className="relative w-full overflow-hidden rounded-2xl bg-sky-200" style={{ height: 'clamp(300px, 62vh, 620px)' }}>
+      <div ref={wrap} className={`relative w-full overflow-hidden rounded-2xl bg-sky-200 ${full ? 'min-h-0 flex-1' : ''}`} style={full ? undefined : { height: 'clamp(300px, 62vh, 620px)' }}>
         <canvas ref={canvas} className="absolute inset-0 h-full w-full touch-none" />
         {st?.phase === 'wait' && <div className="absolute inset-0 flex items-center justify-center bg-black/30 text-white">{tr('Waiting for the other players…')}</div>}
         {st && (st.phase === 'move' || st.phase === 'flight' || st.phase === 'settle') && (
@@ -258,12 +293,18 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
           </div>
         )}
       </div>
-      <div className="mt-3 flex items-center justify-center gap-3">
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+        {([['▲', tr('Aim up'), () => g.adjust(0.06, 0)], ['▼', tr('Aim down'), () => g.adjust(-0.06, 0)], ['−', tr('Less power'), () => g.adjust(0, -0.06)], ['+', tr('More power'), () => g.adjust(0, 0.06)]] as [string, string, () => void][]).map(([sym, label, fn]) => (
+          <button key={label} type="button" aria-label={label} title={label} disabled={!myTurn} onClick={fn} className="h-9 w-9 rounded-full bg-white/90 text-lg font-bold text-slate-800 shadow disabled:opacity-40">{sym}</button>
+        ))}
+      </div>
+      <div className="mt-2 flex items-center justify-center gap-3">
         {btn('ui_btn_left.webp', tr('Left'), hold(-1))}
         {btn('ui_btn_right.webp', tr('Right'), hold(1))}
         {btn('ui_btn_hop.webp', tr('Hop'), { onClick: () => g.hop() })}
         {btn('ui_btn_fire.webp', tr('Fire'), { onClick: () => g.fire() })}
-        <button type="button" className="btn-secondary" onClick={() => { g.mapView = !g.mapView; }}>🗺️ {tr('Map')}</button>
+        <button type="button" className="rounded-full bg-white/90 px-3 py-2 text-sm font-semibold text-slate-800 shadow" onClick={() => { g.mapView = !g.mapView; }}>🗺️ {tr('Map')}</button>
+        <button type="button" className="rounded-full bg-white/90 px-3 py-2 text-sm font-semibold text-slate-800 shadow" aria-label={full ? tr('Exit full screen') : tr('Full screen')} onClick={() => (full ? exitFull() : void enterFull())}>{full ? '🗗' : '⛶'}</button>
       </div>
     </div>
   );

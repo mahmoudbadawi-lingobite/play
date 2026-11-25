@@ -6,7 +6,9 @@ import { MAP_H, MAP_W, Terrain } from './ccTerrain';
 const GRAVITY_ANIMAL = 1400;
 const GRAVITY_SHOT = 900;
 const WALK_SPEED = 70;
-const HOP_VY = -680;
+const HOP_VY = -820;
+const HOP_VX = 230;
+const NATIVE_LEFT = new Set<Species>(['bunny']); // these drawings look to the left, so they are mirrored the other way round
 const MOVE_BUDGET = 260;
 const QUESTION_TIME = 15;
 const AIM_TIME = 15;
@@ -67,11 +69,12 @@ const PROPS: { file: string; x: number; h: number }[] = [
 ];
 
 const COVERS: { name: CoverName; x: number }[] = [
-  { name: 'boulder', x: 360 }, { name: 'hay', x: 1060 }, { name: 'log', x: 1380 }, { name: 'crates', x: 1930 },
-  { name: 'barrel', x: 2330 }, { name: 'hay', x: 2740 }, { name: 'wall', x: 3610 },
+  // x is the left edge of the picture, as in the design prototype
+  { name: 'boulder', x: 330 }, { name: 'hay', x: 1000 }, { name: 'log', x: 1262 }, { name: 'crates', x: 1930 },
+  { name: 'barrel', x: 2330 }, { name: 'hay', x: 2735 }, { name: 'wall', x: 3610 },
 ];
 const TEAMS: Species[][] = [['hippo', 'llama', 'chicken'], ['penguin', 'goat', 'bunny']];
-const SPAWN_X = [[150, 520, 1010], [3100, 3500, 3950]];
+const SPAWN_X = [[150, 520, 940], [3100, 3440, 3560]];
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 
 export class CritterGame {
@@ -123,6 +126,7 @@ export class CritterGame {
   onShooterAnswer?: (pick: number) => void;
   shooterFor?: (team: 0 | 1, n: number) => string;
   private acc = 0;
+  private blockT = 0;
   private posT = 0;
   private lastPosAt = 0;
   cw = 800; ch = 480;
@@ -207,8 +211,9 @@ export class CritterGame {
     for (const c of COVERS) {
       const info = COVER_INFO[c.name];
       const k = (info.hMul * 175) / info.height;
-      const ground = this.terrain.surf[c.x];
-      const left = c.x - 256 * k;
+      const centre = Math.round(c.x + ((info.bbox[0] + info.bbox[2]) / 2) * k);
+      const ground = this.terrain.surf[centre];
+      const left = c.x;
       const top = ground - info.ground * k + 5;
       this.covers.push({ name: c.name, x: c.x, ground, hp: info.hits, k, box: [left + info.bbox[0] * k, top + info.bbox[1] * k, left + info.bbox[2] * k, top + info.bbox[3] * k] });
     }
@@ -230,7 +235,7 @@ export class CritterGame {
     }
     return false;
   }
-  private groundSolid(x: number, y: number) { return this.terrain.solid(x, y) || this.coverSolid(x, y, true); }
+  private groundSolid(x: number, y: number) { return this.terrain.solid(x, y) || this.coverSolid(x, y, false); }
   private bodySolid(x: number, y: number) { return this.terrain.solid(x, y) || this.coverSolid(x, y, false); }
 
   private alive(team?: number) { return this.animals.filter((a) => a.alive && !a.water && (team === undefined || a.team === team)); }
@@ -347,17 +352,22 @@ export class CritterGame {
   // ------------------------------------------------------------------ player actions
   get canAct() { return this.phase === 'move' && this.controlled && this.active.grounded && this.active.aimT <= 0; }
 
-  setAim(dx: number, dy: number) {
-    // slingshot: pull back from the target
+  /** Aim toward a point on the screen (canvas pixels): the animal looks that way, the distance sets the power. */
+  aimScreen(sx: number, sy: number) {
+    if (!this.canAct) return;
+    const a = this.active;
+    const { cx, cy, z } = this.clampCam();
+    const ax = (a.x - cx) * z + this.cw / 2; const ay = (a.y - 95 - cy) * z + this.ch / 2;
+    const dx = sx - ax; const dy = sy - ay;
     const len = Math.hypot(dx, dy);
-    if (len < 6) return;
-    this.active.facing = dx >= 0 ? 1 : -1;
-    this.angle = clamp(Math.atan2(-dy, Math.abs(dx)), -0.35, 1.5);
-    this.power = clamp(len / 140, 0.15, this.maxPower);
+    if (len < 8) return;
+    if (Math.abs(dx) > 6) a.facing = dx >= 0 ? 1 : -1;
+    this.angle = clamp(Math.atan2(-dy, Math.max(6, Math.abs(dx))), -0.6, 1.5);
+    this.power = clamp(len / (0.4 * Math.min(this.cw, this.ch * 1.4)), 0.15, this.maxPower);
     this.aiming = true;
   }
   adjust(dAngle: number, dPower: number) {
-    this.angle = clamp(this.angle + dAngle, -0.35, 1.5);
+    this.angle = clamp(this.angle + dAngle, -0.6, 1.5);
     this.power = clamp(this.power + dPower, 0.15, this.maxPower);
     this.aiming = true;
   }
@@ -366,7 +376,13 @@ export class CritterGame {
   hop() {
     const a = this.active;
     if (!this.canAct || this.moveLeft < 40) return;
-    a.vy = HOP_VY; a.vx = a.facing * 150; a.grounded = false; this.moveLeft -= 40;
+    this.jump(this.moveDir === 0 ? a.facing : (this.moveDir as 1 | -1));
+  }
+
+  /** A hop: up and forward in the given direction. */
+  private jump(dir: 1 | -1) {
+    const a = this.active;
+    a.facing = dir; a.vy = HOP_VY; a.vx = dir * HOP_VX; a.grounded = false; this.moveLeft -= 40; this.blockT = 0;
     this.sendPos();
   }
 
@@ -452,16 +468,17 @@ export class CritterGame {
     const remoteActive = this.net && !this.controlled && a === this.active && (this.phase === 'move' || this.phase === 'feedback');
     if (remoteActive) { if (a.moving) a.walkT += dt; } else a.moving = false;
     if (a.grounded) {
-      if (a === this.active && this.canAct && this.moveDir !== 0 && this.moveLeft > 0) this.walk(a, this.moveDir as 1 | -1, dt);
+      if (a === this.active && this.canAct && this.moveDir !== 0 && this.moveLeft > 0) this.walk(a, this.moveDir as 1 | -1, dt); else this.blockT = 0;
       // ground vanished under the animal?
       if (a.grounded && !this.groundSolid(a.x, a.y + 2) && !this.groundSolid(a.x, a.y)) { a.grounded = false; a.vy = 0; }
       if (a.grounded) { a.vx = 0; }
     }
     if (!a.grounded) {
       a.vy += GRAVITY_ANIMAL * dt;
+      if (a === this.active && this.controlled && this.phase === 'move' && this.moveDir !== 0) { a.vx += (this.moveDir * HOP_VX - a.vx) * Math.min(1, 6 * dt); a.facing = this.moveDir as 1 | -1; }
       const nx = a.x + a.vx * dt;
       const dir = Math.sign(a.vx);
-      if (dir && (this.bodySolid(nx + dir * 18, a.y - 30) || this.bodySolid(nx + dir * 18, a.y - 70))) a.vx = 0; else a.x = nx;
+      if (dir && (this.bodySolid(nx + dir * 18, a.y - 30) || this.bodySolid(nx + dir * 18, a.y - 70))) { if (a.vy >= 0) a.vx = 0; } else a.x = nx; // while rising keep the sideways speed, so a hop can clear a wall
       a.y += a.vy * dt;
       if (a.vy < 0 && this.bodySolid(a.x, a.y - 100)) a.vy = 0;
       if (a.vy >= 0 && this.groundSolid(a.x, a.y)) {
@@ -478,8 +495,14 @@ export class CritterGame {
     const step = WALK_SPEED * dt;
     const nx = a.x + dir * step;
     if (nx < 10 || nx > MAP_W - 10) return;
-    if (this.bodySolid(nx + dir * 18, a.y - 30) || this.bodySolid(nx + dir * 18, a.y - 70)) return;
-    if (this.groundSolid(nx, a.y - 18)) return; // too steep to step up
+    const blocked = this.bodySolid(nx + dir * 18, a.y - 30) || this.bodySolid(nx + dir * 18, a.y - 70) || this.groundSolid(nx, a.y - 18);
+    if (blocked) {
+      // pushing against a wall or a crate: after a moment the animal hops over it by itself
+      this.blockT += dt;
+      if (this.blockT > 0.25 && this.moveLeft >= 40) this.jump(dir);
+      return;
+    }
+    this.blockT = 0;
     let gy = -1;
     for (let y = a.y - 18; y <= a.y + 22; y++) if (this.groundSolid(nx, y)) { gy = y; break; }
     a.x = nx; a.moving = true; a.walkT += dt; this.moveLeft = Math.max(0, this.moveLeft - step);
@@ -617,8 +640,8 @@ export class CritterGame {
       const st: CoverState = c.hp <= 0 ? 'rubble' : c.hp / COVER_INFO[c.name].hits > 0.66 ? 'intact' : 'cracked';
       const sp = this.coverSprites.get(`${c.name}_${st}`); if (!sp) continue;
       const size = sp.width / SS;
-      if (c.x + size < vx0 || c.x - size > vx1) continue;
-      ctx.drawImage(sp, c.x - size / 2, c.ground - COVER_INFO[c.name].ground * c.k + 5, size, size);
+      if (c.x + size < vx0 || c.x > vx1) continue;
+      ctx.drawImage(sp, c.x, c.ground - COVER_INFO[c.name].ground * c.k + 5, size, size);
     }
 
     // animals
@@ -666,7 +689,7 @@ export class CritterGame {
     if (a.water) ctx.globalAlpha = Math.max(0, a.fade);
     ctx.translate(a.x, a.y + bounce);
     if (wob) ctx.rotate(wob);
-    if (a.facing < 0) ctx.scale(-1, 1);
+    if ((a.facing < 0) !== NATIVE_LEFT.has(a.species)) ctx.scale(-1, 1);
     ctx.drawImage(sp, -info.cx * k, -info.feet * k + 6, size, size);
     ctx.restore();
     if (!a.water) {
@@ -729,6 +752,13 @@ export class CritterGame {
     ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.beginPath(); ctx.arc(this.cw / 2, 28 * s, 22 * s, 0, 7); ctx.fill();
     ctx.fillStyle = this.timeLeft < 6 ? '#ff7b6b' : '#fff'; ctx.font = `bold ${20 * s}px system-ui, sans-serif`;
     if (this.phase === 'move' || this.phase === 'question') ctx.fillText(String(Math.max(0, Math.ceil(this.timeLeft))), this.cw / 2, 29 * s);
+    // power meter
+    if (this.phase === 'move' && this.controlled) {
+      const w = 120 * s; const x = this.cw / 2 - w / 2; const y = 70 * s;
+      ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(x - 2, y - 2, w + 4, 10 * s);
+      const g = ctx.createLinearGradient(x, 0, x + w, 0); g.addColorStop(0, '#7ee787'); g.addColorStop(0.6, '#ffd54a'); g.addColorStop(1, '#ff6b5e');
+      ctx.fillStyle = g; ctx.fillRect(x, y, w * this.power, 6 * s);
+    }
     // movement bar
     if (this.phase === 'move' || this.phase === 'feedback') {
       const w = 120 * s; const x = this.cw / 2 - w / 2; const y = 56 * s;
