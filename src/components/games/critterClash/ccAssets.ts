@@ -43,7 +43,7 @@ export const WORLD_FILES = [
 ];
 export const PROP_FILES = [
   'props/prop_lantern_post.webp', 'props/prop_fence.webp', 'props/prop_flag_blue.webp', 'props/prop_flag_red.webp',
-  'props/prop_pine.webp', 'props/prop_windmill.webp', 'props/prop_bridge.webp', 'props/prop_signpost.webp',
+  'props/prop_pine.webp', 'props/prop_windmill.webp', 'props/bridge_segment.webp', 'props/bridge_cap.webp', 'props/prop_signpost.webp',
   'props/fg_tree_topleft.webp', 'props/fg_rocks_bottomright.webp', 'props/fg_bushes_bottomleft.webp',
 ];
 export const UI_FILES = [
@@ -92,3 +92,16 @@ export function speciesFiles(species: Species[]): string[] {
   return species.flatMap((s) => POSES.map((p) => animalPath(s, p)));
 }
 export const COVER_FILES: string[] = (Object.keys(COVER_INFO) as CoverName[]).flatMap((c) => (['intact', 'cracked', 'rubble'] as CoverState[]).map((s) => coverPath(c, s)));
+
+/**
+ * Extra backgrounds: any picture saved as `public/critter/world/bg_random_1.webp` ... `bg_random_6.webp` is added to the
+ * ones a match can pick from. A match picks one at random. Missing files are simply skipped.
+ */
+export async function probeBackgrounds(store: ImageStore): Promise<string[]> {
+  const found: string[] = [];
+  await Promise.all([1, 2, 3, 4, 5, 6].map(async (i) => {
+    const path = `world/bg_random_${i}.webp`;
+    try { store.set(path, await loadOne(path)); found.push(path); } catch { /* not there */ }
+  }));
+  return found.sort();
+}

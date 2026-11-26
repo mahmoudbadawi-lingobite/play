@@ -4,12 +4,34 @@ import type { GameProps } from '../GameShell';
 import { tr } from '../../../i18n/tr';
 import { speakNatural } from '../../../lib/speech';
 import { makeQuestionSource } from './ccQuestions';
-import { COVER_FILES, PROP_FILES, UI_FILES, WORLD_FILES, assetUrl, loadImages, speciesFiles, type ImageStore, type Species } from './ccAssets';
+import { COVER_FILES, PROP_FILES, UI_FILES, WORLD_FILES, assetUrl, loadImages, probeBackgrounds, speciesFiles, type ImageStore, type Species } from './ccAssets';
 import { CritterGame, type GameStatus } from './ccGame';
 import type { CcNet, RosterEntry } from './ccNet';
 import { Terrain } from './ccTerrain';
 
 const SPECIES: Species[] = ['hippo', 'llama', 'chicken', 'penguin', 'goat', 'bunny'];
+
+/**
+ * A round game button that can be held for as long as you like. It is drawn with a background picture (not an <img>) and
+ * all the browser's long-press behaviour (image menu, text selection, context menu) is switched off.
+ */
+function PressButton({ file, label, disabled, onDown, onUp }: { file: string; label: string; disabled?: boolean; onDown: () => void; onUp?: () => void }) {
+  return (
+    <div
+      role="button"
+      aria-label={label}
+      aria-disabled={disabled}
+      onPointerDown={(e) => { e.preventDefault(); if (disabled) return; (e.currentTarget as Element).setPointerCapture?.(e.pointerId); onDown(); }}
+      onPointerUp={() => onUp?.()}
+      onPointerCancel={() => onUp?.()}
+      onLostPointerCapture={() => onUp?.()}
+      onContextMenu={(e) => e.preventDefault()}
+      onDragStart={(e) => e.preventDefault()}
+      className={`pointer-events-auto h-16 w-16 shrink-0 select-none rounded-full bg-contain bg-center bg-no-repeat sm:h-[4.5rem] sm:w-[4.5rem] ${disabled ? 'opacity-40' : 'active:scale-95'}`}
+      style={{ backgroundImage: `url(${assetUrl(`ui/${file}`)})`, touchAction: 'none', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none', WebkitTapHighlightColor: 'transparent' }}
+    />
+  );
+}
 
 /** An online match: the room page passes the connection and who is on which team. */
 export interface CcMulti { net: CcNet; roster: RosterEntry[]; meId: string; isHost: boolean }
@@ -92,10 +114,11 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
       try {
         const files = [...WORLD_FILES, ...PROP_FILES, ...UI_FILES, ...COVER_FILES, ...speciesFiles(SPECIES)];
         await loadImages(files, store.current, (p) => !dead && setProgress(p * 0.5));
+        const bgs = await probeBackgrounds(store.current);
         const terrain = await Terrain.build(store.current, (p) => !dead && setProgress(0.5 + p * 0.5));
         if (dead) return;
         const mu = multiRef.current;
-        const g = new CritterGame(terrain, store.current, makeQuestionSource(itemsRef.current), !mu);
+        const g = new CritterGame(terrain, store.current, makeQuestionSource(itemsRef.current), !mu, bgs);
         g.onStatus = setSt;
         if (mu) {
           const { net, roster, meId } = mu;
@@ -179,12 +202,6 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
     };
   }, [ready]);
 
-  const hold = useCallback((dir: number) => ({
-    onPointerDown: (e: React.PointerEvent) => { (e.target as Element).setPointerCapture?.(e.pointerId); if (game.current) game.current.moveDir = dir; },
-    onPointerUp: () => { if (game.current) game.current.moveDir = 0; },
-    onPointerCancel: () => { if (game.current) game.current.moveDir = 0; },
-  }), []);
-
   if (error) return <div className="card-surface p-6 text-center">{tr('Could not load the game.')} <div className="text-xs opacity-60">{error}</div></div>;
   if (!ready) {
     return (
@@ -213,12 +230,6 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
     if (iShoot) g.submitAnswer(i);
   };
 
-  const btn = (file: string, label: string, props: Record<string, unknown>) => (
-    <button type="button" aria-label={label} disabled={!myTurn} {...props} className="select-none touch-none disabled:opacity-40">
-      <img src={assetUrl(`ui/${file}`)} alt="" draggable={false} className="h-14 w-14 sm:h-16 sm:w-16" />
-    </button>
-  );
-
   const finish = () => {
     if (multi) {
       const { right, answered, assists } = stats.current;
@@ -232,13 +243,6 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
 
   return (
     <div ref={root} className={full ? 'fixed inset-0 z-[100] flex flex-col bg-slate-900 p-2' : 'mx-auto w-full max-w-5xl'}>
-      {offer && !full && (
-        <div className="mb-2 flex items-center justify-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm">
-          <span>{tr('Play full screen?')}</span>
-          <button type="button" className="rounded-lg bg-emerald-600 px-3 py-1 font-semibold text-white" onClick={() => void enterFull()}>{tr('Full screen')}</button>
-          <button type="button" className="rounded-lg px-2 py-1 text-slate-600" onClick={() => setOffer(false)}>{tr('Not now')}</button>
-        </div>
-      )}
       <div className={`mb-2 text-center text-sm ${full ? 'hidden' : ''}`}>
         {multi ? (
           <span className="rounded-full bg-sky-100 px-3 py-1 text-sky-800">{tr('You are on the {team}', { team: teamLabel(myTeam ?? 0) })}</span>
@@ -282,6 +286,32 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
             {st?.phase === 'feedback' && <p className="mt-2 text-center text-sm font-semibold">{st.fizzle ? tr('Not quite: weak shot and a short walk') : tr('Correct! Full-power shot')}</p>}
           </div>
         )}
+        {st && st.phase !== 'over' && st.phase !== 'wait' && (
+          <div className={`pointer-events-none absolute inset-0 transition-opacity ${q ? 'opacity-0' : 'opacity-100'}`} aria-hidden={!!q}>
+            {/* walking: left side of the screen, can be held */}
+            <div className="absolute bottom-3 left-3 flex gap-3">
+              <PressButton file="ui_btn_left.webp" label={tr('Left')} disabled={!myTurn} onDown={() => { g.moveDir = -1; }} onUp={() => { g.moveDir = 0; }} />
+              <PressButton file="ui_btn_right.webp" label={tr('Right')} disabled={!myTurn} onDown={() => { g.moveDir = 1; }} onUp={() => { g.moveDir = 0; }} />
+            </div>
+            {/* jump and shoot: right side */}
+            <div className="absolute bottom-3 right-3 flex flex-col items-end gap-2">
+              <div className="pointer-events-auto flex gap-1.5">
+                {([['▲', tr('Aim up'), () => g.adjust(0.06, 0)], ['▼', tr('Aim down'), () => g.adjust(-0.06, 0)], ['−', tr('Less power'), () => g.adjust(0, -0.06)], ['+', tr('More power'), () => g.adjust(0, 0.06)]] as [string, string, () => void][]).map(([sym, label, fn]) => (
+                  <button key={label} type="button" aria-label={label} title={label} disabled={!myTurn} onClick={fn} className="h-9 w-9 rounded-full bg-white/90 text-lg font-bold text-slate-800 shadow disabled:opacity-40">{sym}</button>
+                ))}
+              </div>
+              <div className="flex gap-3">
+                <PressButton file="ui_btn_hop.webp" label={tr('Hop')} disabled={!myTurn} onDown={() => g.hop()} />
+                <PressButton file="ui_btn_fire.webp" label={tr('Fire')} disabled={!myTurn} onDown={() => g.fire()} />
+              </div>
+            </div>
+            {/* view and full screen: top right, under the red team's bar */}
+            <div className="pointer-events-auto absolute right-3 top-10 flex gap-2">
+              <button type="button" className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow" onClick={() => { g.mapView = !g.mapView; }}>{st.map ? `🔍 ${tr('Close-up')}` : `🗺️ ${tr('Map')}`}</button>
+              <button type="button" className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow" aria-label={full ? tr('Exit full screen') : tr('Full screen')} onClick={() => (full ? exitFull() : void enterFull())}>{full ? '🗗' : '⛶'}</button>
+            </div>
+          </div>
+        )}
         {st?.phase === 'over' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/40 text-white">
             <div className="text-3xl font-bold">{st.winner === null ? tr('Draw!') : tr('{team} wins!', { team: teamLabel(st.winner) })}</div>
@@ -293,19 +323,19 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
           </div>
         )}
       </div>
-      <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-        {([['▲', tr('Aim up'), () => g.adjust(0.06, 0)], ['▼', tr('Aim down'), () => g.adjust(-0.06, 0)], ['−', tr('Less power'), () => g.adjust(0, -0.06)], ['+', tr('More power'), () => g.adjust(0, 0.06)]] as [string, string, () => void][]).map(([sym, label, fn]) => (
-          <button key={label} type="button" aria-label={label} title={label} disabled={!myTurn} onClick={fn} className="h-9 w-9 rounded-full bg-white/90 text-lg font-bold text-slate-800 shadow disabled:opacity-40">{sym}</button>
-        ))}
-      </div>
-      <div className="mt-2 flex items-center justify-center gap-3">
-        {btn('ui_btn_left.webp', tr('Left'), hold(-1))}
-        {btn('ui_btn_right.webp', tr('Right'), hold(1))}
-        {btn('ui_btn_hop.webp', tr('Hop'), { onClick: () => g.hop() })}
-        {btn('ui_btn_fire.webp', tr('Fire'), { onClick: () => g.fire() })}
-        <button type="button" className="rounded-full bg-white/90 px-3 py-2 text-sm font-semibold text-slate-800 shadow" onClick={() => { g.mapView = !g.mapView; }}>🗺️ {tr('Map')}</button>
-        <button type="button" className="rounded-full bg-white/90 px-3 py-2 text-sm font-semibold text-slate-800 shadow" aria-label={full ? tr('Exit full screen') : tr('Full screen')} onClick={() => (full ? exitFull() : void enterFull())}>{full ? '🗗' : '⛶'}</button>
-      </div>
+      {offer && !full && (
+        <div className="absolute inset-0 z-[110] flex items-center justify-center bg-black/55 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 text-center shadow-2xl">
+            <div className="text-4xl">🖥️</div>
+            <h3 className="mt-2 font-display text-xl font-bold text-slate-900">{tr('Play full screen?')}</h3>
+            <p className="mt-1 text-sm text-slate-600">{tr('Full screen gives you the whole map and bigger buttons.')}</p>
+            <div className="mt-4 flex gap-2">
+              <button type="button" className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 text-base font-bold text-white" onClick={() => void enterFull()}>{tr('Full screen')}</button>
+              <button type="button" className="flex-1 rounded-xl bg-slate-100 px-4 py-3 text-base font-semibold text-slate-700" onClick={() => setOffer(false)}>{tr('Not now')}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

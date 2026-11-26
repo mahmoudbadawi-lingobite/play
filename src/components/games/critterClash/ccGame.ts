@@ -11,7 +11,7 @@ const HOP_VX = 230;
 const NATIVE_LEFT = new Set<Species>(['bunny']); // these drawings look to the left, so they are mirrored the other way round
 const MOVE_BUDGET = 260;
 const QUESTION_TIME = 15;
-const AIM_TIME = 15;
+const AIM_TIME = 30; // time to aim and shoot (walking is limited by distance, not time)
 const FIZZLE_MOVE = 80;
 const FIZZLE_POWER = 0.4;
 const MAX_TURNS = 24;
@@ -27,13 +27,13 @@ export interface Question { prompt: string; passage?: string; audio?: string; op
 export interface GameStatus {
   phase: Phase; team: 0 | 1; timeLeft: number; moveLeft: number; winner: 0 | 1 | null; canAct: boolean; hp: [number, number];
   question: Question | null; picked: number; fizzle: boolean; asked: number; correct: [number, number]; animal: string;
-  shooter: string; controlled: boolean; turn: number;
+  shooter: string; controlled: boolean; turn: number; map: boolean;
 }
 
 /** Everything that must match on every device at the start of a turn. */
 export interface Snap {
   animals: { x: number; y: number; hp: number; alive: boolean; water: boolean; fade: number; facing: 1 | -1 }[];
-  covers: number[]; craters: [number, number, number][]; turnIdx: number[]; correct: [number, number]; asked: number; turns: number;
+  bridge: boolean[]; bg: string; covers: number[]; craters: [number, number, number][]; turnIdx: number[]; correct: [number, number]; asked: number; turns: number;
 }
 /** The few messages that make a networked match: the host decides, everybody replays. */
 export type GameEvent =
@@ -75,6 +75,9 @@ const COVERS: { name: CoverName; x: number }[] = [
 ];
 const TEAMS: Species[][] = [['hippo', 'llama', 'chicken'], ['penguin', 'goat', 'bunny']];
 const SPAWN_X = [[150, 520, 940], [3100, 3440, 3560]];
+// the rope bridge between the two big cliffs (art sizes in px, plank-top row inside the pictures)
+const BR_CAP_W = 81; const BR_CAP_H = 54; const BR_SEG_W = 348; const BR_SEG_H = 48; const BR_ROW = 6; const BR_THICK = 20;
+interface Bridge { xl: number; yl: number; xr: number; yr: number; len: number; ang: number; segW: number; tiles: boolean[] }
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 
 export class CritterGame {
@@ -83,6 +86,8 @@ export class CritterGame {
   private sprites = new Map<string, HTMLCanvasElement>();
   private coverSprites = new Map<string, HTMLCanvasElement>();
   private bg: HTMLCanvasElement;
+  bgKey = 'meadow';
+  bridge!: Bridge;
   animals: Animal[] = [];
   covers: Cover[] = [];
   parts: Particle[] = [];
@@ -131,13 +136,17 @@ export class CritterGame {
   private lastPosAt = 0;
   cw = 800; ch = 480;
 
-  constructor(terrain: Terrain, imgs: ImageStore, nextQuestion: () => Question, auto = true) {
+  constructor(terrain: Terrain, imgs: ImageStore, nextQuestion: () => Question, auto = true, bgChoices: string[] = []) {
     this.nextQuestion = nextQuestion;
     this.terrain = terrain;
     this.imgs = imgs;
-    this.bg = this.buildBackground();
+    const pool = ['meadow', ...bgChoices];
+    this.bgKey = pool[Math.floor(Math.random() * pool.length)];
+    this.bg = this.buildBackground(this.bgKey);
+    if (auto) this.dropOtherBackgrounds();
     this.buildSprites();
     this.placeCovers();
+    this.placeBridge();
     this.spawn();
     this.active = this.animals[0];
     this.phase = 'wait';
@@ -146,10 +155,19 @@ export class CritterGame {
   }
 
   // ------------------------------------------------------------------ setup
-  private buildBackground(): HTMLCanvasElement {
+  private buildBackground(key: string): HTMLCanvasElement {
     const S = 0.5; const H = Math.round(MAP_H * S); const W = Math.round(MAP_W * S);
     const c = document.createElement('canvas'); c.width = W; c.height = H;
     const g = c.getContext('2d')!;
+    const custom = key !== 'meadow' ? this.imgs.get(key) : undefined;
+    if (custom) {
+      // a picture of your own: scaled to the height of the map, repeated (every other copy mirrored) if it is narrower
+      const w = Math.max(1, Math.round(custom.width * (H / custom.height)));
+      for (let x = 0, i = 0; x < W; x += w, i++) {
+        if (i % 2) { g.save(); g.translate(x + w, 0); g.scale(-1, 1); g.drawImage(custom, 0, 0, w, H); g.restore(); } else g.drawImage(custom, x, 0, w, H);
+      }
+      return c;
+    }
     const files = ['world/bg_meadow_far.webp', 'world/bg_meadow_wide_b.webp', 'world/bg_meadow_wide_c.webp'];
     const over = 120; let x = 0;
     files.forEach((f, i) => {
@@ -160,23 +178,48 @@ export class CritterGame {
       const t = document.createElement('canvas'); t.width = w; t.height = H;
       const tg = t.getContext('2d')!;
       tg.drawImage(im, 0, 0, w, H);
-      tg.globalCompositeOperation = 'destination-in';
+      // fade the left edge out so the pictures melt into each other
+      tg.globalCompositeOperation = 'destination-out';
       const gr = tg.createLinearGradient(0, 0, over, 0);
-      gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,1)');
+      gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
       tg.fillStyle = gr; tg.fillRect(0, 0, over, H);
-      tg.fillStyle = '#000';
-      tg.globalCompositeOperation = 'destination-in';
-      // keep everything right of the fade
-      tg.fillRect(over, 0, w, H);
       g.drawImage(t, start, 0);
       x = start + w;
     });
-    if (x < W) { // stretch to fill if the pictures are narrower than the map
+    if (x < W) { // the pictures are narrower than the map: stretch them to fill it
       const copy = document.createElement('canvas'); copy.width = x; copy.height = H;
       copy.getContext('2d')!.drawImage(c, 0, 0);
       g.clearRect(0, 0, W, H); g.drawImage(copy, 0, 0, x, H, 0, 0, W, H);
     }
     return c;
+  }
+
+  private setBackground(key: string) {
+    if (key === this.bgKey) return;
+    this.bgKey = key; this.bg = this.buildBackground(key);
+  }
+  private dropOtherBackgrounds() {
+    for (const k of [...this.imgs.keys()]) if (k.startsWith('world/bg_random_') && k !== this.bgKey) this.imgs.delete(k);
+  }
+
+  private placeBridge() {
+    const xl = 2526; const xr = 3334;
+    const yl = this.terrain.surf[xl - 8]; const yr = this.terrain.surf[xr + 8];
+    const len = Math.hypot(xr - xl, yr - yl);
+    const n = Math.max(1, Math.round((len - 2 * BR_CAP_W) / BR_SEG_W));
+    this.bridge = { xl, yl, xr, yr, len, ang: Math.atan2(yr - yl, xr - xl), segW: (len - 2 * BR_CAP_W) / n, tiles: new Array<boolean>(n).fill(true) };
+  }
+  /** x position of the middle of a bridge section */
+  private tileX(i: number) { const b = this.bridge; const d = BR_CAP_W + (i + 0.5) * b.segW; return b.xl + (d / b.len) * (b.xr - b.xl); }
+  private bridgeSolid(x: number, y: number): boolean {
+    const b = this.bridge;
+    if (x < b.xl + 2 || x > b.xr - 2) return false;
+    const t = (x - b.xl) / (b.xr - b.xl);
+    const line = b.yl + t * (b.yr - b.yl);
+    if (y < line || y > line + BR_THICK) return false;
+    const d = t * b.len;
+    if (d < BR_CAP_W || d > b.len - BR_CAP_W) return true;
+    return b.tiles[Math.min(b.tiles.length - 1, Math.floor((d - BR_CAP_W) / b.segW))];
   }
 
   private buildSprites() {
@@ -220,10 +263,15 @@ export class CritterGame {
   }
 
   private spawn() {
-    TEAMS.forEach((sp, team) => sp.forEach((s, i) => {
-      const x = SPAWN_X[team][i];
-      this.animals.push({ species: s, team: team as 0 | 1, name: cap(s), x, y: this.terrain.surf[x], vx: 0, vy: 0, hp: 100, facing: team === 0 ? 1 : -1, grounded: true, alive: true, water: false, fade: 1, hitT: 0, aimT: 0, walkT: 0, moving: false });
-    }));
+    TEAMS.forEach((sp, team) => {
+      // the same animals every match, but standing in a different place each time
+      const slots = [...SPAWN_X[team]];
+      for (let i = slots.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [slots[i], slots[j]] = [slots[j], slots[i]]; }
+      sp.forEach((sps, i) => {
+        const x = Math.round(slots[i] + (Math.random() - 0.5) * 36);
+        this.animals.push({ species: sps, team: team as 0 | 1, name: cap(sps), x, y: this.terrain.surf[x], vx: 0, vy: 0, hp: 100, facing: team === 0 ? 1 : -1, grounded: true, alive: true, water: false, fade: 1, hitT: 0, aimT: 0, walkT: 0, moving: false });
+      });
+    });
   }
 
   // ------------------------------------------------------------------ collisions
@@ -235,8 +283,8 @@ export class CritterGame {
     }
     return false;
   }
-  private groundSolid(x: number, y: number) { return this.terrain.solid(x, y) || this.coverSolid(x, y, false); }
-  private bodySolid(x: number, y: number) { return this.terrain.solid(x, y) || this.coverSolid(x, y, false); }
+  private groundSolid(x: number, y: number) { return this.terrain.solid(x, y) || this.coverSolid(x, y, false) || this.bridgeSolid(x, y); }
+  private bodySolid(x: number, y: number) { return this.terrain.solid(x, y) || this.coverSolid(x, y, false) || this.bridgeSolid(x, y); }
 
   private alive(team?: number) { return this.animals.filter((a) => a.alive && !a.water && (team === undefined || a.team === team)); }
 
@@ -285,11 +333,12 @@ export class CritterGame {
   snapshot(): Snap {
     return {
       animals: this.animals.map((a) => ({ x: a.x, y: a.y, hp: a.hp, alive: a.alive, water: a.water, fade: a.fade, facing: a.facing })),
-      covers: this.covers.map((c) => c.hp), craters: this.craters.map((c) => [...c] as [number, number, number]), turnIdx: [...this.turnIdx],
+      bridge: [...this.bridge.tiles], bg: this.bgKey, covers: this.covers.map((c) => c.hp), craters: this.craters.map((c) => [...c] as [number, number, number]), turnIdx: [...this.turnIdx],
       correct: [...this.correct] as [number, number], asked: this.asked, turns: this.turns,
     };
   }
   private restore(sn: Snap) {
+    this.bridge.tiles = [...sn.bridge];
     sn.animals.forEach((d, i) => {
       const a = this.animals[i];
       Object.assign(a, d);
@@ -297,6 +346,9 @@ export class CritterGame {
       a.grounded = a.alive && !a.water && (this.groundSolid(a.x, a.y + 2) || this.groundSolid(a.x, a.y));
     });
     sn.covers.forEach((hp, i) => { this.covers[i].hp = hp; });
+    this.bridge.tiles = [...sn.bridge];
+    if (sn.bg !== this.bgKey) this.setBackground(this.imgs.has(sn.bg) ? sn.bg : 'meadow');
+    this.dropOtherBackgrounds();
     for (let i = this.craters.length; i < sn.craters.length; i++) { const c = sn.craters[i]; this.terrain.carve(c[0], c[1], c[2]); this.craters.push(c); }
     this.turnIdx = [...sn.turnIdx]; this.correct = [...sn.correct] as [number, number]; this.asked = sn.asked; this.turns = sn.turns;
   }
@@ -311,7 +363,7 @@ export class CritterGame {
         this.shooterId = e.shooter;
         this.controlled = !this.net || e.shooter === this.meId;
         this.phase = 'question'; this.question = e.q; this.picked = -1; this.localPick = -1; this.fizzle = false;
-        this.timeLeft = QUESTION_TIME; this.moveLeft = 0; this.aiming = false; this.angle = 0.8; this.power = 0.6; this.mapView = false; this.shot = null;
+        this.timeLeft = QUESTION_TIME; this.moveLeft = 0; this.aiming = false; this.angle = 0.8; this.power = 0.6; this.mapView = true; this.moveDir = 0; this.shot = null;
         break;
       }
       case 'res': {
@@ -545,6 +597,12 @@ export class CritterGame {
       a.vx = ((dx / n) * 320 * f + (dx >= 0 ? 40 : -40)) * kk; a.vy = (-320 * f - 120) * kk; a.grounded = false; a.hitT = 0.9;
       if (a.hp <= 0) { a.alive = false; this.poof(a.x, a.y - 45); }
     }
+    const br = this.bridge;
+    br.tiles.forEach((alive, i) => {
+      if (!alive) return;
+      const tx = this.tileX(i); const ty = br.yl + ((tx - br.xl) / (br.xr - br.xl)) * (br.yr - br.yl);
+      if (Math.hypot(tx - x, ty - y) < blast + BR_SEG_W / 2 * 0.5) { br.tiles[i] = false; this.poof(tx, ty); }
+    });
     for (const c of this.covers) {
       if (c.hp <= 0) continue;
       const nx = clamp(x, c.box[0], c.box[2]); const ny = clamp(y, c.box[1], c.box[3]);
@@ -565,7 +623,7 @@ export class CritterGame {
   // ------------------------------------------------------------------ camera
   resize(cw: number, ch: number) { this.cw = cw; this.ch = ch; }
   private targetZoom() {
-    if (this.mapView) return Math.max(this.cw / MAP_W, this.ch / MAP_H * 0.6);
+    if (this.mapView) return this.cw / MAP_W; // the whole map, edge to edge
     return Math.max(Math.min(this.ch / 640, this.cw / 800), this.ch / MAP_H);
   }
   private updateCamera(dt: number) {
@@ -590,7 +648,7 @@ export class CritterGame {
   private emitStatus() {
     const hp: [number, number] = [0, 0];
     for (const a of this.animals) if (a.alive && !a.water) hp[a.team] += a.hp;
-    const st: GameStatus = { phase: this.phase, team: this.team, timeLeft: Math.max(0, Math.ceil(this.timeLeft)), moveLeft: Math.round(this.moveLeft / 10), winner: this.winner, canAct: this.canAct, hp, question: this.phase === 'question' || this.phase === 'feedback' ? this.question : null, picked: this.picked, fizzle: this.fizzle, asked: this.asked, correct: [...this.correct] as [number, number], animal: this.active.name, shooter: this.shooterId, controlled: this.controlled, turn: this.turns };
+    const st: GameStatus = { phase: this.phase, team: this.team, timeLeft: Math.max(0, Math.ceil(this.timeLeft)), moveLeft: Math.round(this.moveLeft / 10), winner: this.winner, canAct: this.canAct, hp, question: this.phase === 'question' || this.phase === 'feedback' ? this.question : null, picked: this.picked, fizzle: this.fizzle, asked: this.asked, correct: [...this.correct] as [number, number], animal: this.active.name, shooter: this.shooterId, controlled: this.controlled, turn: this.turns, map: this.mapView };
     const key = JSON.stringify(st);
     if (key !== this.lastStatus) { this.lastStatus = key; this.onStatus?.(st); }
   }
@@ -609,8 +667,11 @@ export class CritterGame {
   draw(ctx: CanvasRenderingContext2D) {
     const { cx, cy, z, hw, hh } = this.clampCam();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = '#bfe3f5'; ctx.fillRect(0, 0, this.cw, this.ch);
+    ctx.fillStyle = '#9fd6f2'; ctx.fillRect(0, 0, this.cw, this.ch);
     ctx.setTransform(z, 0, 0, z, this.cw / 2 - cx * z, this.ch / 2 - cy * z);
+    // when the whole map is shown on a tall screen: sky above it and water below it
+    if (cy - hh < 0) { ctx.fillStyle = '#8fd0f5'; ctx.fillRect(-10, cy - hh - 10, MAP_W + 20, hh - cy + 10 + 1); }
+    if (cy + hh > MAP_H) { ctx.fillStyle = '#4a9ccc'; ctx.fillRect(-10, MAP_H - 1, MAP_W + 20, cy + hh - MAP_H + 12); }
     const vx0 = Math.max(0, Math.floor(cx - hw)); const vx1 = Math.min(MAP_W, Math.ceil(cx + hw));
     const vy0 = Math.max(0, Math.floor(cy - hh)); const vy1 = Math.min(MAP_H, Math.ceil(cy + hh));
     const vw = vx1 - vx0; const vh = vy1 - vy0;
@@ -624,10 +685,10 @@ export class CritterGame {
     for (let x = vx0; x <= vx1; x += 12) { const y = wy + Math.sin(x / 40 + this.time * 2) * 3; if (x === vx0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
     ctx.stroke();
 
-    this.drawBridge(ctx); // behind the ground so the islands stay readable
     for (const c of [this.terrain.rock, this.terrain.edge, this.terrain.cap]) ctx.drawImage(c, vx0, vy0, vw, vh, vx0, vy0, vw, vh);
 
-    // props and bridge
+    // bridge and props
+    this.drawBridge(ctx);
     for (const p of PROPS) {
       if (p.x < vx0 - 300 || p.x > vx1 + 300) continue;
       const im = this.imgs.get(p.file); if (!im) continue;
@@ -669,14 +730,19 @@ export class CritterGame {
   }
 
   private drawBridge(ctx: CanvasRenderingContext2D) {
-    const im = this.imgs.get('props/prop_bridge.webp'); if (!im) return;
-    const xl = 2470; const xr = 3400;
-    const yl = this.terrain.surf[xl - 12] + 6; const yr = this.terrain.surf[xr + 12] + 6;
-    const dx = xr - xl; const len = Math.hypot(dx, yr - yl); const s = len / im.width;
-    ctx.save(); ctx.translate(xl, yl); ctx.rotate(Math.atan2(yr - yl, dx));
-    ctx.drawImage(im, 0, -im.height * s, len, im.height * s);
+    const cap = this.imgs.get('props/bridge_cap.webp'); const seg = this.imgs.get('props/bridge_segment.webp');
+    if (!cap || !seg) return;
+    const b = this.bridge;
+    ctx.save(); ctx.translate(b.xl, b.yl); ctx.rotate(b.ang);
+    ctx.drawImage(cap, 0, -BR_ROW, BR_CAP_W, BR_CAP_H);
+    b.tiles.forEach((alive, i) => { if (alive) ctx.drawImage(seg, BR_CAP_W + i * b.segW, -BR_ROW, b.segW + 1, BR_SEG_H); });
+    ctx.translate(b.len, 0); ctx.scale(-1, 1);
+    ctx.drawImage(cap, 0, -BR_ROW, BR_CAP_W, BR_CAP_H);
     ctx.restore();
   }
+
+  /** things drawn on top of the world (health bars, marker, aim dots) grow a little when the camera is far away */
+  private get ui() { return Math.max(1, 0.8 / this.cam.z); }
 
   private drawAnimal(ctx: CanvasRenderingContext2D, a: Animal) {
     const sp = this.sprites.get(`${a.species}_${this.poseOf(a)}`); if (!sp) return;
@@ -694,12 +760,12 @@ export class CritterGame {
     ctx.restore();
     if (!a.water) {
       const top = a.y - (info.feet - info.bbox[1]) * k;
-      const w = 44; const x = a.x - w / 2; const y = top - 12;
-      ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fillRect(x - 1, y - 1, w + 2, 8);
-      ctx.fillStyle = a.hp > 50 ? '#5fd35f' : a.hp > 25 ? '#f2c230' : '#e9503f'; ctx.fillRect(x, y, w * a.hp / 100, 6);
+      const f = this.ui; const w = 44 * f; const x = a.x - w / 2; const y = top - 12 * f;
+      ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fillRect(x - 1, y - 1, w + 2, 6 * f + 2);
+      ctx.fillStyle = a.hp > 50 ? '#5fd35f' : a.hp > 25 ? '#f2c230' : '#e9503f'; ctx.fillRect(x, y, w * a.hp / 100, 6 * f);
       if (a === this.active && this.phase !== 'over') {
         const mk = this.imgs.get(a.team === 0 ? 'ui/ui_marker_blue.webp' : 'ui/ui_marker_red.webp');
-        if (mk) { const mw = 40; const mh = mk.height * mw / mk.width; ctx.drawImage(mk, a.x - mw / 2, y - mh - 6 + Math.sin(this.time * 4) * 4, mw, mh); }
+        if (mk) { const mw = 40 * f; const mh = mk.height * mw / mk.width; ctx.drawImage(mk, a.x - mw / 2, y - mh - 6 * f + Math.sin(this.time * 4) * 4 * f, mw, mh); }
       }
     }
   }
@@ -707,14 +773,15 @@ export class CritterGame {
   private drawAim(ctx: CanvasRenderingContext2D) {
     const pts = this.preview();
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    pts.forEach((p, i) => { if (i % 3) return; ctx.beginPath(); ctx.arc(p.x, p.y, 3.5 - i / 40, 0, 7); ctx.fill(); });
+    pts.forEach((p, i) => { if (i % 3) return; ctx.beginPath(); ctx.arc(p.x, p.y, (3.5 - i / 40) * this.ui, 0, 7); ctx.fill(); });
     const last = pts[pts.length - 1];
     const ch = this.imgs.get('ui/ui_crosshair.webp');
-    if (last && ch) { const w = 34; ctx.drawImage(ch, last.x - w / 2, last.y - w / 2, w, ch.height * w / ch.width); }
+    if (last && ch) { const w = 34 * this.ui; ctx.drawImage(ch, last.x - w / 2, last.y - w / 2, w, ch.height * w / ch.width); }
   }
 
   private drawShot(ctx: CanvasRenderingContext2D, s: Shot) {
     ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(Math.atan2(s.vy, s.vx));
+    ctx.scale(Math.max(1, 0.6 / this.cam.z), Math.max(1, 0.6 / this.cam.z));
     if (s.fizzle) ctx.scale(0.62, 0.62);
     const g = ctx.createRadialGradient(-4, -4, 2, 0, 0, 15);
     g.addColorStop(0, s.fizzle ? '#eef2f4' : '#d9f3ff'); g.addColorStop(1, s.fizzle ? '#93a9b8' : '#3a9be0');
