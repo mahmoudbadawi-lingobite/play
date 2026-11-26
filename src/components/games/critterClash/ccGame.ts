@@ -1,3 +1,4 @@
+import { sfx } from './ccSfx';
 import { ANIMAL_INFO, COVER_INFO, POSES, animalPath, coverPath, type CoverName, type CoverState, type ImageStore, type Pose, type Species } from './ccAssets';
 import { MAP_H, MAP_W, Terrain } from './ccTerrain';
 
@@ -49,7 +50,7 @@ interface Animal {
   x: number; y: number; vx: number; vy: number;
   hp: number; facing: 1 | -1; grounded: boolean;
   alive: boolean; water: boolean; fade: number;
-  hitT: number; aimT: number; walkT: number; moving: boolean;
+  hitT: number; aimT: number; walkT: number; moving: boolean; stp?: number;
 }
 interface Cover { name: CoverName; x: number; ground: number; hp: number; k: number; box: [number, number, number, number] }
 interface Particle { x: number; y: number; vx: number; vy: number; life: number; max: number; r: number; kind: 'drop' | 'puff' }
@@ -372,7 +373,7 @@ export class CritterGame {
       case 'res': {
         if (this.phase !== 'question' || !this.question) break;
         const ok = e.pick === this.question.correct;
-        this.picked = e.pick; this.fizzle = !ok; this.asked++;
+        this.picked = e.pick; this.fizzle = !ok; this.asked++; sfx(ok ? 'right' : 'wrong');
         if (ok) this.correct[this.team]++;
         this.moveLeft = ok ? MOVE_BUDGET : FIZZLE_MOVE;
         this.power = Math.min(this.power, this.maxPower);
@@ -382,6 +383,7 @@ export class CritterGame {
       case 'pos': {
         if (this.controlled || (this.phase !== 'move' && this.phase !== 'feedback')) break;
         const a = this.active;
+        if (a.grounded && !e.g && e.vy < -300) sfx('jump');
         a.x = e.x; a.y = e.y; a.vx = e.vx; a.vy = e.vy; a.grounded = e.g; a.facing = e.f; a.moving = e.mv;
         this.angle = e.ang; this.power = e.pw; this.aiming = e.aim; this.moveLeft = e.ml; this.lastPosAt = this.time;
         break;
@@ -399,7 +401,7 @@ export class CritterGame {
         this.shot = null; this.aiming = false; this.phase = 'settle'; this.settleT = 0.6;
         break;
       case 'over':
-        this.restore(e.snap); this.shot = null; this.phase = 'over'; this.winner = e.winner;
+        this.restore(e.snap); this.shot = null; this.phase = 'over'; this.winner = e.winner; if (e.winner !== null && e.winner !== undefined && (e.winner as number) >= 0) sfx('win');
         this.onOver?.(e.winner);
         break;
     }
@@ -438,6 +440,7 @@ export class CritterGame {
   /** A hop: up and forward in the given direction. */
   private jump(dir: 1 | -1) {
     const a = this.active;
+    sfx('jump');
     a.facing = dir; a.vy = HOP_VY; a.vx = dir * HOP_VX; a.grounded = false; this.moveLeft -= 40; this.blockT = 0;
     this.sendPos();
   }
@@ -459,7 +462,7 @@ export class CritterGame {
     const dirx = Math.cos(this.angle) * a.facing; const diry = -Math.sin(this.angle);
     const v = this.power * SHOT_POWER;
     this.shot = { x: a.x + dirx * 30, y: a.y - 95 + diry * 30, vx: dirx * v, vy: diry * v, t: 0, owner: a, spin: 0, fizzle: this.fizzle };
-    a.aimT = 0.35; this.aiming = false; this.phase = 'flight';
+    a.aimT = 0.35; this.aiming = false; this.phase = 'flight'; sfx('shoot');
   }
 
   preview(): { x: number; y: number }[] {
@@ -520,9 +523,10 @@ export class CritterGame {
     if (!a.alive) return;
     if (a.hitT > 0) a.hitT -= dt;
     if (a.aimT > 0) a.aimT -= dt;
+    if (a.moving && a.grounded && !a.water) { const n = Math.floor(a.walkT / 0.18); if (n !== a.stp) { if (a.stp !== undefined) sfx('step'); a.stp = n; } }
     if (a.water) {
       a.fade -= dt / 2.2; a.x += 18 * dt; a.y = WATER_Y + Math.sin(this.time * 3 + a.x) * 3;
-      if (a.fade <= 0) { a.alive = false; this.poof(a.x, a.y - 30); }
+      if (a.fade <= 0) { a.alive = false; this.poof(a.x, a.y - 30); sfx('defeat'); }
       return;
     }
     const remoteActive = this.net && !this.controlled && a === this.active && (this.phase === 'move' || this.phase === 'feedback');
@@ -543,6 +547,7 @@ export class CritterGame {
       if (a.vy < 0 && this.bodySolid(a.x, a.y - 100)) a.vy = 0;
       if (a.vy >= 0 && this.groundSolid(a.x, a.y)) {
         let n = 0; while (n < 40 && this.groundSolid(a.x, a.y - 1)) { a.y--; n++; }
+        if (a.vy > 350) sfx('land');
         a.grounded = true; a.vy = 0; a.vx = 0;
       }
       a.x = clamp(a.x, 10, MAP_W - 10);
@@ -587,6 +592,7 @@ export class CritterGame {
 
   private explode(x: number, y: number, fizzle: boolean) {
     const kk = fizzle ? 0.5 : 1;
+    sfx('pop');
     const blast = BLAST_R * kk;
     this.terrain.carve(x, y, CRATER_R * kk);
     this.craters.push([x, y, CRATER_R * kk]);
@@ -603,7 +609,7 @@ export class CritterGame {
       a.hp = Math.max(0, a.hp - Math.round(40 * f * kk));
       const n = d || 1;
       a.vx = ((dx / n) * 320 * f + (dx >= 0 ? 40 : -40)) * kk; a.vy = (-320 * f - 120) * kk; a.grounded = false; a.hitT = 0.9;
-      if (a.hp <= 0) { a.alive = false; this.poof(a.x, a.y - 45); }
+      if (a.hp <= 0) { a.alive = false; this.poof(a.x, a.y - 45); sfx('defeat'); }
     }
     const br = this.bridge;
     br.tiles.forEach((alive, i) => {
@@ -619,12 +625,14 @@ export class CritterGame {
   }
 
   private poof(x: number, y: number) {
+    sfx('poof');
     for (let i = 0; i < 10; i++) {
       const ang = Math.random() * Math.PI * 2;
       this.parts.push({ x, y, vx: Math.cos(ang) * 60, vy: Math.sin(ang) * 60, life: 0.9, max: 0.9, r: 16 + Math.random() * 12, kind: 'puff' });
     }
   }
   private splash(x: number, y: number) {
+    sfx('splash');
     for (let i = 0; i < 16; i++) this.parts.push({ x, y, vx: (Math.random() - 0.5) * 200, vy: -150 - Math.random() * 300, life: 0.9, max: 0.9, r: 3 + Math.random() * 3, kind: 'drop' });
   }
 

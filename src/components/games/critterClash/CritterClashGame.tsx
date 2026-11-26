@@ -10,6 +10,7 @@ import { scoreRow, type CcMulti } from './ccNet';
 import { PressButton } from './PressButton';
 import { ResultsTable } from './ResultsTable';
 import { Terrain } from './ccTerrain';
+import { setSfxMuted, sfxMuted, unlockSfx } from './ccSfx';
 
 const SPECIES: Species[] = ['hippo', 'llama', 'chicken', 'penguin', 'goat', 'bunny'];
 
@@ -27,6 +28,8 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
   const game = useRef<CritterGame | null>(null);
   const store = useRef<ImageStore>(new Map());
   const [round, setRound] = useState(0);
+  const [mute, setMute] = useState(sfxMuted());
+  useEffect(() => { const un = () => unlockSfx(); window.addEventListener('pointerdown', un, { once: true, capture: true }); return () => window.removeEventListener('pointerdown', un, true); }, []);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const [ready, setReady] = useState(false);
@@ -319,6 +322,7 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
             {/* view and full screen: top right, under the red team's bar */}
             <div className="pointer-events-auto absolute right-3 top-10 flex gap-2">
               <button type="button" className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow" onClick={() => { g.mapView = !g.mapView; }}>{st.map ? `🔍 ${tr('Close-up')}` : `🗺️ ${tr('Map')}`}</button>
+              <button type="button" className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow" aria-label={mute ? tr('Sound on') : tr('Sound off')} onClick={() => { const m = !mute; setSfxMuted(m); setMute(m); if (!m) unlockSfx(); }}>{mute ? '🔇' : '🔊'}</button>
               <button type="button" className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow" aria-label={full ? tr('Exit full screen') : tr('Full screen')} onClick={() => (full ? exitFull() : void enterFull())}>{full ? '🗗' : '⛶'}</button>
             </div>
           </div>
