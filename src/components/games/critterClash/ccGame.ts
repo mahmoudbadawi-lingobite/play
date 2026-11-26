@@ -764,6 +764,21 @@ export class CritterGame {
     ctx.translate(a.x, a.y + bounce);
     if (wob) ctx.rotate(wob);
     if ((a.facing < 0) !== NATIVE_LEFT.has(a.species)) ctx.scale(-1, 1);
+    if (!a.water) { // team aura: a glow in the team colour that follows the animal's outline (stronger and pulsing on the active one)
+      const on = a === this.active && this.phase !== 'over';
+      ctx.shadowColor = a.team === 0 ? '#2f8cff' : '#ff3b3b';
+      const col = a.team === 0 ? '20,80,255' : '255,40,40';
+      const rr = (on ? 70 + Math.sin(this.time * 5) * 8 : 56) * this.ui;
+      const g = ctx.createRadialGradient(0, -34 * this.ui, 0, 0, -34 * this.ui, rr);
+      g.addColorStop(0, `rgba(${col},${on ? 0.75 : 0.55})`); g.addColorStop(0.55, `rgba(${col},0.3)`); g.addColorStop(1, `rgba(${col},0)`);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -34 * this.ui, rr, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(0, 4, 30 * this.ui, 8 * this.ui, 0, 0, Math.PI * 2); // ring at the feet
+      ctx.lineWidth = 6 * this.ui; ctx.strokeStyle = '#fff'; ctx.stroke();
+      ctx.lineWidth = 3.5 * this.ui; ctx.strokeStyle = a.team === 0 ? '#1f5cff' : '#ff3030'; ctx.stroke();
+      ctx.shadowBlur = (on ? 30 + Math.sin(this.time * 5) * 8 : 22) * this.ui;
+      for (let i = 0; i < 3; i++) ctx.drawImage(sp, -info.cx * k, -info.feet * k + 6, size, size);
+      ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+    }
     ctx.drawImage(sp, -info.cx * k, -info.feet * k + 6, size, size);
     ctx.restore();
     if (!a.water) {
@@ -772,8 +787,16 @@ export class CritterGame {
       ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fillRect(x - 1, y - 1, w + 2, 6 * f + 2);
       ctx.fillStyle = a.hp > 50 ? '#5fd35f' : a.hp > 25 ? '#f2c230' : '#e9503f'; ctx.fillRect(x, y, w * a.hp / 100, 6 * f);
       if (a === this.active && this.phase !== 'over') {
-        const mk = this.imgs.get(a.team === 0 ? 'ui/ui_marker_blue.webp' : 'ui/ui_marker_red.webp');
-        if (mk) { const mw = 40 * f; const mh = mk.height * mw / mk.width; ctx.drawImage(mk, a.x - mw / 2, y - mh - 6 * f + Math.sin(this.time * 4) * 4 * f, mw, mh); }
+        // a hollow arrow that drops quickly and floats back up, repeating
+        const ph = (this.time * 1.6) % 1; const drop = ph < 0.3 ? Math.sin(ph / 0.3 * Math.PI / 2) : Math.cos((ph - 0.3) / 0.7 * Math.PI / 2);
+        const aw = 34 * f; const ah = 46 * f; const cx = a.x; const by = y - 8 * f - (1 - drop) * 16 * f; // by = arrow tip
+        const t = ah, sh = aw * 0.36, hd = ah * 0.5;
+        ctx.save(); ctx.translate(cx, by); ctx.lineJoin = 'miter';
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(aw / 2, -hd); ctx.lineTo(sh / 2, -hd); ctx.lineTo(sh / 2, -t); ctx.lineTo(-sh / 2, -t); ctx.lineTo(-sh / 2, -hd); ctx.lineTo(-aw / 2, -hd); ctx.closePath();
+        ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.lineWidth = 5 * f; ctx.strokeStyle = a.team === 0 ? '#1f7bf0' : '#f03c3c'; ctx.stroke();
+        ctx.restore();
       }
     }
   }
