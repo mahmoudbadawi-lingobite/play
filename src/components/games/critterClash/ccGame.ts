@@ -122,6 +122,9 @@ export class CritterGame {
   // networking (a one-device match is simply a host with nobody to tell)
   isHost = true;
   net = false;
+  /** big-screen match: this device runs the animals for the shooter, whose phone only sends buttons */
+  arena = false;
+  onOver?: (winner: 0 | 1 | null) => void;
   meId = '';
   controlled = true;
   shooterId = '';
@@ -361,7 +364,7 @@ export class CritterGame {
         this.team = e.team; this.active = this.animals[e.animal];
         this.turnIdx[e.team]++; this.turns++;
         this.shooterId = e.shooter;
-        this.controlled = !this.net || e.shooter === this.meId;
+        this.controlled = !this.net || this.arena || e.shooter === this.meId;
         this.phase = 'question'; this.question = e.q; this.picked = -1; this.localPick = -1; this.fizzle = false;
         this.timeLeft = QUESTION_TIME; this.moveLeft = 0; this.aiming = false; this.angle = 0.8; this.power = 0.6; this.mapView = true; this.moveDir = 0; this.shot = null;
         break;
@@ -397,6 +400,7 @@ export class CritterGame {
         break;
       case 'over':
         this.restore(e.snap); this.shot = null; this.phase = 'over'; this.winner = e.winner;
+        this.onOver?.(e.winner);
         break;
     }
   }
@@ -487,6 +491,10 @@ export class CritterGame {
     if (this.phase === 'feedback') {
       this.fbT -= dt;
       if (this.fbT <= 0) { this.phase = 'move'; this.timeLeft = AIM_TIME; }
+    }
+    // the animal whose turn it is fell into the water (or is gone): nothing more to wait for
+    if (this.isHost && (this.phase === 'question' || this.phase === 'feedback' || this.phase === 'move') && (this.active.water || !this.active.alive)) {
+      const e: GameEvent = { k: 'skip' }; this.apply(e); this.out?.(e);
     }
     if (this.phase === 'move') {
       this.timeLeft -= dt;

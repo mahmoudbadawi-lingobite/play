@@ -18,15 +18,42 @@ export interface CcPlayer {
   /** true while a match is running: nobody new can join */
   locked: boolean;
 }
-export interface CcRoomSettings { setId: string; setTitle: string }
+/**
+ * 'map'   every device shows the map (the teacher may only watch)
+ * 'arena' big-screen match: the host's screen shows the map, the others use their phones as controllers
+ */
+export type CcMode = 'map' | 'arena';
+export interface CcRoomSettings { setId: string; setTitle: string; mode: CcMode; hostPlays: boolean }
+export interface ResultRow { id: string; name: string; team: 0 | 1; right: number; answered: number; assists: number; xp: number }
+
+/** What one player earned: 10 per right answer, 5 per right answer as a teammate (assist), 20 if the team won. */
+export function scoreRow(p: { id: string; name: string; team: 0 | 1 }, s: { right: number; answered: number; assists: number }, winner: 0 | 1 | null): ResultRow {
+  return { ...p, ...s, xp: Math.min(200, 10 * s.right + 5 * s.assists + (winner !== null && winner === p.team ? 20 : 0)) };
+}
 export interface RosterEntry { id: string; name: string; team: 0 | 1 }
 
 export type CcMsg =
   | { t: 'settings'; s: CcRoomSettings }
-  | { t: 'start'; roster: RosterEntry[] }
+  | { t: 'start'; roster: RosterEntry[]; mode: CcMode }
   | { t: 'ready'; id: string }
   | { t: 'ev'; e: GameEvent }
-  | { t: 'ans'; id: string; pick: number; turn: number };
+  | { t: 'ans'; id: string; pick: number; turn: number }
+  | { t: 'cmd'; id: string; turn: number; c: 'dir' | 'hop' | 'adj' | 'fire'; v?: number; a?: number; p?: number }
+  | { t: 'stats'; row: ResultRow }
+  | { t: 'results'; rows: ResultRow[]; winner: 0 | 1 | null };
+
+/** What the room page hands to a match screen. */
+export interface CcMulti {
+  net: CcNet; roster: RosterEntry[]; meId: string; isHost: boolean;
+  /** watching only (the teacher): no controls, answers shown */
+  spectator?: boolean;
+  /** big-screen match: this device runs the animals, the players' phones are controllers */
+  arena?: boolean;
+  onReport?: (row: ResultRow) => void;
+  onOver?: (winner: 0 | 1 | null) => void;
+  onClose?: () => void;
+  results?: { rows: ResultRow[]; winner: 0 | 1 | null } | null;
+}
 
 export const arbiter = (players: CcPlayer[]) => [...players].sort((a, b) => a.joinedAt - b.joinedAt || a.id.localeCompare(b.id))[0] ?? null;
 

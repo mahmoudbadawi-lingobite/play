@@ -4,37 +4,14 @@ import type { GameProps } from '../GameShell';
 import { tr } from '../../../i18n/tr';
 import { speakNatural } from '../../../lib/speech';
 import { makeQuestionSource } from './ccQuestions';
-import { COVER_FILES, PROP_FILES, UI_FILES, WORLD_FILES, assetUrl, loadImages, probeBackgrounds, speciesFiles, type ImageStore, type Species } from './ccAssets';
+import { COVER_FILES, PROP_FILES, UI_FILES, WORLD_FILES, loadImages, probeBackgrounds, speciesFiles, type ImageStore, type Species } from './ccAssets';
 import { CritterGame, type GameStatus } from './ccGame';
-import type { CcNet, RosterEntry } from './ccNet';
+import { scoreRow, type CcMulti } from './ccNet';
+import { PressButton } from './PressButton';
+import { ResultsTable } from './ResultsTable';
 import { Terrain } from './ccTerrain';
 
 const SPECIES: Species[] = ['hippo', 'llama', 'chicken', 'penguin', 'goat', 'bunny'];
-
-/**
- * A round game button that can be held for as long as you like. It is drawn with a background picture (not an <img>) and
- * all the browser's long-press behaviour (image menu, text selection, context menu) is switched off.
- */
-function PressButton({ file, label, disabled, onDown, onUp }: { file: string; label: string; disabled?: boolean; onDown: () => void; onUp?: () => void }) {
-  return (
-    <div
-      role="button"
-      aria-label={label}
-      aria-disabled={disabled}
-      onPointerDown={(e) => { e.preventDefault(); if (disabled) return; (e.currentTarget as Element).setPointerCapture?.(e.pointerId); onDown(); }}
-      onPointerUp={() => onUp?.()}
-      onPointerCancel={() => onUp?.()}
-      onLostPointerCapture={() => onUp?.()}
-      onContextMenu={(e) => e.preventDefault()}
-      onDragStart={(e) => e.preventDefault()}
-      className={`pointer-events-auto h-16 w-16 shrink-0 select-none rounded-full bg-contain bg-center bg-no-repeat sm:h-[4.5rem] sm:w-[4.5rem] ${disabled ? 'opacity-40' : 'active:scale-95'}`}
-      style={{ backgroundImage: `url(${assetUrl(`ui/${file}`)})`, touchAction: 'none', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none', WebkitTapHighlightColor: 'transparent' }}
-    />
-  );
-}
-
-/** An online match: the room page passes the connection and who is on which team. */
-export interface CcMulti { net: CcNet; roster: RosterEntry[]; meId: string; isHost: boolean }
 
 /**
  * Critter Clash. On its own it is a one-device match (two teams share the screen). Inside a room (`multi`) every
@@ -57,6 +34,8 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
   const [myPick, setMyPick] = useState(-1);
   const stats = useRef({ right: 0, answered: 0, assists: 0 });
   const readyIds = useRef(new Set<string>());
+  const lastDir = useRef(0);
+  const reported = useRef(false);
   const root = useRef<HTMLDivElement>(null);
   const [fsReal, setFsReal] = useState(false); // the browser's full screen
   const [fsFake, setFsFake] = useState(false); // fallback for browsers (iPhone) that cannot full-screen a page element
@@ -84,6 +63,13 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
   // a new match: suggest full screen once; when the match ends, leave full screen by itself
   useEffect(() => { if (ready) setOffer(true); }, [ready, round]);
   useEffect(() => { if (st?.phase === 'over') exitFull(); }, [st?.phase, exitFull]);
+  useEffect(() => {
+    if (!multi || st?.phase !== 'over' || reported.current || multi.spectator) return;
+    reported.current = true;
+    const me = multi.roster.find((r) => r.id === multi.meId);
+    if (me) multi.onReport?.(scoreRow(me, stats.current, st.winner));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [st?.phase]);
 
   const myTeam = multi?.roster.find((r) => r.id === multi.meId)?.team ?? null;
   const nameOf = (id: string) => multi?.roster.find((r) => r.id === id)?.name ?? '';
@@ -98,6 +84,13 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
       else if (m.t === 'ev' && g) {
         g.apply(m.e);
       } else if (m.t === 'ans' && g && g.isHost && m.id === g.shooterId && m.turn === g.turns) g.hostResolve(m.pick);
+      else if (m.t === 'cmd' && g && g.isHost && g.arena && m.id === g.shooterId && m.turn === g.turns) {
+        // a phone controller: the button presses of the shooter move this device's animal
+        if (m.c === 'dir') { g.moveDir = m.v === 1 ? 1 : m.v === -1 ? -1 : 0; lastDir.current = Date.now(); }
+        else if (m.c === 'hop') g.hop();
+        else if (m.c === 'adj') g.adjust(m.a ?? 0, m.p ?? 0);
+        else if (m.c === 'fire') g.fire();
+      }
     });
     return off;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -122,7 +115,8 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
         g.onStatus = setSt;
         if (mu) {
           const { net, roster, meId } = mu;
-          g.net = true; g.isHost = mu.isHost; g.meId = meId; g.controlled = false;
+          g.net = true; g.isHost = mu.isHost; g.meId = meId; g.controlled = !!mu.arena; g.arena = !!mu.arena;
+          g.onOver = (w) => multiRef.current?.onOver?.(w);
           g.out = (e) => net.send({ t: 'ev', e });
           g.onShooterAnswer = (pick) => net.send({ t: 'ans', id: meId, pick, turn: g.turns });
           g.shooterFor = (team, n) => {
@@ -142,7 +136,9 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
             if (game.current.phase !== 'wait') { window.clearInterval(timer); return; }
             if (!m.isHost) { m.net.send({ t: 'ready', id: m.meId }); return; }
             const here = m.net.players.map((p) => p.id);
-            if (here.every((id) => readyIds.current.has(id)) || Date.now() - t0 > 12000) { window.clearInterval(timer); game.current.hostBegin(); }
+            // in a big-screen match only this device builds the map; the phones need a moment to show their question screen
+            const everyone = m.arena ? readyIds.current.has(m.meId) && Date.now() - t0 > 2500 : here.every((id) => readyIds.current.has(id));
+            if (everyone || Date.now() - t0 > 12000) { window.clearInterval(timer); game.current.hostBegin(); }
           }, 700);
         }
       } catch (e) {
@@ -177,10 +173,12 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
 
     let drag: { x: number; y: number } | null = null;
     // touch or drag anywhere: the animal aims toward your finger, the farther away the stronger the throw
-    const down = (e: PointerEvent) => { if (!g.canAct) return; drag = { x: e.offsetX, y: e.offsetY }; cv.setPointerCapture(e.pointerId); g.aimScreen(e.offsetX * dpr, e.offsetY * dpr); };
+    const spectating = !!multiRef.current?.spectator;
+    const watchdog = window.setInterval(() => { if (g.arena && g.moveDir !== 0 && Date.now() - lastDir.current > 500) g.moveDir = 0; }, 200);
+    const down = (e: PointerEvent) => { if (spectating || !g.canAct) return; drag = { x: e.offsetX, y: e.offsetY }; cv.setPointerCapture(e.pointerId); g.aimScreen(e.offsetX * dpr, e.offsetY * dpr); };
     const move = (e: PointerEvent) => { if (drag) g.aimScreen(e.offsetX * dpr, e.offsetY * dpr); };
     const up = () => { drag = null; };
-    cv.addEventListener('pointerdown', down); cv.addEventListener('pointermove', move); cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+    if (!spectating) { cv.addEventListener('pointerdown', down); cv.addEventListener('pointermove', move); cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); }
 
     const keys = new Set<string>();
     const sync = () => { g.moveDir = keys.has('ArrowRight') || keys.has('d') ? 1 : keys.has('ArrowLeft') || keys.has('a') ? -1 : 0; };
@@ -194,9 +192,9 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
       keys.add(e.key); sync();
     };
     const ku = (e: KeyboardEvent) => { keys.delete(e.key); sync(); };
-    window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
+    if (!spectating) { window.addEventListener('keydown', kd); window.addEventListener('keyup', ku); }
     return () => {
-      cancelAnimationFrame(raf); ro.disconnect();
+      cancelAnimationFrame(raf); ro.disconnect(); window.clearInterval(watchdog);
       cv.removeEventListener('pointerdown', down); cv.removeEventListener('pointermove', move); cv.removeEventListener('pointerup', up); cv.removeEventListener('pointercancel', up);
       window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku);
     };
@@ -220,6 +218,8 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
   const q = st?.question ?? null;
   const iAnswer = !multi || myTeam === st?.team; // my team is the one answering
   const iShoot = !multi || st?.shooter === multi.meId;
+  const spectator = !!multi?.spectator;
+  const big = spectator; // the teacher's big-screen view: larger text
 
   const pickAnswer = (i: number) => {
     if (!q || st?.phase !== 'question' || myPick >= 0 || !iAnswer) return;
@@ -232,9 +232,9 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
 
   const finish = () => {
     if (multi) {
-      const { right, answered, assists } = stats.current;
-      const win = st?.winner !== null && st?.winner === myTeam;
-      onFinish(answered ? Math.round((100 * right) / answered) : 0, Math.min(200, 10 * right + 5 * assists + (win ? 20 : 0)));
+      const me = multi.roster.find((r) => r.id === multi.meId);
+      const row = scoreRow(me ?? { id: multi.meId, name: '', team: 0 }, stats.current, st?.winner ?? null);
+      onFinish(row.answered ? Math.round((100 * row.right) / row.answered) : 0, row.xp);
     } else {
       const c = (st?.correct[0] ?? 0) + (st?.correct[1] ?? 0);
       onFinish(st?.asked ? Math.round((100 * c) / st.asked) : 0, Math.min(150, 10 * c + (st?.winner == null ? 0 : 20)));
@@ -242,10 +242,11 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
   };
 
   return (
-    <div ref={root} className={full ? 'fixed inset-0 z-[100] flex flex-col bg-slate-900 p-2' : 'mx-auto w-full max-w-5xl'}>
+    <div ref={root} className={full ? 'fixed inset-0 z-[100] flex flex-col bg-slate-900 p-2' : 'relative mx-auto w-full max-w-5xl'}>
       <div className={`mb-2 text-center text-sm ${full ? 'hidden' : ''}`}>
         {multi ? (
-          <span className="rounded-full bg-sky-100 px-3 py-1 text-sky-800">{tr('You are on the {team}', { team: teamLabel(myTeam ?? 0) })}</span>
+          spectator ? <span className="rounded-full bg-violet-100 px-3 py-1 text-violet-800">{tr('Class match: you are watching')}</span>
+          : <span className="rounded-full bg-sky-100 px-3 py-1 text-sky-800">{tr('You are on the {team}', { team: teamLabel(myTeam ?? 0) })}</span>
         ) : (
           <>
             <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-800">{tr('Two teams share one device')}</span>
@@ -253,32 +254,42 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
           </>
         )}
       </div>
+      {spectator && multi && st && (
+        <div className={`mb-2 grid grid-cols-2 gap-2 ${full ? 'hidden' : ''}`}>
+          {[0, 1].map((t) => (
+            <div key={t} className={`rounded-xl px-3 py-2 ${t === 0 ? 'bg-sky-100 text-sky-900' : 'bg-rose-100 text-rose-900'} ${st.team === t && st.phase !== 'over' ? 'ring-2 ring-slate-800' : ''}`}>
+              <div className="flex items-center justify-between font-display text-lg font-bold"><span>{teamLabel(t)}</span><span>✔ {st.correct[t]}</span></div>
+              <div className="flex flex-wrap gap-x-2 text-sm">{multi.roster.filter((r) => r.team === t).map((r) => <span key={r.id} className={st.shooter === r.id && st.phase !== 'over' ? 'font-bold underline' : ''}>{r.name}</span>)}</div>
+            </div>
+          ))}
+        </div>
+      )}
       <div ref={wrap} className={`relative w-full overflow-hidden rounded-2xl bg-sky-200 ${full ? 'min-h-0 flex-1' : ''}`} style={full ? undefined : { height: 'clamp(300px, 62vh, 620px)' }}>
         <canvas ref={canvas} className="absolute inset-0 h-full w-full touch-none" />
         {st?.phase === 'wait' && <div className="absolute inset-0 flex items-center justify-center bg-black/30 text-white">{tr('Waiting for the other players…')}</div>}
         {st && (st.phase === 'move' || st.phase === 'flight' || st.phase === 'settle') && (
           <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/50 px-3 py-1 text-xs text-white">
-            {multi && !st.controlled
+            {multi && (!st.controlled || spectator || multi.arena)
               ? tr('{name} is aiming…', { name: nameOf(st.shooter) || teamName })
               : <>{tr("{team}'s turn", { team: teamName })} · {st.fizzle ? tr('Weak shot: drag to aim, then press Fire') : tr('Drag to aim, then press Fire')}</>}
           </div>
         )}
         {q && (
-          <div className="absolute inset-x-2 bottom-2 mx-auto max-w-xl rounded-2xl bg-white/95 p-3 shadow-lg">
+          <div className={`absolute inset-x-2 bottom-2 mx-auto rounded-2xl bg-white/95 p-3 shadow-lg ${big ? 'max-w-4xl p-5' : 'max-w-xl'}`}>
             <div className="mb-1 flex items-center justify-between text-xs font-semibold text-slate-600">
               <span>{tr("{team}'s turn", { team: teamName })} · {multi && st?.shooter ? nameOf(st.shooter) : st?.animal}</span><span>⏱ {st?.timeLeft}</span>
             </div>
             {q.passage && <p dir="auto" className="mb-1 text-sm text-slate-600">{q.passage}</p>}
             <div className="mb-2 flex items-start gap-2">
-              <p dir="auto" className="flex-1 text-base font-semibold text-slate-900">{q.prompt}</p>
+              <p dir="auto" className={`flex-1 font-semibold text-slate-900 ${big ? 'text-2xl' : 'text-base'}`}>{q.prompt}</p>
               {q.audio && <button type="button" className="rounded-full bg-sky-100 px-2 py-1" aria-label={tr('Listen')} onClick={() => speakNatural(q.audio!)}>🔊</button>}
             </div>
-            {iAnswer ? (
+            {iAnswer || spectator ? (
               <div className="grid gap-2 sm:grid-cols-3">
                 {q.options.map((o, i) => {
                   const done = st?.phase === 'feedback';
                   const cls = done ? (i === q.correct ? 'bg-emerald-500 text-white' : i === st?.picked ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-400') : 'bg-sky-100 text-slate-900 hover:bg-sky-200';
-                  return <button key={i} type="button" dir="auto" disabled={done || myPick >= 0} onClick={() => pickAnswer(i)} className={`rounded-xl px-3 py-2 text-sm font-medium ${cls} ${myPick === i ? 'ring-2 ring-slate-800' : ''}`}>{o}</button>;
+                  return <button key={i} type="button" dir="auto" disabled={done || myPick >= 0 || spectator} onClick={() => pickAnswer(i)} className={`rounded-xl px-3 py-2 font-medium ${big ? 'py-4 text-xl' : 'text-sm'} ${cls} ${myPick === i ? 'ring-2 ring-slate-800' : ''}`}>{o}</button>;
                 })}
               </div>
             ) : <p className="text-center text-sm text-slate-600">{tr('The other team is answering…')}</p>}
@@ -289,12 +300,12 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
         {st && st.phase !== 'over' && st.phase !== 'wait' && (
           <div className={`pointer-events-none absolute inset-0 transition-opacity ${q ? 'opacity-0' : 'opacity-100'}`} aria-hidden={!!q}>
             {/* walking: left side of the screen, can be held */}
-            <div className="absolute bottom-3 left-3 flex gap-3">
+            <div className={`absolute bottom-3 left-3 flex gap-3 ${spectator ? 'hidden' : ''}`}>
               <PressButton file="ui_btn_left.webp" label={tr('Left')} disabled={!myTurn} onDown={() => { g.moveDir = -1; }} onUp={() => { g.moveDir = 0; }} />
               <PressButton file="ui_btn_right.webp" label={tr('Right')} disabled={!myTurn} onDown={() => { g.moveDir = 1; }} onUp={() => { g.moveDir = 0; }} />
             </div>
             {/* jump and shoot: right side */}
-            <div className="absolute bottom-3 right-3 flex flex-col items-end gap-2">
+            <div className={`absolute bottom-3 right-3 flex flex-col items-end gap-2 ${spectator ? 'hidden' : ''}`}>
               <div className="pointer-events-auto flex gap-1.5">
                 {([['▲', tr('Aim up'), () => g.adjust(0.06, 0)], ['▼', tr('Aim down'), () => g.adjust(-0.06, 0)], ['−', tr('Less power'), () => g.adjust(0, -0.06)], ['+', tr('More power'), () => g.adjust(0, 0.06)]] as [string, string, () => void][]).map(([sym, label, fn]) => (
                   <button key={label} type="button" aria-label={label} title={label} disabled={!myTurn} onClick={fn} className="h-9 w-9 rounded-full bg-white/90 text-lg font-bold text-slate-800 shadow disabled:opacity-40">{sym}</button>
@@ -313,11 +324,15 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
           </div>
         )}
         {st?.phase === 'over' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/40 text-white">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-auto bg-black/50 p-3 text-white">
             <div className="text-3xl font-bold">{st.winner === null ? tr('Draw!') : tr('{team} wins!', { team: teamLabel(st.winner) })}</div>
             <div className="text-sm">{tr('Correct answers')}: {tr('Blue team')} {st.correct[0]} · {tr('Red team')} {st.correct[1]}</div>
+            {spectator && multi?.results && <ResultsTable rows={multi.results.rows} dark />}
+            {spectator && !multi?.results && <div className="text-sm opacity-80">{tr('Collecting the results…')}</div>}
             <div className="flex gap-2">
-              <button type="button" className="btn-primary" onClick={finish}>{tr('Finish')}</button>
+              {spectator
+                ? <button type="button" className="rounded-xl bg-white px-5 py-2 font-bold text-slate-900" onClick={() => multi?.onClose?.()}>{tr('Back to the room')}</button>
+                : <button type="button" className="btn-primary" onClick={finish}>{tr('Finish')}</button>}
               {!multi && <button type="button" className="btn-secondary" onClick={() => setRound((r) => r + 1)}>{tr('Play again')}</button>}
             </div>
           </div>

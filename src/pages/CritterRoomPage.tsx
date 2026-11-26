@@ -3,7 +3,9 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext';
 import { useGuestProgress } from '../contexts/GuestProgressContext';
 import { getContentSet, listPublicContentSets, recordGameResult } from '../lib/services';
-import { CC_MAX_PLAYERS, CC_MIN_PLAYERS, CcNet, arbiter, cleanRoomCode, makeRoomCode, makeRoster, type CcPlayer, type CcRoomSettings, type RosterEntry } from '../components/games/critterClash/ccNet';
+import { CC_MAX_PLAYERS, CC_MIN_PLAYERS, CcNet, arbiter, cleanRoomCode, makeRoomCode, makeRoster, type CcMode, type CcMulti, type CcPlayer, type CcRoomSettings, type ResultRow, type RosterEntry } from '../components/games/critterClash/ccNet';
+import { CritterController } from '../components/games/critterClash/CritterController';
+import { ResultsTable } from '../components/games/critterClash/ResultsTable';
 import { CritterClashGame } from '../components/games/critterClash/CritterClashGame';
 import { tr } from '../i18n/tr';
 import type { ContentSet } from '../types';
@@ -36,6 +38,8 @@ const roomLink = (code: string) => `${window.location.origin}${window.location.p
 // ================================================================= /critter
 export function CritterEntryPage() {
   const navigate = useNavigate();
+  const { profile: me } = useAuth();
+  const isTeacher = me?.role === 'teacher' || me?.role === 'admin';
   const [params] = useSearchParams();
   const presetSet = params.get('set');
   const [code, setCode] = useState('');
@@ -63,7 +67,7 @@ export function CritterEntryPage() {
       </div>
 
       <div className="card-surface mt-5 p-5">
-        <h2 className="font-display text-lg font-bold text-primary">{tr('Host a room')}</h2>
+        <h2 className="font-display text-lg font-bold text-primary">{isTeacher ? tr('Host a class match') : tr('Host a room')}</h2>
         <p className="text-sm text-muted-foreground">{tr('Pick the game whose questions the match will use.')}</p>
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tr('Search games…')} className="mt-3 w-full rounded-lg border-2 border-border bg-background px-3 py-2 text-sm" />
         {sets === null ? (
@@ -90,7 +94,7 @@ export function CritterEntryPage() {
 }
 
 // ================================================================= /critter/:code
-interface Run { roster: RosterEntry[]; id: number }
+interface Run { roster: RosterEntry[]; id: number; mode: CcMode }
 
 export function CritterRoomPage() {
   const { code: rawCode } = useParams<{ code: string }>();
@@ -113,6 +117,12 @@ export function CritterRoomPage() {
   const [copied, setCopied] = useState(false);
   const [lastResult, setLastResult] = useState<{ xp: number; accuracy: number } | null>(null);
   const [net, setNet] = useState<CcNet | null>(null);
+  const [results, setResults] = useState<{ rows: ResultRow[]; winner: 0 | 1 | null } | null>(null);
+  const rowsRef = useRef(new Map<string, ResultRow>());
+  const winnerRef = useRef<0 | 1 | null>(null);
+  const publishTimer = useRef(0);
+  const runRef = useRef<Run | null>(null);
+  const isHostRef = useRef(false);
   const netRef = useRef<CcNet | null>(null);
   const settingsRef = useRef<CcRoomSettings | null>(null);
   const pendingRun = useRef<Run | null>(null);
@@ -120,6 +130,32 @@ export function CritterRoomPage() {
   const runCounter = useRef(0);
 
   const isHost = !!players.find((p) => p.id === identity?.id)?.host;
+  isHostRef.current = isHost;
+  const isTeacher = profile?.role === 'teacher' || profile?.role === 'admin';
+
+  /** Host: gather what every player earned, then tell everybody (and show it). */
+  function publish() {
+    window.clearTimeout(publishTimer.current);
+    const rows = [...rowsRef.current.values()];
+    if (!rows.length && !runRef.current) return;
+    const payload = { rows, winner: winnerRef.current };
+    netRef.current?.send({ t: 'results', ...payload });
+    setResults(payload);
+  }
+  function addRow(row: ResultRow) {
+    rowsRef.current.set(row.id, row);
+    const need = runRef.current?.roster.length ?? 0;
+    if (need && rowsRef.current.size >= need) publish();
+    else { window.clearTimeout(publishTimer.current); publishTimer.current = window.setTimeout(publish, 6000); }
+  }
+  const onReport = (row: ResultRow) => { if (isHostRef.current) addRow(row); else netRef.current?.send({ t: 'stats', row }); };
+  const onOver = (winner: 0 | 1 | null) => { winnerRef.current = winner; if (isHostRef.current) { window.clearTimeout(publishTimer.current); publishTimer.current = window.setTimeout(publish, 8000); } };
+
+  const updateSettings = (patch: Partial<CcRoomSettings>) => {
+    const cur = settingsRef.current; if (!cur) return;
+    const next = { ...cur, ...patch };
+    settingsRef.current = next; setSettings(next); netRef.current?.send({ t: 'settings', s: next });
+  };
 
   useEffect(() => {
     if (!identity || code.length !== 5) return;
@@ -131,11 +167,13 @@ export function CritterRoomPage() {
       if (m.t === 'settings') { settingsRef.current = m.s; setSettings(m.s); }
       else if (m.t === 'start') {
         runCounter.current += 1;
-        pendingRun.current = { roster: m.roster, id: runCounter.current };
+        pendingRun.current = { roster: m.roster, id: runCounter.current, mode: m.mode };
         startedAt.current = Date.now();
-        setRun(null); setLastResult(null); setCountdown(3);
+        setRun(null); setLastResult(null); setResults(null); rowsRef.current.clear(); setCountdown(3);
         room.update({ locked: true });
-      }
+      } else if (m.t === 'stats') {
+        if (isHostRef.current) addRow(m.row);
+      } else if (m.t === 'results') setResults({ rows: m.rows, winner: m.winner });
     });
     const offPlayers = room.onPlayers((list) => { if (!dead) setPlayers(list); });
     void (async () => {
@@ -170,7 +208,7 @@ export function CritterRoomPage() {
 
   useEffect(() => {
     if (countdown === null) return;
-    if (countdown <= 0) { setCountdown(null); if (pendingRun.current) setRun(pendingRun.current); return; }
+    if (countdown <= 0) { setCountdown(null); if (pendingRun.current) { runRef.current = pendingRun.current; setRun(pendingRun.current); } return; }
     const t = window.setTimeout(() => setCountdown((c) => (c === null ? c : c - 1)), 1000);
     return () => window.clearTimeout(t);
   }, [countdown]);
@@ -181,7 +219,7 @@ export function CritterRoomPage() {
     let alive = true;
     void getContentSet(hostSetId).then((s) => {
       if (!alive || !s) return;
-      const first: CcRoomSettings = { setId: s.id, setTitle: s.title };
+      const first: CcRoomSettings = { setId: s.id, setTitle: s.title, mode: 'map', hostPlays: !isTeacher };
       settingsRef.current = first; setSettings(first); setSet(s);
     });
     return () => { alive = false; };
@@ -207,16 +245,18 @@ export function CritterRoomPage() {
     return () => { alive = false; };
   }, [settings?.setId, set?.id]);
 
-  const everyoneHere = players.length >= CC_MIN_PLAYERS && players.every((p) => !p.locked);
+  const hostPlays = settings ? settings.mode === 'map' && settings.hostPlays : true;
+  const participants = players.filter((p) => hostPlays || !p.host);
+  const everyoneHere = participants.length >= CC_MIN_PLAYERS && players.every((p) => !p.locked);
   const canStart = isHost && !!settings && !!set && everyoneHere && players.length <= CC_MAX_PLAYERS;
   const start = () => {
-    if (!canStart || !netRef.current) return;
-    const roster = makeRoster(players);
-    netRef.current.send({ t: 'start', roster });
+    if (!canStart || !netRef.current || !settings) return;
+    const roster = makeRoster(participants);
+    netRef.current.send({ t: 'start', roster, mode: settings.mode });
     runCounter.current += 1;
-    pendingRun.current = { roster, id: runCounter.current };
+    pendingRun.current = { roster, id: runCounter.current, mode: settings.mode };
     startedAt.current = Date.now();
-    setRun(null); setLastResult(null); setCountdown(3);
+    setRun(null); setLastResult(null); setResults(null); rowsRef.current.clear(); setCountdown(3);
     netRef.current.update({ locked: true });
   };
 
@@ -260,11 +300,19 @@ export function CritterRoomPage() {
     );
   }
   if (run && set && net) {
+    const inRoster = run.roster.some((r) => r.id === identity.id);
+    const arena = run.mode === 'arena';
+    const multi: CcMulti = {
+      net, roster: run.roster, meId: identity.id, isHost, spectator: !inRoster, arena, onReport, onOver, results,
+      onClose: () => { netRef.current?.update({ locked: false }); setRun(null); },
+    };
     return (
       <div className="mx-auto max-w-5xl px-4 py-4">
         <p className="text-sm uppercase tracking-wide text-secondary">{tr('Critter Clash')} · {tr('Room')} {code}</p>
         <div className="mt-2 ltr-always">
-          <CritterClashGame key={run.id} items={set.items} skill={set.skill} onFinish={handleFinish} multi={{ net, roster: run.roster, meId: identity.id, isHost }} />
+          {arena && inRoster
+            ? <CritterController key={run.id} multi={multi} onFinish={handleFinish} />
+            : <CritterClashGame key={run.id} items={set.items} skill={set.skill} onFinish={handleFinish} multi={multi} />}
         </div>
       </div>
     );
@@ -286,6 +334,13 @@ export function CritterRoomPage() {
 
       {lastResult && <p className="mt-3 rounded-xl bg-success/15 px-3 py-2 text-sm font-bold text-primary">{tr('Last match: {acc}% accuracy · +{xp} XP saved. Play again?', { acc: lastResult.accuracy, xp: lastResult.xp })}</p>}
 
+      {results && (
+        <div className="card-surface mt-4 p-4">
+          <p className="font-display font-bold text-primary">{tr('Results of the last match')}{results.winner !== null ? ` · ${results.winner === 0 ? tr('Blue team') : tr('Red team')} ${tr('won')}` : ''}</p>
+          <div className="mt-2"><ResultsTable rows={results.rows} /></div>
+        </div>
+      )}
+
       <div className="card-surface mt-4 p-4">
         <p className="font-display font-bold text-primary">{tr('Players in the room')} ({players.length}/{CC_MAX_PLAYERS})</p>
         <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
@@ -304,11 +359,22 @@ export function CritterRoomPage() {
         {!settings ? <p className="mt-2 text-sm text-muted-foreground">{tr("Waiting for the host's settings…")}</p> : (
           <p className="mt-1 text-sm text-muted-foreground">{tr('Game')}: <b className="text-primary">{settings.setTitle}</b></p>
         )}
+        {isHost && isTeacher && settings && (
+          <div className="mt-3 space-y-2 rounded-xl bg-muted/60 p-3 text-sm">
+            <p className="font-semibold text-primary">{tr('Class match settings')}</p>
+            <label className="flex items-start gap-2"><input type="radio" name="ccmode" checked={settings.mode === 'map'} onChange={() => updateSettings({ mode: 'map' })} />
+              <span><b>{tr('Everyone sees the map')}</b><br /><span className="text-xs text-muted-foreground">{tr("Each student's device shows the match.")}</span></span></label>
+            <label className="flex items-start gap-2"><input type="radio" name="ccmode" checked={settings.mode === 'arena'} onChange={() => updateSettings({ mode: 'arena', hostPlays: false })} />
+              <span><b>{tr('Big screen')}</b><br /><span className="text-xs text-muted-foreground">{tr("Show this screen to the class. Students use their phones as controllers.")}</span></span></label>
+            {settings.mode === 'map' && <label className="flex items-center gap-2"><input type="checkbox" checked={!settings.hostPlays} onChange={(e) => updateSettings({ hostPlays: !e.target.checked })} /> {tr("I only watch (I don't play)")}</label>}
+          </div>
+        )}
+        {!isHost && settings && <p className="mt-2 text-xs text-muted-foreground">{settings.mode === 'arena' ? tr('Big-screen match: your phone will be the controller.') : tr('Everyone sees the map on their own device.')}</p>}
         <p className="mt-2 text-xs text-muted-foreground">{tr('Players are split into a blue and a red team when the match starts. Each turn one player answers to earn the shot, and teammates can answer too for a bonus.')}</p>
         {isHost ? (
           <>
             <button type="button" onClick={start} disabled={!canStart} className="mt-4 w-full rounded-xl bg-secondary px-6 py-4 text-xl font-extrabold text-secondary-foreground shadow disabled:opacity-50">{tr('Start the match')}</button>
-            {!canStart && <p className="mt-2 text-center text-xs text-muted-foreground">{players.length < CC_MIN_PLAYERS ? tr('Waiting for at least {n} players…', { n: CC_MIN_PLAYERS }) : waitingOn > 0 ? tr('Some players are still finishing the last match…') : !set ? tr('Loading the game…') : ''}</p>}
+            {!canStart && <p className="mt-2 text-center text-xs text-muted-foreground">{participants.length < CC_MIN_PLAYERS ? tr('Waiting for at least {n} players…', { n: CC_MIN_PLAYERS }) : waitingOn > 0 ? tr('Some players are still finishing the last match…') : !set ? tr('Loading the game…') : ''}</p>}
           </>
         ) : <p className="mt-4 rounded-xl bg-muted px-3 py-3 text-center text-sm font-bold text-primary">{tr('Waiting for the host to start the match…')}</p>}
       </div>
