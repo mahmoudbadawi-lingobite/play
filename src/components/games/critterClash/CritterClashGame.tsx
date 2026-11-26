@@ -10,7 +10,7 @@ import { scoreRow, type CcMulti } from './ccNet';
 import { PressButton } from './PressButton';
 import { ResultsTable } from './ResultsTable';
 import { Terrain } from './ccTerrain';
-import { setSfxMuted, sfxMuted, unlockSfx } from './ccSfx';
+import { setSfxMuted, sfxMuted, startAmbient, stopAmbient, unlockSfx } from './ccSfx';
 
 const SPECIES: Species[] = ['hippo', 'llama', 'chicken', 'penguin', 'goat', 'bunny'];
 
@@ -29,6 +29,7 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
   const store = useRef<ImageStore>(new Map());
   const [round, setRound] = useState(0);
   const [mute, setMute] = useState(sfxMuted());
+  useEffect(() => { startAmbient(); return () => stopAmbient(); }, []);
   useEffect(() => { const un = () => unlockSfx(); window.addEventListener('pointerdown', un, { once: true, capture: true }); return () => window.removeEventListener('pointerdown', un, true); }, []);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');

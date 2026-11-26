@@ -5,7 +5,7 @@ let muted = (() => { try { return localStorage.getItem(KEY) === '1'; } catch { r
 let noiseBuf: AudioBuffer | null = null;
 
 export const sfxMuted = () => muted;
-export function setSfxMuted(m: boolean) { muted = m; try { localStorage.setItem(KEY, m ? '1' : '0'); } catch { /* storage blocked */ } }
+export function setSfxMuted(m: boolean) { muted = m; try { localStorage.setItem(KEY, m ? '1' : '0'); } catch { /* storage blocked */ } syncAmbient(); }
 
 function getCtx(): AudioContext | null {
   if (!ctx) { try { const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext; ctx = new AC({ latencyHint: 'interactive' }); } catch { ctx = null; } }
@@ -13,7 +13,7 @@ function getCtx(): AudioContext | null {
   return ctx;
 }
 /** Call from a tap or click so the browser lets sounds play. */
-export function unlockSfx() { getCtx(); }
+export function unlockSfx() { getCtx(); syncAmbient(); }
 
 function tone(freq: number, start: number, dur: number, type: OscillatorType, vol: number, slideTo?: number) {
   const c = getCtx(); if (!c) return;
@@ -52,3 +52,49 @@ export function sfx(k: Sfx) {
     }
   } catch { /* audio not available */ }
 }
+
+// ------------------------------------------------------------------ ambient loop: wind, water and a few birds (no instruments)
+let ambWanted = false;
+let amb: { stop: () => void } | null = null;
+let birdTimer = 0;
+
+function loopNoise(c: AudioContext, seconds: number): AudioBufferSourceNode {
+  const b = c.createBuffer(1, c.sampleRate * seconds, c.sampleRate); const d = b.getChannelData(0);
+  let last = 0; for (let i = 0; i < d.length; i++) { last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.5; } // brown-ish noise
+  const s = c.createBufferSource(); s.buffer = b; s.loop = true; return s;
+}
+function lfo(c: AudioContext, hz: number, depth: number, target: AudioParam): OscillatorNode {
+  const o = c.createOscillator(); const g = c.createGain(); o.frequency.value = hz; g.gain.value = depth; o.connect(g).connect(target); o.start(); return o;
+}
+function chirp() {
+  const c = ctx; if (!c || muted || !amb) return;
+  const base = 2200 + Math.random() * 1600; const n = 2 + Math.floor(Math.random() * 3); const t0 = c.currentTime + 0.05;
+  for (let i = 0; i < n; i++) {
+    const o = c.createOscillator(); const g = c.createGain(); const t = t0 + i * 0.11;
+    o.type = 'sine'; o.frequency.setValueAtTime(base, t); o.frequency.exponentialRampToValueAtTime(base * (1.25 + Math.random() * 0.3), t + 0.07);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.018, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t + 0.12);
+  }
+}
+function buildAmbient() {
+  const c = getCtx(); if (!c || amb) return;
+  const master = c.createGain(); master.gain.value = 0; master.gain.linearRampToValueAtTime(1, c.currentTime + 2); master.connect(c.destination);
+  const nodes: AudioScheduledSourceNode[] = [];
+  // wind: low rustle that slowly swells
+  const w = loopNoise(c, 6); const wf = c.createBiquadFilter(); wf.type = 'bandpass'; wf.frequency.value = 420; wf.Q.value = 0.7;
+  const wg = c.createGain(); wg.gain.value = 0.05; nodes.push(w, lfo(c, 0.07, 0.035, wg.gain), lfo(c, 0.05, 180, wf.frequency));
+  w.connect(wf).connect(wg).connect(master);
+  // water: soft lapping
+  const r = loopNoise(c, 5); const rf = c.createBiquadFilter(); rf.type = 'lowpass'; rf.frequency.value = 900;
+  const rg = c.createGain(); rg.gain.value = 0.045; nodes.push(r, lfo(c, 0.23, 0.025, rg.gain), lfo(c, 0.31, 250, rf.frequency));
+  r.connect(rf).connect(rg).connect(master);
+  w.start(); r.start();
+  birdTimer = window.setInterval(() => { if (Math.random() < 0.7) chirp(); }, 3200);
+  amb = { stop: () => { try { master.gain.cancelScheduledValues(c.currentTime); master.gain.setTargetAtTime(0, c.currentTime, 0.15); } catch { /* ignore */ } window.clearInterval(birdTimer); setTimeout(() => { nodes.forEach((n) => { try { n.stop(); } catch { /* ignore */ } }); master.disconnect(); }, 800); } };
+}
+function syncAmbient() {
+  if (ambWanted && !muted) { try { buildAmbient(); } catch { /* ignore */ } }
+  else if (amb) { amb.stop(); amb = null; }
+}
+export function startAmbient() { ambWanted = true; syncAmbient(); }
+export function stopAmbient() { ambWanted = false; syncAmbient(); }
