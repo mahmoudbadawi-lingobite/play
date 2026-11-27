@@ -4,7 +4,7 @@ import type { GameProps } from '../GameShell';
 import { tr } from '../../../i18n/tr';
 import { speakNatural } from '../../../lib/speech';
 import { makeQuestionSource } from './ccQuestions';
-import { COVER_FILES, PROP_FILES, UI_FILES, WORLD_FILES, loadImages, probeBackgrounds, speciesFiles, type ImageStore, type Species } from './ccAssets';
+import { COVER_FILES, PROP_FILES, UI_FILES, WORLD_FILES, limbUrl, loadImages, probeBackgrounds, speciesFiles, type ImageStore, type Species } from './ccAssets';
 import { CritterGame, type GameStatus } from './ccGame';
 import { scoreRow, type CcMulti } from './ccNet';
 import { PressButton } from './PressButton';
@@ -210,7 +210,7 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
   if (!ready) {
     return (
       <div className="card-surface mx-auto max-w-md p-8 text-center">
-        <div className="text-4xl">🦛</div>
+        <img src={limbUrl('bunny')} alt="" className="mx-auto h-20 w-20 animate-bounce object-contain" draggable={false} />
         <div className="mt-2 font-semibold">{tr('Building the meadow…')}</div>
         <div className="mx-auto mt-3 h-3 w-full overflow-hidden rounded-full bg-black/10"><div className="h-full bg-emerald-500 transition-all" style={{ width: `${Math.round(progress * 100)}%` }} /></div>
       </div>

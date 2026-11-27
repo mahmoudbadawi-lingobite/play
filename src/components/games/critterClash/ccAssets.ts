@@ -51,6 +51,8 @@ export const UI_FILES = [
   'ui/ui_btn_left.webp', 'ui/ui_btn_right.webp', 'ui/ui_btn_hop.webp', 'ui/ui_btn_fire.webp',
 ];
 export const assetUrl = (path: string) => BASE + path;
+/** the paw/claw/hoof picture that stands for a player or an animal (one per species) */
+export const limbUrl = (species: Species) => `${BASE}limbs/limb_${species}.webp`;
 
 export type ImageStore = Map<string, HTMLImageElement>;
 

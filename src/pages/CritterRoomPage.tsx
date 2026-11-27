@@ -6,6 +6,7 @@ import { getContentSet, listPublicContentSets, recordGameResult } from '../lib/s
 import { CC_MAX_PLAYERS, CC_MIN_PLAYERS, CcNet, arbiter, cleanRoomCode, makeRoomCode, makeRoster, type CcMode, type CcMulti, type CcPlayer, type CcRoomSettings, type ResultRow, type RosterEntry } from '../components/games/critterClash/ccNet';
 import { CritterController } from '../components/games/critterClash/CritterController';
 import { ResultsTable } from '../components/games/critterClash/ResultsTable';
+import { ANIMALS, limbUrl } from '../components/games/critterClash/ccAssets';
 import { CritterClashGame } from '../components/games/critterClash/CritterClashGame';
 import { tr } from '../i18n/tr';
 import type { ContentSet } from '../types';
@@ -344,9 +345,9 @@ export function CritterRoomPage() {
       <div className="card-surface mt-4 p-4">
         <p className="font-display font-bold text-primary">{tr('Players in the room')} ({players.length}/{CC_MAX_PLAYERS})</p>
         <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
-          {sorted.map((p) => (
+          {sorted.map((p, i) => (
             <li key={p.id} className={`flex flex-col items-center rounded-2xl border-2 px-1 py-3 ${p.id === identity.id ? 'border-[#FF9A1F] bg-[#FF9A1F]/10' : 'border-border'}`}>
-              <span className="text-3xl">🦛</span>
+              <img src={limbUrl(ANIMALS[i % ANIMALS.length])} alt="" className="h-14 w-14 object-contain" draggable={false} />
               <span className="mt-1 max-w-full truncate text-xs font-extrabold text-primary">{p.host ? '👑 ' : ''}{p.name}{p.id === identity.id ? ` (${tr('you')})` : ''}</span>
               {p.locked && <span className="text-[10px] text-muted-foreground">{tr('still playing')}</span>}
             </li>
