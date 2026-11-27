@@ -639,6 +639,17 @@ export class CritterGame {
     }
   }
 
+  private sil = new Map<CanvasImageSource, HTMLCanvasElement>();
+  /** A white copy of a sprite's shape, cached, used for the sticker outline. */
+  private silhouette(img: CanvasImageSource): HTMLCanvasElement {
+    let c = this.sil.get(img);
+    if (!c) {
+      const im = img as HTMLImageElement | ImageBitmap | HTMLCanvasElement; c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+      const x = c.getContext('2d')!; x.drawImage(img, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+      this.sil.set(img, c);
+    }
+    return c;
+  }
   private poof(x: number, y: number) {
     sfx('poof');
     for (let i = 0; i < 10; i++) {
@@ -787,21 +798,24 @@ export class CritterGame {
     ctx.translate(a.x, a.y + bounce);
     if (wob) ctx.rotate(wob);
     if ((a.facing < 0) !== NATIVE_LEFT.has(a.species)) ctx.scale(-1, 1);
-    if (!a.water) { // team aura: a small pulsing glow hugging the outline in the team colour
-      const on = a === this.active && this.phase !== 'over';
-      const pulse = 0.5 + 0.5 * Math.sin(this.time * 4 + a.x * 0.01);
-      ctx.shadowColor = a.team === 0 ? '#1238ff' : '#ff2a2a';
-      ctx.shadowBlur = (9 + pulse * (on ? 8 : 5)) * this.ui;
-      ctx.drawImage(sp, -info.cx * k, -info.feet * k + 6, size, size);
-      ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+    if (!a.water) { // sticker look: a white cut-out outline makes every animal pop from the scenery
+      const sil = this.silhouette(sp); const r = 2.6 * this.ui; const ox = -info.cx * k; const oy = -info.feet * k + 6;
+      for (let i = 0; i < 12; i++) { const t = i / 12 * Math.PI * 2; ctx.drawImage(sil, ox + Math.cos(t) * r, oy + Math.sin(t) * r, size, size); }
     }
     ctx.drawImage(sp, -info.cx * k, -info.feet * k + 6, size, size);
     ctx.restore();
     if (!a.water) {
       const top = a.y - (info.feet - info.bbox[1]) * k;
       const f = this.ui; const w = 44 * f; const x = a.x - w / 2; const y = top - 12 * f;
-      ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fillRect(x - 1, y - 1, w + 2, 6 * f + 2);
-      ctx.fillStyle = a.hp > 50 ? '#5fd35f' : a.hp > 25 ? '#f2c230' : '#e9503f'; ctx.fillRect(x, y, w * a.hp / 100, 6 * f);
+      // team name plate: a rounded tag in the team colour with a paw badge, health bar inside
+      const tc = a.team === 0 ? '#2f6fe0' : '#e0443a'; const pad = 4.5 * f; const bh = 6 * f;
+      const rr = (px: number, py: number, pw: number, ph: number, r: number) => { ctx.beginPath(); ctx.moveTo(px + r, py); ctx.arcTo(px + pw, py, px + pw, py + ph, r); ctx.arcTo(px + pw, py + ph, px, py + ph, r); ctx.arcTo(px, py + ph, px, py, r); ctx.arcTo(px, py, px + pw, py, r); ctx.closePath(); };
+      rr(x - pad - 9 * f, y - pad, w + pad * 2 + 9 * f, bh + pad * 2, (bh + pad * 2) / 2); ctx.fillStyle = tc; ctx.fill(); ctx.lineWidth = 1.5 * f; ctx.strokeStyle = '#fff'; ctx.stroke();
+      ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(x, y, w, bh);
+      ctx.fillStyle = a.hp > 50 ? '#5fd35f' : a.hp > 25 ? '#f2c230' : '#ffcf3f'; if (a.hp <= 25) ctx.fillStyle = '#ff9a3c'; ctx.fillRect(x, y, w * a.hp / 100, bh);
+      ctx.fillStyle = '#fff'; const bx = x - 5 * f; const by = y + bh / 2; // tiny paw: pad + three toes
+      ctx.beginPath(); ctx.ellipse(bx, by + 0.8 * f, 2 * f, 1.6 * f, 0, 0, Math.PI * 2); ctx.fill();
+      for (const dx of [-2.2, 0, 2.2]) { ctx.beginPath(); ctx.arc(bx + dx * f, by - 1.6 * f, 0.95 * f, 0, Math.PI * 2); ctx.fill(); }
       if (a === this.active && this.phase !== 'over') {
         // the team marker picture, dropping quickly and floating back up, repeating
         const mk = this.imgs.get(a.team === 0 ? 'ui/ui_marker_blue.webp' : 'ui/ui_marker_red.webp');
