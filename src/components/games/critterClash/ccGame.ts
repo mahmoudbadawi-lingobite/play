@@ -709,10 +709,15 @@ export class CritterGame {
   draw(ctx: CanvasRenderingContext2D) {
     const { cx, cy, z, hw, hh } = this.clampCam();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = '#9fd6f2'; ctx.fillRect(0, 0, this.cw, this.ch);
+    ctx.fillStyle = this.skyColors()[1]; ctx.fillRect(0, 0, this.cw, this.ch);
     ctx.setTransform(z, 0, 0, z, this.cw / 2 - cx * z, this.ch / 2 - cy * z);
     // when the whole map is shown on a tall screen: sky above it (the water below is drawn further down)
-    if (cy - hh < 0) { ctx.fillStyle = '#8fd0f5'; ctx.fillRect(-10, cy - hh - 10, MAP_W + 20, hh - cy + 10 + 1); }
+    if (cy - hh < 0) { // the sky goes on above the picture: it starts with the picture's own top colour and gets lighter going up
+      const sk = this.skyColors(); const top = cy - hh - 10;
+      const g = ctx.createLinearGradient(0, 0, 0, Math.min(top, -700));
+      g.addColorStop(0, sk[0]); g.addColorStop(1, sk[1]);
+      ctx.fillStyle = g; ctx.fillRect(-10, top, MAP_W + 20, -top + 1);
+    }
     const vx0 = Math.max(0, Math.floor(cx - hw)); const vx1 = Math.min(MAP_W, Math.ceil(cx + hw));
     const vy0 = Math.max(0, Math.floor(cy - hh)); const vy1 = Math.min(MAP_H, Math.ceil(cy + hh));
     const vw = vx1 - vx0; const vh = vy1 - vy0;
@@ -765,6 +770,20 @@ export class CritterGame {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.drawForeground(ctx);
     this.drawHud(ctx, z, cx, cy);
+  }
+
+  private skyFor: HTMLCanvasElement | null = null; private skyCol: [string, string] = ['#58b4ee', '#bfe6fb'];
+  /** average colour of the top rows of the background picture, and a lighter tint of it for higher up */
+  private skyColors(): [string, string] {
+    if (this.skyFor !== this.bg) {
+      this.skyFor = this.bg;
+      try {
+        const d = this.bg.getContext('2d')!.getImageData(0, 0, this.bg.width, 8).data; let r = 0, g = 0, b = 0, n = 0;
+        for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 200) continue; r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
+        if (n) { r /= n; g /= n; b /= n; const m = (v: number) => Math.round(v + (255 - v) * 0.55); this.skyCol = [`rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`, `rgb(${m(r)},${m(g)},${m(b)})`]; }
+      } catch { /* keep the default */ }
+    }
+    return this.skyCol;
   }
 
   /** wavy water: the back part sits behind the hills (solid), the front part is see-through and in front of them */
