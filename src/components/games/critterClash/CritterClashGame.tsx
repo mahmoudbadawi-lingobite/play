@@ -4,7 +4,7 @@ import type { GameProps } from '../GameShell';
 import { tr } from '../../../i18n/tr';
 import { speakNatural } from '../../../lib/speech';
 import { makeQuestionSource } from './ccQuestions';
-import { COVER_FILES, PROP_FILES, UI_FILES, WORLD_FILES, limbUrl, loadImages, probeBackgrounds, speciesFiles, type ImageStore, type Species } from './ccAssets';
+import { COVER_FILES, PROP_FILES, UI_FILES, WORLD_FILES, ANIMALS, limbUrl, loadImages, probeBackgrounds, speciesFiles, type ImageStore, type Species } from './ccAssets';
 import { CritterGame, type GameStatus } from './ccGame';
 import { scoreRow, type CcMulti } from './ccNet';
 import { PressButton } from './PressButton';
@@ -13,7 +13,7 @@ import { ExitButton } from './ExitButton';
 import { Terrain } from './ccTerrain';
 import { setSfxMuted, sfxMuted, startAmbient, stopAmbient, unlockSfx } from './ccSfx';
 
-const SPECIES: Species[] = ['hippo', 'llama', 'chicken', 'penguin', 'goat', 'bunny'];
+const SPECIES: Species[] = [...ANIMALS];
 
 /**
  * Critter Clash. On its own it is a one-device match (two teams share the screen). Inside a room (`multi`) every
@@ -117,12 +117,15 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
         const terrain = await Terrain.build(store.current, (p) => !dead && setProgress(0.5 + p * 0.5));
         if (dead) return;
         const mu = multiRef.current;
-        const g = new CritterGame(terrain, store.current, makeQuestionSource(itemsRef.current), !mu, bgs);
+        const prefs: Species[][] = [[], []];
+        for (const r of mu?.roster ?? []) if (r.sp) prefs[r.team].push(r.sp as Species);
+        const g = new CritterGame(terrain, store.current, makeQuestionSource(itemsRef.current), !mu, bgs, prefs);
         g.onStatus = setSt;
         if (mu) {
           const { net, roster, meId } = mu;
           g.net = true; g.isHost = mu.isHost; g.meId = meId; g.controlled = !!mu.arena; g.arena = !!mu.arena;
           g.onOver = (w) => multiRef.current?.onOver?.(w);
+          g.animalOf = (id) => roster.find((r) => r.id === id)?.sp as Species | undefined;
           g.out = (e) => net.send({ t: 'ev', e });
           g.onShooterAnswer = (pick) => net.send({ t: 'ans', id: meId, pick, turn: g.turns });
           g.shooterFor = (team, n) => {

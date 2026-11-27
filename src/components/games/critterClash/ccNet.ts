@@ -30,7 +30,8 @@ export interface ResultRow { id: string; name: string; team: 0 | 1; right: numbe
 export function scoreRow(p: { id: string; name: string; team: 0 | 1 }, s: { right: number; answered: number; assists: number }, winner: 0 | 1 | null): ResultRow {
   return { ...p, ...s, xp: Math.min(200, 10 * s.right + 5 * s.assists + (winner !== null && winner === p.team ? 20 : 0)) };
 }
-export interface RosterEntry { id: string; name: string; team: 0 | 1 }
+/** sp = the animal that belongs to this player (the picture shown next to their name in the room) */
+export interface RosterEntry { id: string; name: string; team: 0 | 1; sp?: string }
 
 export type CcMsg =
   | { t: 'settings'; s: CcRoomSettings }

@@ -252,7 +252,8 @@ export function CritterRoomPage() {
   const canStart = isHost && !!settings && !!set && everyoneHere && players.length <= CC_MAX_PLAYERS;
   const start = () => {
     if (!canStart || !netRef.current || !settings) return;
-    const roster = makeRoster(participants);
+    const order = [...players].sort((a, b) => a.joinedAt - b.joinedAt).map((p) => p.id); // same order as the pictures in the room
+    const roster = makeRoster(participants).map((r) => ({ ...r, sp: ANIMALS[order.indexOf(r.id) % ANIMALS.length] as string }));
     netRef.current.send({ t: 'start', roster, mode: settings.mode });
     runCounter.current += 1;
     pendingRun.current = { roster, id: runCounter.current, mode: settings.mode };

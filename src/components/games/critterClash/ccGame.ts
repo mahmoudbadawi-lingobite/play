@@ -1,5 +1,5 @@
 import { sfx } from './ccSfx';
-import { ANIMAL_INFO, COVER_INFO, POSES, animalPath, coverPath, type CoverName, type CoverState, type ImageStore, type Pose, type Species } from './ccAssets';
+import { ANIMALS, ANIMAL_INFO, COVER_INFO, POSES, animalPath, coverPath, type CoverName, type CoverState, type ImageStore, type Pose, type Species } from './ccAssets';
 import { MAP_H, MAP_W, Terrain } from './ccTerrain';
 
 /** Critter Clash game engine (stage 1: one-device preview). Pure canvas, no React. */
@@ -9,7 +9,7 @@ const GRAVITY_SHOT = 900;
 const WALK_SPEED = 70;
 const HOP_VY = -820;
 const HOP_VX = 230;
-const NATIVE_LEFT = new Set<Species>(['bunny']); // these drawings look to the left, so they are mirrored the other way round
+const NATIVE_LEFT = new Set<Species>(['bunny', 'walrus']); // these drawings look to the left, so they are mirrored the other way round
 const MOVE_BUDGET = 260;
 const QUESTION_TIME = 15;
 const AIM_TIME = 30; // time to aim and shoot (walking is limited by distance, not time)
@@ -33,7 +33,7 @@ export interface GameStatus {
 
 /** Everything that must match on every device at the start of a turn. */
 export interface Snap {
-  animals: { x: number; y: number; hp: number; alive: boolean; water: boolean; fade: number; facing: 1 | -1 }[];
+  animals: { species: Species; x: number; y: number; hp: number; alive: boolean; water: boolean; fade: number; facing: 1 | -1 }[];
   bridge: boolean[]; bg: string; covers: number[]; craters: [number, number, number][]; turnIdx: number[]; correct: [number, number]; asked: number; turns: number;
 }
 /** The few messages that make a networked match: the host decides, everybody replays. */
@@ -75,7 +75,15 @@ const COVERS: { name: CoverName; x: number }[] = [
   { name: 'boulder', x: 330 }, { name: 'hay', x: 1000 }, { name: 'log', x: 1262 }, { name: 'crates', x: 1930 },
   { name: 'barrel', x: 2330 }, { name: 'hay', x: 2735 }, { name: 'wall', x: 3610 },
 ];
-const TEAMS: Species[][] = [['hippo', 'llama', 'chicken'], ['penguin', 'goat', 'bunny']];
+/** 3 animals a side, drawn at random from all of them; animals that belong to players (their picture in the room) are used first */
+function pickTeams(prefs: Species[][]): Species[][] {
+  const used = new Set<Species>(); const out: Species[][] = [[], []];
+  for (let t = 0; t < 2; t++) for (const s of prefs[t] ?? []) if (out[t].length < 3 && !used.has(s)) { out[t].push(s); used.add(s); }
+  const rest = ANIMALS.filter((s) => !used.has(s)); // shuffle the animals nobody owns
+  for (let i = rest.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [rest[i], rest[j]] = [rest[j], rest[i]]; }
+  for (let t = 0; t < 2; t++) while (out[t].length < 3) out[t].push(rest.pop()!);
+  return out;
+}
 const SPAWN_X = [[150, 520, 940], [3100, 3440, 3560]];
 // the rope bridge between the two big cliffs (art sizes in px, plank-top row inside the pictures)
 const BR_CAP_W = 81; const BR_CAP_H = 54; const BR_SEG_W = 348; const BR_SEG_H = 48; const BR_ROW = 6; const BR_THICK = 20;
@@ -135,13 +143,15 @@ export class CritterGame {
   out?: (e: GameEvent) => void;
   onShooterAnswer?: (pick: number) => void;
   shooterFor?: (team: 0 | 1, n: number) => string;
+  /** the animal that belongs to a player, if they have one */
+  animalOf?: (playerId: string) => Species | undefined;
   private acc = 0;
   private blockT = 0;
   private posT = 0;
   private lastPosAt = 0;
   cw = 800; ch = 480;
 
-  constructor(terrain: Terrain, imgs: ImageStore, nextQuestion: () => Question, auto = true, bgChoices: string[] = []) {
+  constructor(terrain: Terrain, imgs: ImageStore, nextQuestion: () => Question, auto = true, bgChoices: string[] = [], prefs: Species[][] = []) {
     this.nextQuestion = nextQuestion;
     this.terrain = terrain;
     this.imgs = imgs;
@@ -152,7 +162,7 @@ export class CritterGame {
     this.buildSprites();
     this.placeCovers();
     this.placeBridge();
-    this.spawn();
+    this.spawn(prefs);
     this.active = this.animals[0];
     this.phase = 'wait';
     if (auto) this.hostBegin();
@@ -228,8 +238,7 @@ export class CritterGame {
   }
 
   private buildSprites() {
-    const species = new Set<Species>(TEAMS.flat());
-    for (const s of species) {
+    for (const s of ANIMALS) {
       const k = (175 / 512) * SPECIES_SCALE(s) * SS;
       const size = Math.round(512 * k);
       for (const p of POSES) {
@@ -267,8 +276,8 @@ export class CritterGame {
     }
   }
 
-  private spawn() {
-    TEAMS.forEach((sp, team) => {
+  private spawn(prefs: Species[][] = []) {
+    pickTeams(prefs).forEach((sp, team) => {
       // the same animals every match, but standing in a different place each time
       const slots = [...SPAWN_X[team]];
       for (let i = slots.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [slots[i], slots[j]] = [slots[j], slots[i]]; }
@@ -300,7 +309,10 @@ export class CritterGame {
   private hostNextTurn(team: 0 | 1) {
     const list = this.animals.filter((a) => a.team === team && a.alive && !a.water);
     const n = this.turnIdx[team];
-    const e: GameEvent = { k: 'turn', team, animal: this.animals.indexOf(list[n % list.length]), q: this.nextQuestion(), shooter: this.shooterFor?.(team, n) ?? '', snap: this.snapshot() };
+    const shooter = this.shooterFor?.(team, n) ?? '';
+    const own = shooter ? this.animalOf?.(shooter) : undefined; // a player shoots with their own animal while it is still in the game
+    const mine = own ? list.find((a) => a.species === own) : undefined;
+    const e: GameEvent = { k: 'turn', team, animal: this.animals.indexOf(mine ?? list[n % list.length]), q: this.nextQuestion(), shooter, snap: this.snapshot() };
     this.apply(e); this.out?.(e);
   }
 
@@ -343,7 +355,7 @@ export class CritterGame {
 
   snapshot(): Snap {
     return {
-      animals: this.animals.map((a) => ({ x: a.x, y: a.y, hp: a.hp, alive: a.alive, water: a.water, fade: a.fade, facing: a.facing })),
+      animals: this.animals.map((a) => ({ species: a.species, x: a.x, y: a.y, hp: a.hp, alive: a.alive, water: a.water, fade: a.fade, facing: a.facing })),
       bridge: [...this.bridge.tiles], bg: this.bgKey, covers: this.covers.map((c) => c.hp), craters: this.craters.map((c) => [...c] as [number, number, number]), turnIdx: [...this.turnIdx],
       correct: [...this.correct] as [number, number], asked: this.asked, turns: this.turns,
     };
@@ -352,7 +364,7 @@ export class CritterGame {
     this.bridge.tiles = [...sn.bridge];
     sn.animals.forEach((d, i) => {
       const a = this.animals[i];
-      Object.assign(a, d);
+      Object.assign(a, d); a.name = cap(a.species);
       a.vx = 0; a.vy = 0; a.hitT = 0; a.aimT = 0; a.moving = false;
       a.grounded = a.alive && !a.water && (this.groundSolid(a.x, a.y + 2) || this.groundSolid(a.x, a.y));
     });
