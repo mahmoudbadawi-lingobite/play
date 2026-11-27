@@ -125,6 +125,25 @@ function makeStrips(imgs: ImageStore): { cap: Strip; under: Strip; side: Strip }
   return { cap, under, side };
 }
 
+/** The hills run off the bottom of the map. Cut them with a rounded, rough underside so they end like real rocks (the underside strip is drawn along it). */
+function roughenBottoms(mask: Uint8Array) {
+  const last = (MAP_H - 1) * MAP_W; const R = 170;
+  let x = 0;
+  while (x < MAP_W) {
+    if (!mask[last + x]) { x++; continue; }
+    let b = x; while (b + 1 < MAP_W && mask[last + b + 1]) b++;
+    const a = x; const ph = a * 0.37;
+    for (let c = a; c <= b; c++) {
+      const dl = a > 0 ? c - a : 1e9; const dr = b < MAP_W - 1 ? b - c : 1e9; const d = Math.min(dl, dr);
+      const drop = d >= R ? 0 : R - Math.sqrt(Math.max(0, R * R - (R - d) * (R - d))); // circular corner
+      const rough = Math.sin(c * 0.031 + ph) * 0.55 + Math.sin(c * 0.083 + ph * 1.7) * 0.3 + Math.sin(c * 0.21 + ph * 0.6) * 0.15;
+      const B = Math.round(MAP_H - 105 - drop * 0.9 + rough * 24);
+      for (let y = Math.max(0, B); y < MAP_H; y++) mask[y * MAP_W + c] = 0;
+    }
+    x = b + 1;
+  }
+}
+
 // ---------------------------------------------------------------- contours (marching squares)
 interface Samples { n: number; x: Float32Array; y: Float32Array; nx: Float32Array; ny: Float32Array; wc: Float32Array; wu: Float32Array; ws: Float32Array }
 
@@ -259,6 +278,7 @@ export class Terrain {
     const tick = () => new Promise<void>((r) => setTimeout(r, 0));
     const blurred = blur3(buildRawMask(), MAP_W, MAP_H, 11);
     for (let i = 0; i < blurred.length; i++) t.mask[i] = blurred[i] > 0.5 ? 1 : 0;
+    roughenBottoms(t.mask);
     onProgress?.(0.15); await tick();
     t.strips = makeStrips(imgs);
     const tex = imgs.get('world/cliff_face_512.webp')!;

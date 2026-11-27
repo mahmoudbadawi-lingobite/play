@@ -711,21 +711,15 @@ export class CritterGame {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = '#9fd6f2'; ctx.fillRect(0, 0, this.cw, this.ch);
     ctx.setTransform(z, 0, 0, z, this.cw / 2 - cx * z, this.ch / 2 - cy * z);
-    // when the whole map is shown on a tall screen: sky above it and water below it
+    // when the whole map is shown on a tall screen: sky above it (the water below is drawn further down)
     if (cy - hh < 0) { ctx.fillStyle = '#8fd0f5'; ctx.fillRect(-10, cy - hh - 10, MAP_W + 20, hh - cy + 10 + 1); }
-    if (cy + hh > MAP_H) { ctx.fillStyle = '#4a9ccc'; ctx.fillRect(-10, MAP_H - 1, MAP_W + 20, cy + hh - MAP_H + 12); }
     const vx0 = Math.max(0, Math.floor(cx - hw)); const vx1 = Math.min(MAP_W, Math.ceil(cx + hw));
     const vy0 = Math.max(0, Math.floor(cy - hh)); const vy1 = Math.min(MAP_H, Math.ceil(cy + hh));
     const vw = vx1 - vx0; const vh = vy1 - vy0;
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(this.bg, vx0 / 2, vy0 / 2, vw / 2, vh / 2, vx0, vy0, vw, vh);
 
-    // water band
-    const wy = MAP_H - 70;
-    ctx.fillStyle = 'rgba(70,160,210,0.55)'; ctx.fillRect(vx0, wy, vw, 70);
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 3; ctx.beginPath();
-    for (let x = vx0; x <= vx1; x += 12) { const y = wy + Math.sin(x / 40 + this.time * 2) * 3; if (x === vx0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
-    ctx.stroke();
+    this.drawWater(ctx, vx0, vx1, cy + hh, false);
 
     for (const c of [this.terrain.rock, this.terrain.edge, this.terrain.cap]) ctx.drawImage(c, vx0, vy0, vw, vh, vx0, vy0, vw, vh);
 
@@ -750,6 +744,8 @@ export class CritterGame {
     // animals
     for (const a of this.animals) if (a.alive) this.drawAnimal(ctx, a);
 
+    this.drawWater(ctx, vx0, vx1, cy + hh, true); // the front waves wash over the feet of the hills
+
     // projectile and effects
     if (this.phase === 'move' && this.aiming && this.active.grounded) this.drawAim(ctx);
     if (this.shot) this.drawShot(ctx, this.shot);
@@ -769,6 +765,31 @@ export class CritterGame {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.drawForeground(ctx);
     this.drawHud(ctx, z, cx, cy);
+  }
+
+  /** wavy water: the back part sits behind the hills (solid), the front part is see-through and in front of them */
+  private drawWater(ctx: CanvasRenderingContext2D, vx0: number, vx1: number, bottom: number, front: boolean) {
+    const wy = MAP_H - 120; if (bottom < wy - 20) return;
+    const u = this.ui; const yb = Math.max(bottom, MAP_H) + 40; const step = 14 * u; const t = this.time;
+    const wave = (x: number, k: number) => Math.sin(x / (95 * u) + t * (1.3 + k * 0.35) + k * 2.1) * 5 * u + Math.sin(x / (41 * u) - t * (1.9 + k * 0.2) + k) * 2.2 * u;
+    const trace = (off: number, k: number) => { ctx.beginPath(); ctx.moveTo(vx0 - step, yb); for (let x = vx0 - step; x <= vx1 + step; x += step) ctx.lineTo(x, wy + off * u + wave(x, k)); ctx.lineTo(vx1 + step, yb); ctx.closePath(); };
+    const line = (off: number, k: number, alpha: number, w: number) => {
+      ctx.beginPath(); for (let x = vx0 - step, i = 0; x <= vx1 + step; x += step, i++) { const y = wy + off * u + wave(x, k); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+      ctx.strokeStyle = `rgba(255,255,255,${alpha})`; ctx.lineWidth = w * u; ctx.lineJoin = 'round'; ctx.stroke();
+    };
+    if (!front) {
+      const g = ctx.createLinearGradient(0, wy, 0, wy + 900); g.addColorStop(0, '#58bdea'); g.addColorStop(0.25, '#3a95cf'); g.addColorStop(1, '#1d5f9a');
+      trace(0, 0); ctx.fillStyle = g; ctx.fill();
+      trace(34, 1); ctx.fillStyle = 'rgba(255,255,255,0.10)'; ctx.fill(); // lighter swell behind the hills
+      line(0, 0, 0.85, 4);
+    } else {
+      const g = ctx.createLinearGradient(0, wy, 0, wy + 700); g.addColorStop(0, 'rgba(70,170,225,0.42)'); g.addColorStop(1, 'rgba(25,85,150,0.78)');
+      trace(16, 2); ctx.fillStyle = g; ctx.fill();
+      line(16, 2, 0.9, 4); line(52, 3, 0.35, 3);
+      // a few drifting sparkles on the surface
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      for (let i = 0; i < 26; i++) { const x = ((i * 337 + t * 18 * (1 + (i % 3))) % (MAP_W + 200)) - 100; if (x < vx0 || x > vx1) continue; const y = wy + (30 + (i * 53) % 220) * u; ctx.fillRect(x, y, 14 * u, 2.2 * u); }
+    }
   }
 
   private drawBridge(ctx: CanvasRenderingContext2D) {
