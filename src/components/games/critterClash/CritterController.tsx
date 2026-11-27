@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { tr } from '../../../i18n/tr';
 import { speakNatural } from '../../../lib/speech';
+import { ExitButton } from './ExitButton';
 import { PressButton } from './PressButton';
 import type { Question } from './ccGame';
 import { scoreRow, type CcMulti } from './ccNet';
@@ -92,10 +93,11 @@ export function CritterController({ multi, onFinish }: { multi: CcMulti; onFinis
 
   const bg = myTeam === 0 ? 'from-sky-600 to-sky-800' : 'from-rose-600 to-rose-800';
   return (
-    <div className={`mx-auto flex min-h-[70vh] w-full max-w-md flex-col gap-3 rounded-3xl bg-gradient-to-b ${bg} p-4 text-white`}>
+    <div className={`mx-auto relative flex min-h-[70vh] w-full max-w-md flex-col gap-3 rounded-3xl bg-gradient-to-b ${bg} p-4 text-white`}>
       <div className="flex items-center justify-between text-sm font-semibold">
         <span>{teamName(myTeam)} · {me?.name}</span>
         {(phase === 'question' || phase === 'move') && <span className="rounded-full bg-black/30 px-3 py-1">⏱ {secs}</span>}
+        {phase !== 'over' && <ExitButton onExit={() => net.send({ t: 'forfeit', id: meId })} />}
       </div>
 
       {phase === 'wait' && <p className="my-auto text-center text-lg">{tr('Look at the big screen. The match is about to start…')}</p>}

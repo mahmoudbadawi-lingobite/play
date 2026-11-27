@@ -9,6 +9,7 @@ import { CritterGame, type GameStatus } from './ccGame';
 import { scoreRow, type CcMulti } from './ccNet';
 import { PressButton } from './PressButton';
 import { ResultsTable } from './ResultsTable';
+import { ExitButton } from './ExitButton';
 import { Terrain } from './ccTerrain';
 import { setSfxMuted, sfxMuted, startAmbient, stopAmbient, unlockSfx } from './ccSfx';
 
@@ -88,6 +89,7 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
       else if (m.t === 'ev' && g) {
         g.apply(m.e);
       } else if (m.t === 'ans' && g && g.isHost && m.id === g.shooterId && m.turn === g.turns) g.hostResolve(m.pick);
+      else if (m.t === 'forfeit' && g && g.isHost) { const t = multi.roster.find((r) => r.id === m.id)?.team; if (t === 0 || t === 1) g.forfeit(t); }
       else if (m.t === 'cmd' && g && g.isHost && g.arena && m.id === g.shooterId && m.turn === g.turns) {
         // a phone controller: the button presses of the shooter move this device's animal
         if (m.c === 'dir') { g.moveDir = m.v === 1 ? 1 : m.v === -1 ? -1 : 0; lastDir.current = Date.now(); }
@@ -320,6 +322,15 @@ export function CritterClashGame({ items, onFinish, multi }: GameProps & { multi
                 <PressButton file="ui_btn_fire.webp" label={tr('Fire')} disabled={!myTurn} onDown={() => g.fire()} />
               </div>
             </div>
+            {!spectator && (
+              <div className="pointer-events-auto absolute left-3 top-10">
+                <ExitButton pickTeam={!multi} onExit={(t) => {
+                  if (!multi) { if (t === 0 || t === 1) g.forfeit(t); }
+                  else if (multi.isHost && myTeam !== null) g.forfeit(myTeam);
+                  else multi.net.send({ t: 'forfeit', id: multi.meId });
+                }} />
+              </div>
+            )}
             {/* view and full screen: top right, under the red team's bar */}
             <div className="pointer-events-auto absolute right-3 top-10 flex gap-2">
               <button type="button" className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow" onClick={() => { g.mapView = !g.mapView; }}>{st.map ? `🔍 ${tr('Close-up')}` : `🗺️ ${tr('Map')}`}</button>

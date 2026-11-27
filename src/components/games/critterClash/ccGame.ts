@@ -43,6 +43,7 @@ export type GameEvent =
   | { k: 'pos'; x: number; y: number; vx: number; vy: number; g: boolean; f: 1 | -1; mv: boolean; ang: number; pw: number; aim: boolean; ml: number }
   | { k: 'fire'; x: number; y: number; f: 1 | -1; ang: number; pw: number }
   | { k: 'skip' }
+  | { k: 'forfeit'; team: 0 | 1 }
   | { k: 'over'; winner: 0 | 1 | null; snap: Snap };
 
 interface Animal {
@@ -316,6 +317,12 @@ export class CritterGame {
     this.localPick = pick;
     if (this.isHost) this.hostResolve(pick); else this.onShooterAnswer?.(pick);
   }
+  /** A team leaves the match (host decides; other devices ask the host through the room). */
+  forfeit(team: 0 | 1) {
+    if (!this.isHost || this.phase === 'over') return;
+    const e: GameEvent = { k: 'forfeit', team };
+    this.apply(e); this.out?.(e);
+  }
   get maxPower() { return this.fizzle ? FIZZLE_POWER : 1; }
 
   private hostEnd() {
@@ -400,6 +407,14 @@ export class CritterGame {
         if (this.phase === 'over') break;
         this.shot = null; this.aiming = false; this.phase = 'settle'; this.settleT = 0.6;
         break;
+      case 'forfeit': { // a team leaves: all its animals vanish like on a lost match, then the other team wins
+        if (this.phase === 'over') break;
+        let n = 0;
+        for (const a of this.animals) if (a.team === e.team && a.alive) { a.alive = false; a.hp = 0; a.water = false; this.poof(a.x, a.y - 45); n++; }
+        if (n) sfx('defeat');
+        this.shot = null; this.aiming = false; this.moveDir = 0; this.phase = 'settle'; this.settleT = 1.6;
+        break;
+      }
       case 'over':
         this.restore(e.snap); this.shot = null; this.phase = 'over'; this.winner = e.winner; if (e.winner !== null && e.winner !== undefined && (e.winner as number) >= 0) sfx('win');
         this.onOver?.(e.winner);

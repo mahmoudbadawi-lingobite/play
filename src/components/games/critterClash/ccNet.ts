@@ -38,6 +38,7 @@ export type CcMsg =
   | { t: 'ready'; id: string }
   | { t: 'ev'; e: GameEvent }
   | { t: 'ans'; id: string; pick: number; turn: number }
+  | { t: 'forfeit'; id: string }
   | { t: 'cmd'; id: string; turn: number; c: 'dir' | 'hop' | 'adj' | 'fire'; v?: number; a?: number; p?: number }
   | { t: 'stats'; row: ResultRow }
   | { t: 'results'; rows: ResultRow[]; winner: 0 | 1 | null };
